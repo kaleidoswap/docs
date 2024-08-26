@@ -1,8 +1,7 @@
 ![Kaleidoswap Logo](https://kaleidoswap.com/_astro/logo.23ce5f59.svg)
 
-# Kaleidoswap RGB-LSP API Documentation
+# Kaleidoswap API Documentation
 
-Welcome to the Kaleidoswap RGB-LSP API documentation. This API provides interfaces for managing swaps, channels, and related operations, built to facilitate seamless integration with Lightning Service Providers (LSPs). The API supports operations like order creation, asset management, pair management, and real-time swaps, adhering to a modified version of the LSPS1 protocol.
 
 ## Table of Contents
 
@@ -17,7 +16,7 @@ Welcome to the Kaleidoswap RGB-LSP API documentation. This API provides interfac
 
 ## 1. Introduction
 
-The Kaleidoswap RGB-LSP API allows interaction with an RGB Lightning Node (RLN) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The node follows a modified version of the LSPS1 standard to manage these operations efficiently.
+The Kaleidoswap API allows interaction with an RGB Lightning Node (RLN) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
 
 ### Key Features
 - **LSPS1 (Lightning Service Provider Specification) Support**: Liquidity services and swap functionalities following the modified LSPS1 protocol.

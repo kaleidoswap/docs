@@ -1,0 +1,25 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "![Kaleidoswap Logo](https://kaleidoswap.com/_astro/logo.23ce5f59.svg)",
+  "main": "gulpfile.js",
+  "dependencies": {},
+  "devDependencies": {
+    "gh-pages": "^6.1.1",
+    "gulp": "^5.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaleidoswap/docs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kaleidoswap/docs/issues"
+  },
+  "homepage": "https://github.com/kaleidoswap/docs#readme"
+}

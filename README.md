@@ -374,9 +374,9 @@ The server will stream JSON objects with price updates for subscribed pairs:
 
 **Request Body:**
 - `request_for_quotation_id`: The ID of the price update received via WebSocket.
-- `from_asset`: The asset to swap from.
+- `from_asset`: The RGB asset ID to swap from.
 - `from_amount`: The amount of the asset to swap from.
-- `to_asset`: The asset to swap to.
+- `to_asset`: The RGB asset ID to swap to.
 - `to_amount`: The amount of the asset to swap to.
 
 **Example Request:**
@@ -385,7 +385,7 @@ The server will stream JSON objects with price updates for subscribed pairs:
   "request_for_quotation_id": "550e8400-e29b-41d4-a716-446655440000",
   "from_asset": "BTC",
   "from_amount": 100000000,
-  "to_asset": "USDT",
+  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
   "to_amount": 3000000000
 }
 ```

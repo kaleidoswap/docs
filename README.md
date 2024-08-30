@@ -28,11 +28,11 @@ The Kaleidoswap API allows interaction with an RGB Lightning Node (RLN) that pro
 
 ### Base URL
 
-#### Testnet
+#### Bitcoin Testnet4
 - **Base URL:** `https://api.testnet.kaleidoswap.com/api/v1`
 
 
-#### Mainnet (Coming Soon)
+#### Bitcoin Mainnet (Coming Soon)
 - **Base URL:** `https://api.kaleidoswap.com/api/v1`
 
 
@@ -87,9 +87,9 @@ The current API version is v1, reflected in the base URL.
       "min_initial_client_amount": 0,
       "max_initial_client_amount": 0,
       "min_initial_lsp_amount": 0,
-      "max_initial_lsp_amount": 1000000,
+      "max_initial_lsp_amount": 1000000000,
       "min_channel_amount": 0,
-      "max_channel_amount": 1000000
+      "max_channel_amount": 1000000000
     }
   ]
 }
@@ -99,7 +99,7 @@ The current API version is v1, reflected in the base URL.
 
 ##### `POST /api/v1/lsps1/create_order`
 
-**Description:** Create a new order for a channel with the RGB Lightning Service Provider.
+**Description:** Create a new order request for a channel with the RGB Lightning Service Provider.
 
 **Request Body:**
 - `client_pubkey`: The public key of the client (not spec compliant, but required in this implementation).
@@ -397,6 +397,7 @@ The server will stream JSON objects with price updates for subscribed pairs:
 - The WebSocket connection will remain open until the client disconnects or a network error occurs.
 
 ---
+
 #### 3.3.3 Initiate Swap
 
 ##### `POST /api/v1/swaps/init`
@@ -406,18 +407,18 @@ The server will stream JSON objects with price updates for subscribed pairs:
 **Request Body:**
 - `rfq_id`: The ID of the price update received via WebSocket.
 - `from_asset`: The RGB asset ID to swap from.
-- `from_amount`: The amount of the asset to swap from.
+- `from_amount`: The amount of the asset to swap from. If the asset is BTC, the amount should be specified in **millisatoshis (msat)**. For other assets, the amount should be provided in the asset’s native unit without considering precision.
 - `to_asset`: The RGB asset ID to swap to.
-- `to_amount`: The amount of the asset to swap to.
+- `to_amount`: The amount of the asset to swap to. If the asset is BTC, the amount should be specified in **millisatoshis (msat)**. For other assets, the amount should be provided in the asset’s native unit without considering precision.
 
 **Example Request:**
 ```json
 {
-  "rfq_id": "550e8400-e29b-41d4-a716-446655440000",
-  "from_asset": "BTC",
-  "from_amount": 100000000,
-  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-  "to_amount": 3000000000
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "from_asset": "btc", 
+  "from_amount": 1000000, 
+  "to_asset": "rgb:2V2f58W-Tabtk3J4j-qGVQQwPWt-ksbujLNxx-x1BMTNBEf-KVsg2j3",
+  "to_amount": 587770
 }
 ```
 
@@ -428,10 +429,16 @@ The server will stream JSON objects with price updates for subscribed pairs:
 **Example Response:**
 ```json
 {
-  "swapstring": "30/rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd/10/rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc/1715896416/9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2",
-  "payment_hash": "3febfae1e68b190c15461f4c2a3290f9af1dae63fd7d620d2bd61601869026cd"
+  "swapstring": "1000000/btc/587770/rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB/be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
+  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e"
 }
 ```
+
+**Note:** 
+- The precision for an RGB asset can be obtained using the  [`/assets`](#321-list-assets) API on the maker's node. If the client has the same asset, the precision can also be retrieved via the node API.
+- The swapstring returned by this endpoint needs to be whitelisted using the `/taker` API of the RGB Lightning Node (RLN) of the client before executing the swap.
+- In this example, the user is selling 1,000 sats for 0.5877 USDT (using the RGB asset rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB).
+
 
 #### 3.3.4 Execute Swap
 
@@ -447,9 +454,9 @@ The server will stream JSON objects with price updates for subscribed pairs:
 **Example Request:**
 ```json
 {
-  "swapstring": "30/rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd/10/rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc/1715896416/9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2",
+  "swapstring": "1000000/btc/587770/rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB/be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
   "taker_pubkey": "03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad",
-  "payment_hash": "3febfae1e68b190c15461f4c2a3290f9af1dae63fd7d620d2bd61601869026cd"
+  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e"
 }
 ```
 
@@ -464,6 +471,8 @@ The server will stream JSON objects with price updates for subscribed pairs:
   "message": "Swap executed successfully"
 }
 ```
+
+---
 
 ## 4. Error Handling
 

@@ -1,6 +1,6 @@
 ![Kaleidoswap Logo](https://kaleidoswap.com/_astro/logo.23ce5f59.svg)
 
-# Kaleidoswap API Documentation
+# RGB Lightning DEX API Documentation
 
 
 ## Table of Contents
@@ -16,7 +16,7 @@
 
 ## 1. Introduction
 
-The Kaleidoswap API allows interaction with an RGB Lightning Node (RLN) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
+The RGB Lightning DEX API allows interaction with an RGB Lightning Node (RLN) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
 
 ### Key Features
 - **RGB LSPS1**: Liquidity services following the modified LSPS1 protocol.
@@ -290,6 +290,112 @@ The current API version is v1, reflected in the base URL.
   ]
 }
 ```
+#### 3.2.3 Request Quote for a Pair
+
+##### `POST /api/v1/market/quote`
+
+**Description:** Request a quote for a specific trading pair and amount. The response includes detailed information about the quote, including prices, fees, and expiration time.
+
+**Request Body:**
+- `pair_id`: The unique identifier of the trading pair (obtained from the `/api/v1/market/pairs` endpoint).
+- `from_asset`: The asset ID of the asset to swap from.
+- `from_amount`: The amount of the base asset to swap from.
+- `to_asset`: The asset ID of the asset to swap to.
+
+
+**Example Request:**
+```json
+{
+  "pair_id": "BTC_USDT",
+  "from_asset": "BTC",
+  "from_amount": 100000000,
+  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
+}
+```
+
+**Response:**
+- `rfq_id`: A unique identifier for this quote request.
+- `pair_id`: The ID of the trading pair.
+- `from_asset`: The asset ID being swapped from.
+- `to_asset`: The asset ID being swapped to.
+- `from_amount`: The amount of the base asset to be swapped.
+- `to_amount`: The amount of the quote asset to be received after fees.
+- `price`: The exchange rate between the base and quote assets.
+- `fee`: The fee applied to the transaction, denominated in the quote asset.
+- `fee_rate`: The fee rate as a percentage.
+- `price_precision`: The number of decimal places for the price.
+- `base_precision`: The number of decimal places for the base asset.
+- `quote_precision`: The number of decimal places for the quote asset.
+- `timestamp`: The server-side timestamp when the quote was generated.
+- `expires_at`: The timestamp when this quote will expire.
+
+**Example Response:**
+```json
+{
+  "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+  "pair_id": "BTC_USDT",
+  "from_asset": "BTC",
+  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+  "from_amount": 100000000,
+  "to_amount": 5877000000,
+  "price": 59507000000,
+  "fee": 53000000,
+  "fee_rate": 0.001,
+  "price_precision": 2,
+  "base_precision": 8,
+  "quote_precision": 6,
+  "timestamp": 1630296243,
+  "expires_at": 1630296543
+}
+```
+
+**Additional Notes:**
+- The `pair_id` in the request should match an ID returned from the `/api/v1/market/pairs` endpoint.
+- The `from_amount` should adhere to the `min_order_size` and `max_order_size` defined in the trading pair details.
+- The `expires_at` field indicates when this quote will no longer be valid for initiating a swap.
+- The `fee` is already included in the `to_amount`.
+- Precision fields help clients format and display values correctly.
+- The `rfq_id` can be used in subsequent swap initiation requests if the client decides to proceed with the trade.
+- 
+#### **3.2.4 Estimate Bitcoin Fee**
+
+##### `GET /api/v1/market/bitcoin_fee_estimate`
+
+**Description:** Estimate the Bitcoin fee required to include a transaction in a specified number of target blocks.
+
+**Query Parameters:**
+- `target_blocks` (integer, required): The number of blocks within which you aim to have the transaction confirmed.
+
+**Example Request:**
+```
+GET /api/v1/market/bitcoin_fee_estimate?target_blocks=3
+```
+
+**Response:**
+- `estimated_fee_sat`: The estimated fee in satoshis required for the transaction to be confirmed within the target number of blocks.
+- `target_blocks`: The number of blocks within which the fee estimate is applicable.
+- `timestamp`: The server-side timestamp when the estimate was generated.
+
+**Example Response:**
+```json
+{
+  "estimated_fee_sat": 253,
+  "target_blocks": 3,
+  "timestamp": 1691160765
+}
+```
+
+**Field Descriptions:**
+- **`estimated_fee_sat`**: The estimated fee in satoshis needed for the transaction to be included in the next `target_blocks` blocks.
+- **`target_blocks`**: The user-specified number of blocks within which the transaction should be confirmed.
+- **`timestamp`**: The Unix timestamp indicating when the fee estimate was generated.
+
+**Additional Notes:**
+- Fee estimates are based on current network conditions and may vary. It's advisable to check closer to the time of transaction submission.
+- If `target_blocks` is set too low, the estimated fee might be higher to ensure timely confirmation.
+
+
+---
 
 ### 3.3 Swap APIs
 
@@ -314,9 +420,6 @@ The current API version is v1, reflected in the base URL.
   "synced_to_chain": true
 }
 ```
----
-
-### 3.3 Swap APIs
 
 #### 3.3.2 Real-time Price Updates
 
@@ -352,40 +455,41 @@ The server will stream JSON objects with price updates for subscribed pairs:
 
 ```json
 {
-  "action": "priceUpdate",
+  "action": "price_update",
   "data": {
-    "rfqId": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
-    "buyPrice": 59507000000,
-    "sellPrice": 59508000000,
-    "markPrice": 59509000000,
-    "pricePrecision": 6,
+    "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+    "price_buy": 59507000000,
+    "price_sell": 59508000000,
+    "fee_base": 100,
+    "fee_rate": 0.1,
+    "price_precision": 6,
+    "base_precision": 8,
     "pair": "BTC/USDT",
-    "size": 100000000,
-    "timestamp": "2024-08-30T10:44:03.060423",
-    "rfqExpireSeconds": 5
+    "timestamp": 1630296243,
+    "expires_at": 1630296248
   }
 }
 ```
 
 **Field Descriptions:**
 
-- **`rfqId`**: The `request_for_quotation_id`, a unique identifier generated by the maker. This ID is crucial for initiating swaps and must be passed in the `init` endpoint.
+- **`rfq_id`**: The `request_for_quotation_id`, a unique identifier generated by the maker. This ID is crucial for initiating swaps and must be passed in the `init` endpoint.
   
-- **`buyPrice`**: The buy price for the trading pair. 
+- **`price_buy`**: The buy price for the trading pair. 
 - 
-- **`sellPrice`**: The sell price for the trading pair.
+- **`price_sell`**: The sell price for the trading pair.
 
-- **`markPrice`**: The mid-price or average of the buy and sell prices.
+- **`price_precision`**: The number of decimal places to which the price is quoted, relevant to the quote asset. For example, if `pricePrecision` is `6` for the BTC/USDT pair, it indicates that the USDT is quoted to six decimal places.
 
-- **`pricePrecision`**: The number of decimal places to which the price is quoted, relevant to the quote asset. For example, if `pricePrecision` is `6` for the BTC/USDT pair, it indicates that the USDT is quoted to six decimal places.
+- **`base_precision`**:  The number of decimal places to which the base asset is quoted. For example, if `basePrecision` is `8` for the BTC/USDT pair, it indicates that BTC is quoted to eight decimal places.
 
 - **`pair`**: The trading pair, such as BTC/USDT.
 
-- **`size`**: The quantity of the base asset (e.g., BTC) involved in the price quote. In the provided example, a size of `100000000` sats (1 BTC) is quoted.
+- **`timestamp`**: The timestamp when the price update was generated in unix time.
 
-- **`timestamp`**: The timestamp when the price update was generated.
+- **`expires_at`**: The timestamp when the `rfqId` will expire in unix time.
 
-- **`rfqExpireSeconds`**: The duration in seconds for which the `rfqId` is valid. After this period, the `rfqId` will expire and can no longer be used for initiating a swap.
+
 
 **Price Precision Note:**
 - Prices provided in the response do not reflect the precision of the base asset. For instance, in a BTC/USDT pair, the base asset (BTC) is always denominated in satoshis, and the quote asset (USDT) price precision is found in the update. For example, a `buyPrice` of `59507000000` unit for a size of `100000000` sats (1 BTC) corresponds to `59507` USDT, considering the `pricePrecision` of `8`.
@@ -472,6 +576,69 @@ The server will stream JSON objects with price updates for subscribed pairs:
 }
 ```
 
+#### **3.3.5 Get Swap Status**
+
+##### `GET /api/v1/swaps/status`
+
+**Description:** Retrieve the current status of a swap using the associated `payment_hash`.
+
+**Query Parameters:**
+- `payment_hash` (string, required): The payment hash of the swap whose status is to be retrieved.
+
+**Example Request:**
+```
+GET /api/v1/swaps/status?payment_hash=7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664
+```
+
+**Response:**
+- `swap`: An object containing detailed information about the swap.
+
+**Example Response:**
+```json
+{
+  "swap": {
+    "qty_from": 1000000,
+    "qty_to": 587770,
+    "from_asset": "btc",
+    "to_asset": "rgb:2V2f58W-Tabtk3J4j-qGVQQwPWt-ksbujLNxx-x1BMTNBEf-KVsg2j3",
+    "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664",
+    "status": "Pending",
+    "requested_at": 1691160765,
+    "initiated_at": 1691168512,
+    "expires_at": 1691172703,
+    "completed_at": 1691171075
+  }
+}
+```
+
+**Swap Object Schema:**
+- **`qty_from`** (`integer`): The quantity of the asset being swapped from. Example: `30`
+- **`qty_to`** (`integer`): The quantity of the asset being swapped to. Example: `10`
+- **`from_asset`** (`string`): The RGB asset ID being swapped from. Example: `rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd`
+- **`to_asset`** (`string`): The RGB asset ID being swapped to. Example: `rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc`
+- **`payment_hash`** (`string`): The unique payment hash associated with the swap. Example: `7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664`
+- **`status`** (`SwapStatus`): The current status of the swap. Possible values:
+  - `Waiting`
+  - `Pending`
+  - `Succeeded`
+  - `Expired`
+  - `Failed`
+- **`requested_at`** (`integer`): Unix timestamp when the swap was requested. Example: `1691160765`
+- **`initiated_at`** (`integer`): Unix timestamp when the swap was initiated. Example: `1691168512`
+- **`expires_at`** (`integer`): Unix timestamp when the swap expires. Example: `1691172703`
+- **`completed_at`** (`integer`): Unix timestamp when the swap was completed. Example: `1691171075`
+
+**Additional Notes:**
+- The `status` field provides real-time updates on the swap's progress.
+- Ensure that the `payment_hash` provided is accurate to retrieve the correct swap status.
+- Time-related fields are in Unix timestamp format.
+- The `SwapStatus` field in the `Swap` object can have one of the following values:
+  - **`Waiting`**: The swap is awaiting initiation.
+  - **`Pending`**: The swap has been initiated and is currently in progress.
+  - **`Succeeded`**: The swap has been successfully completed.
+  - **`Expired`**: The swap was not completed within the required timeframe.
+  - **`Failed`**: The swap encountered an error and did not complete successfully.
+
 ---
 
 ## 4. Error Handling
@@ -495,3 +662,7 @@ For WebSocket connections, errors will be sent as JSON messages through the WebS
 ## 5. License
 
 This API is licensed under the MIT License. For more information, please refer to the LICENSE file in the repository.
+
+---
+
+Feel free to open an issue or submit a pull request for any suggestions or improvements to this documentation.

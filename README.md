@@ -8,7 +8,6 @@ This documentation is divided into two main sections:
    - Includes details on endpoints, error handling, and more.
 2. [Desktop App Documentation](./DesktopApp/README.md)
    - Contains information on using the Kaleidoswap desktop application.
-
 --- 
 
 ## Table of Contents

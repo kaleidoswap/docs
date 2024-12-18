@@ -1,0 +1,188 @@
+# RGB LSPS1 APIs
+
+The RGB LSPS1 APIs enable management of channels and liquidity services following the Lightning Service Provider Specification (LSPS1). This section provides details on available endpoints and their usage.
+
+---
+
+## Get LSP Information
+
+### Endpoint
+**`GET /api/v1/lsps1/get_info`**
+
+### Description
+Retrieve information about the RGB Lightning Service Provider, including available assets, liquidity options, and channel configurations.
+
+### Response Structure
+- **`options`**: Configuration settings for orders and channels.
+- **`assets`**: List of assets managed by the LSP.
+
+### Example Response
+```json
+{
+  "options": {
+    "min_required_channel_confirmations": 0,
+    "min_funding_confirms_within_blocks": 0,
+    "min_onchain_payment_confirmations": 0,
+    "supports_zero_channel_reserve": true,
+    "min_onchain_payment_size_sat": 0,
+    "max_channel_expiry_blocks": 30160,
+    "min_initial_client_balance_sat": 0,
+    "max_initial_client_balance_sat": 100000000,
+    "min_initial_lsp_balance_sat": 0,
+    "max_initial_lsp_balance_sat": 100000000,
+    "min_channel_balance_sat": 50000,
+    "max_channel_balance_sat": 100000000
+  },
+  "assets": [
+    {
+      "name": "Tether USD",
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+      "ticker": "USDT",
+      "precision": 6,
+      "issued_supply": 100000000000,
+      "min_initial_client_amount": 0,
+      "max_initial_client_amount": 0,
+      "min_initial_lsp_amount": 0,
+      "max_initial_lsp_amount": 1000000,
+      "min_channel_amount": 0,
+      "max_channel_amount": 1000000
+    }
+  ]
+}
+```
+
+---
+
+## Create Order
+
+### Endpoint
+
+`POST /api/v1/lsps1/create_order`
+
+### Description
+
+Create a new order for a channel with the RGB Lightning Service Provider.
+
+### Request Body
+
+| Field                            | Type    | Description                                                |
+|----------------------------------|---------|------------------------------------------------------------|
+| `client_pubkey`                  | String  | Public key of the client (required).                       |
+| `lsp_balance_sat`                | Integer | Balance in satoshis for the LSP side of the channel.       |
+| `client_balance_sat`             | Integer | Balance in satoshis for the client side of the channel.    |
+| `required_channel_confirmations` | Integer | Number of confirmations required for the channel.          |
+| `funding_confirms_within_blocks` | Integer | Number of blocks within which funding should be confirmed. |
+| `channel_expiry_blocks`          | Integer | Number of blocks after which the channel expires.          |
+| `announce_channel`               | Boolean | Whether to announce the channel publicly.                  |
+| `asset_id` (optional)            | String  | ID of the RGB asset for the channel.                       |
+| `lsp_asset_amount` (optional)    | Integer | Amount of RGB asset for the LSP side.                      |
+| `client_asset_amount` (optional) | Integer | Amount of RGB asset for the client side.                   |
+
+### Example Request
+
+```json
+{
+  "client_pubkey": "03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad",
+  "lsp_balance_sat": 100000,
+  "client_balance_sat": 50000,
+  "required_channel_confirmations": 3,
+  "funding_confirms_within_blocks": 144,
+  "channel_expiry_blocks": 4032,
+  "announce_channel": true,
+  "asset_id": "rgb:$i4cFKwt-2C5LZ3X-l$kOTGN-O6l1AOP-aP9COyn-7IeBkEM",
+  "lsp_asset_amount": 5000,
+  "client_asset_amount": 2500
+}
+```
+
+### Response Body
+
+| Field                             | Type             | Description                                                    |
+|-----------------------------------|------------------|----------------------------------------------------------------|
+| `order_id`                        | String           | Unique identifier for the created order.                       |
+| `client_pubkey`                   | String           | The public key of the client.                                  |
+| `lsp_balance_sat`                 | Integer          | The balance in satoshis for the LSP side of the channel.       |
+| `client_balance_sat`              | Integer          | The balance in satoshis for the client side of the channel.    |
+| `required_channel_confirmations`  | Integer          | The number of confirmations required for the channel.          |
+| `funding_confirms_within_blocks`  | Integer          | The number of blocks within which funding should be confirmed. |
+| `channel_expiry_blocks`           | Integer          | The number of blocks after which the channel expires.          |
+| `token`                           | String / Null    | The token associated with the order (if provided).             |
+| `created_at`                      | String date-time | Timestamp of order creation.                                   |
+| `expires_at`                      | String date-time | Timestamp when the order expires.                              |
+| `announce_channel`                | Boolean          | Whether the channel will be announced publicly.                |
+| `order_state`                     | String           | Current state of the order (e.g., "CREATED").                  |
+| `payment`                         | Object           | Payment details including fees, invoice or on-chain address.   |
+| `channel` (optional)              | Object / Null    | Channel details if the channel has been created.               |
+| `asset_id` (optional)             | String / Null    | The ID of the RGB asset for the channel.                       |
+| `lsp_asset_amount` (optional)     | Integer / Null   | The amount of RGB asset for the LSP side.                      |
+| `client_asset_amount`  (optional) | Integer / Null   | The amount of RGB asset for the client side.                   |
+
+### Example Response
+
+```json
+{
+  "order_id": "string",
+  "client_pubkey": "string",
+  "lsp_balance_sat": 0,
+  "client_balance_sat": 0,
+  "required_channel_confirmations": 0,
+  "funding_confirms_within_blocks": 0,
+  "channel_expiry_blocks": 0,
+  "token": "",
+  "created_at": "2024-12-18T19:09:19.868Z",
+  "announce_channel": true,
+  "order_state": "CREATED",
+  "payment": {
+    "bolt11": {
+      "state": "EXPECT_PAYMENT",
+      "expires_at": "2024-12-18T19:09:19.868Z",
+      "fee_total_sat": 0,
+      "order_total_sat": 0,
+      "invoice": "string"
+    },
+    "onchain": {
+      "state": "EXPECT_PAYMENT",
+      "expires_at": "2024-12-18T19:09:19.868Z",
+      "fee_total_sat": 0,
+      "order_total_sat": 0,
+      "address": "string",
+      "min_fee_for_0conf": 0,
+      "min_onchain_payment_confirmations": 0,
+      "refund_onchain_address": "string"
+    }
+  },
+  "channel": {},
+  "asset_id": "string",
+  "lsp_asset_amount": 0,
+  "client_asset_amount": 0
+}
+```
+---
+
+## Get Order
+
+### Endpoint
+
+`POST /api/v1/lsps1/get_order`
+
+### Description
+Retrieve information about an existing order.
+
+### Request Body
+| Field      |  Type    | Description                     |
+|------------|----------|---------------------------------|
+| `order_id` |  String  | Unique identifier of the order. |
+
+### Example Request
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Example Response
+The response structure is identical to the `create_order` endpoint.
+
+---
+
+For more details about trading and market operations, proceed to [Market APIs](./Market_APIs.md).

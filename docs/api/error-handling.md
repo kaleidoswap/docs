@@ -1,4 +1,11 @@
+---
+id: error-handling
+title: Error Handling
+sidebar_position: 6
+---
+
 # Error Handling
+
 
 The Kaleidoswap API uses standard HTTP status codes and detailed error messages to communicate the outcome of API requests. This section provides an overview of common error types and how to handle them effectively.
 

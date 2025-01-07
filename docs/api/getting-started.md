@@ -1,3 +1,9 @@
+---
+id: getting-started
+title: Getting Started
+sidebar_position: 2
+---
+
 # Getting Started
 
 Welcome to the Kaleidoswap API! This guide will help you set up and start using the API quickly and effectively.

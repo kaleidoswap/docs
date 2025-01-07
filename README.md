@@ -1,40 +1,41 @@
-![Kaleidoswap Logo](https://kaleidoswap.com/_astro/logo.23ce5f59.svg)
+# KaleidoSwap Documentation
 
-# Kaleidoswap Documentation
+This repository contains the documentation for KaleidoSwap, built using [Docusaurus](https://docusaurus.io/).
 
-This documentation is divided into two main sections:
+## Development
 
-1. [API Documentation](./API/README.md)
-   - Includes details on endpoints, error handling, and more.
-2. [Desktop App Documentation](./DesktopApp/README.md)
-   - Contains information on using the Kaleidoswap desktop application.
---- 
+### Prerequisites
 
-## Table of Contents
+- Node.js >= 18
+- pnpm
 
-1. [API Documentation](#api-documentation)
-   - [Introduction](./API/Introduction.md)
-   - [Getting Started](./API/GettingStarted.md)
-   - [Endpoints](#endpoints)
-     - [RGB LSPS1 APIs](./API/RGB_LSPS1_APIs.md)
-     - [Market APIs](./API/Market_APIs.md)
-     - [Swap APIs](./API/Swap_APIs.md)
-   - [Error Handling](./API/ErrorHandling.md)
-   - [License](./API/License.md)
-2. [Desktop App Documentation](#desktop-app-documentation)
-   - [Introduction](./DesktopApp/Introduction.md)
-   - [Installation](./DesktopApp/Installation.md)
-   - [Creating a New Wallet](./DesktopApp/CreatingWallet.md)
-   - [Mnemonic Backup](./DesktopApp/InitializingMnemonic.md)
-   - [Unlocking Wallet](./DesktopApp/UnlockingWallet.md)
-   - [Settings](./DesktopApp/Settings.md)
-   - [Deposits](./DesktopApp/Deposits.md)
-   - [Withdrawals](./DesktopApp/Withdrawals.md)
-   - [Funding Wallet](./DesktopApp/FundingWallet.md)
-   - [Opening Channels](./DesktopApp/OpeningChannel.md)
-   - [Backups and Requests](./DesktopApp/ChannelBackups.md)
-   - [Asset Swaps](./DesktopApp/AssetSwaps.md)
-   - [Background Information](./DesktopApp/Background.md)
-   - [Additional Resources](./DesktopApp/AdditionalResources.md)
-   - [Contributing](./DesktopApp/Contributing.md)
-   - [License](./DesktopApp/License.md)
+### Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm start
+
+# Build documentation
+pnpm build
+```
+
+## Documentation Structure
+
+- `docs/` - Main documentation content
+  - `introduction.md` - Main introduction
+  - `desktop-app/` - Desktop application guides
+  - `api/` - API reference and guides
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+[MIT License](LICENSE)

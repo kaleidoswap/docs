@@ -6,13 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const config = {
-  title: 'KaleidoSwap Documentation',
-  tagline: 'Documentation for the KaleidoSwap platform',
+  title: 'KaleidoSwap Docs',
+  tagline: 'Documentation for the KaleidoSwap App and Protocol',
   url: 'https://docs.kaleidoswap.com',
   baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon/favicon.svg',
   organizationName: 'kaleidoswap',
   projectName: 'kaleidoswap-docs',
   staticDirectories: ['static', 'src/assets'],

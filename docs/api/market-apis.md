@@ -240,4 +240,4 @@ GET /api/v1/market/bitcoin_fee_estimate?target_blocks=3
 
 ---
 
-For details about swap operations, proceed to [Swap APIs](./Swap_APIs.md).
+For details about swap operations, proceed to [Swap APIs](./swap-apis.md).

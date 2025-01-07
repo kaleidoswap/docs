@@ -1,6 +1,6 @@
 # Creating a New Wallet
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 When you first launch the app, you'll need to create a new wallet. You have two options:
 
@@ -27,4 +27,4 @@ From the left menu you can select an account that has been saved previously, eve
 
 ---
 
-*Next: [Initializing with Mnemonic Backup](InitializingMnemonic.md)*
+*Next: [Initializing with Mnemonic Backup](./initializing-mnemonic.md)*

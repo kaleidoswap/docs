@@ -185,4 +185,4 @@ The response structure is identical to the `create_order` endpoint.
 
 ---
 
-For more details about trading and market operations, proceed to [Market APIs](./Market_APIs.md).
+For more details about trading and market operations, proceed to [Market APIs](./market-apis.md).

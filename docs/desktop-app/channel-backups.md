@@ -1,6 +1,6 @@
 # Channel Backups
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 Backing up your channels is essential to prevent loss of funds in case of device failure.
 
@@ -13,4 +13,4 @@ Backing up your channels is essential to prevent loss of funds in case of device
 
 ---
 
-*Next: [Channel Requests](ChannelRequests.md)*
+*Next: [Channel Requests](./channel-requests.md)*

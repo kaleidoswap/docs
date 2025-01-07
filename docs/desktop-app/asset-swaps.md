@@ -1,6 +1,12 @@
+---
+id: asset-swaps
+title: Asset Swaps
+sidebar_position: 8
+---
+
 # Asset Swaps
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 The KaleidoSwap Desktop App allows you to swap RGB assets seamlessly.
 
@@ -19,4 +25,4 @@ The KaleidoSwap Desktop App allows you to swap RGB assets seamlessly.
 
 ---
 
-*Next: [How It Works in the Background](Background.md)*
+*Next: [How It Works in the Background](./background.md)*

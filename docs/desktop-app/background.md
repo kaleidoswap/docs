@@ -1,6 +1,6 @@
 # How It Works in the Background
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 The KaleidoSwap Desktop App integrates several technologies:
 
@@ -10,4 +10,4 @@ The KaleidoSwap Desktop App integrates several technologies:
 
 ---
 
-*Next: [Additional Resources](AdditionalResources.md)*
+*Next: [Additional Resources](./additional-resources.md)*

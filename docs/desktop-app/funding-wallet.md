@@ -1,12 +1,12 @@
 # Funding Your Bitcoin Wallet
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 Before you can transact, you'll need to fund your wallet with Bitcoin.
 
 ## Obtaining a New Address
 
-Follow the steps already taken in the [deposit](Deposits.md) section.
+Follow the steps already taken in the [deposit](./deposits.md) section.
 
 1. **Navigate to "Channels"**: Navigate to "Channels" and click on the "Deposit" tab from the dropdown menu.
 2. **Generate BTC Address**: Select BTC from assets menu and click "Continue" and "On-chain" to create a Bitcoin receiving address.
@@ -24,4 +24,4 @@ For testnet coins, you can use the [Mutiny Faucet](https://faucet.mutinywallet.c
 
 ---
 
-*Next: [Opening a New Channel](OpeningChannel.md)*
+*Next: [Opening a New Channel](./opening-channel.md)*

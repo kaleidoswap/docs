@@ -1,6 +1,6 @@
 # Installation
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 To get started with the KaleidoSwap Desktop App:
 
@@ -9,4 +9,4 @@ To get started with the KaleidoSwap Desktop App:
 
 ---
 
-*Next: [Creating a New Wallet](CreatingWallet.md)*
+*Next: [Creating a New Wallet](./creating-wallet.md)*

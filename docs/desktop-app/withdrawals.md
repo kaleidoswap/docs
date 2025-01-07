@@ -1,6 +1,6 @@
 # Withdrawals
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 Withdrawing funds from your wallet allows you to send Bitcoin or RGB assets to other addresses.
 
@@ -22,4 +22,4 @@ Withdrawing funds from your wallet allows you to send Bitcoin or RGB assets to o
 
 ---
 
-*Next: [Funding Your Bitcoin Wallet](FundingWallet.md)*
+*Next: [Funding Your Bitcoin Wallet](./funding-wallet.md)*

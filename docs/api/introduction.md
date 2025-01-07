@@ -14,4 +14,4 @@ The RGB Lightning DEX API allows interaction with an RGB Lightning Node (RLN) th
 - **Swap Protocol**: Taker-maker model for initiating and executing swaps.
 - **Asset and Trading Pair Management**: Comprehensive API for fetching supported assets and pairs.
 
-Proceed to [Getting Started](./GettingStarted.md) to begin.
+Proceed to [Getting Started](./getting-started.md) to begin.

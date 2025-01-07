@@ -33,11 +33,6 @@ module.exports = {
         'api/swap-apis',
         'api/error-handling',
       ],
-    },
-    {
-      type: 'doc',
-      id: 'p2p-swaps-protocol',
-      label: 'P2P Swaps Protocol',
-    },
+    }
   ],
 }; 

@@ -10,7 +10,7 @@ const config = {
   tagline: 'Documentation for the KaleidoSwap platform',
   url: 'https://docs.kaleidoswap.com',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'kaleidoswap',
@@ -79,12 +79,12 @@ const config = {
           title: 'Community',
           items: [
             {
-              label: 'Discord',
-              href: 'https://discord.gg/kaleidoswap',
+              label: 'Telegram',
+              href: 'https://t.me/kaleidoswap',
             },
             {
-              label: 'Twitter',
-              href: 'https://twitter.com/kaleidoswap',
+              label: 'X',
+              href: 'https://x.com/kaleidoswap',
             },
           ],
         },

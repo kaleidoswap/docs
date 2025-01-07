@@ -6,4 +6,4 @@ This guide provides detailed instructions for:
 - Setting up and using the app.
 - Understanding its background operations.
 
-Proceed to [Installation](./Installation.md) to get started.
+Proceed to [Installation](./installation.md) to get started.

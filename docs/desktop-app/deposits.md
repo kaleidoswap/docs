@@ -1,6 +1,6 @@
 # Deposits
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 Depositing funds into your wallet is straightforward.
 
@@ -21,4 +21,4 @@ Depositing funds into your wallet is straightforward.
 
 ---
 
-*Next: [Withdrawals](Withdrawals.md)*
+*Next: [Withdrawals](./withdrawals.md)*

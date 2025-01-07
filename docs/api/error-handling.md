@@ -109,4 +109,4 @@ If a WebSocket connection is closed unexpectedly:
 
 ---
 
-For additional details on error codes and troubleshooting, refer to the API documentation or proceed to [License](./License.md).
+For additional details on error codes and troubleshooting, refer to the API documentation.

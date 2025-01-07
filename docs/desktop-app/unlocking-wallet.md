@@ -1,6 +1,6 @@
 # Unlocking Your Wallet
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 To access your wallet features, you'll need to unlock it each time you open the app.
 
@@ -15,4 +15,4 @@ To access your wallet features, you'll need to unlock it each time you open the 
 
 ---
 
-*Next: [Settings](Settings.md)*
+*Next: [Settings](./settings.md)*

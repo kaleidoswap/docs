@@ -1,6 +1,6 @@
 # Channel Requests
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 In addition to opening channels with other nodes, it is possible to request inbound channels from an LSP in exchange for a certain percentage of the liquidity held by your node:
 
@@ -12,4 +12,4 @@ In addition to opening channels with other nodes, it is possible to request inbo
 
 ---
 
-*Next: [Asset Swaps](AssetSwaps.md)*
+*Next: [Asset Swaps](asset-swaps.md)*

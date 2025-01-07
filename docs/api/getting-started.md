@@ -116,10 +116,10 @@ The API returns standard HTTP status codes to indicate the outcome of a request:
 - **400**: Bad Request (e.g., invalid parameters)
 - **404**: Resource Not Found
 - **500**: Internal Server Error
-For more information on error handling, see [Error Handling](./ErrorHandling.md).
+For more information on error handling, see [Error Handling](./error-handling.md).
 
 ---
 
 ## Next Steps
 
-Now that you’ve set up your environment and are familiar with the basics, it’s time to explore the endpoints. Proceed to the [RGB LSPS1 APIs](./RGB_LSPS1_APIs.md) for more details.
+Now that you’ve set up your environment and are familiar with the basics, it’s time to explore the endpoints. Proceed to the [RGB LSPS1 APIs](./rgb-lsps1-apis.md) for more details.

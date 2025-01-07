@@ -1,6 +1,6 @@
 # Initializing with Mnemonic Backup
 
-[← Back to Documentation](README.md)
+[← Back to Documentation](./introduction.md)
 
 Backing up your wallet is crucial. The app will generate a mnemonic phrase (a series of words) that acts as a backup.
 
@@ -10,4 +10,4 @@ Backing up your wallet is crucial. The app will generate a mnemonic phrase (a se
 
 ---
 
-*Next: [Unlocking Your Wallet](UnlockingWallet.md)*
+*Next: [Unlocking Your Wallet](./unlocking-wallet.md)*

@@ -272,4 +272,4 @@ GET /api/v1/swaps/status?payment_hash=7c2c95b9c2aa0a7d140495b664de7973b76561de83
 
 ---
 
-For error details, refer to [Error Handling](./ErrorHandling.md).
+For error details, refer to [Error Handling](./error-handling.md).

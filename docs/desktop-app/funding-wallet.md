@@ -14,9 +14,9 @@ Follow the steps already taken in the [deposit](./deposits.md) section.
 
 ## Using the Mutiny Faucet
 
-For testnet coins, you can use the [Mutiny Faucet](https://faucet.mutinywallet.com/):
+For testnet coins, you can use the [Mutiny Faucet](https://faucet.mutinynet.com/):
 
-1. **Visit Mutiny Faucet**: Go to [faucet.mutinywallet.com](https://faucet.mutinywallet.com/). ![Mutiny faucet](img/25_mutiny_faucet.png)
+1. **Visit Mutiny Faucet**: Go to [faucet.mutinynet.com](https://faucet.mutinynet.com/). ![Mutiny faucet](img/25_mutiny_faucet.png)
 2. **Select SATs Amount**: Enter the desired amount of SATs in the field "How much?".
 3. **Paste Address**: Enter the copied signet Bitcoin address in the “Destination” field of the faucet.
 4. **Request Coins**: Click "Make it rain" to receive testnet Bitcoins.

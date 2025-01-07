@@ -31,7 +31,7 @@ export default function Home() {
   return (
     <Layout
       title={`${siteConfig.title}`}
-      description="Documentation for the KaleidoSwap platform">
+      description="Documentation for the KaleidoSwap App and Protocol">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

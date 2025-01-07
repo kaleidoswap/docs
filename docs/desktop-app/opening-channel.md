@@ -53,6 +53,7 @@ To include RGB assets in your channel:
 - RGB assets can be added later through additional transactions
 - Keep your node online during the opening process
 
+
 ---
 
-*Next: [Channel Backups](channel-backups.md)*
+*Next: [Buy New Channel](./order-new-channel.md)*

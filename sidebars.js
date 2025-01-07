@@ -14,6 +14,7 @@ module.exports = {
         'desktop-app/creating-wallet',
         'desktop-app/funding-wallet',
         'desktop-app/opening-channel',
+        'desktop-app/order-new-channel',
         'desktop-app/channel-backups',
         'desktop-app/channel-requests',
         'desktop-app/asset-swaps',

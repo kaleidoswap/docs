@@ -14,10 +14,10 @@ Welcome to the Kaleidoswap API! This guide will help you set up and start using 
 
 The Kaleidoswap API is accessible via HTTPS for secure communication. Here are the available environments:
 
-### Bitcoin Testnet4
+### Signet (MutinyNet)
 The testnet environment is used for development and testing purposes. All API requests in this environment should be directed to the following base URL:
 
-- **Base URL:** `https://api.testnet.kaleidoswap.com/api/v1`
+- **Base URL:** `https://api.signet.kaleidoswap.com/api/v1`
 
 ### Bitcoin Mainnet (Coming Soon)
 The mainnet environment is the production-ready endpoint for live transactions. Stay tuned for updates about its release.

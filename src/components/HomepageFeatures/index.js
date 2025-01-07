@@ -8,8 +8,9 @@ const FeatureList = [
     icon: '🚀',
     description: (
       <>
-        KaleidoSwap was designed to be easily integrated into your applications
-        with comprehensive documentation.
+        KaleidoSwap is an open-source desktop application designed for seamless 
+        management of your RGB Lightning Node. Run your own node or connect to 
+        existing ones with just a few clicks.
       </>
     ),
   },
@@ -18,7 +19,8 @@ const FeatureList = [
     icon: '🎨',
     description: (
       <>
-        Trade RGB assets securely and efficiently using our decentralized protocol.
+        Connect to RGB Lightning Service Providers (LSPs) to access liquidity and 
+        trade RGB assets on the Lightning Network. Full support for RGB20.
       </>
     ),
   },
@@ -27,7 +29,9 @@ const FeatureList = [
     icon: '⚡',
     description: (
       <>
-        Built on Lightning Network for instant, low-cost transactions.
+        Experience instant, low-cost RGB asset transfers powered by the Lightning 
+        Network. Open channels, manage liquidity, and execute atomic swaps with 
+        built-in security.
       </>
     ),
   },

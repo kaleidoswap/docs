@@ -1,7 +1,7 @@
 ---
 id: faq
 title: Frequently Asked Questions
-sidebar_position: 15
+sidebar_position: 7
 ---
 
 # Frequently Asked Questions
@@ -9,28 +9,106 @@ sidebar_position: 15
 ## General Questions
 
 ### What is KaleidoSwap?
-KaleidoSwap is a decentralized platform for trading RGB assets on the Lightning Network.
+KaleidoSwap is an open-source desktop application that enables trading of RGB assets on the Lightning Network. It provides a user-friendly interface for managing RGB Lightning nodes and connecting to Lightning Service Providers (LSPs).
 
-### What networks are supported?
-Currently, KaleidoSwap supports:
-- Bitcoin Testnet
-- Bitcoin Mainnet (coming soon)
+### What assets can I trade on KaleidoSwap?
+Currently, KaleidoSwap supports RGB20 assets on the Lightning Network. These are client-validated smart contracts on Bitcoin that represent fungible tokens.
+
+### Is KaleidoSwap custodial?
+No, KaleidoSwap is non-custodial. You maintain full control of your private keys and assets at all times. The application provides secure key management and encrypted backups.
 
 ## Technical Questions
 
-### What is the minimum channel size?
-The minimum channel size is 50,000 sats.
+### Do I need to run my own RGB Lightning node?
+No, you have two options:
+- Run your own RGB Lightning node
+- Connect to existing nodes through the application
 
-### How long do channel opens take?
-Channel opens typically require 3 confirmations on the Bitcoin network.
+### How does the trading protocol work?
+KaleidoSwap uses a taker-maker model for trading:
+1. Makers provide liquidity and set prices
+2. Takers can view real-time price updates
+3. Trades are executed through atomic swaps via RLN API
+4. All trades are secured by Lightning Network and RGB Protocol
+
+## Security
+
+### How secure are my assets?
+KaleidoSwap implements multiple security measures:
+- Non-custodial architecture
+- Encrypted channel backups
+- Secure key management
+- Trustless trading protocol
+- Client-side validation for RGB assets
+
+### Are my trades private?
+Yes, KaleidoSwap prioritizes privacy:
+- Channel operations can be private
+- Trade details are only known to participants
+- No KYC required for basic operations
 
 ## Troubleshooting
 
-### What should I do if a swap fails?
-If a swap fails:
-1. Check your channel balances
-2. Verify the asset IDs
-3. Contact support if the issue persists
+### What should I do if a trade fails?
+If a trade fails:
+1. Check your channel liquidity
+2. Verify the RGB asset details
+3. Ensure your node is properly synced
+4. Contact support if issues persist
 
-### How do I recover my wallet?
-You can recover your wallet using your 12-word mnemonic phrase through the wallet recovery process.
+### How do I restore my wallet?
+To restore your wallet:
+1. Use the backup file you created
+2. Decrypt the backup file with your password
+3. Wait for the node to sync
+
+### Why can't I connect to an LSP?
+Common connection issues:
+- Network connectivity problems
+- Incorrect node configuration
+- LSP maintenance
+- Insufficient channel capacity
+
+## Getting Started
+
+### What do I need to start trading?
+To start trading on KaleidoSwap:
+1. Install the desktop application
+2. Create or import a wallet
+3. Fund your wallet with Bitcoin
+4. Open Lightning channels
+5. Acquire RGB assets
+
+### How do I get RGB assets?
+You can acquire RGB assets by:
+- Trading through KaleidoSwap
+- Connecting to RGB LSPs
+- Participating in RGB token distributions
+
+### What are the minimum requirements?
+Minimum requirements for running KaleidoSwap:
+- Modern operating system (Windows, macOS, Linux)
+- 2GB RAM minimum (4GB recommended)
+- Stable internet connection
+- Sufficient storage for blockchain data if running a full node
+
+## Support
+
+### Where can I get help?
+Support channels:
+- [Telegram Group](https://t.me/kaleidoswap)
+- [X (Twitter)](https://x.com/kaleidoswap)
+- [GitHub Issues](https://github.com/kaleidoswap/kaleidoswap)
+
+### How do I report bugs?
+To report bugs:
+1. Check existing GitHub issues
+2. Provide detailed reproduction steps
+3. Include relevant logs and system information
+4. Submit through GitHub issues
+
+### Is there documentation for developers?
+Yes, developers can refer to:
+- [API Documentation](../api/introduction.md)
+- [RGB LSPS1 Specification](../api/rgb-lsps1-apis.md)
+- [Trading Protocol](../api/swap-apis.md)

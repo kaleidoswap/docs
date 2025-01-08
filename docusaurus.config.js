@@ -53,7 +53,7 @@ const config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/kaleidoswap/kaleidoswap',
+          href: 'https://github.com/kaleidoswap',
           label: 'GitHub',
           position: 'right',
         },
@@ -73,6 +73,10 @@ const config = {
             {
               label: 'API Reference',
               to: '/api/introduction',
+            },
+            {
+              label: 'GitHub',
+              href: 'https://github.com/kaleidoswap',
             },
           ],
         },

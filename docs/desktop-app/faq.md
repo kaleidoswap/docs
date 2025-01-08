@@ -98,7 +98,7 @@ Minimum requirements for running KaleidoSwap:
 Support channels:
 - [Telegram Group](https://t.me/kaleidoswap)
 - [X (Twitter)](https://x.com/kaleidoswap)
-- [GitHub Issues](https://github.com/kaleidoswap/kaleidoswap)
+- [GitHub Issues](https://github.com/kaleidoswap/desktop-app)
 
 ### How do I report bugs?
 To report bugs:

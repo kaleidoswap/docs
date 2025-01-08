@@ -63,8 +63,8 @@ If you're interested in integrating with KaleidoSwap:
 
 - [Telegram Group](https://t.me/kaleidoswap)
 - [X (Twitter)](https://x.com/kaleidoswap)
-- [GitHub Repository](https://github.com/kaleidoswap/kaleidoswap)
+- [GitHub Repository](https://github.com/kaleidoswap/desktop-app)
 
 ## License
 
-KaleidoSwap is open-source software licensed under the [MIT License](https://github.com/kaleidoswap/kaleidoswap/blob/main/LICENSE). 
+KaleidoSwap is open-source software licensed under the [MIT License](https://github.com/kaleidoswap/desktop-app/blob/main/LICENSE). 

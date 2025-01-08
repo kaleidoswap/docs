@@ -58,6 +58,7 @@ const config = {
           position: 'right',
         },
       ],
+      hideOnScroll: false,
     },
     footer: {
       style: 'dark',
@@ -89,7 +90,7 @@ const config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} KaleidoSwap. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} KaleidoSwap`,
     },
     colorMode: {
       defaultMode: 'dark',
@@ -100,10 +101,20 @@ const config = {
       theme: themes.github,
       darkTheme: themes.dracula,
     },
+    sidebar: {
+      hideable: true,
+      autoCollapseCategories: true,
+    },
+    docs: {
+      sidebar: {
+        hideable: true,
+        autoCollapseCategories: true,
+      },
+    },
   },
   stylesheets: [
     {
-      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&family=Mulish+Mono&display=swap',
       type: 'text/css',
     },
   ],

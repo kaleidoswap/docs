@@ -135,7 +135,6 @@ For assistance:
 1. Check the [FAQ](./faq.md)
 2. Join our [Telegram Group](https://t.me/kaleidoswap)
 3. Open an issue on [GitHub](https://github.com/kaleidoswap/desktop-app)
-4. For refunds, email support@kaleidoswap.com with your order ID 
 
 
 ---

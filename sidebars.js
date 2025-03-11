@@ -10,8 +10,8 @@ module.exports = {
       label: 'Desktop App Guide',
       items: [
         'desktop-app/introduction',
-        'desktop-app/node-hosting',
         'desktop-app/installation',
+        'desktop-app/node-hosting',
         'desktop-app/creating-wallet',
         'desktop-app/funding-wallet',
         'desktop-app/opening-channel',

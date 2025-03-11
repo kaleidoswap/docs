@@ -7,9 +7,10 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Desktop App',
+      label: 'Desktop App Guide',
       items: [
         'desktop-app/introduction',
+        'desktop-app/node-hosting',
         'desktop-app/installation',
         'desktop-app/creating-wallet',
         'desktop-app/funding-wallet',

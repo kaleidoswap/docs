@@ -2,11 +2,100 @@
 
 [← Back to Documentation](./introduction.md)
 
-To get started with the KaleidoSwap Desktop App:
+## Installation Methods
 
-1. **Download the App**: Visit the [GitHub repository](https://github.com/kaleidoswap/desktop-app) and download the latest release for your operating system.
-2. **Install the App**: Follow the installation instructions specific to your OS.
+You can install the Kaleidoswap Desktop App in two ways:
+
+### 1. Download Binaries
+
+1. **Download**: Visit the [Releases](https://github.com/kaleidoswap/desktop-app/releases) page and download the appropriate binary for your operating system.
+2. **Verify**: Download both the binary file and its corresponding `.sig` signature file.
+   ```sh
+   # Import our public GPG key
+   curl https://keybase.io/bitwalt/pgp_keys.asc | gpg --import
+   
+   # Verify the signature (example for different OS)
+   # For Linux
+   gpg --verify kaleido-swap_0.0.1_amd64.AppImage.sig kaleido-swap_0.0.1_amd64.AppImage
+
+   # For macOS
+   gpg --verify Kaleido-Swap_0.0.1_x64.dmg.sig Kaleido-Swap_0.0.1_x64.dmg
+
+   # For Windows
+   gpg --verify Kaleido-Swap_0.0.1_x64-setup.exe.sig Kaleido-Swap_0.0.1_x64-setup.exe
+   ```
+3. **Verify Checksum**: Verify the SHA256 checksum of the binary.
+4. **Install**: Run the app by executing the binary.
+
+### 2. Building Locally
+
+#### Common Prerequisites
+
+- **Tauri 1.6.0**  
+  Make sure you have installed all the [official Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) (Rust, Node.js, npm, pnpm).
+- **Repository**  
+  ```sh
+  git clone https://github.com/kaleidoswap/desktop-app
+  cd desktop-app
+  ```
+
+#### Platform-Specific Instructions
+
+**Windows:**
+- The `rgb-lightning-node` integration is not yet fully supported on Windows
+- Consider using a Docker container for RLN and connect remotely
+- Install [vcpkg](https://github.com/microsoft/vcpkg) to install libraries like **openssl** and **sqlite3**
+- Ensure **Microsoft Visual C++** is installed (via Visual Studio or Build Tools)
+
+**Linux:**
+- Install `build-essential`, `pkg-config`, and SSL libraries
+- Install GTK and WebKit requirements (libsoup 2.4, javascriptcoregtk 4.0, webkit2gtk 4.0)
+- Confirm correct installation of Rust, Node.js, npm, and pnpm
+
+#### Building and Running
+
+1. **Install dependencies**:  
+   ```sh
+   npm install
+   ```
+2. **Build the Tauri app**:  
+   ```sh
+   tauri build
+   ```
+3. **Run Kaleidoswap in development mode**:  
+   ```sh
+   tauri dev
+   ```
+
+## Node Setup Options
+
+After installing KaleidoSwap, you'll need to connect to an RGB Lightning Node. You have two options:
+
+### Option 1: Connect to a Remote Node
+
+If you prefer not to run a node on your local machine, you can connect to a remote RGB Lightning Node:
+
+- **Self-hosted remote node**: Learn how to set up your own RGB Lightning Node on a VPS or server by following our [RGB Lightning Node Hosting](./node-hosting.md) guide.
+- **Hosted provider**: Connect to a professionally managed node from a service provider like ThunderStack.
+
+**Advantages of remote nodes:**
+- No local resources required
+- 24/7 availability (for hosted solutions)
+- Simplified setup process
+
+### Option 2: Create a Local Wallet with Integrated Node
+
+For complete control and privacy, you can run a node directly on your machine:
+
+- Follow the [Creating a New Wallet](./creating-wallet.md) guide to set up a local wallet with an integrated RGB Lightning Node.
+
+**Advantages of local nodes:**
+- Full control over your node
+- Enhanced privacy
+- No dependency on external services
+
+Choose the option that best fits your technical skills and requirements before proceeding with the KaleidoSwap setup.
 
 ---
 
-*Next: [Creating a New Wallet](./creating-wallet.md)*
+*Next: [Creating a New Wallet](./creating-wallet.md) or [RGB Lightning Node Hosting](./node-hosting.md)*

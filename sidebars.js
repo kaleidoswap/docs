@@ -11,6 +11,7 @@ module.exports = {
       items: [
         'desktop-app/introduction',
         'desktop-app/installation',
+        'desktop-app/verify-binaries',
         'desktop-app/node-hosting',
         'desktop-app/creating-wallet',
         'desktop-app/funding-wallet',

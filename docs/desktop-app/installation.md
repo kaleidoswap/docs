@@ -9,23 +9,8 @@ You can install the Kaleidoswap Desktop App in two ways:
 ### 1. Download Binaries
 
 1. **Download**: Visit the [Releases](https://github.com/kaleidoswap/desktop-app/releases) page and download the appropriate binary for your operating system.
-2. **Verify**: Download both the binary file and its corresponding `.sig` signature file.
-   ```sh
-   # Import our public GPG key
-   curl https://keybase.io/bitwalt/pgp_keys.asc | gpg --import
-   
-   # Verify the signature (example for different OS)
-   # For Linux
-   gpg --verify kaleido-swap_0.0.1_amd64.AppImage.sig kaleido-swap_0.0.1_amd64.AppImage
-
-   # For macOS
-   gpg --verify Kaleido-Swap_0.0.1_x64.dmg.sig Kaleido-Swap_0.0.1_x64.dmg
-
-   # For Windows
-   gpg --verify Kaleido-Swap_0.0.1_x64-setup.exe.sig Kaleido-Swap_0.0.1_x64-setup.exe
-   ```
-3. **Verify Checksum**: Verify the SHA256 checksum of the binary.
-4. **Install**: Run the app by executing the binary.
+2. **Verify**: Download the `manifest.txt` and `manifest.txt.sig` files to verify the authenticity of your download. See our [Binary Verification Guide](./verify-binaries.md) for detailed instructions.
+3. **Install**: Run the app by executing the binary.
 
 ### 2. Building Locally
 

@@ -4,24 +4,24 @@
 
 When you first launch the app, you'll need to choose the kind of node you want to connect your wallet to. You have two options: either to use a remote node or a Local one. The first option requires you to connect to an already running RGB Lightning Node, while the second automatically initialize one on the device you are using and stores data on it. In this guide we will show the flow for the local node option since it is the easiest way to start testing the Kaleidoswap app.
 
-![KS_home.png](KS_home.png)
+![KS_home.png](img/ks_home.png)
 
 ## Create New Wallet
 
 To start the creation process, you first need to select "Create New Wallet" option:
 
-![Create_restore.png](Create_restore.png)
+![Create_restore.png](img/create_restore.png)
 
 Then, you will need proceed with the following steps:
 
 1. **Assign a name** to your new account and **select the network** you want to use. We currently support "Regtest", "Signet" and "Testnet" as testing options.
-![creation_step1.png](creation_step1.png)
+![creation_step1.png](img/creation_step1.png)
 2. **Set a Secure Password**: Enter a strong password to protect your wallet and then click on "Initialize Node". This will trigger the initialization of your node on your machine. 
-![creation_step2.png](creation_step2.png)
+![creation_step2.png](img/creation_step2.png)
 3. **Backup**: After the node has been initialized, write down the mnemonic phrase provided and store it securely.
-![creation_step3.png](creation_step3.png)
+![creation_step3.png](img/creation_step3.png)
 4. **Verify** recovery phrase: you will be asked to enter back your recovery seed for security purposes.
-![creation_step4.png](creation_step4.png)
+![creation_step4.png](img/creation_step4.png)
 
 After that, some moments will be required to unlock your new local node and you will then land to the home page of Kaleidoswap, ready to start operating with it!
 
@@ -37,7 +37,7 @@ If instead of creating a new account you need to select an existing one, you can
 
 Please note that unlocking your node could take a while due to a current limitation experienced in the RGB Lightning Network code.
 
-![Selectaccount_1.png](Selectaccount_1.png)
+![Selectaccount_1.png](img/selectaccount_1.png)
 
 ---
 

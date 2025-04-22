@@ -41,4 +41,4 @@ Please note that unlocking your node could take a while due to a current limitat
 
 ---
 
-*Next: [Initializing with Mnemonic Backup](./initializing-mnemonic.md)*
+*Next: [Funding Your Bitcoin Wallet](./funding-wallet.md)*

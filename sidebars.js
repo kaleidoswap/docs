@@ -14,7 +14,6 @@ module.exports = {
         'desktop-app/verify-binaries',
         'desktop-app/node-hosting',
         'desktop-app/creating-wallet',
-        'desktop-app/funding-wallet',
         'desktop-app/opening-channel',
         'desktop-app/order-new-channel',
         'desktop-app/channel-backups',

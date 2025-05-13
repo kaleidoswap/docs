@@ -2,23 +2,31 @@
 
 [← Back to Documentation](./introduction.md)
 
-Depositing funds into your wallet is straightforward.
+The first thing you would usually need to do to start using Kaleidoswap is depositing some funds, either to start swapping assets or custody them. In the former case, you need to deposit Bitcoin in order to be able to open an RGB channel, in the latter you can decide which other asset (including an RGB one) to deposit.
 
 ## Depositing Bitcoin
 
-1. **Navigate to "Channels"**: Click on the "Channels" tab. ![init deposit](img/12_deposits_init.png)
-2. **Choose Asset**: Select BTC from the drop-down menu.
-3. **Deposit Method**: Click on one of two available methods to deposit assets: onchain or Lightning Network.  ![deposit method](img/13_deposits_btc_onchain.png)
-4. **Copy Address**: If you have selected the onchain method, then you will need to copy the automatically generated address to deposit the desired amount of assets. ![deposit BTC onchain with address](img/14_deposits_btc_onchain_address.png)
-5. **Generate Lightning Invoice**: If you selected deposit by LN, then you will need to introduce the amount of assets you want to deposit to generate an invoice. ![deposit offchain](img/15_deposits_btc_ln.png) ![deposit offchain with LN invoice](img/16_deposits_btc_ln_invoice.png)
+1. **Click on "Deposit"**: you can find it among the "Quick Actions" section on the left menu. ![deposit_quick_actions.png](img/deposit_quick_actions.png)
+2. **Select Asset**: Select "BTC" (Bitcoin) from the drop-down menu (it should be already selected by default) and then "Continue". 
+3. **Deposit Method**: Click on one of two available methods to deposit assets: onchain or Lightning Network.  ![deposit_method](img/deposit_method.png)
+4. **Proceed with the deposit**: If you have selected the onchain method, then you will need to click on "Generate Address", copy/scan it and proceed with the deposit of the desired amount of assets. ![deposit_BTC_onchain](img/deposit_BTC_onchain.png).
+If you selected deposit by LN, then you will need to introduce the amount of assets you want to deposit to generate an invoice. ![deposit_with_LN](img/deposit_with_LN.png)
 
 ## Depositing RGB Assets
 
-1. **Choose Asset**: Repeat steps 1 and 2 in the previous section, but this time select one of the registered assets or upload one using its asset ID. In this example we will use USDT. ![deposit USDT](img/17_deposits_assets.png)
-2. **Deposit Method**: Click on one of two available methods to deposit assets: onchain or Lightning Network. ![deposit method](img/18_deposits_assets_onchain.png)
-3. **Copy Recipient ID**: If you have selected the onchain method, then you will need to copy the automatically generated `recipient id` to deposit the desired amount of assets with the corresponding id. ![deposit onchain](img/19_deposits_assets_onchain_address.png)
-4. **Generate Lightning Invoice**: If you selected deposit by LN, then you will need to introduce the amount of assets you want to deposit to generate an invoice. ![deposit offchain](img/20_deposits_assets_offchain_invoice.png)
+1. **Choose Asset**: Repeat steps 1 and 2 in the previous section, but this time select one of the registered assets or upload one using its asset ID. To see an asset among the registered ones, your node need to have already encountered (i.e. received) it.  In this example we will use test-USDT. ![deposit_USDT](img/deposit_USDT.png)
+2. **Deposit Method**: As in the previous section, select one of the two available methods to deposit assets: onchain or Lightning Network.
+3. **Proceed with the deposit**: If you have selected the onchain method, then you will need to copy the automatically generated `recipient id` to deposit the desired amount of assets with the corresponding id. ![deposit_onchain](img/deposit_onchain.png).
+Note that in order to proceed with the deposit you will need to have at least one "Colored" UTXO available, which is a specific type of UTXO required to trade RGB assets on the Bitcoin blockchain. If you don't have any Colored UTXO available, at this step the app will allow you to generate one (assuming you have some Bitcoin balance available on your KS wallet) with just one click: ![colored_UTXOs](img/colored_UTXOs.png)
+4. **Generate Lightning Invoice**: If you selected deposit by LN, then you will need to introduce the amount of assets you want to deposit to generate an invoice and then proceed with the deposit. ![deposit_USDT_offchain](img/deposit_USDT_offchain.png)
+
+## Obtaining test coins
+
+If during the wallet creation you selected a test network to try Kaleidoswap out, you can use the following faucets to get coins and assets to be used for deposit, channel opening, swapping and withdrawal purposes:
+
+- Regtest: you can explore the functions of the RGB LN Bot on telegram (@rgb_lightning_bot).
+- Signet: you can use the [Mutiny Faucet](https://faucet.mutinynet.com/) by entering the desired amount of SATs you want to receive in the field "How much?", pasting the signet Bitcoin address in the “Destination” field of the faucet and clicking "Make it rain" to receive the deposit. ![Mutiny faucet](img/25_mutiny_faucet.png)
 
 ---
 
-*Next: [Withdrawals](./withdrawals.md)*
+*Next: [Opening Channels](./opening-channel.md)*

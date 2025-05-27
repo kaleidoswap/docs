@@ -4,7 +4,7 @@ title: Order New Channel
 sidebar_position: 4
 ---
 
-# Order New Channel from a Lightning Service Provider (LSP)
+# Buy a New Channel from a Lightning Service Provider (LSP)
 
 This guide explains how to purchase a new Lightning Network channel with outbound liquidity from a KaleidoSwap LSP (Lightning Service Provider). This is particularly useful for users who want to quickly start trading new assets on the platform.
 

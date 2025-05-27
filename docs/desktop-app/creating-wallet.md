@@ -41,4 +41,4 @@ Please note that unlocking your node could take a while due to a current limitat
 
 ---
 
-*Next: [Funding Your Bitcoin Wallet](./funding-wallet.md)*
+*Next: [Deposit To Your Wallet](./deposits.md)*

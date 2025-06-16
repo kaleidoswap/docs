@@ -4,130 +4,115 @@ title: Order New Channel
 sidebar_position: 4
 ---
 
-# Order New Channel from LSP
+# Buy a New Channel from a Lightning Service Provider (LSP)
 
-This guide explains how to purchase a new Lightning Network channel with outbound liquidity from a KaleidoSwap LSP (Lightning Service Provider).
+This guide explains how to purchase a new Lightning Network channel with outbound liquidity from a KaleidoSwap LSP (Lightning Service Provider). This is particularly useful for users who want to quickly start trading new assets on the platform.
 
 ## Overview
 
-Opening a channel through an LSP involves four steps:
-1. Connect to LSP
-2. Configure Channel Order
-3. Make Payment
-4. Channel Opening
+Opening a channel through an LSP involves four general steps:
+1. Connect to LSP.
+2. Configure Channel Order.
+3. Make Payment.
+4. Channel Opening.
 
 ## Step 1: Connect to LSP
 
-First, you'll need to connect to an LSP:
-1. Enter the LSP URL or use the default KaleidoSwap LSP
-2. The LSP connection string will be displayed
-3. Confirm the connection to proceed
+First, after going to the **"Buy a Channel"** functionality from the left vertical menu, you'll need to connect to an LSP:
+1. Enter the LSP URL or select the default KaleidoSwap LSP.
+2. The LSP connection string will be displayed.
+3. Confirm the connection to proceed.
 
 ## Step 2: Configure Channel Order
 
-### Channel Capacity
-- Set the total channel capacity (in satoshis)
-- This is the total size of the channel
-- Minimum: 20,000 sats
-- Maximum: 16,777,215 sats
-
-### Outbound Liquidity
-- Choose how much outbound liquidity you want to purchase
-- This is the amount the LSP commits to your channel
-- The remaining capacity becomes your inbound liquidity
-- Example: For a 1M sat channel with 700k outbound, you'll have 300k inbound
-
-### Channel Duration
-Select how long the LSP guarantees to keep the channel open:
+1. Set the total **channel capacity** (in satoshis). This represents the total size of the channel (min: 50,000 sats; max: 10,000,000 sats).
+2. Choose the **outbound liquidity** you want to purchase. This is the amount the LSP commits to your channel, while the remaining capacity becomes your inbound liquidity. Example: For a 1M sat channel with 700k outbound, you'll have 300k inbound capacity.
+3. Select how long the LSP needs to guarantee to keep the channel open (**channel duration**), among the following options:
 - 1 week (1,008 blocks)
 - 1 month (4,320 blocks)
 - 6 months (25,920 blocks)
+4. [Optional] Request an RGB Asset in your channel by enabling the "Add Asset" option and selecting the asset you want. You will then need to specify the amount of that asset you want the LSP to commit. Note that currently RGB assets are provided on the LSP side only.
 
-### Optional: RGB Assets
-You can request RGB assets in your channel:
-- Enable "Add Asset" option
-- Select an RGB20 asset type
-- Specify the amount you want the LSP to commit
-- Note: Currently, RGB assets are provided from the LSP side only
+![channel_order](img/channel_order.png)
 
-### Fee Structure
+## Step 3: Make Payment
+
+In order to proceed with the channel opening, you will need to execute the payment. You will pay for:
+- Your outbound liquidity, i.e. the funds that you will have immediately available to spend.
+- The LSP service fee, which is different for each provider. Below you can find the fee structure of the default Kaleidoswap LSP.
+
+### Kaleidoswap LSP Fee Structure
 When using KaleidoSwap LSP:
 - Base fee: 1% of total channel balance
 - Time-lock fee: 10 sats per block of guaranteed channel lifetime
 - Example calculation:
   ```
   For a 1M sat channel locked for 1 month (4,320 blocks):
-  - Base fee: 10,000 sats (1% of 1M)
-  - Time-lock fee: 43,200 sats (10 sats × 4,320 blocks)
-  - Total fee: 53,200 sats
+  - Base fee: 10,000 sats (1% of 1M).
+  - Time-lock fee: 43,200 sats (10 sats × 4,320 blocks).
+  - Total fee: 53,200 sats.
   ```
 
-## Step 3: Make Payment
-
-Choose how to pay for your channel:
+You can choose to pay for your channel onchain or via the Lightning Network, either using the funds already present in your Kaleidoswap wallet or from a different one.
 
 ### Lightning Payment
-- Scan the QR code or copy the Lightning invoice
-- Pay using any Lightning wallet
+- Scan the QR code or copy the Lightning invoice.
+- Pay either using an external Lightning wallet or the Kaleidoswap wallet funds (if available) by selecting the "Pay with wallet funds" checkbox.
 - Amount includes:
-  - Channel capacity
-  - LSP fees (base + time-lock)
-  - Network fees
+  - Channel capacity.
+  - LSP fees (base + time-lock).
+  - Network fees.
 
 ### On-chain Payment
-- Send Bitcoin to the provided address
-- Include the exact amount shown
-- Wait for blockchain confirmations
+- Send Bitcoin to the provided address either using an external wallet or the Kaleidoswap wallet funds (if available) by selecting the "Pay with wallet funds" checkbox.
+- Include the exact amount shown.
+- Wait for blockchain confirmations.
 
-### Wallet Balance
-If you have sufficient funds in your KaleidoSwap wallet:
-- Select "Pay from Wallet"
-- Confirm the payment details
-- Funds will be deducted automatically
+![channel_payment](img/channel_payment.png)
 
 ## Step 4: Channel Opening
 
 After payment confirmation:
-1. The LSP initiates channel opening
-2. Wait for blockchain confirmations (3 blocks)
+1. The LSP initiates channel opening.
+2. Wait for blockchain confirmations (3 blocks).
 3. Your channel becomes active with the specified:
-   - Total capacity
-   - Outbound liquidity
-   - RGB assets (if requested)
-   - Lock period
+   - Total capacity.
+   - Outbound liquidity.
+   - RGB assets (if requested).
+   - Lock period.
 
 ## Order States
 
 Your channel order can be in these states:
-- `PENDING`: Waiting for payment
-- `PAID`: Payment received, channel opening in progress
-- `COMPLETED`: Channel successfully opened
-- `FAILED`: Error occurred during process
+- `PENDING`: Waiting for payment.
+- `PAID`: Payment received, channel opening in progress.
+- `COMPLETED`: Channel successfully opened.
+- `FAILED`: An error occurred during the process.
 
 ## Refund Policy
 
-If the channel opening fails after payment:
-1. Note your `order_id` (shown in the interface)
-2. Contact support with your order ID
-3. Provide payment proof if requested
-4. Refund will be processed after verification
+If the channel opening fails after the payment:
+1. Note your `order_id` (shown in the interface).
+2. Contact support with your order ID.
+3. Provide payment proof if requested.
+4. Refund will be processed after verification.
 
 ## Best Practices
 
 1. **Capacity Planning**
-   - Calculate your required outbound/inbound ratio
-   - Consider future RGB asset needs
-   - Account for fees in your budget
+   - Calculate your required outbound/inbound ratio.
+   - Consider future RGB asset needs.
+   - Account for fees in your budget.
 
 2. **During Order**
-   - Keep the application open during payment
-   - Save your order ID
-   - Wait for all confirmations
+   - Keep the application open during payment.
+   - Save your order ID.
+   - Wait for all the required confirmations.
 
 3. **After Opening**
-   - Verify channel parameters
-   - Test with small transactions
-   - Monitor channel status
+   - Verify channel parameters.
+   - Test with small transactions.
+   - Monitor channel status.
 
 ## Support
 
@@ -139,4 +124,4 @@ For assistance:
 
 ---
 
-*Next: [Channel Backups](channel-backups.md)*
+*Next: [Asset Swaps](asset-swaps.md)*

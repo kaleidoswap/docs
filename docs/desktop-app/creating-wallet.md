@@ -2,29 +2,43 @@
 
 [← Back to Documentation](./introduction.md)
 
-When you first launch the app, you'll need to create a new wallet. You have two options:
+When you first launch the app, you'll need to choose the kind of node you want to connect your wallet to. You have two options: either to use a remote node or a Local one. The first option requires you to connect to an already running RGB Lightning Node, while the second automatically initialize one on the device you are using and stores data on it. In this guide we will show the flow for the local node option since it is the easiest way to start testing the Kaleidoswap app.
 
-![start screen](img/0_init.png)
+![KS_home.png](img/ks_home.png)
 
 ## Create New Wallet
 
-A local RGB node stores data on the device from which you are launching the application.
+To start the creation process, you first need to select "Create New Wallet" option:
 
-1. **Select "Create New Wallet"**: Choose "Set Up Your Kaleidoswap Node" and select the network you want to use, the datapath where the data will be stored, and a name for your account. ![set up node](img/3_set_up_your_kaleidoswap_node.png)
-2. **Set a Secure Password**: Enter a strong password to protect your wallet. ![create password](img/5_create_your_password.png)
-3. **Backup**: After the node has been initialized, write down the mnemonic phrase provided and store it securely. ![backup seed phrase](img/7_save_your_recovery_phrase.png)
+![Create_restore.png](img/create_restore.png)
+
+Then, you will need proceed with the following steps:
+
+1. **Assign a name** to your new account and **select the network** you want to use. We currently support "Regtest", "Signet" and "Testnet" as testing options.
+![creation_step1.png](img/creation_step1.png)
+2. **Set a Secure Password**: Enter a strong password to protect your wallet and then click on "Initialize Node". This will trigger the initialization of your node on your machine. 
+![creation_step2.png](img/creation_step2.png)
+3. **Backup**: After the node has been initialized, write down the mnemonic phrase provided and store it securely.
+![creation_step3.png](img/creation_step3.png)
+4. **Verify** recovery phrase: you will be asked to enter back your recovery seed for security purposes.
+![creation_step4.png](img/creation_step4.png)
+
+After that, some moments will be required to unlock your new local node and you will then land to the home page of Kaleidoswap, ready to start operating with it!
+
+
 
 ## Select Account
 
-From the left menu you can select an account that has been saved previously, even if it has not been initialized.
+If instead of creating a new account you need to select an existing one, you can select it among the ones that has been previously saved on the left menu, even if it has not been initialized. Here is the procedure:
 
 1. **Select Account**: From the menu on the left.
-2. **Unlock Wallet** Enter the previously generated password to unlock the local RGB Lightning Node instance.
-3. **Set Credentials**: Enter a strong password and any additional required information.
-4. **Backup**: Ensure you save any backup phrases or keys provided.
+2. Click on **Select Node** after checking that it's the correct account.
+3. **Unlock Wallet** Enter the previously generated password to unlock the local RGB Lightning Node instance.
 
-![select account from left menu](img/1_init_with_account.png)
+Please note that unlocking your node could take a while due to a current limitation experienced in the RGB Lightning Network code.
+
+![Selectaccount_1.png](img/selectaccount_1.png)
 
 ---
 
-*Next: [Initializing with Mnemonic Backup](./initializing-mnemonic.md)*
+*Next: [Deposit To Your Wallet](./deposits.md)*

@@ -6,39 +6,30 @@ sidebar_position: 8
 
 # Opening Channels
 
-To use the Lightning network, you'll need to open channels. You can open channels with or without RGB assets, but you will need at least 50,000 SATs. ![insufficient balance](img/26_open_channel_insufficient_balance.png)
+Kaleidoswap allows you to use the Lightning Network both by itself and with RGB assets on top of it. The former option is useful for generic LN operations, while the latter is to operate with RGB assets over the LN.
 
-## Opening a Basic Channel
+## Opening a Channel
 
-To open a Lightning Network channel without RGB assets:
+The following is the procedure that will allow you to open a LN channel on your node. As mentioned in step 4, you can open it with or without adding a RGB asset on top of it.
 
-1. **Go to "Channels"**: Click on the "Channels" tab.
-2. **Open New Channel**: Click "Create New Channel". ![Create New Channel](img/27_create_new_channel_step_0.png)
-3. **Enter Peer Information**: Input the node ID or public key of the peer. ![Input peer info](img/28_create_new_channel_step_1.png)
-4. **Allocate Funds**: Specify the amount of Bitcoin to allocate to the channel. ![Channel settings](img/29_create_new_channel_step_2.png)
-5. **Review Details**: Ensure all the information is correct.
-6. **Open Channel**: Click "Next" to initiate the channel opening process.
-
-## Opening a Channel With RGB Assets
-
-To include RGB assets in your channel:
-
-1. **Go to "Channels"**: Click on the "Channels" tab.
-2. **Open New Channel**: Click "Open Channel".
-3. **Enter Peer Information**: Input the node ID or public key of the peer.
-4. **Allocate Bitcoin**: Specify the amount of Bitcoin for the channel.
-5. **Add RGB Assets**: 
-   - Click "Add Asset"
-   - Select the RGB assets you want to include
-   - Specify the amount for each asset
-6. **Set Asset Allocation**: Define how much of each asset to allocate to the channel.
-7. **Review Details**: Double-check all the information:
-   - Bitcoin amount
-   - RGB asset amounts
-   - Peer information
-8. **Open Channel**: Click "Confirm" to initiate the channel opening process.
+1. Click either on **"+ Create new Channel"** on the left vertical menu or on **"Open Channel"** in the high end of the Dashboard.
+2. **Select a Peer** either by inserting the node ID or public key of the peer or by selecting a suggested node. ![channel_peer](img/channel_peer.png)
+3. Specify the amount of Bitcoin to allocate to the channel. This will represent the total capacity of the channel. ![channel_amount](img/channel_amount.png)
+4. [Optional] **Add RGB Assets** by doing the following: 
+   - Click "Add Asset".
+   - Select the RGB assets you want to include. Note that you need to already have received or generated the asset in advance in order to be able to open a channel with it. If your purpose is to include an asset that you don't already have seen in your wallet - as it's usually the case for first time users - the best way to proceed is to [buy a channel](./order-new-channel.md) instead.
+   - Define how much of each asset to allocate to the channel.
+This step is required if you want to use the channel to swap one or more RGB assets. ![add_rgb_asset](img/add_rgb_asset.png)
+5. Select a **Transaction Fee Rate** and go to "Next".
+6. **Double-check** all the information:
+   - Bitcoin amount.
+   - RGB asset amounts (if present).
+   - Peer information.
+7. **Open Channel**: Click "Confirm" to initiate the channel opening process.
 
 ## Channel Opening Process
+
+The following is the high-level flow required to operate with a newly-opened channel:
 
 1. **Confirmation**: The app will display a confirmation screen with the channel details.
 2. **Funding Transaction**: The funding transaction will be broadcast to the Bitcoin network.
@@ -52,7 +43,6 @@ To include RGB assets in your channel:
 - Channel capacity cannot be changed after opening
 - RGB assets can be added later through additional transactions
 - Keep your node online during the opening process
-
 
 ---
 

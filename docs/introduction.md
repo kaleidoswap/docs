@@ -37,7 +37,7 @@ KaleidoSwap is an open-source desktop application that enables seamless trading 
 
 1. [Install KaleidoSwap](desktop-app/installation.md)
 2. [Create or Import a Wallet](desktop-app/creating-wallet.md)
-3. [Fund Your Wallet](desktop-app/funding-wallet.md)
+3. [Fund Your Wallet](desktop-app/deposits.md)
 4. [Open Lightning Channels](desktop-app/opening-channel.md)
 5. [Buy New Channel](desktop-app/order-new-channel.md)
 6. [Start Trading](desktop-app/asset-swaps.md)

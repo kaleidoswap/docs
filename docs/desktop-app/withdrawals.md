@@ -12,7 +12,7 @@ Withdrawing funds from your wallet allows you to send Bitcoin or RGB assets to o
 5. **Review Transaction**: Double-check the details.
 8. **Confirm and Send**: Click "Withdraw" to initiate the transaction.
 
-![withdraw-menu](withdraw-menu.png)
+![withdraw-menu](img/withdraw-menu.png)
 
 **Differences between BTC and RGB onchain withdrawal**: The steps to withdraw generic assets are almost identical to those required to withdraw BTC with the only difference being that onchain you will need to specify the `blinded UTxO` instead of the address. 
 

@@ -31,7 +31,12 @@ KaleidoSwap uses a taker-maker model for trading:
 3. Trades are executed through atomic swaps via RLN API
 4. All trades are secured by Lightning Network and RGB Protocol
 
-## Security
+### Why can’t I trade all the sats on my side of the channel?
+There are two protocol limits in place:
+1.	Dust reserve (3,000 sats):
+In RGB Lightning swaps, the taker (you) must always send 3,000 sats to the maker as part of the swap. These sats aren’t lost — they act as a temporary “dust amount.” When the maker completes the HTLC and sends assets back, you also receive 3,000 sats with the assets on top. So, you need to keep at least 3,000 sats untradeable in your balance to make the swap process work.
+2.	Per-swap limit (10%):
+You can only trade up to 10% of the total channel capacity in a single swap.## Security
 
 ### How secure are my assets?
 KaleidoSwap implements multiple security measures:

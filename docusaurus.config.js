@@ -11,7 +11,6 @@ const config = {
   url: 'https://docs.kaleidoswap.com',
   baseUrl: '/',
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon/favicon.svg',
   organizationName: 'kaleidoswap',
   projectName: 'kaleidoswap-docs',

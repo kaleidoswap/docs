@@ -7,6 +7,25 @@ module.exports = {
     },
     {
       type: 'category',
+      label: 'SDK',
+      collapsed: true,
+      items: [
+        {
+          type: 'category',
+          label: 'TypeScript',
+          items: [
+            'sdk/typescript/index',
+            'sdk/typescript/getting-started',
+            'sdk/typescript/api-reference',
+            'sdk/typescript/types',
+            'sdk/typescript/utilities',
+            'sdk/typescript/error-handling',
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
       label: 'Desktop App Guide',
       items: [
         'desktop-app/introduction',

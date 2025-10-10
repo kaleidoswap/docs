@@ -12,7 +12,7 @@ module.exports = {
       items: [
         {
           type: 'category',
-          label: 'TypeScript',
+          label: 'On-Chain Lightning Orders',
           items: [
             'sdk/typescript/index',
             'sdk/typescript/getting-started',
@@ -20,6 +20,13 @@ module.exports = {
             'sdk/typescript/types',
             'sdk/typescript/utilities',
             'sdk/typescript/error-handling',
+            'sdk/typescript/examples',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Atomic Lightning Swaps',
+          items: [
           ],
         },
       ],

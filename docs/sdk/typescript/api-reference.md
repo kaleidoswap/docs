@@ -69,9 +69,23 @@ const client = new KaleidoClient({
 
 | Method | Description | Parameters | Return Type | Example Usage |
 |--------|-------------|------------|-------------|---------------|
-| `createOrder()` | Create a new swap order | `CreateOrderRequest` | `Promise<any>` | `const order = await client.createOrder(orderRequest);` |
-| `swapOrderStatus()` | Get order status | `request: string` | `Promise<any>` | `const status = await client.swapOrderStatus('order123');` |
+| `createOrder()` | Create a new swap order | `CreateOrderRequest` | `Promise<OrderResponse>` | `const order = await client.createOrder(orderRequest);` |
+| `swapOrderStatus()` | Get order status | `orderId: string` | `Promise<OrderStatusResponse>` | `const status = await client.swapOrderStatus(order.id);` |
 | `swapOrderAnalytic()` | Get order analytics | None | `Promise<any>` | `const analytics = await client.swapOrderAnalytic();` |
+
+**Order Response Structure:**
+```typescript
+interface OrderResponse {
+  id: string;                    // Unique order ID
+  rfq_id: string;                // Quote request ID
+  pay_in: string;                // Payment method (ONCHAIN/LIGHTNING)
+  onchain_address: string;       // Payment address (for onchain)
+  ln_invoice: string | null;     // Lightning invoice (if applicable)
+  rgb_recipient_id: string | null;
+  rgb_invoice: string | null;
+  status: 'PENDING_PAYMENT' | 'COMPLETED' | 'FAILED';
+}
+```
 
 ### Lightning Network Operations
 

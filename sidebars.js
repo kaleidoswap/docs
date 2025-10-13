@@ -27,6 +27,7 @@ module.exports = {
           type: 'category',
           label: 'Atomic Lightning Swaps',
           items: [
+            'sdk/typescript/getting-started',
           ],
         },
       ],

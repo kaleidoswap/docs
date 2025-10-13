@@ -1,327 +1,258 @@
 # Error Handling
 
-The KaleidoSwap SDK provides a comprehensive error handling system designed to help you build robust applications. This guide covers error types, handling strategies, and best practices for dealing with various failure scenarios.
+The KaleidoSwap SDK provides simple and effective error handling that preserves all error details from the API. This guide shows you how to handle errors in your application.
 
 ## Introduction
 
-The SDK features a hierarchical error system with enhanced metadata, automatic retry strategies, and user-friendly error messages. All errors extend from `KaleidoSDKError` and include detailed context for debugging and recovery.
+The SDK uses standard JavaScript `Error` objects with additional properties for HTTP-related information. All errors from API calls include the server's error message, making debugging straightforward.
 
 ```typescript
-import { 
-  KaleidoClient,
-  NetworkError,
-  AuthenticationError,
-  ValidationError,
-  SwapError,
-  ErrorFactory
-} from '@kaleidoswap/sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
 const client = new KaleidoClient({
   baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
 });
 ```
 
-## Error Types
+## Error Structure
 
-### Error Hierarchy
-
-The SDK uses a structured error hierarchy with specific error classes for different scenarios:
-
-| Error Class | Purpose | Category | Retryable |
-|-------------|---------|----------|-----------|
-| `KaleidoSDKError` | Base error class | - | Varies |
-| `NetworkError` | Network connectivity issues | Network | Yes |
-| `AuthenticationError` | API key and auth problems | Authentication | No |
-| `ValidationError` | Invalid request data | Validation | No |
-| `SwapError` | Trading and swap failures | Trading | Varies |
-| `AssetError` | Asset-related issues | Business Logic | No |
-| `PairError` | Trading pair problems | Business Logic | No |
-| `QuoteError` | Quote generation failures | Business Logic | Varies |
-| `TimeoutError` | Operation timeouts | Network | Yes |
-| `WebSocketError` | WebSocket connection issues | Network | Yes |
-| `HttpError` | HTTP response errors | HTTP | Varies |
-| `ConfigurationError` | Client configuration issues | Configuration | No |
-| `NodeError` | Lightning node problems | Lightning Network | Varies |
-| `RateLimitError` | Rate limiting violations | Rate Limiting | Yes |
-
-### Error Codes
-
-Each error includes a specific error code for programmatic handling:
+All errors from the SDK are standard JavaScript `Error` objects with additional properties:
 
 ```typescript
-import { ErrorCode } from '@kaleidoswap/sdk';
-
-// Network errors (1000-1099)
-ErrorCode.NETWORK_UNREACHABLE
-ErrorCode.CONNECTION_TIMEOUT
-ErrorCode.WEBSOCKET_CONNECTION_FAILED
-
-// HTTP errors (1100-1199)
-ErrorCode.HTTP_UNAUTHORIZED
-ErrorCode.HTTP_NOT_FOUND
-ErrorCode.HTTP_INTERNAL_SERVER_ERROR
-
-// Validation errors (1300-1399)
-ErrorCode.VALIDATION_INVALID_AMOUNT
-ErrorCode.VALIDATION_INVALID_ASSET_ID
-
-// Trading errors (1500-1599)
-ErrorCode.SWAP_FAILED
-ErrorCode.SWAP_INSUFFICIENT_BALANCE
-ErrorCode.INSUFFICIENT_LIQUIDITY
+interface SDKError extends Error {
+  message: string;      // Descriptive error message from the API
+  statusCode?: number;  // HTTP status code (404, 500, etc.)
+  response?: string;    // Raw JSON response from the server
+}
 ```
 
-## Error Response Format
+### Common HTTP Status Codes
 
-All SDK errors follow a consistent structure with enhanced metadata:
+| Status Code | Meaning | Example |
+|-------------|---------|---------|
+| 400 | Bad Request | Invalid parameters sent to API |
+| 401 | Unauthorized | Missing or invalid API key |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Asset, pair, or resource doesn't exist |
+| 422 | Validation Error | Request data failed validation |
+| 429 | Rate Limited | Too many requests |
+| 500 | Server Error | Internal server error |
+| 503 | Service Unavailable | Service temporarily down |
+
+## Error Messages
+
+The SDK preserves error messages from the KaleidoSwap API, so you get clear, actionable information:
 
 ```typescript
-interface KaleidoSDKError {
-  name: string;           // Error class name
-  message: string;        // Human-readable description
-  code: ErrorCode;        // Specific error code
-  category: ErrorCategory; // Error category
-  severity: ErrorSeverity; // Error severity level
-  metadata: {
-    statusCode?: number;     // HTTP status code
-    response?: any;          // Raw server response
-    requestData?: any;       // Original request data
-    timestamp: Date;         // Error occurrence time
-    requestId?: string;      // Request tracking ID
-    retryable: boolean;      // Whether retry is recommended
-    retryStrategy: string;   // Suggested retry approach
-    retryDelay?: number;     // Recommended retry delay
-    maxRetries?: number;     // Maximum retry attempts
-    recoveryActions?: string[]; // Suggested recovery steps
-  };
-  cause?: Error;          // Original underlying error
+try {
+  const quote = await client.quoteRequest('INVALID_ASSET', 'BTC', 100000);
+} catch (error: any) {
+  console.log(error.message);
+  // Output: "HTTP 404: Pair not found: INVALID_ASSET/BTC"
+  
+  console.log(error.statusCode);
+  // Output: 404
+  
+  // Parse the full response for details
+  const response = JSON.parse(error.response);
+  console.log(response.detail);
+  // Output: "Pair not found: INVALID_ASSET/BTC"
 }
 ```
 
 ## Common Error Scenarios
+
+### Handling API Errors by Status Code
+
+```typescript
+try {
+  const quote = await client.quoteRequest('BTC', 'USDT', 100000);
+} catch (error: any) {
+  if (error.statusCode) {
+    switch (error.statusCode) {
+      case 400:
+      case 422:
+        // Validation error - show message to user
+        console.error('Invalid request:', error.message);
+        showUserError(error.message);
+        break;
+        
+      case 401:
+        // Authentication error
+        console.error('Not authenticated');
+        redirectToLogin();
+        break;
+        
+      case 404:
+        // Resource not found
+        console.error('Resource not found:', error.message);
+        showNotFoundMessage();
+        break;
+        
+      case 429:
+        // Rate limited - wait and retry
+        console.warn('Rate limited, waiting before retry...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Retry the operation
+        break;
+        
+      case 500:
+      case 502:
+      case 503:
+        // Server error - retry with backoff
+        console.error('Server error, will retry');
+        await retryWithBackoff();
+        break;
+        
+      default:
+        console.error('Unexpected error:', error.message);
+    }
+  } else {
+    // Network error (no HTTP response)
+    console.error('Network error:', error.message);
+    showOfflineMessage();
+  }
+}
+```
 
 ### Network Connectivity Issues
 
 ```typescript
 try {
   const pairs = await client.pairList();
-} catch (error) {
-  if (error instanceof NetworkError) {
-    console.error('Network issue:', error.getUserMessage());
+} catch (error: any) {
+  if (!error.statusCode) {
+    // Network error - no response from server
+    console.error('Network connection failed');
     
-    // Check if retryable
-    if (error.isRetryable()) {
-      console.log('Retry strategy:', error.getRetryStrategy());
-      console.log('Retry delay:', error.metadata.retryDelay);
-    }
-    
-    // Handle specific network codes
-    switch (error.code) {
-      case ErrorCode.NETWORK_UNREACHABLE:
-        showOfflineMessage();
-        break;
-      case ErrorCode.CONNECTION_TIMEOUT:
-        retryWithBackoff();
-        break;
+    if (error.message.includes('timeout')) {
+      showTimeoutMessage();
+    } else {
+      showOfflineMessage();
     }
   }
 }
 ```
 
-### Authentication Failures
+### Parsing Error Details
 
 ```typescript
 try {
-  const quote = await client.quoteRequest('BTC', 'USDT', 100000);
-} catch (error) {
-  if (error instanceof AuthenticationError) {
-    switch (error.code) {
-      case ErrorCode.AUTH_INVALID_API_KEY:
-        redirectToLogin();
-        break;
-      case ErrorCode.AUTH_EXPIRED_API_KEY:
-        refreshApiKey();
-        break;
-      case ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS:
-        showPermissionError();
-        break;
+  const swap = await client.initMakerSwap(request);
+} catch (error: any) {
+  // Error message already contains the key info
+  console.error(error.message);
+  // Example: "HTTP 422: Invalid amount: must be positive"
+  
+  // For detailed parsing:
+  if (error.response) {
+    try {
+      const details = JSON.parse(error.response);
+      console.log('Error detail:', details.detail);
+      console.log('Full response:', details);
+    } catch {
+      console.log('Raw response:', error.response);
     }
   }
 }
 ```
 
-### Validation Errors
+## Best Practices
+
+### 1. Check Status Codes
+
+Use HTTP status codes to determine the appropriate response:
 
 ```typescript
 try {
-  const swap = await client.initMakerSwap({
-    rfq_id: 'invalid-id',
-    from_asset: 'BTC',
-    to_asset: 'USDT',
-    from_amount: -100, // Invalid negative amount
-    to_amount: 45000
-  });
-} catch (error) {
-  if (error instanceof ValidationError) {
-    // Show specific validation messages
-    const field = extractFieldFromError(error.message);
-    showFieldError(field, error.getUserMessage());
-    
-    // Get recovery suggestions
-    if (error.metadata.recoveryActions) {
-      showRecoverySuggestions(error.metadata.recoveryActions);
+  const result = await client.quoteRequest(fromAsset, toAsset, amount);
+} catch (error: any) {
+  if (error.statusCode) {
+    // HTTP error from API
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      // Client error - don't retry, show to user
+      showUserError(error.message);
+    } else if (error.statusCode >= 500) {
+      // Server error - can retry
+      await retryOperation();
     }
-  }
-}
-```
-
-### Trading and Swap Errors
-
-```typescript
-try {
-  const swapResult = await client.executeMakerSwap({
-    swapstring: 'swap-data...',
-    payment_hash: 'hash123',
-    taker_pubkey: 'pubkey456'
-  });
-} catch (error) {
-  if (error instanceof SwapError) {
-    switch (error.code) {
-      case ErrorCode.SWAP_INSUFFICIENT_BALANCE:
-        showInsufficientBalanceError();
-        break;
-      case ErrorCode.SWAP_SLIPPAGE_EXCEEDED:
-        offerSlippageAdjustment();
-        break;
-      case ErrorCode.INSUFFICIENT_LIQUIDITY:
-        suggestAlternativePairs();
-        break;
-      case ErrorCode.SWAP_TIMEOUT:
-        // This is retryable
-        if (error.isRetryable()) {
-          scheduleRetry();
-        }
-        break;
-    }
-  }
-}
-```
-
-## Error Handling Best Practices
-
-### 1. Use Type-Safe Error Handling
-
-Always check error types using `instanceof` for proper TypeScript support:
-
-```typescript
-try {
-  await performTradingOperation();
-} catch (error) {
-  if (error instanceof NetworkError) {
-    handleNetworkError(error);
-  } else if (error instanceof SwapError) {
-    handleSwapError(error);
-  } else if (error instanceof KaleidoSDKError) {
-    handleGenericSDKError(error);
   } else {
-    handleUnknownError(error);
+    // Network error - no response
+    showNetworkError();
   }
 }
 ```
 
-### 2. Implement Graceful Degradation
+### 2. Display User-Friendly Messages
 
-```typescript
-async function getAssetData(assetId: string) {
-  try {
-    return await client.getAssetMetadata(assetId);
-  } catch (error) {
-    if (error instanceof AssetError) {
-      // Fallback to basic asset info
-      console.warn('Asset metadata unavailable, using basic info');
-      return getBasicAssetInfo(assetId);
-    }
-    throw error; // Re-throw unexpected errors
-  }
-}
-```
-
-### 3. Use Error Context for Debugging
+The error messages from the API are already user-friendly:
 
 ```typescript
 try {
-  await client.initMakerSwap(swapRequest);
-} catch (error) {
-  if (error instanceof KaleidoSDKError) {
-    // Log detailed error context
-    console.error('Swap failed:', {
-      code: error.code,
-      category: error.category,
-      severity: error.severity,
-      requestData: error.metadata.requestData,
-      requestId: error.metadata.requestId,
-      timestamp: error.metadata.timestamp
-    });
-    
-    // Send to error reporting service
-    errorReporter.captureError(error.toJSON());
-  }
+  const quote = await client.quoteRequest('BTC', 'INVALID', 100000);
+} catch (error: any) {
+  // error.message is: "HTTP 404: Pair not found: BTC/INVALID"
+  // You can show this directly or extract just the detail:
+  
+  const match = error.message.match(/HTTP \d+: (.+)/);
+  const userMessage = match ? match[1] : error.message;
+  
+  showToast(userMessage); // "Pair not found: BTC/INVALID"
 }
 ```
 
-### 4. Handle Rate Limiting Appropriately
+### 3. Implement Retry Logic
+
+Retry on network errors and server errors (5xx):
 
 ```typescript
-async function handleRateLimit(operation: () => Promise<any>) {
-  try {
-    return await operation();
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      const retryAfter = error.metadata.retryDelay || 1000;
-      console.warn(`Rate limited, retrying in ${retryAfter}ms`);
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      const isLastAttempt = attempt === maxRetries - 1;
+      const shouldRetry = !error.statusCode || error.statusCode >= 500;
       
-      await new Promise(resolve => setTimeout(resolve, retryAfter));
-      return await operation(); // Retry once
+      if (isLastAttempt || !shouldRetry) {
+        throw error;
+      }
+      
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+      console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    throw error;
+  }
+  throw new Error('Max retries exceeded');
+}
+
+// Usage
+const quote = await retryWithBackoff(() => 
+  client.quoteRequest('BTC', 'USDT', 100000)
+);
+```
+
+### 4. Log Errors for Debugging
+
+Include all error details in your logs:
+## Timeout Handling
+
+All requests have a 30-second timeout. Handle timeouts appropriately:
+
+```typescript
+try {
+  const result = await client.quoteRequest('BTC', 'USDT', 100000);
+} catch (error: any) {
+  if (error.message.includes('timeout')) {
+    console.error('Request timed out after 30 seconds');
+    // Retry with same or longer timeout
+    // Or show "server is slow" message to user
   }
 }
-```
-
-## Retry Strategies
-
-### Automatic Retry with SDK Utilities
-
-The SDK provides built-in retry functionality that respects error metadata:
-
-```typescript
-import { retry, withRetry } from '@kaleidoswap/sdk';
-
-// Basic retry wrapper
-const retryableOperation = withRetry(async () => {
-  return await client.pairList();
-}, {
-  maxRetries: 3,
-  respectErrorRetryConfig: true // Use error's own retry settings
-});
-
-// Manual retry with custom config
-async function robustQuoteRequest() {
-  return await retry(async () => {
-    return await client.quoteRequest('BTC', 'USDT', 100000);
-  }, {
-    maxRetries: 5,
-    initialDelay: 1000,
-    exponentialBase: 2,
-    retryOnExceptions: [NetworkError, TimeoutError, RateLimitError]
-  });
-}
-```
-
-### Custom Retry Logic
-
-```typescript
-async function customRetrySwap(swapRequest: SwapRequest): Promise<SwapResponse> {
+```nc function customRetrySwap(swapRequest: SwapRequest): Promise<SwapResponse> {
   let lastError: Error;
   
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -400,110 +331,181 @@ class TradingService {
       
       return result;
       
-    } catch (error) {
-      return this.handleSwapError(error, { fromAsset, toAsset, amount });
+## Complete Examples
+
+### Basic Error Handling
+
+```typescript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+const client = new KaleidoClient({
+  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+});
+
+async function getQuote(fromAsset: string, toAsset: string, amount: number) {
+  try {
+    return await client.quoteRequest(fromAsset, toAsset, amount);
+  } catch (error: any) {
+    // Log the full error for debugging
+    console.error('Quote request failed:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      response: error.response
+    });
+    
+    // Handle based on status code
+    if (error.statusCode === 404) {
+      throw new Error(`Trading pair ${fromAsset}/${toAsset} not found`);
+    } else if (error.statusCode === 422) {
+      throw new Error(`Invalid amount: ${amount}`);
+    } else if (!error.statusCode) {
+      throw new Error('Network connection failed. Please check your internet.');
+    } else {
+      throw new Error('Failed to get quote. Please try again.');
+    }
+  }
+}
+```
+
+### Production-Ready Error Handling
+
+```typescript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+class TradingService {
+  private client: KaleidoClient;
+  
+  constructor() {
+    this.client = new KaleidoClient({
+      baseUrl: 'https://api.kaleidoswap.com/api/v1'
+    });
+  }
+  
+  async executeSwap(fromAsset: string, toAsset: string, amount: number) {
+    try {
+      // Get quote
+      const quote = await this.retryOperation(() =>
+        this.client.quoteRequest(fromAsset, toAsset, amount)
+      );
+      
+      // Initialize swap
+      const swapResponse = await this.client.initMakerSwap({
+        rfq_id: quote.rfq_id,
+        from_asset: fromAsset,
+        to_asset: toAsset,
+        from_amount: amount,
+        to_amount: quote.to_amount
+      });
+      
+      return swapResponse;
+      
+    } catch (error: any) {
+      // Log for debugging
+      console.error('Swap failed:', error);
+      
+      // Provide user-friendly error message
+      throw new Error(this.getUserFriendlyMessage(error));
     }
   }
   
-  private handleSwapError(error: unknown, context: any) {
-    if (error instanceof ValidationError) {
-      throw new Error(`Invalid swap parameters: ${error.getUserMessage()}`);
-    }
-    
-    if (error instanceof NetworkError) {
-      // Log and retry or show offline message
-      console.error('Network error during swap:', error.toJSON());
-      throw new Error('Network connection issue. Please try again.');
-    }
-    
-    if (error instanceof SwapError) {
-      switch (error.code) {
-        case ErrorCode.INSUFFICIENT_LIQUIDITY:
-          throw new Error(`Insufficient liquidity for ${context.fromAsset}/${context.toAsset} pair`);
-        case ErrorCode.SWAP_SLIPPAGE_EXCEEDED:
-          throw new Error('Price moved too much. Please try again with higher slippage tolerance.');
-        case ErrorCode.SWAP_INSUFFICIENT_BALANCE:
-          throw new Error(`Insufficient ${context.fromAsset} balance`);
-        default:
-          throw new Error(`Swap failed: ${error.getUserMessage()}`);
-      }
-    }
-    
-    // Unknown error
-    console.error('Unexpected error during swap:', error);
-    throw new Error('An unexpected error occurred. Please try again later.');
-  }
-}
-```
-
-### Error Recovery with Fallback
-
-```typescript
-async function robustPairListing() {
-  try {
-    // Primary method
-    return await client.pairList();
-  } catch (error) {
-    if (error instanceof NetworkError) {
-      // Try WebSocket fallback
+  private async retryOperation<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3
+  ): Promise<T> {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        console.warn('HTTP request failed, trying WebSocket...');
-        return await getPairsViaWebSocket();
-      } catch (wsError) {
-        // Both methods failed
-        console.error('Both HTTP and WebSocket failed');
-        throw new Error('Unable to fetch trading pairs. Please check your connection.');
+        return await operation();
+      } catch (error: any) {
+        const shouldRetry = 
+          !error.statusCode || // Network error
+          error.statusCode >= 500 || // Server error
+          error.statusCode === 429; // Rate limit
+        
+        if (attempt === maxRetries - 1 || !shouldRetry) {
+          throw error;
+        }
+        
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
-    if (error instanceof RateLimitError) {
-      // Wait and retry
-      const delay = error.metadata.retryDelay || 5000;
-      console.warn(`Rate limited, waiting ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return await client.pairList();
+    throw new Error('Max retries exceeded');
+  }
+  
+  private getUserFriendlyMessage(error: any): string {
+    // Extract message from API response
+    if (error.response) {
+      try {
+        const parsed = JSON.parse(error.response);
+        if (parsed.detail) return parsed.detail;
+      } catch {}
     }
     
-    throw error;
+    // Fallback to error message
+    const match = error.message?.match(/HTTP \d+: (.+)/);
+    if (match) return match[1];
+    
+    // Generic fallback
+    if (!error.statusCode) {
+      return 'Network connection failed. Please check your internet connection.';
+    }
+    
+    return 'An error occurred. Please try again.';
   }
 }
 ```
 
-### Logging and Monitoring
+### Error Monitoring
 
 ```typescript
-function setupErrorMonitoring() {
-  // Global error handler for unhandled SDK errors
-  process.on('unhandledRejection', (error) => {
-    if (error instanceof KaleidoSDKError) {
-      // Send to monitoring service
-      errorMonitor.captureSDKError({
-        error: error.toJSON(),
-        severity: error.severity,
-        category: error.category,
-        retryable: error.isRetryable()
+// Set up error tracking
+function setupErrorTracking(client: KaleidoClient) {
+  const originalRequest = client.quoteRequest.bind(client);
+  
+  client.quoteRequest = async (...args) => {
+    try {
+      return await originalRequest(...args);
+    } catch (error: any) {
+      // Send to error tracking service
+      trackError(error, {
+        operation: 'quoteRequest',
+        args: args
       });
+      throw error;
     }
+  };
+}
+
+function trackError(error: any, context: any) {
+  // Example with Sentry
+  if (typeof Sentry !== 'undefined') {
+    Sentry.captureException(error, {
+      tags: {
+        operation: context.operation,
+        statusCode: error.statusCode
+      },
+      extra: {
+        response: error.response,
+        context: context
+      }
+    });
+  }
+  
+  // Or custom analytics
+  console.log('Error tracked:', {
+    message: error.message,
+    statusCode: error.statusCode,
+    operation: context.operation,
+    timestamp: new Date().toISOString()
   });
 }
-
-// Error logging utility
-function logError(error: unknown, operation: string) {
-  if (error instanceof KaleidoSDKError) {
-    console.error(`[${operation}] SDK Error:`, {
-      code: error.code,
-      message: error.message,
-      category: error.category,
-      severity: error.severity,
-      requestId: error.metadata.requestId,
-      retryable: error.isRetryable()
-    });
-  } else {
-    console.error(`[${operation}] Unknown Error:`, error);
-  }
-}
 ```
 
-> **Warning**: Always handle errors appropriately in production applications. Network errors should typically be retried, while validation errors should be shown to users with clear guidance on how to fix the input.
+## Tips
 
-> **Note**: The SDK automatically includes request IDs in error metadata when available, which can be helpful for support and debugging purposes.
+- **Error messages are ready to show**: The API returns clear error messages that you can display directly to users
+- **Check `statusCode` first**: Use it to determine if an error is retryable (5xx) or a client mistake (4xx)
+- **Parse `response` for details**: The raw JSON response contains additional error information
+- **Retry server errors**: Network errors and 5xx errors can be retried with exponential backoff
+- **Don't retry client errors**: 4xx errors (except 429) indicate client-side issues that won't be fixed by retrying
+- **Log everything**: Include message, statusCode, and response in your error logs for easier debugging

@@ -37,7 +37,7 @@ const client = new KaleidoClient({
 });
 ```
 
-> More information about the configuration of `KaleidoClient` class later in this guide.
+> More information about the configuration of `KaleidoClient` class later in this page.
 
 ### 3. Make Your First API Call
 
@@ -222,7 +222,6 @@ Now that you have the basics, explore these guides:
 
 - **[API Reference](./api-reference.md)** - Complete method documentation
 - **[Examples](./examples.md)** - Full swap workflows and use cases
-- **[WebSocket Guide](./websocket.md)** - Real-time data streaming
 - **[Utilities](./utilities.md)** - Helper classes for common operations
 - **[Error Handling](./error-handling.md)** - Comprehensive error management
 

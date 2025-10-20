@@ -509,3 +509,4 @@ function trackError(error: any, context: any) {
 - **Retry server errors**: Network errors and 5xx errors can be retried with exponential backoff
 - **Don't retry client errors**: 4xx errors (except 429) indicate client-side issues that won't be fixed by retrying
 - **Log everything**: Include message, statusCode, and response in your error logs for easier debugging
+- **Report**: Send us your issues on Telegram, or on the relevant Github repo.

@@ -10,9 +10,7 @@ KaleidoSwap SDK provides a comprehensive TypeScript interface for interacting wi
 
 - 📊 **Asset Management** - Utilities for managing trading pairs and assets
 - 🔄 **Utilities** - Built-in utilities, such a precision handling and retry mechanism
-- �🔒 **Type Safe** - Full TypeScript support with comprehensive type definitions
-- 🛡️ **Error Handling** - Comprehensive error types and handling
-- 🌐 **Real-time Data** - WebSocket support for live quotes and updates
+- 🔒 **Type Safe** - Full TypeScript support with comprehensive type definitions
 
 ## What You Can Build
 
@@ -29,17 +27,16 @@ Ready to start building? Check out our [Getting Started Guide](./getting-started
 - **[Getting Started](./getting-started.md)** - Installation, configuration, and first steps
 - **[API Reference](./api-reference.md)** - Complete method documentation
 - **[Types](./types.md)** - Available types
-- **[Error Handling](./error-handling.md)** - Exception types and error management
 - **[Utilities](./utilities.md)** - Helper classes and functions
+- **[Error Handling](./error-handling.md)** - Exception types and error management
 - **[Examples](./examples.md)** - Complete code examples and workflows
-- **[Best Practices](./best-practices.md)** - Production-ready patterns
-- **[Troubleshooting](./troubleshooting.md)** - Common issues and solutions
 
 ## Support
 
 - 📚 [API Documentation](./api-reference.md)
-- 🐛 [Report Issues](https://github.com/kaleidoswap/docs/issues)
+- 💬 [Telegram Community](https://t.me/kaleidoswap/)
 - 📧 [Contact Support](mailto:support@kaleidoswap.com)
+- 🐛 [Report Issues](https://github.com/kaleidoswap/docs/issues)
 
 ## License
 

@@ -10,10 +10,6 @@ module.exports = {
       label: 'SDK',
       collapsed: true,
       items: [
-        {
-          type: 'category',
-          label: 'On-Chain Lightning Orders',
-          items: [
             'sdk/typescript/index',
             'sdk/typescript/getting-started',
             'sdk/typescript/api-reference',
@@ -21,16 +17,7 @@ module.exports = {
             'sdk/typescript/utilities',
             'sdk/typescript/error-handling',
             'sdk/typescript/examples',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Atomic Lightning Swaps',
-          items: [
-            'sdk/typescript/getting-started',
-          ],
-        },
-      ],
+              ],
     },
     {
       type: 'category',

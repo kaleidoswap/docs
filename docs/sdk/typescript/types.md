@@ -64,7 +64,7 @@ interface WebSocketConfig {
 }
 ```
 
-### Asset and Market Types
+### Asset Types
 
 | Interface | Description | Usage |
 |-----------|-------------|-------|
@@ -306,7 +306,7 @@ interface NetworkInfoResponse {
 }
 ```
 
-## Error System Types
+## Error System Types (Experimentory)
 
 ### Error Enumerations
 
@@ -540,18 +540,6 @@ function processAssets(assets: MappedAsset[]): Record<string, MappedAsset> {
     return acc;
   }, {} as Record<string, MappedAsset>);
 }
-```
-
-## Schema Integration
-
-The SDK automatically generates types from OpenAPI schemas:
-
-```typescript
-// Access raw schema types
-import { components } from '@kaleidoswap/sdk';
-
-type RawAssetResponse = components['schemas']['AssetsResponse'];
-type RawPairResponse = components['schemas']['PairResponse'];
 ```
 
 > **Note**: All amounts in the API use atomic units (smallest divisible unit for each asset). Use the PrecisionHandler utility to convert between decimal and atomic amounts.

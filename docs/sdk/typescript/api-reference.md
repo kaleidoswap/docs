@@ -13,6 +13,7 @@ const client = new KaleidoClient({
   baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
   nodeUrl: 'https://your-lightning-node.com', // Optional
   wsUrl: 'wss://api.staging.kaleidoswap.com/api/v1', // Optional
+  apiKey: process.env.KALEIDO_API_KEY, // leave empty for now
   timeout: 30000,
   retries: 3
 });
@@ -32,18 +33,6 @@ const client = new KaleidoClient({
 | `apiKey` | `string` | No | `undefined` | API key for authenticated requests |
 | `userAgent` | `string` | No | SDK default | Custom User-Agent header |
 
-### Configuration Example
-
-```typescript
-const client = new KaleidoClient({
-  baseUrl: 'https://api.kaleidoswap.com/api/v1',
-  nodeUrl: 'https://lightning.example.com',
-  timeout: 60000,
-  retries: 5,
-  apiKey: process.env.KALEIDO_API_KEY
-});
-```
-
 ## API Methods
 
 ### Asset and Market Data
@@ -55,7 +44,7 @@ const client = new KaleidoClient({
 | `quoteRequest()` | Get price quote for a trade | `fromAsset`, `toAsset`, `fromAmount?`, `toAmount?` | `Promise<PairQuoteResponse>` | `const quote = await client.quoteRequest('BTC', 'USDT', 100000);` |
 | `quoteRequestWS()` | Get real-time quote via WebSocket | `fromAsset`, `toAsset`, `fromAmount?`, `toAmount?` | `Promise<PairQuoteResponse>` | `const quote = await client.quoteRequestWS('BTC', 'USDT', 100000);` |
 
-### Swap Operations
+### Atomic Swap Operations
 
 | Method | Description | Parameters | Return Type | Example Usage |
 |--------|-------------|------------|-------------|---------------|
@@ -65,7 +54,7 @@ const client = new KaleidoClient({
 | `waitForSwapCompletion()` | Wait for swap to complete with polling | `paymentHash`, `timeoutSeconds?`, `pollIntervalSeconds?` | `Promise<Swap>` | `const final = await client.waitForSwapCompletion('hash123');` |
 | `whitelistTrade()` | Whitelist a trade on Lightning node | `swapstring: string` | `Promise<Record<string, never>>` | `await client.whitelistTrade(swapstring);` |
 
-### Order Management
+### On-Chain Order Management
 
 | Method | Description | Parameters | Return Type | Example Usage |
 |--------|-------------|------------|-------------|---------------|
@@ -87,7 +76,9 @@ interface OrderResponse {
 }
 ```
 
-### Lightning Network Operations
+> You can also verify these types from our node Swagger documentation: `https://api.regtest.kaleidoswap.com/docs`
+
+### LSP Operations
 
 | Method | Description | Parameters | Return Type | Example Usage |
 |--------|-------------|------------|-------------|---------------|
@@ -101,7 +92,7 @@ interface OrderResponse {
 
 ## Method Details
 
-### assetList()
+### - `assetList()`
 
 Lists all available assets on the platform.
 
@@ -115,19 +106,7 @@ Lists all available assets on the platform.
 - `AssetError` - Failed to fetch assets
 - `NetworkError` - Connection issues
 
-**Example**:
-```typescript
-try {
-  const assets = await client.assetList();
-  console.log('Available assets:', assets.assets);
-} catch (error) {
-  if (error instanceof AssetError) {
-    console.error('Failed to load assets:', error.message);
-  }
-}
-```
-
-### pairList()
+### - `pairList()`
 
 Retrieves all available trading pairs with their configuration.
 
@@ -137,18 +116,7 @@ Retrieves all available trading pairs with their configuration.
 
 **Returns**: `Promise<PairResponse>`
 
-**Example**:
-```typescript
-const pairs = await client.pairList();
-console.log('Trading pairs:', pairs.pairs.length);
-
-// Find specific pair
-const btcUsdtPair = pairs.pairs.find(p => 
-  p.base_asset === 'BTC' && p.quote_asset === 'USDT'
-);
-```
-
-### quoteRequest()
+### - `quoteRequest()`
 
 Generates a price quote for a potential trade.
 
@@ -167,19 +135,30 @@ Generates a price quote for a potential trade.
 - `ValidationError` - Invalid parameters
 - `PairError` - Trading pair not available
 
-**Example**:
+**Note:** `quoteRequest` accepts a single object parameter. The request shape is:
+
+Example — quoting a sell (0.001 BTC = 100000 atomic units with precision):
 ```typescript
-// Quote selling 0.001 BTC (100000 atomic units with precision 11)
-const quote = await client.quoteRequest('BTC', 'USDT', 100000);
+const quote = await client.quoteRequest({
+  from_asset: 'BTC',
+  from_amount: 100000,
+  to_asset: 'USDT'
+});
 console.log('Price:', quote.price);
 console.log('You will receive:', quote.to_amount, 'atomic USDT');
+```
 
-// Quote buying specific amount of USDT
-const buyQuote = await client.quoteRequest('BTC', 'USDT', undefined, 45000000);
+Example — quoting a buy (specific USDT amount with precision):
+```typescript
+const buyQuote = await client.quoteRequest({
+  to_asset: 'USDT',
+  to_amount: 45000000,
+  from_asset: 'BTC' // property order can differ
+});
 console.log('BTC required:', buyQuote.from_amount);
 ```
 
-### initMakerSwap()
+### - `initMakerSwap()`
 
 Initializes a swap transaction as the maker (liquidity provider).
 
@@ -214,7 +193,7 @@ console.log('Swap initialized:', swap.payment_hash);
 console.log('Swapstring:', swap.swapstring);
 ```
 
-### executeMakerSwap()
+### - `executeMakerSwap()`
 
 Executes a previously initialized swap.
 
@@ -238,7 +217,7 @@ const result = await client.executeMakerSwap({
 console.log('Swap executed successfully:', result);
 ```
 
-### waitForSwapCompletion()
+### - `waitForSwapCompletion()`
 
 Polls for swap completion with configurable timeout and interval.
 
@@ -276,9 +255,9 @@ try {
 }
 ```
 
-### getLspInfo()
+### - `getLspInfo()`
 
-Retrieves Lightning Service Provider information.
+Retrieves our Lightning Service Provider information.
 
 **Purpose**: Get LSP capabilities and connection details for Lightning operations.
 
@@ -293,155 +272,4 @@ console.log('LSP connection URL:', lspInfo.lsp_connection_url);
 console.log('Supported features:', lspInfo.features);
 ```
 
-### getNodePubkey()
-
-Gets the Lightning node's public key.
-
-**Purpose**: Retrieve the node's public key for use in swap operations.
-
-**Parameters**: None
-
-**Returns**: `Promise<string>`
-
-**Error Conditions**:
-- `NodeError` - Node operation failed
-- `ConfigurationError` - Node URL not configured
-
-**Example**:
-```typescript
-try {
-  const pubkey = await client.getNodePubkey();
-  console.log('Node public key:', pubkey);
-} catch (error) {
-  if (error instanceof ConfigurationError) {
-    console.error('Node URL not configured in client');
-  }
-}
-```
-
-### quoteRequestWS()
-
-Real-time quote generation using WebSocket connection.
-
-**Purpose**: Get live pricing with lower latency than HTTP requests.
-
-**Parameters**: Same as `quoteRequest()`
-
-**Returns**: `Promise<PairQuoteResponse>`
-
-**Error Conditions**:
-- `WebSocketError` - WebSocket connection failed
-- `TimeoutError` - Quote request timed out (30s default)
-
-**Example**:
-```typescript
-// WebSocket connection is automatically managed
-const liveQuote = await client.quoteRequestWS('BTC', 'USDT', 100000);
-console.log('Live price:', liveQuote.price);
-```
-
-## Complete Usage Example
-
-```typescript
-import { 
-  KaleidoClient, 
-  createAssetPairMapper, 
-  createPrecisionHandler 
-} from '@kaleidoswap/sdk';
-
-async function performSwap() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-    nodeUrl: 'https://your-lightning-node.com'
-  });
-
-  try {
-    // 1. Get trading pairs and create utilities
-    const pairs = await client.pairList();
-    const assetMapper = createAssetPairMapper(pairs);
-    const precisionHandler = createPrecisionHandler(assetMapper.getAllAssets());
-
-    // 2. Find assets
-    const btc = assetMapper.findByTicker('BTC');
-    const usdt = assetMapper.findByTicker('USDT');
-
-    // 3. Validate and convert amount
-    const decimalAmount = 0.001; // 0.001 BTC
-    const validation = precisionHandler.validateOrderSize(decimalAmount, btc);
-    
-    if (!validation.valid) {
-      throw new Error(`Invalid order size: ${validation.error}`);
-    }
-
-    // 4. Get quote
-    const quote = await client.quoteRequest(
-      btc.asset_id, 
-      usdt.asset_id, 
-      validation.atomicAmount
-    );
-
-    console.log('Quote received:', {
-      price: quote.price,
-      fromAmount: precisionHandler.toDecimalAmount(quote.from_amount, btc.asset_id),
-      toAmount: precisionHandler.toDecimalAmount(quote.to_amount, usdt.asset_id),
-      fee: quote.fee
-    });
-
-    // 5. Initialize swap
-    const swap = await client.initMakerSwap({
-      rfq_id: quote.rfq_id,
-      from_asset: btc.asset_id,
-      to_asset: usdt.asset_id,
-      from_amount: quote.from_amount,
-      to_amount: quote.to_amount
-    });
-
-    // 6. Execute swap  
-    const result = await client.executeMakerSwap({
-      swapstring: swap.swapstring,
-      payment_hash: swap.payment_hash,
-      taker_pubkey: await client.getNodePubkey()
-    });
-
-    // 7. Wait for completion
-    const finalSwap = await client.waitForSwapCompletion(swap.payment_hash);
-    
-    console.log('Swap completed:', finalSwap.status);
-    return finalSwap;
-
-  } catch (error) {
-    console.error('Swap failed:', error);
-    throw error;
-  }
-}
-```
-
-## Authentication
-
-Most API methods work without authentication, but some advanced features may require API keys:
-
-```typescript
-const client = new KaleidoClient({
-  baseUrl: 'https://api.kaleidoswap.com/api/v1',
-  apiKey: process.env.KALEIDO_API_KEY
-});
-```
-
-## Rate Limiting
-
-The API implements rate limiting. The SDK automatically handles rate limit responses with appropriate retry delays:
-
-```typescript
-try {
-  const quote = await client.quoteRequest('BTC', 'USDT', 100000);
-} catch (error) {
-  if (error instanceof RateLimitError) {
-    // SDK will automatically retry with proper delay
-    console.log('Rate limited, retrying...');
-  }
-}
-```
-
-> **Warning**: Always configure `nodeUrl` in the client configuration when using Lightning Network operations like `getNodePubkey()`, `connectPeer()`, or `getAssetMetadata()`.
-
-> **Note**: WebSocket connections are automatically managed by the client. The connection is established on first use and reused for subsequent requests.
+> A complete guide for atomic swaps will be added to the docs soon.

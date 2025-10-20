@@ -1,0 +1,1006 @@
+# Best Practices
+
+This guide outlines recommended patterns and practices for building production-ready applications with the KaleidoSwap SDK.
+
+## General Principles
+
+### 1. Always Validate Input Data
+
+```typescript
+// ✅ Good: Validate before processing
+async function getQuote(fromTicker: string, toTicker: string, amount: number) {
+  if (!fromTicker || !toTicker) {
+    throw new ValidationError('Asset tickers are required');
+  }
+  
+  if (amount <= 0) {
+    throw new ValidationError('Amount must be positive');
+  }
+
+  const fromAsset = assetMapper.findByTicker(fromTicker);
+  const toAsset = assetMapper.findByTicker(toTicker);
+  
+  if (!fromAsset || !toAsset) {
+    throw new ValidationError('One or both assets not found');
+  }
+
+  const validation = precisionHandler.validateOrderSize(amount, fromAsset);
+  if (!validation.valid) {
+    throw new ValidationError(validation.error);
+  }
+
+  return await client.quoteRequest(fromAsset.asset_id, toAsset.asset_id, validation.atomicAmount);
+}
+
+// ❌ Bad: No validation
+async function getQuoteBad(fromTicker: string, toTicker: string, amount: number) {
+  const fromAsset = assetMapper.findByTicker(fromTicker);
+  const toAsset = assetMapper.findByTicker(toTicker);
+  
+  // Potential errors: undefined assets, invalid amounts
+  return await client.quoteRequest(fromAsset.asset_id, toAsset.asset_id, amount);
+}
+```
+
+### 2. Use Proper Error Handling
+
+```typescript
+// ✅ Good: Specific error handling with user-friendly messages
+async function handleQuoteRequest(fromTicker: string, toTicker: string, amount: number) {
+  try {
+    return await getQuote(fromTicker, toTicker, amount);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return { error: 'Invalid input parameters', details: error.message };
+    } else if (error instanceof QuoteError) {
+      return { error: 'Unable to get quote at this time', details: error.message };
+    } else if (error instanceof NetworkError) {
+      return { error: 'Network connection issue', details: 'Please check your internet connection' };
+    } else if (error instanceof RateLimitError) {
+      return { error: 'Too many requests', details: 'Please wait a moment before trying again' };
+    } else {
+      console.error('Unexpected error:', error);
+      return { error: 'An unexpected error occurred', details: 'Please try again later' };
+    }
+  }
+}
+
+// ❌ Bad: Generic error handling
+async function handleQuoteRequestBad(fromTicker: string, toTicker: string, amount: number) {
+  try {
+    return await getQuote(fromTicker, toTicker, amount);
+  } catch (error) {
+    console.error('Error:', error);
+    throw error; // Exposes internal errors to users
+  }
+}
+```
+
+### 3. Initialize Utilities Once
+
+```typescript
+// ✅ Good: Initialize once, reuse everywhere
+class TradingService {
+  private client: KaleidoClient;
+  private assetMapper: AssetPairMapper;
+  private precisionHandler: PrecisionHandler;
+  private initialized = false;
+
+  constructor(config: KaleidoConfig) {
+    this.client = new KaleidoClient(config);
+  }
+
+  async initialize() {
+    if (this.initialized) return;
+
+    const pairs = await this.client.pairList();
+    this.assetMapper = createAssetPairMapper(pairs);
+    this.precisionHandler = createPrecisionHandler(this.assetMapper.getAllAssets());
+    this.initialized = true;
+  }
+
+  async getQuote(fromTicker: string, toTicker: string, amount: number) {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    // Use this.assetMapper and this.precisionHandler
+  }
+}
+
+// ❌ Bad: Recreate utilities every time
+async function getQuoteBad(fromTicker: string, toTicker: string, amount: number) {
+  const pairs = await client.pairList(); // API call every time
+  const assetMapper = createAssetPairMapper(pairs); // Recreated every time
+  const precisionHandler = createPrecisionHandler(assetMapper.getAllAssets());
+  // ... rest of the logic
+}
+```
+
+## Asset and Precision Management
+
+### 1. Always Use Precision Handler
+
+```typescript
+// ✅ Good: Use precision handler for all amount conversions
+async function createSwapOrder(fromTicker: string, toTicker: string, decimalAmount: number) {
+  const fromAsset = assetMapper.findByTicker(fromTicker);
+  const toAsset = assetMapper.findByTicker(toTicker);
+  
+  // Validate and convert to atomic units
+  const validation = precisionHandler.validateOrderSize(decimalAmount, fromAsset);
+  if (!validation.valid) {
+    throw new ValidationError(validation.error);
+  }
+
+  const quote = await client.quoteRequest(
+    fromAsset.asset_id,
+    toAsset.asset_id,
+    validation.atomicAmount // Use atomic units for API
+  );
+
+  // Convert back to decimal for logging/display
+  const fromDecimal = precisionHandler.toDecimalAmount(quote.from_amount, fromAsset.asset_id);
+  const toDecimal = precisionHandler.toDecimalAmount(quote.to_amount, toAsset.asset_id);
+  
+  console.log(`Quote: ${fromDecimal} ${fromTicker} → ${toDecimal} ${toTicker}`);
+  
+  return quote;
+}
+
+// ❌ Bad: Manual precision handling
+async function createSwapOrderBad(fromTicker: string, toTicker: string, decimalAmount: number) {
+  const fromAsset = assetMapper.findByTicker(fromTicker);
+  
+  // Manual conversion - error-prone
+  const atomicAmount = Math.floor(decimalAmount * Math.pow(10, fromAsset.precision));
+  
+  // No validation
+  const quote = await client.quoteRequest(fromAsset.asset_id, toAsset.asset_id, atomicAmount);
+  
+  return quote;
+}
+```
+
+### 2. Cache Asset Information
+
+```typescript
+// ✅ Good: Cache asset data with expiration
+class AssetCache {
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly TTL = 5 * 60 * 1000; // 5 minutes
+
+  async getAsset(ticker: string): Promise<MappedAsset | undefined> {
+    const cacheKey = `asset_${ticker}`;
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < this.TTL) {
+      return cached.data;
+    }
+
+    // Refresh cache
+    const pairs = await client.pairList();
+    const assetMapper = createAssetPairMapper(pairs);
+    const asset = assetMapper.findByTicker(ticker);
+    
+    this.cache.set(cacheKey, {
+      data: asset,
+      timestamp: Date.now()
+    });
+    
+    return asset;
+  }
+
+  clearCache() {
+    this.cache.clear();
+  }
+}
+
+// ❌ Bad: No caching, repeated API calls
+async function getAssetBad(ticker: string) {
+  const pairs = await client.pairList(); // API call every time
+  const assetMapper = createAssetPairMapper(pairs);
+  return assetMapper.findByTicker(ticker);
+}
+```
+
+## API Usage Patterns
+
+### 1. Use Appropriate Retry Strategies
+
+```typescript
+// ✅ Good: Different retry strategies for different operations
+const quickRetryConfig = {
+  maxRetries: 2,
+  initialDelay: 500,
+  maxDelay: 2000
+};
+
+const robustRetryConfig = {
+  maxRetries: 5,
+  initialDelay: 1000,
+  maxDelay: 30000,
+  exponentialBase: 2,
+  jitter: true
+};
+
+// Quick operations (asset lists, pair lists)
+const assets = await retry(() => client.assetList(), quickRetryConfig);
+
+// Important operations (quotes, orders)
+const quote = await retry(() => client.quoteRequest(from, to, amount), robustRetryConfig);
+
+// ❌ Bad: Same retry strategy for everything
+const defaultRetry = { maxRetries: 3, initialDelay: 1000 };
+const assets = await retry(() => client.assetList(), defaultRetry);
+const quote = await retry(() => client.quoteRequest(from, to, amount), defaultRetry);
+```
+
+### 2. Implement Circuit Breaker Pattern
+
+```typescript
+// ✅ Good: Circuit breaker for external dependencies
+class CircuitBreaker {
+  private failures = 0;
+  private lastFailureTime = 0;
+  private readonly threshold = 5;
+  private readonly timeout = 60000; // 1 minute
+  private readonly halfOpenMaxCalls = 3;
+  private halfOpenCalls = 0;
+
+  async execute<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.isOpen()) {
+      if (this.shouldAttemptReset()) {
+        return this.executeHalfOpen(operation);
+      }
+      throw new Error('Circuit breaker is open');
+    }
+
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+
+  private isOpen(): boolean {
+    return this.failures >= this.threshold;
+  }
+
+  private shouldAttemptReset(): boolean {
+    return Date.now() - this.lastFailureTime >= this.timeout;
+  }
+
+  private async executeHalfOpen<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.halfOpenCalls >= this.halfOpenMaxCalls) {
+      throw new Error('Circuit breaker is half-open, max calls exceeded');
+    }
+
+    this.halfOpenCalls++;
+    
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+
+  private onSuccess(): void {
+    this.failures = 0;
+    this.halfOpenCalls = 0;
+  }
+
+  private onFailure(): void {
+    this.failures++;
+    this.lastFailureTime = Date.now();
+    this.halfOpenCalls = 0;
+  }
+}
+
+// Usage
+const circuitBreaker = new CircuitBreaker();
+
+async function getQuoteWithCircuitBreaker(from: string, to: string, amount: number) {
+  return await circuitBreaker.execute(() => 
+    client.quoteRequest(from, to, amount)
+  );
+}
+```
+
+### 3. Rate Limiting and Throttling
+
+```typescript
+// ✅ Good: Implement client-side rate limiting
+class RateLimiter {
+  private requests: number[] = [];
+  private readonly maxRequests: number;
+  private readonly windowMs: number;
+
+  constructor(maxRequests: number, windowMs: number) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+  }
+
+  async throttle(): Promise<void> {
+    const now = Date.now();
+    
+    // Remove old requests outside the window
+    this.requests = this.requests.filter(time => now - time < this.windowMs);
+    
+    if (this.requests.length >= this.maxRequests) {
+      const oldestRequest = Math.min(...this.requests);
+      const waitTime = this.windowMs - (now - oldestRequest);
+      
+      if (waitTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        return this.throttle(); // Recursive call after waiting
+      }
+    }
+    
+    this.requests.push(now);
+  }
+}
+
+// Usage
+const rateLimiter = new RateLimiter(10, 60000); // 10 requests per minute
+
+async function getThrottledQuote(from: string, to: string, amount: number) {
+  await rateLimiter.throttle();
+  return await client.quoteRequest(from, to, amount);
+}
+
+// ❌ Bad: No rate limiting, risk of hitting API limits
+async function getQuoteNoLimit(from: string, to: string, amount: number) {
+  return await client.quoteRequest(from, to, amount);
+}
+```
+
+## WebSocket Best Practices
+
+### 1. Proper Connection Management
+
+```typescript
+// ✅ Good: Robust WebSocket connection management
+class WebSocketManager {
+  private wsClient: WebSocketClient;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private isIntentionalDisconnect = false;
+
+  constructor(config: WebSocketConfig) {
+    this.wsClient = new WebSocketClient(config);
+    this.setupEventHandlers();
+  }
+
+  private setupEventHandlers() {
+    this.wsClient.on('error', this.handleError.bind(this));
+    this.wsClient.on('close', this.handleClose.bind(this));
+    this.wsClient.on('reconnected', this.handleReconnected.bind(this));
+  }
+
+  private handleError(error: any) {
+    console.error('WebSocket error:', error);
+    
+    if (error.action === 'max_reconnect_attempts') {
+      console.log('Max reconnection attempts reached, falling back to HTTP');
+      this.fallbackToHttp();
+    }
+  }
+
+  private handleClose(event: any) {
+    if (!this.isIntentionalDisconnect) {
+      console.log('Unexpected WebSocket disconnection');
+    }
+  }
+
+  private handleReconnected() {
+    console.log('WebSocket reconnected successfully');
+    this.reconnectAttempts = 0;
+    this.resubscribeAll();
+  }
+
+  private fallbackToHttp() {
+    // Implement HTTP fallback logic
+    console.log('Switching to HTTP-only mode');
+  }
+
+  private resubscribeAll() {
+    // Re-establish all subscriptions after reconnection
+  }
+
+  async connect() {
+    this.isIntentionalDisconnect = false;
+    await this.wsClient.connect();
+  }
+
+  async disconnect() {
+    this.isIntentionalDisconnect = true;
+    await this.wsClient.disconnect();
+  }
+}
+
+// ❌ Bad: No connection management
+const wsClient = new WebSocketClient(config);
+// No error handling, no reconnection logic
+```
+
+### 2. Fallback Strategies
+
+```typescript
+// ✅ Good: WebSocket with HTTP fallback
+class QuoteService {
+  private wsClient: WebSocketClient;
+  private httpClient: KaleidoClient;
+  private useWebSocket = true;
+
+  async getQuote(from: string, to: string, amount: number) {
+    if (this.useWebSocket) {
+      try {
+        return await this.getWebSocketQuote(from, to, amount);
+      } catch (error) {
+        if (error instanceof WebSocketError || error instanceof TimeoutError) {
+          console.log('WebSocket failed, falling back to HTTP');
+          this.useWebSocket = false;
+          return await this.getHttpQuote(from, to, amount);
+        }
+        throw error;
+      }
+    } else {
+      return await this.getHttpQuote(from, to, amount);
+    }
+  }
+
+  private async getWebSocketQuote(from: string, to: string, amount: number) {
+    return await this.httpClient.quoteRequestWS(from, to, amount);
+  }
+
+  private async getHttpQuote(from: string, to: string, amount: number) {
+    return await this.httpClient.quoteRequest(from, to, amount);
+  }
+
+  // Periodically try to re-enable WebSocket
+  enableWebSocketRetry() {
+    setInterval(() => {
+      if (!this.useWebSocket) {
+        this.testWebSocketConnection();
+      }
+    }, 60000); // Test every minute
+  }
+
+  private async testWebSocketConnection() {
+    try {
+      if (this.wsClient.isConnected()) {
+        this.useWebSocket = true;
+        console.log('WebSocket re-enabled');
+      }
+    } catch (error) {
+      // WebSocket still not working
+    }
+  }
+}
+```
+
+## Order Management
+
+### 1. Proper Order Monitoring
+
+```typescript
+// ✅ Good: Comprehensive order monitoring
+class OrderManager {
+  private activeOrders = new Map<string, {
+    orderId: string;
+    status: string;
+    createdAt: number;
+    lastUpdate: number;
+    callbacks: Array<(status: string) => void>;
+  }>();
+
+  async createAndMonitorOrder(orderRequest: any, onStatusChange?: (status: string) => void) {
+    const order = await client.createOrder(orderRequest);
+    const orderId = order.order_id || order.rfq_id;
+
+    // Store order info
+    this.activeOrders.set(orderId, {
+      orderId,
+      status: order.order_state || 'CREATED',
+      createdAt: Date.now(),
+      lastUpdate: Date.now(),
+      callbacks: onStatusChange ? [onStatusChange] : []
+    });
+
+    // Start monitoring
+    this.startMonitoring(orderId);
+
+    return order;
+  }
+
+  private startMonitoring(orderId: string) {
+    const checkStatus = async () => {
+      const orderInfo = this.activeOrders.get(orderId);
+      if (!orderInfo) return;
+
+      try {
+        const status = await client.swapOrderStatus(orderId);
+        const newStatus = status.order_state || status.status;
+
+        if (newStatus !== orderInfo.status) {
+          orderInfo.status = newStatus;
+          orderInfo.lastUpdate = Date.now();
+
+          // Notify callbacks
+          orderInfo.callbacks.forEach(callback => {
+            try {
+              callback(newStatus);
+            } catch (error) {
+              console.error('Callback error:', error);
+            }
+          });
+
+          // Check if order is complete
+          if (['COMPLETED', 'FAILED', 'EXPIRED'].includes(newStatus)) {
+            this.activeOrders.delete(orderId);
+            return; // Stop monitoring
+          }
+        }
+
+        // Check for stale orders (no update for 30 minutes)
+        if (Date.now() - orderInfo.lastUpdate > 30 * 60 * 1000) {
+          console.warn(`Order ${orderId} appears stale, stopping monitoring`);
+          this.activeOrders.delete(orderId);
+          return;
+        }
+
+        // Schedule next check
+        setTimeout(checkStatus, 10000);
+
+      } catch (error) {
+        console.error(`Error monitoring order ${orderId}:`, error);
+        // Continue monitoring despite errors
+        setTimeout(checkStatus, 15000);
+      }
+    };
+
+    checkStatus();
+  }
+
+  getActiveOrders() {
+    return Array.from(this.activeOrders.values());
+  }
+
+  addStatusCallback(orderId: string, callback: (status: string) => void) {
+    const orderInfo = this.activeOrders.get(orderId);
+    if (orderInfo) {
+      orderInfo.callbacks.push(callback);
+    }
+  }
+}
+
+// ❌ Bad: No proper monitoring
+async function createOrderBad(orderRequest: any) {
+  const order = await client.createOrder(orderRequest);
+  // No monitoring, user has to manually check status
+  return order;
+}
+```
+
+### 2. Quote Expiration Handling
+
+```typescript
+// ✅ Good: Handle quote expiration properly
+class QuoteManager {
+  private quotes = new Map<string, {
+    quote: any;
+    expiresAt: number;
+    refreshCallback?: () => Promise<any>;
+  }>();
+
+  async getQuoteWithRefresh(
+    from: string, 
+    to: string, 
+    amount: number,
+    autoRefresh = true
+  ) {
+    const quote = await client.quoteRequest(from, to, amount);
+    const expiresAt = new Date(quote.expires_at).getTime();
+
+    if (autoRefresh) {
+      this.quotes.set(quote.rfq_id, {
+        quote,
+        expiresAt,
+        refreshCallback: () => this.getQuoteWithRefresh(from, to, amount, false)
+      });
+
+      // Set up auto-refresh before expiration
+      const refreshTime = expiresAt - Date.now() - 30000; // 30 seconds before expiry
+      if (refreshTime > 0) {
+        setTimeout(() => this.refreshQuote(quote.rfq_id), refreshTime);
+      }
+    }
+
+    return quote;
+  }
+
+  private async refreshQuote(rfqId: string) {
+    const quoteInfo = this.quotes.get(rfqId);
+    if (!quoteInfo || !quoteInfo.refreshCallback) return;
+
+    try {
+      const newQuote = await quoteInfo.refreshCallback();
+      console.log(`Quote ${rfqId} refreshed`);
+      
+      // Update stored quote
+      this.quotes.set(newQuote.rfq_id, {
+        ...quoteInfo,
+        quote: newQuote,
+        expiresAt: new Date(newQuote.expires_at).getTime()
+      });
+
+      // Remove old quote if different ID
+      if (newQuote.rfq_id !== rfqId) {
+        this.quotes.delete(rfqId);
+      }
+
+    } catch (error) {
+      console.error(`Failed to refresh quote ${rfqId}:`, error);
+      this.quotes.delete(rfqId);
+    }
+  }
+
+  isQuoteValid(rfqId: string): boolean {
+    const quoteInfo = this.quotes.get(rfqId);
+    if (!quoteInfo) return false;
+
+    return Date.now() < quoteInfo.expiresAt;
+  }
+
+  async createOrderWithValidQuote(rfqId: string, orderRequest: any) {
+    if (!this.isQuoteValid(rfqId)) {
+      throw new Error('Quote has expired, please get a new quote');
+    }
+
+    return await client.createOrder(orderRequest);
+  }
+}
+
+// ❌ Bad: No quote expiration handling
+async function createOrderBad(quote: any, orderRequest: any) {
+  // Quote might be expired
+  return await client.createOrder(orderRequest);
+}
+```
+
+## Security Best Practices
+
+### 1. Secure API Key Management
+
+```typescript
+// ✅ Good: Secure configuration management
+class SecureConfig {
+  private static instance: SecureConfig;
+  private config: Map<string, string> = new Map();
+
+  private constructor() {
+    this.loadConfig();
+  }
+
+  static getInstance(): SecureConfig {
+    if (!SecureConfig.instance) {
+      SecureConfig.instance = new SecureConfig();
+    }
+    return SecureConfig.instance;
+  }
+
+  private loadConfig() {
+    // Load from environment variables
+    if (process.env.KALEIDO_API_KEY) {
+      this.config.set('apiKey', process.env.KALEIDO_API_KEY);
+    }
+    
+    if (process.env.KALEIDO_API_URL) {
+      this.config.set('baseUrl', process.env.KALEIDO_API_URL);
+    }
+
+    // Validate required config
+    if (!this.config.get('baseUrl')) {
+      throw new Error('KALEIDO_API_URL environment variable is required');
+    }
+  }
+
+  get(key: string): string | undefined {
+    return this.config.get(key);
+  }
+
+  getClientConfig(): KaleidoConfig {
+    return {
+      baseUrl: this.config.get('baseUrl')!,
+      apiKey: this.config.get('apiKey'),
+      // Don't log sensitive config
+    };
+  }
+}
+
+// Usage
+const config = SecureConfig.getInstance();
+const client = new KaleidoClient(config.getClientConfig());
+
+// ❌ Bad: Hardcoded credentials
+const client = new KaleidoClient({
+  baseUrl: 'https://api.kaleidoswap.com/api/v1',
+  apiKey: 'hardcoded-api-key-123' // Never do this!
+});
+```
+
+### 2. Input Sanitization
+
+```typescript
+// ✅ Good: Proper input validation and sanitization
+function validateAndSanitizeInput(input: any): {
+  fromTicker: string;
+  toTicker: string;
+  amount: number;
+} {
+  // Type checking
+  if (typeof input !== 'object' || input === null) {
+    throw new ValidationError('Invalid input format');
+  }
+
+  // Sanitize ticker symbols
+  const fromTicker = String(input.fromTicker || '').toUpperCase().trim();
+  const toTicker = String(input.toTicker || '').toUpperCase().trim();
+
+  // Validate ticker format (alphanumeric only)
+  const tickerRegex = /^[A-Z0-9]+$/;
+  if (!tickerRegex.test(fromTicker) || !tickerRegex.test(toTicker)) {
+    throw new ValidationError('Invalid ticker format');
+  }
+
+  // Validate and sanitize amount
+  const amount = parseFloat(input.amount);
+  if (isNaN(amount) || amount <= 0 || amount > 1000000) {
+    throw new ValidationError('Invalid amount');
+  }
+
+  return { fromTicker, toTicker, amount };
+}
+
+// ❌ Bad: No input validation
+function processInputBad(input: any) {
+  // Direct usage without validation
+  return client.quoteRequest(input.fromTicker, input.toTicker, input.amount);
+}
+```
+
+## Performance Optimization
+
+### 1. Connection Pooling and Reuse
+
+```typescript
+// ✅ Good: Reuse client instances
+class ClientManager {
+  private static clients = new Map<string, KaleidoClient>();
+
+  static getClient(config: KaleidoConfig): KaleidoClient {
+    const key = `${config.baseUrl}_${config.apiKey || 'no-key'}`;
+    
+    if (!this.clients.has(key)) {
+      this.clients.set(key, new KaleidoClient(config));
+    }
+    
+    return this.clients.get(key)!;
+  }
+
+  static closeAll() {
+    // Clean up if needed
+    this.clients.clear();
+  }
+}
+
+// Usage
+const client = ClientManager.getClient(config);
+
+// ❌ Bad: Create new client for each request
+async function getQuoteBad() {
+  const client = new KaleidoClient(config); // New instance every time
+  return await client.quoteRequest(from, to, amount);
+}
+```
+
+### 2. Batch Operations
+
+```typescript
+// ✅ Good: Batch multiple operations
+async function batchQuotes(requests: QuoteRequest[]) {
+  // Process in batches to avoid overwhelming the API
+  const batchSize = 5;
+  const results = [];
+
+  for (let i = 0; i < requests.length; i += batchSize) {
+    const batch = requests.slice(i, i + batchSize);
+    
+    const batchPromises = batch.map(async (request, index) => {
+      // Stagger requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, index * 200));
+      
+      try {
+        return await client.quoteRequest(request.from, request.to, request.amount);
+      } catch (error) {
+        return { error: error.message, request };
+      }
+    });
+
+    const batchResults = await Promise.allSettled(batchPromises);
+    results.push(...batchResults);
+
+    // Wait between batches
+    if (i + batchSize < requests.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  return results;
+}
+
+// ❌ Bad: Sequential processing
+async function sequentialQuotesBad(requests: QuoteRequest[]) {
+  const results = [];
+  for (const request of requests) {
+    const result = await client.quoteRequest(request.from, request.to, request.amount);
+    results.push(result);
+  }
+  return results;
+}
+```
+
+## Testing Best Practices
+
+### 1. Mock External Dependencies
+
+```typescript
+// ✅ Good: Proper mocking for tests
+class MockKaleidoClient extends KaleidoClient {
+  private mockResponses = new Map<string, any>();
+
+  setMockResponse(method: string, response: any) {
+    this.mockResponses.set(method, response);
+  }
+
+  async quoteRequest(from: string, to: string, amount: number) {
+    const mockResponse = this.mockResponses.get('quoteRequest');
+    if (mockResponse) {
+      if (mockResponse instanceof Error) {
+        throw mockResponse;
+      }
+      return mockResponse;
+    }
+    return super.quoteRequest(from, to, amount);
+  }
+}
+
+// Test usage
+describe('Trading Service', () => {
+  let mockClient: MockKaleidoClient;
+  let tradingService: TradingService;
+
+  beforeEach(() => {
+    mockClient = new MockKaleidoClient({ baseUrl: 'test' });
+    tradingService = new TradingService(mockClient);
+  });
+
+  it('should handle quote errors gracefully', async () => {
+    mockClient.setMockResponse('quoteRequest', new QuoteError('No liquidity'));
+    
+    const result = await tradingService.getQuote('BTC', 'USDT', 0.001);
+    
+    expect(result.error).toBe('Unable to get quote at this time');
+  });
+});
+```
+
+### 2. Integration Testing
+
+```typescript
+// ✅ Good: Comprehensive integration tests
+describe('KaleidoSwap Integration', () => {
+  let client: KaleidoClient;
+
+  beforeAll(() => {
+    client = new KaleidoClient({
+      baseUrl: process.env.TEST_API_URL || 'https://api.staging.kaleidoswap.com/api/v1'
+    });
+  });
+
+  it('should complete full swap workflow', async () => {
+    // Test with small amounts on staging
+    const pairs = await client.pairList();
+    expect(pairs.pairs.length).toBeGreaterThan(0);
+
+    const btcUsdtPair = pairs.pairs.find(p => 
+      p.base_asset === 'BTC' && p.quote_asset === 'USDT'
+    );
+    
+    if (!btcUsdtPair) {
+      console.log('BTC/USDT pair not available, skipping test');
+      return;
+    }
+
+    const quote = await client.quoteRequest(
+      btcUsdtPair.base_asset_id,
+      btcUsdtPair.quote_asset_id,
+      1000 // Small amount for testing
+    );
+
+    expect(quote.rfq_id).toBeDefined();
+    expect(quote.price).toBeDefined();
+    expect(quote.expires_at).toBeDefined();
+  }, 30000); // 30 second timeout
+});
+```
+
+## Monitoring and Logging
+
+### 1. Structured Logging
+
+```typescript
+// ✅ Good: Structured logging with context
+class Logger {
+  private context: Record<string, any> = {};
+
+  setContext(key: string, value: any) {
+    this.context[key] = value;
+  }
+
+  info(message: string, data?: any) {
+    console.log(JSON.stringify({
+      level: 'info',
+      message,
+      timestamp: new Date().toISOString(),
+      context: this.context,
+      data
+    }));
+  }
+
+  error(message: string, error?: Error, data?: any) {
+    console.error(JSON.stringify({
+      level: 'error',
+      message,
+      timestamp: new Date().toISOString(),
+      context: this.context,
+      error: error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : undefined,
+      data
+    }));
+  }
+}
+
+// Usage
+const logger = new Logger();
+logger.setContext('service', 'trading');
+logger.setContext('version', '1.0.0');
+
+try {
+  const quote = await client.quoteRequest(from, to, amount);
+  logger.info('Quote received', { 
+    from, 
+    to, 
+    amount, 
+    price: quote.price,
+    rfqId: quote.rfq_id 
+  });
+} catch (error) {
+  logger.error('Quote request failed', error as Error, { from, to, amount });
+}
+
+// ❌ Bad: Unstructured logging
+console.log('Getting quote...');
+console.error('Error:', error); // No context
+```
+
+These best practices will help you build robust, maintainable, and production-ready applications with the KaleidoSwap SDK.

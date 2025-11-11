@@ -121,7 +121,9 @@ cargo install --locked --debug --path .
 
 ```bash
 rgb-lightning-node <data-dir>/ --daemon-listening-port 3001 \
-    --ldk-peer-listening-port 9735 --network <network>
+--disable-authentication \
+--ldk-peer-listening-port 9735 \
+--network <network>
 ```
 
 Replace:

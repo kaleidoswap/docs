@@ -10,6 +10,26 @@ module.exports = {
       label: 'SDK',
       collapsed: true,
       items: [
+        {
+          type: 'category',
+          label: 'Python SDK',
+          collapsed: true,
+          items: [
+            'sdk/python/index',
+            'sdk/python/getting-started',
+            'sdk/python/api-reference',
+            'sdk/python/types',
+            'sdk/python/examples',
+            'sdk/python/error-handling',
+            'sdk/python/websocket',
+            'sdk/python/utilities',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'TypeScript SDK',
+          collapsed: true,
+          items: [
             'sdk/typescript/index',
             'sdk/typescript/getting-started',
             'sdk/typescript/api-reference',
@@ -17,7 +37,12 @@ module.exports = {
             'sdk/typescript/utilities',
             'sdk/typescript/error-handling',
             'sdk/typescript/examples',
-              ],
+            'sdk/typescript/websocket',
+            'sdk/typescript/best-practices',
+            'sdk/typescript/troubleshooting',
+          ],
+        },
+      ],
     },
     {
       type: 'category',

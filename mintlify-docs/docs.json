@@ -11,12 +11,13 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Learn",
         "groups": [
           {
             "group": "Introduction",
             "icon": "sparkles",
             "pages": [
+              "whats-kaleidoswap/introduction",
               "whats-kaleidoswap/quickstart",
               "whats-kaleidoswap/key-features"
             ]
@@ -29,29 +30,6 @@
               "whats-kaleidoswap/background",
               "whats-kaleidoswap/glossary",
               "whats-kaleidoswap/troubleshooting"
-            ]
-          },
-          {
-            "group": "Web App (Coming Soon)",
-            "icon": "globe",
-            "pages": [
-              "web-app/getting-started",
-              "web-app/wallet-connection",
-              "web-app/trading-interface",
-              "web-app/advanced-features",
-              "web-app/faq"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Learn",
-        "groups": [
-          {
-            "group": "Introduction",
-            "icon": "sparkles",
-            "pages": [
-              "whats-kaleidoswap/introduction"
             ]
           }
         ]
@@ -135,18 +113,6 @@
         ]
       },
       {
-        "tab": "Web App (Soon)",
-        "groups": [
-          {
-            "group": "Web App (Coming Soon)",
-            "icon": "globe",
-            "pages": [
-              "web-app/introduction"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "API Reference",
         "groups": [
           {
@@ -194,7 +160,7 @@
       "display": "interactive"
     },
     "mdx": {
-      "server": "https://api.staging.kaleidoswap.com/api/v1",
+      "server": "https://api.staging.kaleidoswap.com",
       "auth": {
         "method": "bearer"
       }

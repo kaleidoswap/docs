@@ -35,10 +35,6 @@
       "url": "sdk"
     },
     {
-      "name": "Web App (Soon)",
-      "url": "web-app/introduction"
-    },
-    {
       "name": "API Reference",
       "url": "api-reference"
     }
@@ -159,7 +155,7 @@
     }
   ],
   "api": {
-    "baseUrl": "https://api.staging.kaleidoswap.com/api/v1",
+    "baseUrl": "https://api.staging.kaleidoswap.com",
     "auth": {
       "method": "bearer"
     },

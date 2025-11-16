@@ -86,7 +86,7 @@
             "pages": [
               "desktop-app/channels/opening-channel",
               "desktop-app/channels/order-new-channel",
-              "desktop-app/channels/channel-backups",
+              "desktop-app/channels/channel-backups"
             ]
           },
           {

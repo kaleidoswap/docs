@@ -1,0 +1,456 @@
+---
+title: Troubleshooting Guide
+description: Common issues and solutions for KaleidoSwap Desktop App, API, and SDK
+---
+
+## Desktop Application
+
+### Installation & Startup Issues
+
+<AccordionGroup>
+  <Accordion title="Application won't start" icon="circle-xmark">
+    **Symptoms**: Double-clicking the application does nothing or shows an error.
+
+    **Solutions**:
+    1. **macOS**: Check if the app is blocked by Gatekeeper
+       - Go to System Preferences → Security & Privacy
+       - Click "Open Anyway" if you see a message about KaleidoSwap
+
+    2. **Windows**: Run as Administrator
+       - Right-click the app → Run as Administrator
+       - Check Windows Defender hasn't quarantined the file
+
+    3. **Linux**: Check execution permissions
+       ```bash
+       chmod +x kaleidoswap-desktop
+       ```
+
+    4. Check system requirements:
+       - 4GB RAM minimum
+       - 500MB free disk space
+       - Modern OS version (macOS 10.15+, Windows 10+, Ubuntu 20.04+)
+  </Accordion>
+
+  <Accordion title="Binary verification fails" icon="shield-xmark">
+    **Symptoms**: SHA256 checksum doesn't match the published hash.
+
+    **Solutions**:
+    1. Re-download the application from the official [GitHub releases](https://github.com/kaleidoswap/desktop-app/releases)
+    2. Ensure you're downloading the correct file for your platform
+    3. Use a reliable download connection (corrupted downloads can cause mismatches)
+    4. Verify you're comparing against the correct version's checksum
+
+    See the [Binary Verification](/desktop-app/getting-started/verify-binaries) guide for detailed steps.
+  </Accordion>
+
+  <Accordion title="App crashes on startup" icon="bomb">
+    **Symptoms**: Application opens briefly then closes, or shows a crash dialog.
+
+    **Solutions**:
+    1. Check the log files:
+       - macOS: `~/Library/Application Support/KaleidoSwap/logs/`
+       - Windows: `%APPDATA%/KaleidoSwap/logs/`
+       - Linux: `~/.config/KaleidoSwap/logs/`
+
+    2. Common causes:
+       - **Corrupted configuration**: Delete the config file and restart
+       - **Port conflict**: Another app is using the required ports (9735, 9736)
+       - **Missing dependencies**: Reinstall the application
+
+    3. Try running with debug logging:
+       ```bash
+       # macOS/Linux
+       ./kaleidoswap-desktop --debug
+
+       # Windows
+       kaleidoswap-desktop.exe --debug
+       ```
+  </Accordion>
+</AccordionGroup>
+
+### Node & Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to LSP" icon="link-slash">
+    **Symptoms**: Error messages about LSP connection, or unable to open channels.
+
+    **Solutions**:
+    1. **Check your internet connection**
+       - Ensure you have a stable internet connection
+       - Try accessing other websites to verify connectivity
+
+    2. **Verify LSP URL**
+       - Default: `https://api.staging.kaleidoswap.com`
+       - Check Settings → LSP Configuration
+
+    3. **Firewall/VPN issues**
+       - Disable VPN temporarily to test
+       - Allow KaleidoSwap through your firewall
+       - Required ports: 9735 (P2P), 9736 (RPC)
+
+    4. **Check LSP status**
+       - Visit the LSP's status page or contact support
+       - Try switching to a different LSP if available
+  </Accordion>
+
+  <Accordion title="Node sync is very slow" icon="hourglass">
+    **Symptoms**: Blockchain sync taking hours or appearing stuck.
+
+    **Solutions**:
+    1. **Normal behavior**: Initial sync can take 30 minutes to several hours depending on:
+       - Your internet speed
+       - Your system's disk speed
+       - Network congestion
+
+    2. **Check sync progress**:
+       - Look for block height in the UI
+       - Compare against current network height
+
+    3. **Stuck sync troubleshooting**:
+       - Restart the application
+       - Check available disk space (need at least 10GB free)
+       - Clear peer list and reconnect
+       - Check firewall isn't blocking P2P connections
+  </Accordion>
+
+  <Accordion title="Peer connection issues" icon="users-slash">
+    **Symptoms**: "No peers connected" or low peer count.
+
+    **Solutions**:
+    1. **Wait**: Peer discovery can take a few minutes
+
+    2. **Check network settings**:
+       - Ensure UPnP is enabled on your router (for incoming connections)
+       - Manually forward port 9735 if UPnP unavailable
+
+    3. **Bootstrap nodes**:
+       - The app should connect to bootstrap nodes automatically
+       - If not, check your internet connection and firewall
+
+    4. **Network selection**:
+       - Verify you're on the correct network (Mainnet/Testnet/Signet/Regtest)
+       - Peers must be on the same network
+  </Accordion>
+</AccordionGroup>
+
+### Wallet & Asset Issues
+
+<AccordionGroup>
+  <Accordion title="Wallet balance shows zero" icon="wallet">
+    **Symptoms**: Expecting funds but balance shows 0 or is incorrect.
+
+    **Solutions**:
+    1. **Wait for sync**: Balance won't show until node is fully synced
+    2. **Check the correct network**: Ensure you're on the network where you have funds
+    3. **Verify wallet recovery**: If you restored from seed, ensure you used the correct mnemonic
+    4. **Check asset vs BTC balance**: Toggle between Bitcoin and RGB asset views
+    5. **Refresh**: Try restarting the application
+  </Accordion>
+
+  <Accordion title="Cannot unlock wallet" icon="lock">
+    **Symptoms**: Password not working, wallet stays locked.
+
+    **Solutions**:
+    1. **Verify password**: Passwords are case-sensitive
+    2. **Caps Lock**: Check if Caps Lock is accidentally on
+    3. **Different keyboard layout**: Ensure same keyboard layout as when password was set
+    4. **Wallet recovery**: If password is truly lost, you'll need to recover using your mnemonic seed
+    5. **Contact support**: As a last resort, contact support with your wallet public key (never share private keys)
+  </Accordion>
+
+  <Accordion title="RGB asset not appearing" icon="eye-slash">
+    **Symptoms**: Received an asset but it doesn't show in your wallet.
+
+    **Solutions**:
+    1. **Wait for confirmation**: RGB asset transfers require Bitcoin confirmations
+    2. **Import consignment**: You may need to manually import the consignment data
+    3. **Check asset ID**: Verify you're looking at the correct asset
+    4. **Refresh asset list**: Settings → Assets → Refresh
+    5. **Verify sender completed transfer**: Contact sender to confirm they finished the send process
+  </Accordion>
+</AccordionGroup>
+
+### Channel Operations
+
+<AccordionGroup>
+  <Accordion title="Channel opening failed" icon="door-closed">
+    **Symptoms**: Channel order fails or gets stuck.
+
+    **Solutions**:
+    1. **Check order status**: Use Order ID to check status via API or support
+
+    2. **Common failure reasons**:
+       - **Insufficient funds**: Need to cover channel amount + fees
+       - **Payment timeout**: Invoice expired before payment
+       - **Invalid parameters**: Check min/max channel sizes
+       - **LSP unavailable**: Temporary LSP downtime
+
+    3. **Refund process**:
+       - If order fails, refunds are automatic to your refund address
+       - Refunds may take 6+ confirmations to appear
+
+    4. **Retry**:
+       - Wait a few minutes and try again
+       - Reduce channel size if at maximum
+       - Verify sufficient inbound liquidity
+  </Accordion>
+
+  <Accordion title="Channel shows as inactive" icon="plug-circle-xmark">
+    **Symptoms**: Channel exists but cannot send/receive payments.
+
+    **Solutions**:
+    1. **Wait for confirmations**: Channels need blockchain confirmations to become active
+       - Typically 3-6 confirmations required
+       - Check confirmation count in channel details
+
+    2. **Peer offline**: Your channel partner needs to be online
+       - Wait for peer to come back online
+       - Check "Last Seen" timestamp
+
+    3. **Channel reserves**: Cannot spend below channel reserve amount
+       - Lightning channels require keeping a reserve balance
+       - This is normal protocol behavior
+
+    4. **Force close**: If channel is permanently stuck, you can force-close
+       - This puts funds back on-chain after a delay
+       - Should be last resort
+  </Accordion>
+
+  <Accordion title="Asset delivery pending" icon="truck-clock">
+    **Symptoms**: Channel opened but RGB assets not yet delivered.
+
+    **Solutions**:
+    1. **Normal delay**: Asset delivery via keysend can take a few minutes
+       - Automatic retry mechanism in place
+       - Can take up to 30 minutes in some cases
+
+    2. **Check delivery status**:
+       - Order details show asset delivery status
+       - Statuses: PENDING → IN_PROGRESS → COMPLETED
+
+    3. **Manual retry**:
+       - Use "Retry Delivery" button if available
+       - API endpoint: `/api/v1/lsps1/retry_delivery`
+
+    4. **Failed delivery**:
+       - Contact LSP support with Order ID
+       - Refund may be available if delivery cannot complete
+  </Accordion>
+</AccordionGroup>
+
+### Trading & Swaps
+
+<AccordionGroup>
+  <Accordion title="Swap failed or timed out" icon="clock-rotate-left">
+    **Symptoms**: Swap doesn't complete or expires.
+
+    **Solutions**:
+    1. **Quote expiration**: RFQ quotes are valid for limited time (typically 60-300 seconds)
+       - Complete swap before expiration
+       - Request new quote if expired
+
+    2. **Rate changed**: Market rate changed significantly
+       - Accept new rate when prompted
+       - Or cancel and get refund
+
+    3. **Payment routing failed**: Lightning payment couldn't find a route
+       - Try smaller amount
+       - Open additional channels for more liquidity
+       - Wait and retry
+
+    4. **Swap order stuck**:
+       - Check order status: `/api/v1/swaps/orders/status`
+       - Contact support with Order ID for assistance
+  </Accordion>
+
+  <Accordion title="Unexpected swap price" icon="triangle-exclamation">
+    **Symptoms**: Final price different from expected.
+
+    **Solutions**:
+    1. **Check quote details**: Review the RFQ response carefully
+       - `from_amount` vs `to_amount`
+       - Applied fees
+       - Precision of assets
+
+    2. **Fee structure**:
+       - Base fee + variable fee
+       - Fee asset and precision
+       - Total fee shown in quote
+
+    3. **Precision confusion**:
+       - BTC uses 11 decimals (millisats)
+       - USDT typically uses 6 decimals
+       - Check asset precision in glossary
+
+    4. **Slippage**:
+       - For market orders, price can move slightly
+       - Use limit orders if you need exact price
+  </Accordion>
+</AccordionGroup>
+
+## API & Integration Issues
+
+### Authentication & Connection
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized errors" icon="ban">
+    **Symptoms**: API returns 401 status code.
+
+    **Solutions**:
+    1. **Bearer token**: Ensure you're sending authentication token correctly
+       ```http
+       Authorization: Bearer YOUR_TOKEN_HERE
+       ```
+
+    2. **Token expiration**: Tokens may expire - obtain a new one
+
+    3. **Incorrect endpoint**: Verify you're using the correct API base URL
+       - Staging: `https://api.staging.kaleidoswap.com/api/v1`
+       - Production: `https://api.kaleidoswap.com/api/v1`
+  </Accordion>
+
+  <Accordion title="422 Validation errors" icon="circle-exclamation">
+    **Symptoms**: API returns 422 with validation errors.
+
+    **Solutions**:
+    1. **Check request body**: Ensure all required fields are present
+    2. **Data types**: Verify integers, strings, booleans are correct type
+    3. **Field validation**: Check min/max values, formats
+    4. **Read error details**: The response includes which fields failed validation
+
+    Example error response:
+    ```json
+    {
+      "detail": [
+        {
+          "loc": ["body", "from_amount"],
+          "msg": "field required",
+          "type": "value_error.missing"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="CORS errors in browser" icon="globe">
+    **Symptoms**: Browser blocks API requests with CORS error.
+
+    **Solutions**:
+    1. **Use backend**: Make API calls from your backend, not frontend
+       - CORS is disabled for security on most endpoints
+       - Browser-based apps need a backend proxy
+
+    2. **Development workaround**:
+       - Use browser CORS plugin (development only)
+       - Configure your dev server as proxy
+
+    3. **Production**: Always use server-side API calls
+  </Accordion>
+</AccordionGroup>
+
+### RFQ & Order Issues
+
+<AccordionGroup>
+  <Accordion title="RFQ expired before use" icon="hourglass-end">
+    **Symptoms**: Using RFQ ID returns error about expiration.
+
+    **Solutions**:
+    1. **Check expires_at**: Quotes typically valid for 60-300 seconds
+    2. **Request new quote**: Call `/api/v1/market/quote` again
+    3. **Faster integration**: Minimize time between quote and order creation
+    4. **Use expiration time**: Build UI countdown showing time remaining
+  </Accordion>
+
+  <Accordion title="Order stuck in PENDING state" icon="spinner">
+    **Symptoms**: Order doesn't progress from PENDING_PAYMENT or other status.
+
+    **Solutions**:
+    1. **Payment required**: Check if you need to pay an invoice or send to an address
+    2. **Check payment status**:
+       ```bash
+       POST /api/v1/lsps1/get_order
+       {
+         "order_id": "your-order-id"
+       }
+       ```
+
+    3. **Automatic transitions**: Some states transition automatically
+       - PENDING_PAYMENT → PAID (after payment confirmed)
+       - CHANNEL_OPENING → COMPLETED (after channel opens)
+
+    4. **Timeouts**: Orders expire if not paid within time limit
+       - Check `expires_at` field
+       - Unpaid orders auto-expire and refund
+  </Accordion>
+</AccordionGroup>
+
+## SDK-Specific Issues
+
+### Python SDK
+
+See the [Python SDK Error Handling](/sdk/python/error-handling) guide for Python-specific troubleshooting.
+
+**Quick tips**:
+- Always use error handling with try/except blocks
+- Check `KaleidoSwapError` exception details
+- Enable debug logging for detailed request/response info
+- Verify Python version 3.8+ is installed
+
+### TypeScript SDK
+
+See the [TypeScript SDK Troubleshooting](/sdk/typescript/troubleshooting) guide for comprehensive TypeScript-specific solutions.
+
+**Quick tips**:
+- Check TypeScript version compatibility (4.5+)
+- Verify all peer dependencies are installed
+- Use proper type assertions for responses
+- Enable verbose logging in development
+
+## General Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Check Logs First" icon="file-lines">
+    Most issues can be diagnosed from log files. Enable debug logging when troubleshooting.
+  </Card>
+
+  <Card title="Verify Network" icon="network-wired">
+    Ensure you're on the correct network (Mainnet, Testnet, Signet, Regtest) for your use case.
+  </Card>
+
+  <Card title="Keep Updated" icon="arrow-up-from-bracket">
+    Use the latest version of Desktop App and SDKs for bug fixes and improvements.
+  </Card>
+
+  <Card title="Test on Testnet" icon="flask">
+    Always test new integrations on Testnet before using real funds on Mainnet.
+  </Card>
+</CardGroup>
+
+## Still Need Help?
+
+If these troubleshooting steps don't resolve your issue:
+
+<Steps>
+  <Step title="Check the FAQ">
+    Review the [Desktop App FAQ](/desktop-app/support/faq) for additional common questions.
+  </Step>
+
+  <Step title="Search Documentation">
+    Use the search bar to find specific topics in the documentation.
+  </Step>
+
+  <Step title="Check GitHub Issues">
+    See if others have reported similar issues on [GitHub](https://github.com/kaleidoswap).
+  </Step>
+
+  <Step title="Contact Support">
+    Reach out via:
+    - Email: [support@kaleidoswap.com](mailto:support@kaleidoswap.com)
+    - Telegram: [https://t.me/kaleidoswap](https://t.me/kaleidoswap)
+    - GitHub Issues: [Report a bug](https://github.com/kaleidoswap/desktop-app/issues/new)
+  </Step>
+</Steps>
+
+<Warning>
+  **Never share your private keys or mnemonic seed with anyone, including support staff.** Legitimate support will never ask for this information.
+</Warning>

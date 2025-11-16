@@ -1,0 +1,250 @@
+---
+title: Glossary
+description: Key terms and concepts for RGB, Lightning Network, and KaleidoSwap
+---
+
+## RGB Protocol
+
+<AccordionGroup>
+  <Accordion title="RGB Asset" icon="gem">
+    A digital asset created using the RGB protocol. RGB assets are client-validated smart contracts that leverage Bitcoin's security while maintaining scalability and privacy through off-chain validation.
+  </Accordion>
+
+  <Accordion title="RGB20" icon="coins">
+    The RGB protocol standard for fungible tokens, similar to ERC-20 on Ethereum. Used for creating and managing divisible assets like stablecoins or utility tokens.
+  </Accordion>
+
+  <Accordion title="RGB21" icon="image">
+    The RGB protocol standard for non-fungible tokens (NFTs), comparable to ERC-721. Used for unique digital assets and collectibles.
+  </Accordion>
+
+  <Accordion title="RGB25" icon="layer-group">
+    The RGB protocol standard for asset containers and complex smart contracts with multiple asset types.
+  </Accordion>
+
+  <Accordion title="Asset ID" icon="fingerprint">
+    A unique identifier for an RGB asset, typically in the format `rgb:xxxxxx-xxxxxx-xxxxxx`. Each asset has a globally unique ID derived from its genesis transaction.
+  </Accordion>
+
+  <Accordion title="Client-Side Validation" icon="shield-check">
+    A core RGB concept where asset state and transaction history are validated by clients rather than being stored on the blockchain. This provides enhanced privacy and scalability.
+  </Accordion>
+
+  <Accordion title="Consignment" icon="box">
+    A data package containing all necessary information to validate an RGB asset transfer, including proofs, history, and state transitions.
+  </Accordion>
+
+  <Accordion title="Schema" icon="sitemap">
+    The blueprint defining an RGB asset's properties, state transitions, and validation rules. Different schemas (RGB20, RGB21, RGB25) enable different asset types.
+  </Accordion>
+</AccordionGroup>
+
+## Lightning Network
+
+<AccordionGroup>
+  <Accordion title="Lightning Network" icon="bolt">
+    A Layer 2 payment protocol built on Bitcoin enabling instant, low-cost transactions through off-chain payment channels.
+  </Accordion>
+
+  <Accordion title="Payment Channel" icon="arrow-right-arrow-left">
+    A bidirectional payment channel between two Lightning nodes allowing multiple transactions without touching the blockchain until the channel is closed.
+  </Accordion>
+
+  <Accordion title="Channel Capacity" icon="gauge">
+    The total amount of Bitcoin (and potentially RGB assets) locked in a payment channel, determining the maximum transaction size.
+  </Accordion>
+
+  <Accordion title="Inbound Liquidity" icon="arrow-down">
+    The amount of funds others can send to you through a channel. Determined by your channel partner's balance.
+  </Accordion>
+
+  <Accordion title="Outbound Liquidity" icon="arrow-up">
+    The amount of funds you can send through a channel. Determined by your balance in the channel.
+  </Accordion>
+
+  <Accordion title="BOLT11" icon="receipt">
+    The standard Lightning Network invoice format for requesting payments. Contains payment amount, recipient, and other metadata.
+  </Accordion>
+
+  <Accordion title="Keysend" icon="paper-plane">
+    A Lightning payment method allowing spontaneous payments without requiring an invoice, used for pushing assets or funds.
+  </Accordion>
+
+  <Accordion title="HTLC (Hash Time-Locked Contract)" icon="clock">
+    A conditional payment mechanism ensuring atomic transactions across Lightning channels using cryptographic hashes and time locks.
+  </Accordion>
+
+  <Accordion title="Routing" icon="route">
+    The process of finding a path through the Lightning Network to deliver a payment from sender to receiver.
+  </Accordion>
+</AccordionGroup>
+
+## LSP (Lightning Service Provider)
+
+<AccordionGroup>
+  <Accordion title="LSP (Lightning Service Provider)" icon="server">
+    A service provider that offers Lightning infrastructure, liquidity, and channel management services to users.
+  </Accordion>
+
+  <Accordion title="LSPS (LSP Specification)" icon="file-contract">
+    A set of standardized protocols for Lightning Service Providers, defining how they interact with clients.
+  </Accordion>
+
+  <Accordion title="LSPS1" icon="hashtag">
+    The first LSP specification defining channel opening and liquidity services. KaleidoSwap implements LSPS1 for RGB-enabled channels.
+  </Accordion>
+
+  <Accordion title="Channel Request" icon="hand">
+    A request from a client to an LSP to open a Lightning channel with specific parameters like capacity and asset allocation.
+  </Accordion>
+
+  <Accordion title="JIT Channel" icon="zap">
+    Just-In-Time channel opening where an LSP opens a channel on-demand when a user receives a payment, providing instant onboarding.
+  </Accordion>
+</AccordionGroup>
+
+## KaleidoSwap Specific
+
+<AccordionGroup>
+  <Accordion title="RGB-LSP" icon="palette">
+    A Lightning Service Provider that supports RGB assets in payment channels, enabling instant RGB asset transfers over Lightning.
+  </Accordion>
+
+  <Accordion title="Atomic Swap" icon="atom">
+    A trustless exchange of one asset for another that either completes entirely or fails entirely, with no possibility of partial execution.
+  </Accordion>
+
+  <Accordion title="Swap Order" icon="rectangle-list">
+    An order to exchange one asset for another at a specified price, which can be settled on-chain or via Lightning.
+  </Accordion>
+
+  <Accordion title="RFQ (Request for Quote)" icon="comment-dollar">
+    A request to get a price quote for swapping between two assets. Quotes are valid for a limited time.
+  </Accordion>
+
+  <Accordion title="Swapstring" icon="link">
+    A compact string encoding all parameters of a swap transaction, used for coordinating atomic swaps between parties.
+  </Accordion>
+
+  <Accordion title="Settlement Type" icon="handshake">
+    The method used to finalize an asset transfer - either LIGHTNING (instant via payment channels) or ONCHAIN (via Bitcoin transactions).
+  </Accordion>
+
+  <Accordion title="Asset Delivery" icon="truck">
+    The process of transferring RGB assets through Lightning channels using keysend after a channel is opened.
+  </Accordion>
+
+  <Accordion title="Rate Decision" icon="scale-balanced">
+    When market rates change significantly during order processing, users can choose to accept the new rate or request a refund.
+  </Accordion>
+</AccordionGroup>
+
+## Bitcoin & On-Chain
+
+<AccordionGroup>
+  <Accordion title="Satoshi (sat)" icon="bitcoin-sign">
+    The smallest unit of Bitcoin, equal to 0.00000001 BTC. All amounts in KaleidoSwap are denominated in satoshis.
+  </Accordion>
+
+  <Accordion title="Millisatoshi (msat)" icon="coins">
+    One-thousandth of a satoshi, used for precise calculations in Lightning Network payments (not enforceable on-chain).
+  </Accordion>
+
+  <Accordion title="UTXO (Unspent Transaction Output)" icon="cube">
+    A discrete chunk of Bitcoin that can be spent. RGB assets are anchored to specific UTXOs on the Bitcoin blockchain.
+  </Accordion>
+
+  <Accordion title="Confirmation" icon="check-double">
+    When a Bitcoin transaction is included in a block on the blockchain. More confirmations mean higher security against reorganization.
+  </Accordion>
+
+  <Accordion title="Mempool" icon="inbox">
+    The pool of unconfirmed Bitcoin transactions waiting to be included in the next block.
+  </Accordion>
+
+  <Accordion title="Fee Rate" icon="gauge-high">
+    The cost per byte to include a transaction in a Bitcoin block, typically measured in satoshis per virtual byte (sat/vB).
+  </Accordion>
+
+  <Accordion title="Testnet" icon="flask">
+    A separate Bitcoin network used for testing, where coins have no real value.
+  </Accordion>
+
+  <Accordion title="Signet" icon="pen-nib">
+    A newer test network with more predictable block times, used for development and testing.
+  </Accordion>
+
+  <Accordion title="Regtest" icon="wrench">
+    Regression test mode allowing developers to create local private Bitcoin networks for testing.
+  </Accordion>
+</AccordionGroup>
+
+## Wallet & Security
+
+<AccordionGroup>
+  <Accordion title="Mnemonic Seed" icon="key">
+    A 12 or 24-word phrase that can restore your entire wallet. Must be kept secure and private.
+  </Accordion>
+
+  <Accordion title="Public Key" icon="lock-open">
+    The public portion of a cryptographic key pair, safe to share. Used to receive payments and verify signatures.
+  </Accordion>
+
+  <Accordion title="Private Key" icon="lock">
+    The secret portion of a cryptographic key pair, never to be shared. Used to sign transactions and prove ownership.
+  </Accordion>
+
+  <Accordion title="Derivation Path" icon="code-branch">
+    A scheme for generating multiple keys from a single mnemonic seed in a deterministic way.
+  </Accordion>
+
+  <Accordion title="Watch-Only Wallet" icon="eye">
+    A wallet that can view balances and transactions but cannot sign or send transactions.
+  </Accordion>
+
+  <Accordion title="Channel Backup" icon="floppy-disk">
+    A backup file containing essential data to recover Lightning channel funds in case of data loss.
+  </Accordion>
+</AccordionGroup>
+
+## Trading & Market
+
+<AccordionGroup>
+  <Accordion title="Trading Pair" icon="scale-unbalanced">
+    A combination of two assets that can be traded against each other, e.g., BTC/USDT.
+  </Accordion>
+
+  <Accordion title="Base Asset" icon="b">
+    The first asset in a trading pair - what you're buying or selling.
+  </Accordion>
+
+  <Accordion title="Quote Asset" icon="q">
+    The second asset in a trading pair - what you're paying with or receiving.
+  </Accordion>
+
+  <Accordion title="Precision" icon="calculator">
+    The number of decimal places an asset supports. For example, USDT typically has 6 decimals of precision.
+  </Accordion>
+
+  <Accordion title="Maker" icon="user-tie">
+    The party providing liquidity by creating a swap offer that others can accept.
+  </Accordion>
+
+  <Accordion title="Taker" icon="user">
+    The party consuming liquidity by accepting an existing swap offer.
+  </Accordion>
+
+  <Accordion title="Slippage" icon="arrow-trend-down">
+    The difference between expected price and actual execution price, typically due to market movement or liquidity constraints.
+  </Accordion>
+
+  <Accordion title="Order Status" icon="list-check">
+    The current state of a swap order: OPEN, PENDING_PAYMENT, PAID, EXECUTING, FILLED, CANCELLED, EXPIRED, or FAILED.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Note>
+  This glossary is continuously updated. If you encounter unfamiliar terms not listed here, please let us know via our [support channels](/desktop-app/support/additional-resources).
+</Note>

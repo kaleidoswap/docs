@@ -1,0 +1,680 @@
+---
+title: Troubleshooting
+description: This guide helps you diagnose and resolve common issues when using the KaleidoSwap SDK.
+---
+
+## Common Issues
+
+### 1. "Asset not found" Errors
+
+**Problem:** Getting errors when trying to find assets by ticker or ID.
+
+**Symptoms:**
+```typescript
+const btc = assetMapper.findByTicker('BTC');
+// btc is undefined
+```
+
+**Solutions:**
+
+#### Check Available Assets
+```typescript
+// List all available assets
+const pairs = await client.pairList();
+const assetMapper = createAssetPairMapper(pairs);
+const allAssets = assetMapper.getAllAssets();
+
+console.log('Available assets:');
+allAssets.forEach(asset => {
+  console.log(`- ${asset.ticker} (${asset.asset_id})`);
+});
+```
+
+#### Case Sensitivity
+```typescript
+// ✅ Good: Use exact case
+const btc = assetMapper.findByTicker('BTC');
+
+// ❌ Bad: Wrong case
+const btc = assetMapper.findByTicker('btc'); // Returns undefined
+```
+
+#### Asset Availability
+```typescript
+// Check if asset is active
+const asset = assetMapper.findByTicker('BTC');
+if (asset && !asset.is_active) {
+  console.log('Asset found but not active for trading');
+}
+```
+
+### 2. "Invalid order size" Errors
+
+**Problem:** Order size validation fails with precision or limit errors.
+
+**Symptoms:**
+```
+Error: Amount 0.0001 BTC is below minimum order size of 0.001 BTC
+Error: Amount 10 BTC exceeds maximum order size of 1 BTC
+```
+
+**Solutions:**
+
+#### Check Order Limits
+```typescript
+const asset = assetMapper.findByTicker('BTC');
+const limits = precisionHandler.getOrderSizeLimits(asset);
+
+console.log(`${asset.ticker} order limits:`);
+console.log(`  Min: ${limits.minDecimal} ${asset.ticker}`);
+console.log(`  Max: ${limits.maxDecimal} ${asset.ticker}`);
+console.log(`  Precision: ${limits.precision} decimal places`);
+```
+
+#### Validate Before Trading
+```typescript
+function validateOrderSize(amount: number, ticker: string) {
+  const asset = assetMapper.findByTicker(ticker);
+  if (!asset) {
+    throw new Error(`Asset ${ticker} not found`);
+  }
+
+  const validation = precisionHandler.validateOrderSize(amount, asset);
+  if (!validation.valid) {
+    const limits = precisionHandler.getOrderSizeLimits(asset);
+    console.error(`Invalid order size: ${validation.error}`);
+    console.log(`Valid range: ${limits.minDecimal} - ${limits.maxDecimal} ${ticker}`);
+    return false;
+  }
+
+  return true;
+}
+
+// Usage
+if (validateOrderSize(0.001, 'BTC')) {
+  // Proceed with order
+}
+```
+
+### 3. Quote Expiration Issues
+
+**Problem:** Quotes expire before orders can be created.
+
+**Symptoms:**
+```
+Error: Quote expired
+Error: Invalid RFQ ID
+```
+
+**Solutions:**
+
+#### Check Quote Expiration
+```typescript
+function isQuoteValid(quote: any): boolean {
+  const expiresAt = new Date(quote.expires_at).getTime();
+  const now = Date.now();
+  const timeLeft = expiresAt - now;
+  
+  console.log(`Quote expires in ${Math.floor(timeLeft / 1000)} seconds`);
+  
+  return timeLeft > 0;
+}
+
+// Check before using quote
+if (isQuoteValid(quote)) {
+  const order = await client.createOrder({
+    rfq_id: quote.rfq_id,
+    // ... other parameters
+  });
+} else {
+  console.log('Quote expired, getting new quote...');
+  const newQuote = await client.quoteRequest(from, to, amount);
+}
+```
+
+#### Implement Quote Refresh
+```typescript
+class QuoteManager {
+  async getQuoteWithBuffer(from: string, to: string, amount: number) {
+    const quote = await client.quoteRequest(from, to, amount);
+    const expiresAt = new Date(quote.expires_at).getTime();
+    const now = Date.now();
+    const timeLeft = expiresAt - now;
+    
+    // Warn if quote expires soon
+    if (timeLeft < 30000) { // Less than 30 seconds
+      console.warn('Quote expires soon, consider getting a fresh quote');
+    }
+    
+    return quote;
+  }
+}
+```
+
+### 4. WebSocket Connection Issues
+
+**Problem:** WebSocket connections fail or disconnect frequently.
+
+**Symptoms:**
+```
+WebSocket connection failed
+Connection timeout
+Frequent reconnections
+```
+
+**Solutions:**
+
+#### Enable Debug Logging
+```typescript
+// Enable WebSocket debugging
+process.env.DEBUG_WS = 'true';
+
+const wsClient = new WebSocketClient({
+  baseUrl: 'wss://api.kaleidoswap.com/ws'
+});
+
+// Check connection state
+console.log('WebSocket state:', wsClient.getConnectionState());
+```
+
+#### Check Network Connectivity
+```typescript
+async function testConnectivity() {
+  try {
+    // Test HTTP first
+    const response = await fetch('https://api.kaleidoswap.com/api/v1/health');
+    console.log('HTTP connectivity: OK');
+    
+    // Test WebSocket
+    const wsClient = new WebSocketClient({
+      baseUrl: 'wss://api.kaleidoswap.com/ws',
+      pingTimeout: 15000 // Increase timeout
+    });
+    
+    await wsClient.connect();
+    console.log('WebSocket connectivity: OK');
+    await wsClient.disconnect();
+    
+  } catch (error) {
+    console.error('Connectivity test failed:', error);
+  }
+}
+```
+
+#### Implement Fallback Strategy
+```typescript
+class RobustQuoteService {
+  async getQuote(from: string, to: string, amount: number) {
+    try {
+      // Try WebSocket first
+      return await client.quoteRequestWS(from, to, amount);
+    } catch (wsError) {
+      console.log('WebSocket failed, falling back to HTTP');
+      
+      try {
+        return await client.quoteRequest(from, to, amount);
+      } catch (httpError) {
+        console.error('Both WebSocket and HTTP failed');
+        throw httpError;
+      }
+    }
+  }
+}
+```
+
+### 5. Rate Limiting Errors
+
+**Problem:** Hitting API rate limits with 429 errors.
+
+**Symptoms:**
+```
+Error: Rate limit exceeded
+HTTP 429 Too Many Requests
+```
+
+**Solutions:**
+
+#### Implement Client-Side Rate Limiting
+```typescript
+class RateLimitedClient {
+  private lastRequest = 0;
+  private minInterval = 1000; // 1 second between requests
+
+  async makeRequest<T>(requestFn: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequest;
+    
+    if (timeSinceLastRequest < this.minInterval) {
+      const waitTime = this.minInterval - timeSinceLastRequest;
+      console.log(`Rate limiting: waiting ${waitTime}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    this.lastRequest = Date.now();
+    return await requestFn();
+  }
+}
+
+// Usage
+const rateLimitedClient = new RateLimitedClient();
+
+const quote = await rateLimitedClient.makeRequest(() =>
+  client.quoteRequest(from, to, amount)
+);
+```
+
+#### Use Built-in Retry Logic
+```typescript
+// The SDK automatically retries rate-limited requests
+const client = new KaleidoClient({
+  baseUrl: 'https://api.kaleidoswap.com/api/v1',
+  retryConfig: {
+    maxRetries: 5,
+    initialDelay: 2000,
+    maxDelay: 30000,
+    exponentialBase: 2,
+    jitter: true
+  }
+});
+```
+
+### 6. Network Timeout Issues
+
+**Problem:** Requests timeout or fail due to network issues.
+
+**Symptoms:**
+```
+Error: Network timeout
+Error: Connection refused
+Error: DNS resolution failed
+```
+
+**Solutions:**
+
+#### Increase Timeout Values
+```typescript
+// For HTTP requests, the SDK uses a 10-second timeout by default
+// You can implement custom timeout handling:
+
+async function requestWithTimeout<T>(
+  requestFn: () => Promise<T>,
+  timeoutMs: number = 30000
+): Promise<T> {
+  return Promise.race([
+    requestFn(),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+    )
+  ]);
+}
+
+// Usage
+const quote = await requestWithTimeout(
+  () => client.quoteRequest(from, to, amount),
+  30000 // 30 seconds
+);
+```
+
+#### Implement Retry with Exponential Backoff
+```typescript
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+      console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+```
+
+### 7. Precision and Rounding Errors
+
+**Problem:** Incorrect amount calculations due to floating-point precision.
+
+**Symptoms:**
+```
+Expected: 100000000 satoshis
+Actual: 99999999 satoshis
+```
+
+**Solutions:**
+
+#### Always Use PrecisionHandler
+```typescript
+// ✅ Good: Use precision handler
+const precisionHandler = createPrecisionHandler(assets);
+const atomicAmount = precisionHandler.toAtomicAmount(0.001, 'btc_asset_id');
+
+// ❌ Bad: Manual calculation
+const atomicAmount = Math.floor(0.001 * 100000000); // Prone to floating-point errors
+```
+
+#### Validate Conversions
+```typescript
+function validateConversion(decimalAmount: number, assetId: string) {
+  const atomicAmount = precisionHandler.toAtomicAmount(decimalAmount, assetId);
+  const backToDecimal = precisionHandler.toDecimalAmount(atomicAmount, assetId);
+  
+  const difference = Math.abs(decimalAmount - backToDecimal);
+  const tolerance = Math.pow(10, -precisionHandler.getPrecision(assetId));
+  
+  if (difference > tolerance) {
+    console.warn(`Precision loss detected: ${decimalAmount} -> ${backToDecimal}`);
+  }
+  
+  return atomicAmount;
+}
+```
+
+## Debugging Tools
+
+### 1. Enable Debug Logging
+
+```typescript
+// Enable all debug logging
+process.env.DEBUG = '*';
+
+// Enable specific debug logging
+process.env.DEBUG_WS = 'true'; // WebSocket debugging
+process.env.DEBUG_HTTP = 'true'; // HTTP debugging (if implemented)
+```
+
+### 2. Network Inspection
+
+```typescript
+// Log all HTTP requests and responses
+class DebuggingClient extends KaleidoClient {
+  async get<T>(endpoint: string): Promise<T> {
+    console.log(`GET ${endpoint}`);
+    const start = Date.now();
+    
+    try {
+      const result = await super.get<T>(endpoint);
+      console.log(`GET ${endpoint} - ${Date.now() - start}ms - Success`);
+      return result;
+    } catch (error) {
+      console.log(`GET ${endpoint} - ${Date.now() - start}ms - Error:`, error);
+      throw error;
+    }
+  }
+
+  async post<T>(endpoint: string, data: any): Promise<T> {
+    console.log(`POST ${endpoint}`, JSON.stringify(data, null, 2));
+    const start = Date.now();
+    
+    try {
+      const result = await super.post<T>(endpoint, data);
+      console.log(`POST ${endpoint} - ${Date.now() - start}ms - Success`);
+      return result;
+    } catch (error) {
+      console.log(`POST ${endpoint} - ${Date.now() - start}ms - Error:`, error);
+      throw error;
+    }
+  }
+}
+```
+
+### 3. Health Check Function
+
+```typescript
+async function healthCheck() {
+  const client = new KaleidoClient({
+    baseUrl: 'https://api.kaleidoswap.com/api/v1'
+  });
+
+  const checks = {
+    apiConnection: false,
+    assetList: false,
+    pairList: false,
+    webSocket: false
+  };
+
+  try {
+    // Test basic API connection
+    await client.assetList();
+    checks.apiConnection = true;
+    checks.assetList = true;
+    console.log('✅ API connection: OK');
+  } catch (error) {
+    console.log('❌ API connection failed:', error.message);
+  }
+
+  try {
+    // Test pair list
+    await client.pairList();
+    checks.pairList = true;
+    console.log('✅ Pair list: OK');
+  } catch (error) {
+    console.log('❌ Pair list failed:', error.message);
+  }
+
+  try {
+    // Test WebSocket
+    const wsClient = new WebSocketClient({
+      baseUrl: 'wss://api.kaleidoswap.com/ws'
+    });
+    
+    await wsClient.connect();
+    checks.webSocket = true;
+    console.log('✅ WebSocket: OK');
+    await wsClient.disconnect();
+  } catch (error) {
+    console.log('❌ WebSocket failed:', error.message);
+  }
+
+  return checks;
+}
+
+// Run health check
+healthCheck().then(results => {
+  console.log('\nHealth Check Results:', results);
+});
+```
+
+## Environment-Specific Issues
+
+### 1. Development vs Production
+
+```typescript
+// Environment-specific configuration
+const getConfig = (): KaleidoConfig => {
+  const env = process.env.NODE_ENV || 'development';
+  
+  switch (env) {
+    case 'production':
+      return {
+        baseUrl: 'https://api.kaleidoswap.com/api/v1',
+        wsUrl: 'wss://api.kaleidoswap.com/ws',
+        retryConfig: {
+          maxRetries: 5,
+          initialDelay: 1000
+        }
+      };
+    
+    case 'staging':
+      return {
+        baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
+        wsUrl: 'wss://api.staging.kaleidoswap.com/ws',
+        retryConfig: {
+          maxRetries: 3,
+          initialDelay: 500
+        }
+      };
+    
+    default: // development
+      return {
+        baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
+        wsUrl: 'wss://api.staging.kaleidoswap.com/ws',
+        retryConfig: {
+          maxRetries: 2,
+          initialDelay: 100
+        }
+      };
+  }
+};
+```
+
+### 2. Browser vs Node.js Issues
+
+```typescript
+// Check environment and adjust accordingly
+const isNode = typeof window === 'undefined';
+const isBrowser = typeof window !== 'undefined';
+
+if (isBrowser) {
+  // Browser-specific considerations
+  console.log('Running in browser environment');
+  
+  // CORS might be an issue
+  // WebSocket connections might need different handling
+} else {
+  // Node.js specific considerations
+  console.log('Running in Node.js environment');
+  
+  // Can use all Node.js features
+  // Environment variables available
+}
+```
+
+## Performance Issues
+
+### 1. Slow Response Times
+
+**Diagnosis:**
+```typescript
+// Measure request times
+async function measureRequestTime<T>(
+  name: string,
+  requestFn: () => Promise<T>
+): Promise<T> {
+  const start = Date.now();
+  
+  try {
+    const result = await requestFn();
+    const duration = Date.now() - start;
+    console.log(`${name} completed in ${duration}ms`);
+    return result;
+  } catch (error) {
+    const duration = Date.now() - start;
+    console.log(`${name} failed after ${duration}ms:`, error.message);
+    throw error;
+  }
+}
+
+// Usage
+const quote = await measureRequestTime(
+  'Quote Request',
+  () => client.quoteRequest(from, to, amount)
+);
+```
+
+**Solutions:**
+- Use WebSocket for real-time data
+- Implement caching for frequently accessed data
+- Use batch operations when possible
+- Consider connection pooling
+
+### 2. Memory Leaks
+
+**Diagnosis:**
+```typescript
+// Monitor memory usage
+function logMemoryUsage() {
+  if (typeof process !== 'undefined' && process.memoryUsage) {
+    const usage = process.memoryUsage();
+    console.log('Memory usage:', {
+      rss: Math.round(usage.rss / 1024 / 1024) + 'MB',
+      heapTotal: Math.round(usage.heapTotal / 1024 / 1024) + 'MB',
+      heapUsed: Math.round(usage.heapUsed / 1024 / 1024) + 'MB'
+    });
+  }
+}
+
+// Call periodically
+setInterval(logMemoryUsage, 30000); // Every 30 seconds
+```
+
+**Solutions:**
+- Properly clean up WebSocket connections
+- Remove event listeners when done
+- Clear caches periodically
+- Avoid creating unnecessary client instances
+
+## Getting Help
+
+### 1. Collect Diagnostic Information
+
+```typescript
+function collectDiagnostics() {
+  const diagnostics = {
+    timestamp: new Date().toISOString(),
+    environment: {
+      nodeVersion: typeof process !== 'undefined' ? process.version : 'N/A',
+      platform: typeof process !== 'undefined' ? process.platform : 'browser',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'
+    },
+    sdkVersion: '0.1.0', // Replace with actual version
+    configuration: {
+      // Don't include sensitive data like API keys
+      hasApiKey: !!process.env.KALEIDO_API_KEY,
+      baseUrl: process.env.KALEIDO_API_URL || 'default'
+    }
+  };
+
+  return diagnostics;
+}
+
+// Include diagnostics when reporting issues
+console.log('Diagnostics:', JSON.stringify(collectDiagnostics(), null, 2));
+```
+
+### 2. Create Minimal Reproduction
+
+```typescript
+// Minimal example that reproduces the issue
+async function reproduceIssue() {
+  const client = new KaleidoClient({
+    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  });
+
+  try {
+    // Minimal steps to reproduce the problem
+    const pairs = await client.pairList();
+    console.log('Step 1: Got pairs');
+
+    const quote = await client.quoteRequest('asset1', 'asset2', 1000);
+    console.log('Step 2: Got quote');
+
+    // Issue occurs here...
+  } catch (error) {
+    console.error('Issue reproduced:', error);
+    console.log('Diagnostics:', collectDiagnostics());
+  }
+}
+```
+
+### 3. Support Channels
+
+- **GitHub Issues**: [Report bugs and feature requests](https://github.com/kaleidoswap/kaleidosdk/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/kaleidoswap/kaleidosdk/discussions)
+- **Documentation**: Check the [API Reference](./api-reference.md) and [Examples](./examples.md)
+- **Email Support**: support@kaleidoswap.com
+
+When reporting issues, please include:
+- SDK version
+- Environment details (Node.js version, browser, OS)
+- Minimal code example that reproduces the issue
+- Error messages and stack traces
+- Expected vs actual behavior

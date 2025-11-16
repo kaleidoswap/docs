@@ -1,0 +1,180 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "KaleidoSwap Documentation",
+  "logo": {
+    "dark": "/assets/logo-dark.svg",
+    "light": "/assets/logo-light.svg"
+  },
+  "favicon": "/assets/favicon.png",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@kaleidoswap.com"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://kaleidoswap.com"
+  },
+  "tabs": [
+    {
+      "name": "Desktop App",
+      "url": "desktop-app"
+    },
+    {
+      "name": "SDK",
+      "url": "sdk"
+    },
+    {
+      "name": "Web App (Soon)",
+      "url": "web-app/introduction"
+    },
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Download Desktop App",
+      "icon": "download",
+      "url": "https://github.com/kaleidoswap/desktop-app/releases"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/kaleidoswap"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "icon": "sparkles",
+      "pages": [
+        "whats-kaleidoswap/introduction",
+        "whats-kaleidoswap/quickstart",
+        "whats-kaleidoswap/key-features"
+      ]
+    },
+    {
+      "group": "Understanding KaleidoSwap",
+      "icon": "hashtag",
+      "pages": [
+        "whats-kaleidoswap/architecture",
+        "whats-kaleidoswap/background",
+        "whats-kaleidoswap/glossary",
+        "whats-kaleidoswap/troubleshooting"
+      ]
+    },
+    {
+      "group": "Tutorial: First Steps",
+      "icon": "rocket",
+      "pages": [
+        "desktop-app/getting-started/introduction",
+        "desktop-app/getting-started/installation",
+        "desktop-app/getting-started/verify-binaries",
+        "desktop-app/wallet/creating-wallet",
+        "desktop-app/wallet/unlocking-wallet",
+        "desktop-app/trading/asset-swaps"
+      ]
+    },
+    {
+      "group": "How-To: Wallet Operations",
+      "icon": "wallet",
+      "pages": [
+        "desktop-app/wallet/initializing-mnemonic",
+        "desktop-app/wallet/deposits",
+        "desktop-app/wallet/withdrawals"
+      ]
+    },
+    {
+      "group": "How-To: Channel Management",
+      "icon": "git-branch",
+      "pages": [
+        "desktop-app/channels/opening-channel",
+        "desktop-app/channels/order-new-channel",
+        "desktop-app/channels/channel-backups"
+      ]
+    },
+    {
+      "group": "How-To: Configuration",
+      "icon": "sliders",
+      "pages": [
+        "desktop-app/getting-started/node-hosting",
+        "desktop-app/support/settings"
+      ]
+    },
+    {
+      "group": "Reference",
+      "icon": "life-buoy",
+      "pages": [
+        "desktop-app/support/faq"
+      ]
+    },
+    {
+      "group": "SDK Overview",
+      "icon": "book-open",
+      "pages": [
+        "sdk/introduction"
+      ]
+    },
+    {
+      "group": "Python SDK",
+      "icon": "python",
+      "pages": [
+        "sdk/python/index",
+        "sdk/python/getting-started",
+        "sdk/python/examples",
+        "sdk/python/api-reference",
+        "sdk/python/types",
+        "sdk/python/websocket",
+        "sdk/python/error-handling",
+        "sdk/python/utilities"
+      ]
+    },
+    {
+      "group": "TypeScript SDK",
+      "icon": "js",
+      "pages": [
+        "sdk/typescript/index",
+        "sdk/typescript/getting-started",
+        "sdk/typescript/examples",
+        "sdk/typescript/api-reference",
+        "sdk/typescript/types",
+        "sdk/typescript/websocket",
+        "sdk/typescript/error-handling",
+        "sdk/typescript/utilities",
+        "sdk/typescript/best-practices",
+        "sdk/typescript/troubleshooting"
+      ]
+    }
+  ],
+  "api": {
+    "baseUrl": "https://api.staging.kaleidoswap.com/api/v1",
+    "auth": {
+      "method": "bearer"
+    },
+    "playground": {
+      "mode": "show"
+    }
+  },
+  "footerSocials": {
+    "twitter": "https://twitter.com/kaleidoswap",
+    "github": "https://github.com/kaleidoswap",
+    "telegram": "https://t.me/kaleidoswap"
+  },
+  "analytics": {
+    "ga4": {
+      "measurementId": "G-XXXXXXXXXX"
+    }
+  }
+}

@@ -1,0 +1,449 @@
+---
+title: Key Features
+description: Core capabilities and features of KaleidoSwap
+---
+
+## Core Capabilities
+
+<CardGroup cols={2}>
+  <Card title="RGB Lightning Node Management" icon="server">
+    Run your own RGB Lightning node or connect to existing ones
+  </Card>
+
+  <Card title="RGB Asset Trading" icon="coins">
+    Trade RGB20 assets instantly on the Lightning Network
+  </Card>
+
+  <Card title="Lightning Integration" icon="bolt">
+    Fast, low-cost transactions through payment channels
+  </Card>
+
+  <Card title="Security First" icon="shield-check">
+    Non-custodial architecture with encrypted backups
+  </Card>
+</CardGroup>
+
+---
+
+## 🚀 RGB Lightning Node Management
+
+### Full Node Control
+
+<Tabs>
+  <Tab title="Run Your Own Node">
+    **Self-Hosted RGB Lightning Node**
+
+    - Full control over your node
+    - Complete privacy for your transactions
+    - Customizable configuration
+    - Direct P2P connections
+
+    ```bash
+    # Start your RGB Lightning node
+    kaleidoswap-node start
+    ```
+  </Tab>
+
+  <Tab title="Connect to Existing Node">
+    **Remote Node Connection**
+
+    - Connect to any RGB Lightning node
+    - Access from multiple devices
+    - Professional node hosting
+    - Managed infrastructure
+
+    Supported connection methods:
+    - REST API
+    - gRPC
+    - Websocket
+  </Tab>
+</Tabs>
+
+### Node Features
+
+<AccordionGroup>
+  <Accordion title="Channel Management" icon="network-wired">
+    - Open/close Lightning channels
+    - Monitor channel states
+    - Rebalance liquidity
+    - Set channel policies
+  </Accordion>
+
+  <Accordion title="Asset Allocation" icon="layer-group">
+    - Allocate RGB assets to channels
+    - Multi-asset channel support
+    - Asset-specific routing
+    - Balance tracking per asset
+  </Accordion>
+
+  <Accordion title="Automated Backups" icon="cloud-arrow-up">
+    - Encrypted channel backups
+    - Automatic backup scheduling
+    - Cloud or local storage
+    - One-click restore
+  </Accordion>
+
+  <Accordion title="Monitoring & Alerts" icon="bell">
+    - Real-time node monitoring
+    - Channel status alerts
+    - Payment notifications
+    - Performance metrics
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 💱 RGB Asset Trading
+
+### Atomic Swaps
+
+Execute trustless, instant asset swaps without intermediaries.
+
+**Supported Swap Types**:
+
+<CardGroup cols={3}>
+  <Card title="Lightning to Lightning" icon="bolt">
+    **Instant RGB Asset Swaps**
+
+    Swap RGB assets directly through Lightning channels
+
+    - USDT ↔ BTC
+    - XAUT ↔ BTC
+    - Any RGB20 asset pairs
+  </Card>
+
+  <Card title="On-Chain to Lightning" icon="arrow-right-arrow-left">
+    **Move Assets to Lightning**
+
+    Transfer on-chain assets to Lightning channels
+
+    - Instant liquidity
+    - Lower future transaction costs
+    - Enable fast trading
+  </Card>
+
+  <Card title="Lightning to On-Chain" icon="bitcoin">
+    **Settle to Base Layer**
+
+    Move assets from Lightning back to Bitcoin blockchain
+
+    - Final settlement
+    - Cold storage transfer
+    - Long-term holding
+  </Card>
+</CardGroup>
+
+### Trading Features
+
+<Steps>
+  <Step title="Real-Time Quotes">
+    Get live market rates for asset pairs with price impact calculations
+  </Step>
+
+  <Step title="Slippage Protection">
+    Configure maximum acceptable slippage for trades
+  </Step>
+
+  <Step title="Order History">
+    Track all your swaps with detailed execution data
+  </Step>
+
+  <Step title="Multiple LSP Support">
+    Connect to multiple liquidity providers for best rates
+  </Step>
+</Steps>
+
+### Supported Assets
+
+| Asset | Ticker | Type | Precision |
+|-------|--------|------|-----------|
+| Tether USD | USDT | RGB20 | 6 decimals |
+| Tether Gold | XAUT | RGB20 | 9 decimals |
+| Tether Silver | XAG | RGB20 | 9 decimals |
+| Bitcoin | BTC | Native | 8 decimals |
+| *More assets coming soon* | | | |
+
+<Note>
+  Asset availability depends on connected LSP. Different LSPs may support different asset sets.
+</Note>
+
+---
+
+## ⚡ Lightning Network Integration
+
+### Fast & Low-Cost Transactions
+
+<CardGroup cols={2}>
+  <Card title="Instant Settlement" icon="bolt-lightning">
+    **Millisecond Finality**
+
+    - Transactions complete in less than 1 second
+    - No blockchain confirmation wait
+    - Immediate balance updates
+  </Card>
+
+  <Card title="Minimal Fees" icon="coins">
+    **Low Transaction Costs**
+
+    - Fees measured in satoshis
+    - Fraction of on-chain costs
+    - Economical for small amounts
+  </Card>
+
+  <Card title="High Throughput" icon="gauge-high">
+    **Unlimited Scalability**
+
+    - Millions of TPS possible
+    - No blockchain bottleneck
+    - Instant multi-hop routing
+  </Card>
+
+  <Card title="Privacy Enhanced" icon="user-shield">
+    **Increased Privacy**
+
+    - Off-chain transactions
+    - Onion routing
+    - Minimal blockchain footprint
+  </Card>
+</CardGroup>
+
+### Channel Operations
+
+#### Opening Channels
+
+```
+┌─────────────────────────────────────────────┐
+│  1. Select LSP or Peer                      │
+│  2. Choose Channel Capacity                 │
+│  3. Allocate RGB Assets (optional)          │
+│  4. Set Channel Parameters                  │
+│  5. Confirm and Open                        │
+└─────────────────────────────────────────────┘
+```
+
+**Channel Options**:
+- **Public Channels**: Participate in routing, earn fees
+- **Private Channels**: Direct payments only, more privacy
+- **Anchor Channels**: Use anchor outputs for security
+- **Zero Reserve**: Spend full channel capacity
+
+#### Managing Liquidity
+
+<Tabs>
+  <Tab title="Inbound Liquidity">
+    **Receive Payments**
+
+    Get inbound liquidity from LSPs:
+    - Order channels with inbound capacity
+    - Submarine swaps
+    - Lightning Service Provider services
+  </Tab>
+
+  <Tab title="Outbound Liquidity">
+    **Send Payments**
+
+    Ensure outbound capacity:
+    - Fund channels with on-chain deposit
+    - Receive payments to build inbound
+    - Channel rebalancing services
+  </Tab>
+
+  <Tab title="Circular Rebalancing">
+    **Optimize Channels**
+
+    Balance channel liquidity:
+    - Pay yourself through different route
+    - Maintain optimal channel states
+    - Automated rebalancing bots
+  </Tab>
+</Tabs>
+
+---
+
+## 🔒 Security Features
+
+### Non-Custodial Architecture
+
+**Your Keys, Your Control**:
+
+<Check>
+  ✓ Private keys never leave your device
+</Check>
+<Check>
+  ✓ No third-party access to funds
+</Check>
+<Check>
+  ✓ Complete control over transactions
+</Check>
+<Check>
+  ✓ Trustless trading protocol
+</Check>
+
+### Secure Key Management
+
+```
+┌─────────────────────────────────────────┐
+│  Encryption Layer                       │
+│  ┌───────────────────────────────────┐  │
+│  │  Hardware Wallet Support (Soon)   │  │
+│  │  - Ledger                         │  │
+│  │  - Trezor                         │  │
+│  └───────────────────────────────────┘  │
+│  ┌───────────────────────────────────┐  │
+│  │  Software Wallet                  │  │
+│  │  - AES-256 Encryption            │  │
+│  │  - Password Protection            │  │
+│  │  - Mnemonic Backup               │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+### Channel Backups
+
+<Steps>
+  <Step title="Automatic Backups">
+    Channels are automatically backed up after every state change
+  </Step>
+
+  <Step title="Encrypted Storage">
+    Backups are encrypted with your password before storage
+  </Step>
+
+  <Step title="Multiple Locations">
+    Save backups locally and to cloud storage for redundancy
+  </Step>
+
+  <Step title="Easy Restore">
+    Restore channels with mnemonic phrase + backup file
+  </Step>
+</Steps>
+
+### Security Best Practices
+
+<Warning>
+  **Important Security Tips**:
+  - Always verify binary signatures before installation
+  - Store your mnemonic phrase securely offline
+  - Use strong, unique passwords
+  - Enable automatic backups
+  - Keep your software updated
+</Warning>
+
+---
+
+## 🎯 Additional Features
+
+### User Interface
+
+<CardGroup cols={2}>
+  <Card title="Intuitive Design" icon="paintbrush">
+    Clean, modern interface designed for both beginners and power users
+  </Card>
+
+  <Card title="Dark Mode" icon="moon">
+    Easy on the eyes with beautiful dark theme support
+  </Card>
+
+  <Card title="Multi-Platform" icon="desktop">
+    Available for macOS, Windows, and Linux
+  </Card>
+
+  <Card title="Real-Time Updates" icon="arrows-rotate">
+    Live balance updates, market data, and notifications
+  </Card>
+</CardGroup>
+
+### Developer Tools
+
+For developers building on KaleidoSwap:
+
+<Tabs>
+  <Tab title="Python SDK">
+    ```python
+    from kaleidoswap_sdk import KaleidoClient
+
+    client = KaleidoClient(...)
+    quote = await client.get_quote("BTC", "USDT", 100000)
+    ```
+
+    [Explore Python SDK →](/sdk/python/index)
+  </Tab>
+
+  <Tab title="TypeScript SDK">
+    ```typescript
+    import { KaleidoClient } from '@kaleidoswap/sdk';
+
+    const client = new KaleidoClient({...});
+    const quote = await client.quoteRequest({...});
+    ```
+
+    [Explore TypeScript SDK →](/sdk/typescript/index)
+  </Tab>
+
+  <Tab title="REST API">
+    ```bash
+    curl -X POST https://api.kaleidoswap.com/api/v1/quotes \
+      -d '{"from_asset": "BTC", "to_asset": "USDT"}'
+    ```
+
+    [Explore API Reference →](/api-reference/introduction)
+  </Tab>
+</Tabs>
+
+### Advanced Features
+
+<AccordionGroup>
+  <Accordion title="WebSocket Streaming" icon="bolt">
+    Real-time market data and quote updates via WebSocket connections
+  </Accordion>
+
+  <Accordion title="Multi-Asset Channels" icon="layer-group">
+    Allocate multiple RGB assets to a single Lightning channel
+  </Accordion>
+
+  <Accordion title="Custom Fee Policies" icon="sliders">
+    Set your own routing fees for public channels
+  </Accordion>
+
+  <Accordion title="Payment Routing" icon="route">
+    Automatic optimal path finding for Lightning payments
+  </Accordion>
+
+  <Accordion title="Invoice Management" icon="file-invoice">
+    Create, track, and manage Lightning invoices
+  </Accordion>
+
+  <Accordion title="Transaction History" icon="clock-rotate-left">
+    Complete history of all swaps, payments, and channel operations
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Coming Soon
+
+<Info>
+  **Upcoming Features**:
+  - Web application interface
+  - Mobile app (iOS & Android)
+  - Hardware wallet integration
+  - Advanced trading features (limit orders, DCA)
+  - Multi-signature wallet support
+  - More RGB asset types (RGB21 NFTs, RGB25 UDAs)
+</Info>
+
+## Get Started
+
+<CardGroup cols={3}>
+  <Card title="Download Desktop App" icon="download" href="/desktop-app/getting-started/installation">
+    Install KaleidoSwap and start trading
+  </Card>
+
+  <Card title="Explore Documentation" icon="book" href="/desktop-app/getting-started/introduction">
+    Learn how to use all features
+  </Card>
+
+  <Card title="Join Community" icon="users" href="https://t.me/kaleidoswap">
+    Get help and connect with users
+  </Card>
+</CardGroup>

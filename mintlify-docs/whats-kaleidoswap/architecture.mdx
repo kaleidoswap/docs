@@ -1,0 +1,309 @@
+---
+title: Architecture Overview
+description: Understanding KaleidoSwap's decentralized architecture
+---
+
+KaleidoSwap operates on a decentralized architecture that combines the power of RGB Protocol with the scalability of the Lightning Network.
+
+## Core Components
+
+<CardGroup cols={2}>
+  <Card title="RGB Protocol" icon="layer-group">
+    Client-validated smart contracts on Bitcoin enabling scalable and private asset issuance
+  </Card>
+
+  <Card title="Lightning Network" icon="bolt">
+    Second-layer payment protocol providing instant, low-cost transactions
+  </Card>
+
+  <Card title="LSP Integration" icon="server">
+    Lightning Service Providers offering liquidity and channel management services
+  </Card>
+
+  <Card title="Desktop Client" icon="desktop">
+    Secure, user-friendly interface with full key control
+  </Card>
+</CardGroup>
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   KaleidoSwap Desktop App                │
+│                  (User Interface Layer)                  │
+└────────────────────┬────────────────────────────────────┘
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+┌───────▼──────────┐    ┌────────▼─────────┐
+│  RGB Lightning   │    │  Lightning       │
+│  Node            │◄───┤  Service         │
+│                  │    │  Provider (LSP)  │
+└────────┬─────────┘    └──────────────────┘
+         │
+┌────────▼─────────────────────────┐
+│      Bitcoin Network             │
+│  (Base Layer / Settlement)       │
+└──────────────────────────────────┘
+```
+
+## RGB Protocol
+
+### What is RGB?
+
+RGB is a scalable and confidential smart contract system for Bitcoin. It uses client-side validation and single-use seals to enable complex smart contract functionality while maintaining Bitcoin's security guarantees.
+
+**Key Features**:
+- **Client-Side Validation**: Contract state is validated by the recipient, not globally
+- **Scalability**: No blockchain bloat - contracts are off-chain
+- **Privacy**: Transaction details are only known to involved parties
+- **Bitcoin Security**: Anchored to Bitcoin blockchain for security
+
+### RGB Asset Types
+
+<Tabs>
+  <Tab title="RGB20 - Fungible Assets">
+    **RGB20** tokens are fungible assets similar to ERC-20 on Ethereum.
+
+    **Use Cases**:
+    - Stablecoins (USDT, USDC)
+    - Tokenized commodities
+    - Loyalty points
+    - Currency tokens
+
+    **Properties**:
+    - Divisible
+    - Interchangeable
+    - Fixed or variable supply
+  </Tab>
+
+  <Tab title="RGB21 - NFTs">
+    **RGB21** tokens are non-fungible, unique digital assets.
+
+    **Use Cases**:
+    - Digital art
+    - Collectibles
+    - Identity tokens
+    - Certificates
+
+    **Properties**:
+    - Unique
+    - Non-divisible
+    - Provably scarce
+  </Tab>
+
+  <Tab title="RGB25 - Unique Digital Assets">
+    **RGB25** provides more complex asset functionality.
+
+    **Use Cases**:
+    - Complex financial instruments
+    - Multi-asset bundles
+    - Advanced DeFi primitives
+
+    **Properties**:
+    - Programmable
+    - Composable
+    - Advanced state management
+  </Tab>
+</Tabs>
+
+## Lightning Network Integration
+
+### Why Lightning?
+
+The Lightning Network provides the scalability layer for instant, low-cost RGB asset transfers.
+
+**Benefits**:
+- ⚡ **Instant Settlement**: Transactions complete in milliseconds
+- 💰 **Low Fees**: Fraction of on-chain costs
+- 🔒 **Security**: Backed by Bitcoin's security model
+- 📈 **Scalability**: Millions of transactions per second
+
+### How It Works
+
+1. **Payment Channels**: Users open bidirectional payment channels
+2. **Off-Chain Transactions**: Multiple transfers happen off-chain
+3. **Channel State**: Only final state is settled on Bitcoin blockchain
+4. **Routing**: Payments route through network of channels
+
+### RGB on Lightning
+
+KaleidoSwap extends Lightning Network to support RGB assets:
+
+```
+┌────────────────────────────────┐
+│  Traditional Lightning         │
+│  (BTC only)                    │
+└────────┬───────────────────────┘
+         │
+         │ Extended with RGB
+         │
+┌────────▼───────────────────────┐
+│  RGB Lightning                 │
+│  (BTC + RGB Assets)            │
+│  - Transfer USDT instantly     │
+│  - Trade assets atomically     │
+│  - Multi-asset channels        │
+└────────────────────────────────┘
+```
+
+## Lightning Service Providers (LSPs)
+
+### What are LSPs?
+
+LSPs provide essential services to Lightning Network users:
+
+<AccordionGroup>
+  <Accordion title="Channel Liquidity">
+    LSPs open channels with users, providing inbound liquidity for receiving payments
+  </Accordion>
+
+  <Accordion title="Channel Management">
+    Automatic channel rebalancing, backup services, and monitoring
+  </Accordion>
+
+  <Accordion title="Routing Services">
+    Optimal payment routing through the Lightning Network
+  </Accordion>
+
+  <Accordion title="RGB Asset Support">
+    Specialized support for RGB asset transfers and atomic swaps
+  </Accordion>
+</AccordionGroup>
+
+### RGB LSPS1 Specification
+
+KaleidoSwap implements the RGB Lightning Service Provider Specification (RGB-LSPS1):
+
+- **Standardized Interface**: Common API for LSP interactions
+- **Asset Allocation**: Specify RGB assets when opening channels
+- **Swap Support**: Built-in atomic swap functionality
+- **Fee Transparency**: Clear fee structure for all operations
+
+## Desktop Client Architecture
+
+### Non-Custodial Design
+
+```
+┌─────────────────────────────────────┐
+│     User's Device                   │
+│  ┌───────────────────────────┐     │
+│  │  Desktop Application      │     │
+│  └─────────┬─────────────────┘     │
+│            │                        │
+│  ┌─────────▼─────────────────┐     │
+│  │  RGB Lightning Node        │     │
+│  │  - Manages keys locally    │     │
+│  │  - Controls channels       │     │
+│  │  - Validates contracts     │     │
+│  └────────────────────────────┘     │
+└─────────────────────────────────────┘
+```
+
+**Security Principles**:
+- 🔐 **Your Keys, Your Coins**: Private keys never leave your device
+- 🔒 **Encrypted Storage**: All sensitive data encrypted locally
+- 🛡️ **No Custody**: No third party can access your funds
+- ✅ **Client Validation**: You validate all RGB contracts
+
+### Component Layers
+
+1. **UI Layer**: React-based desktop interface
+2. **Business Logic**: State management and workflow orchestration
+3. **Node Interface**: Communication with RGB Lightning node
+4. **Network Layer**: P2P connections and LSP integration
+
+## Data Flow
+
+### Atomic Swap Process
+
+```
+User A (BTC)                KaleidoSwap                User B (USDT)
+     │                           │                            │
+     │  1. Request Quote         │                            │
+     ├──────────────────────────►│                            │
+     │                           │                            │
+     │  2. Quote Response        │                            │
+     │◄──────────────────────────┤                            │
+     │                           │                            │
+     │  3. Init Swap             │                            │
+     ├──────────────────────────►│  4. Create HTLC           │
+     │                           ├───────────────────────────►│
+     │                           │                            │
+     │                           │  5. Lock USDT             │
+     │  6. Lock BTC              │◄───────────────────────────┤
+     │◄──────────────────────────┤                            │
+     │                           │                            │
+     │  7. Reveal Secret         │                            │
+     ├──────────────────────────►│  8. Claim USDT            │
+     │                           ├───────────────────────────►│
+     │                           │                            │
+     │  9. Claim BTC             │ 10. Reveal Secret         │
+     │◄──────────────────────────┤◄───────────────────────────┤
+     │                           │                            │
+     ✓ Swap Complete             │              ✓ Swap Complete
+```
+
+## Security Model
+
+### Multi-Layer Security
+
+<Steps>
+  <Step title="Bitcoin Base Layer">
+    Final settlement and security anchoring on Bitcoin blockchain
+  </Step>
+
+  <Step title="Lightning Layer">
+    HTLC-based atomic swaps ensuring trustless execution
+  </Step>
+
+  <Step title="RGB Layer">
+    Client-side validation preventing double-spending
+  </Step>
+
+  <Step title="Application Layer">
+    Encrypted storage and secure key management
+  </Step>
+</Steps>
+
+### Trustless Trading
+
+- **No Counterparty Risk**: Atomic swaps execute atomically or fail completely
+- **No Custodians**: Users maintain control of their keys and assets
+- **No Trust Required**: Cryptographic guarantees, not trust in intermediaries
+
+## Scalability
+
+### Transaction Throughput
+
+| Layer | Throughput | Finality | Cost |
+|-------|------------|----------|------|
+| Bitcoin On-Chain | ~7 TPS | 10-60 min | High |
+| Lightning Network | Millions TPS | Instant | Very Low |
+| RGB Contracts | Unlimited | Client-side | Minimal |
+
+### Why This Matters
+
+- **Mass Adoption**: Can scale to billions of users
+- **Micro-Transactions**: Economically viable even for tiny amounts
+- **Real-Time Trading**: No waiting for blockchain confirmations
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Key Features" icon="star" href="/whats-kaleidoswap/key-features">
+    Explore KaleidoSwap's core features and capabilities
+  </Card>
+
+  <Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/introduction">
+    Get started with the desktop application
+  </Card>
+
+  <Card title="For Developers" icon="code" href="/sdk/python/index">
+    Build with our Python or TypeScript SDKs
+  </Card>
+
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Integrate with our REST API
+  </Card>
+</CardGroup>

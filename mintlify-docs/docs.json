@@ -189,6 +189,7 @@
   "integrations": {
     "posthog": {
       "apiKey": "phc_g3NF1o9hsu8tFROxZaRT9JfD1BdBEQYfIIcrkVzTkps",
+      "apiHost": "https://eu.i.posthog.com",
       "sessionRecording": true
     }
   }

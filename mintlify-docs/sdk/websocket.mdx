@@ -1,0 +1,1154 @@
+---
+title: WebSocket
+description: Real-time data streaming with WebSocket connections across Python and TypeScript SDKs
+---
+
+## Overview
+
+The KaleidoSwap SDK provides WebSocket support for real-time market data updates and low-latency connections. WebSocket connections offer several advantages over HTTP requests:
+
+- **Real-time Updates** - Receive live price quotes and market data instantly
+- **Lower Latency** - Faster response times (~10-50ms vs 100-500ms for REST)
+- **Reduced Overhead** - Persistent connection reduces connection setup time
+- **Push Notifications** - Server can push updates without client polling
+- **Efficient** - Single connection for multiple subscriptions
+
+## Quick Start
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+
+async def main():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    try:
+        # Connect to WebSocket
+        await client.connect()
+        print("WebSocket connected")
+
+        # Your WebSocket operations here
+
+    finally:
+        # Disconnect
+        await client.disconnect()
+        await client.close()
+
+asyncio.run(main())
+```
+
+```typescript TypeScript
+import { KaleidoClient, WebSocketClient, WebSocketConfig } from 'kaleidoswap-sdk';
+
+const wsConfig: WebSocketConfig = {
+  baseUrl: 'wss://api.kaleidoswap.com/ws',
+  apiKey: 'your-api-key', // Optional
+};
+
+const wsClient = new WebSocketClient(wsConfig);
+
+// Connect to WebSocket
+await wsClient.connect();
+console.log('WebSocket connected');
+
+// Your WebSocket operations here
+
+// Disconnect
+await wsClient.disconnect();
+```
+
+</CodeGroup>
+
+## Configuration
+
+### WebSocket Parameters
+
+<CodeGroup>
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient(
+    api_url="https://api.staging.kaleidoswap.com/api/v1",
+    node_url="<Your node URL>",
+
+    # WebSocket configuration
+    ping_interval=30,        # Ping interval in seconds
+    ping_timeout=10,         # Ping timeout in seconds
+    close_timeout=10,        # Close timeout in seconds
+    max_size=2**20,          # Max message size (1MB)
+    max_queue=32,            # Max message queue size
+    compression=None         # Compression method (None, 'deflate', etc.)
+)
+```
+
+```typescript TypeScript
+interface WebSocketConfig {
+  baseUrl: string;                    // WebSocket URL
+  apiKey?: string;                    // Optional API key
+  pingInterval?: number;              // Ping interval (default: 30000ms)
+  pingTimeout?: number;               // Ping timeout (default: 10000ms)
+  reconnectInterval?: number;         // Reconnect interval (default: 5000ms)
+  maxReconnectAttempts?: number;      // Max reconnect attempts (default: 5)
+}
+
+const wsConfig: WebSocketConfig = {
+  baseUrl: 'wss://api.kaleidoswap.com/ws',
+  apiKey: 'your-api-key',
+  pingInterval: 30000,        // Send ping every 30 seconds
+  pingTimeout: 10000,         // Wait 10 seconds for pong
+  reconnectInterval: 5000,    // Wait 5 seconds before reconnecting
+  maxReconnectAttempts: 10    // Try reconnecting up to 10 times
+};
+
+const wsClient = new WebSocketClient(wsConfig);
+```
+
+</CodeGroup>
+
+## Connection Management
+
+### Connecting
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+
+async def main():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    # Connect to WebSocket
+    await client.connect()
+    print("WebSocket connected")
+```
+
+```typescript TypeScript
+// Connect to WebSocket
+await wsClient.connect();
+
+// Check connection status
+if (wsClient.isConnected()) {
+  console.log('WebSocket connected successfully');
+}
+```
+
+</CodeGroup>
+
+### Connection States
+
+<CodeGroup>
+
+```python Python
+# Python uses asyncio for state management
+# Connection states are handled internally
+```
+
+```typescript TypeScript
+// Get current connection state
+const state = wsClient.getConnectionState();
+
+// WebSocket states:
+// WebSocket.CONNECTING (0) - Connection is being established
+// WebSocket.OPEN (1)       - Connection is open and ready
+// WebSocket.CLOSING (2)    - Connection is being closed
+// WebSocket.CLOSED (3)     - Connection is closed
+
+switch (state) {
+  case WebSocket.OPEN:
+    console.log('Connected and ready');
+    break;
+  case WebSocket.CONNECTING:
+    console.log('Connecting...');
+    break;
+  case WebSocket.CLOSED:
+    console.log('Disconnected');
+    break;
+}
+```
+
+</CodeGroup>
+
+### Disconnecting
+
+<CodeGroup>
+
+```python Python
+# Graceful disconnect
+await client.disconnect()
+await client.close()
+```
+
+```typescript TypeScript
+// Graceful disconnect
+await wsClient.disconnect();
+
+// Disconnect with custom code and reason
+await wsClient.disconnect(1000, 'User initiated disconnect');
+```
+
+</CodeGroup>
+
+## Real-time Quote Streaming
+
+### Subscribe to Live Quotes
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+
+async def stream_quotes():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    # Define callback for quote updates
+    async def quote_callback(quote):
+        print(f"Live Quote Update:")
+        print(f"  Rate: {quote.exchange_rate}")
+        print(f"  From: {quote.from_amount} {quote.from_asset}")
+        print(f"  To: {quote.to_amount} {quote.to_asset}")
+        print(f"  Time: {quote.timestamp}\n")
+
+    try:
+        # Connect WebSocket
+        await client.connect()
+
+        # Subscribe to BTC/USDT quotes
+        await client.get_quote_websocket(
+            from_asset="BTC",
+            to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",
+            amount=100000,  # 0.001 BTC
+            callback=quote_callback
+        )
+
+        # Keep connection alive
+        await asyncio.sleep(300)  # Stream for 5 minutes
+
+    finally:
+        await client.disconnect()
+        await client.close()
+
+asyncio.run(stream_quotes())
+```
+
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = new KaleidoClient({
+  baseUrl: 'https://api.kaleidoswap.com/api/v1',
+  wsUrl: 'wss://api.kaleidoswap.com/ws'
+});
+
+// Get real-time quote via WebSocket
+const quote = await client.quoteRequestWS(
+  'btc_asset_id',
+  'usdt_asset_id',
+  100000 // 100,000 satoshis
+);
+
+console.log('Real-time quote:', quote);
+```
+
+</CodeGroup>
+
+### Manual WebSocket Quote Requests
+
+<CodeGroup>
+
+```python Python
+# The Python SDK provides the get_quote_websocket method
+# which handles callback-based subscriptions
+```
+
+```typescript TypeScript
+async function getRealtimeQuote() {
+  // Connect if not already connected
+  if (!wsClient.isConnected()) {
+    await wsClient.connect();
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      wsClient.off('quote_response', handleResponse);
+      reject(new Error('Quote request timeout'));
+    }, 30000);
+
+    const handleResponse = (data: any) => {
+      clearTimeout(timeout);
+      wsClient.off('quote_response', handleResponse);
+
+      if (data.error) {
+        reject(new Error(data.error.message));
+      } else {
+        resolve(data);
+      }
+    };
+
+    wsClient.on('quote_response', handleResponse);
+
+    wsClient.send({
+      action: 'quote_request',
+      from_asset: 'btc_asset_id',
+      to_asset: 'usdt_asset_id',
+      from_amount: 100000,
+      timestamp: Math.floor(Date.now() / 1000)
+    });
+  });
+}
+```
+
+</CodeGroup>
+
+## Message Handling
+
+### Event Listeners
+
+<CodeGroup>
+
+```python Python
+# Python SDK uses callbacks for event handling
+async def quote_callback(quote):
+    print(f"Quote received: {quote}")
+
+await client.get_quote_websocket(
+    from_asset="BTC",
+    to_asset="USDT",
+    amount=100000,
+    callback=quote_callback
+)
+```
+
+```typescript TypeScript
+// Listen for quote responses
+wsClient.on('quote_response', (data) => {
+  console.log('Received quote:', data);
+});
+
+// Listen for connection errors
+wsClient.on('error', (error) => {
+  console.error('WebSocket error:', error);
+});
+
+// Listen for custom events
+wsClient.on('market_update', (data) => {
+  console.log('Market update:', data);
+});
+```
+
+</CodeGroup>
+
+### Removing Event Listeners
+
+<CodeGroup>
+
+```python Python
+# Python uses callbacks that are managed per subscription
+# Unsubscribe automatically removes the callback
+```
+
+```typescript TypeScript
+// Method 1: Using the unsubscribe function returned by on()
+const unsubscribe = wsClient.on('quote_response', handleQuote);
+unsubscribe(); // Remove this specific listener
+
+// Method 2: Using off() method
+function handleQuote(data: any) {
+  console.log('Quote:', data);
+}
+
+wsClient.on('quote_response', handleQuote);
+wsClient.off('quote_response', handleQuote); // Remove specific handler
+```
+
+</CodeGroup>
+
+### Sending Messages
+
+<CodeGroup>
+
+```python Python
+# Python SDK abstracts message sending through client methods
+await client.get_quote_websocket(
+    from_asset='btc_asset_id',
+    to_asset='usdt_asset_id',
+    amount=100000,
+    callback=callback_function
+)
+```
+
+```typescript TypeScript
+// Send a custom message
+await wsClient.send({
+  action: 'custom_action',
+  data: { key: 'value' }
+});
+
+// Send quote request
+await wsClient.send({
+  action: 'quote_request',
+  from_asset: 'btc_asset_id',
+  to_asset: 'usdt_asset_id',
+  from_amount: 100000,
+  timestamp: Math.floor(Date.now() / 1000)
+});
+```
+
+</CodeGroup>
+
+## Subscriptions
+
+### Subscribe to Trading Pairs
+
+<CodeGroup>
+
+```python Python
+# Python SDK handles subscriptions through WebSocket methods
+async def multi_subscription():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    async def btc_usdt_callback(quote):
+        print(f"BTC/USDT: {quote.exchange_rate}")
+
+    async def btc_xaut_callback(quote):
+        print(f"BTC/XAUT: {quote.exchange_rate}")
+
+    try:
+        await client.connect()
+
+        # Subscribe to multiple pairs
+        await client.get_quote_websocket(
+            from_asset="BTC",
+            to_asset="USDT",
+            amount=100000,
+            callback=btc_usdt_callback
+        )
+
+        await client.get_quote_websocket(
+            from_asset="BTC",
+            to_asset="XAUT",
+            amount=100000,
+            callback=btc_xaut_callback
+        )
+
+        await asyncio.sleep(300)
+
+    finally:
+        await client.disconnect()
+        await client.close()
+```
+
+```typescript TypeScript
+// Subscribe to BTC/USDT pair updates
+await wsClient.subscribe('BTC_USDT');
+
+// Listen for pair updates
+wsClient.on('pair_update', (data) => {
+  console.log('Pair update:', data);
+});
+
+// Subscribe to multiple pairs
+const pairs = ['BTC_USDT', 'ETH_USDT', 'LTC_BTC'];
+
+for (const pair of pairs) {
+  await wsClient.subscribe(pair);
+}
+
+// Handle updates for all subscribed pairs
+wsClient.on('pair_update', (data) => {
+  console.log(`Update for ${data.pair}:`, data);
+});
+```
+
+</CodeGroup>
+
+### Unsubscribe from Trading Pairs
+
+<CodeGroup>
+
+```python Python
+# Unsubscribing is handled through connection management
+# in Python - close the connection or let callbacks go out of scope
+```
+
+```typescript TypeScript
+// Unsubscribe from pair updates
+await wsClient.unsubscribe('BTC_USDT');
+```
+
+</CodeGroup>
+
+## Error Handling
+
+### Connection Errors
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.exceptions import WebSocketError
+
+async def robust_websocket():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    max_retries = 3
+    retry_delay = 5
+
+    for attempt in range(max_retries):
+        try:
+            await client.connect()
+            print(f"Connected (attempt {attempt + 1})")
+
+            # Your WebSocket operations
+            await asyncio.sleep(300)
+            break
+
+        except WebSocketError as e:
+            print(f"WebSocket error: {e.message}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay}s...")
+                await asyncio.sleep(retry_delay)
+            else:
+                print("Max retries reached")
+
+        finally:
+            try:
+                await client.disconnect()
+            except:
+                pass
+            await client.close()
+```
+
+```typescript TypeScript
+wsClient.on('error', (error) => {
+  console.error('WebSocket error:', error);
+
+  if (error.action === 'connection_failed') {
+    console.log('Failed to connect, retrying...');
+    // Implement custom retry logic if needed
+  } else if (error.action === 'max_reconnect_attempts') {
+    console.log('Max reconnection attempts reached');
+    // Handle permanent connection failure
+  }
+});
+```
+
+</CodeGroup>
+
+### Message Parse Errors
+
+<CodeGroup>
+
+```python Python
+# Python SDK handles parsing internally
+# Errors are raised through exceptions
+```
+
+```typescript TypeScript
+wsClient.on('error', (error) => {
+  if (error.action === 'message_parse_error') {
+    console.error('Failed to parse message:', error.error);
+  }
+});
+```
+
+</CodeGroup>
+
+### Timeout Handling
+
+<CodeGroup>
+
+```python Python
+# Timeouts are handled through asyncio timeout wrappers
+import asyncio
+
+try:
+    await asyncio.wait_for(
+        client.get_quote_websocket(
+            from_asset="BTC",
+            to_asset="USDT",
+            amount=100000,
+            callback=callback
+        ),
+        timeout=30
+    )
+except asyncio.TimeoutError:
+    print("Quote request timed out")
+```
+
+```typescript TypeScript
+import { TimeoutError } from 'kaleidoswap-sdk';
+
+try {
+  const quote = await client.quoteRequestWS('btc_id', 'usdt_id', 100000);
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error('Quote request timed out');
+    // Fall back to HTTP request
+    const httpQuote = await client.quoteRequest('btc_id', 'usdt_id', 100000);
+  }
+}
+```
+
+</CodeGroup>
+
+## Automatic Reconnection
+
+<CodeGroup>
+
+```python Python
+# Python SDK handles reconnection automatically
+# Use context managers for proper cleanup:
+
+async with KaleidoClient(
+    api_url="...",
+    node_url="..."
+) as client:
+    await client.connect()
+    # Operations
+    # Auto-closes on exit
+```
+
+```typescript TypeScript
+// Reconnection is automatic, but you can listen for events
+wsClient.on('reconnecting', (attempt) => {
+  console.log(`Reconnection attempt ${attempt}`);
+});
+
+wsClient.on('reconnected', () => {
+  console.log('Successfully reconnected');
+  // Re-subscribe to any pairs if needed
+});
+
+wsClient.on('max_reconnect_attempts', () => {
+  console.log('Failed to reconnect after maximum attempts');
+  // Handle permanent disconnection
+});
+```
+
+</CodeGroup>
+
+## Debug Mode
+
+<CodeGroup>
+
+```python Python
+# Python SDK uses standard logging
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('kaleidoswap_sdk')
+logger.setLevel(logging.DEBUG)
+```
+
+```typescript TypeScript
+// Enable WebSocket debugging
+process.env.DEBUG_WS = 'true';
+
+// Or set it programmatically before creating the client
+process.env.DEBUG_WS = 'true';
+const wsClient = new WebSocketClient(config);
+
+// Debug output includes:
+// - Connection attempts and status
+// - Message sending and receiving
+// - Reconnection attempts
+// - Error details
+```
+
+</CodeGroup>
+
+## Best Practices
+
+### 1. Always Clean Up Connections
+
+<CodeGroup>
+
+```python Python
+async with KaleidoClient(api_url="...", node_url="...") as client:
+    await client.connect()
+    # WebSocket operations
+    await client.disconnect()
+    # Client auto-closes
+```
+
+```typescript TypeScript
+// ✅ Check connection before sending messages
+if (wsClient.isConnected()) {
+  await wsClient.send(message);
+} else {
+  await wsClient.connect();
+  await wsClient.send(message);
+}
+
+// ✅ Handle reconnection gracefully
+wsClient.on('reconnected', () => {
+  // Re-establish subscriptions
+  resubscribeToImportantPairs();
+});
+```
+
+</CodeGroup>
+
+### 2. Handle Reconnection
+
+<CodeGroup>
+
+```python Python
+async def auto_reconnect_websocket():
+    while True:
+        try:
+            async with KaleidoClient(...) as client:
+                await client.connect()
+                # Operations
+                await asyncio.sleep(3600)
+        except WebSocketError:
+            print("Reconnecting...")
+            await asyncio.sleep(5)
+```
+
+```typescript TypeScript
+// ✅ Always have fallback to HTTP
+async function getQuoteWithFallback(fromAsset: string, toAsset: string, amount: number) {
+  try {
+    return await client.quoteRequestWS(fromAsset, toAsset, amount);
+  } catch (error) {
+    if (error instanceof WebSocketError) {
+      console.log('WebSocket failed, using HTTP fallback');
+      return await client.quoteRequest(fromAsset, toAsset, amount);
+    }
+    throw error;
+  }
+}
+```
+
+</CodeGroup>
+
+### 3. Process Updates Asynchronously
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from collections import deque
+
+quote_queue = deque(maxlen=100)
+
+async def quote_callback(quote):
+    # Queue updates for processing
+    quote_queue.append(quote)
+
+async def process_quotes():
+    while True:
+        if quote_queue:
+            quote = quote_queue.popleft()
+            # Process quote
+            print(f"Processing: {quote.exchange_rate}")
+        await asyncio.sleep(0.1)
+
+async def main():
+    async with KaleidoClient(...) as client:
+        await client.connect()
+
+        # Start processor
+        processor_task = asyncio.create_task(process_quotes())
+
+        # Subscribe to quotes
+        await client.get_quote_websocket(
+            from_asset="BTC",
+            to_asset="USDT",
+            amount=100000,
+            callback=quote_callback
+        )
+
+        await asyncio.sleep(300)
+        processor_task.cancel()
+```
+
+```typescript TypeScript
+// ✅ Clean up event listeners
+class QuoteManager {
+  private unsubscribeFunctions: (() => void)[] = [];
+
+  addQuoteListener(callback: (data: any) => void) {
+    const unsubscribe = wsClient.on('quote_response', callback);
+    this.unsubscribeFunctions.push(unsubscribe);
+  }
+
+  cleanup() {
+    this.unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+    this.unsubscribeFunctions = [];
+  }
+}
+```
+
+</CodeGroup>
+
+### 4. Rate Limiting
+
+<CodeGroup>
+
+```python Python
+# Implement rate limiting for quote requests
+class RateLimitedQuoteService:
+    def __init__(self, min_interval=1.0):
+        self.last_request_time = 0
+        self.min_interval = min_interval
+
+    async def get_quote(self, client, from_asset, to_asset, amount, callback):
+        import time
+        now = time.time()
+        time_since_last = now - self.last_request_time
+
+        if time_since_last < self.min_interval:
+            await asyncio.sleep(self.min_interval - time_since_last)
+
+        self.last_request_time = time.time()
+        return await client.get_quote_websocket(
+            from_asset=from_asset,
+            to_asset=to_asset,
+            amount=amount,
+            callback=callback
+        )
+```
+
+```typescript TypeScript
+// ✅ Throttle quote requests
+class ThrottledQuoteService {
+  private lastRequestTime = 0;
+  private minInterval = 1000; // 1 second between requests
+
+  async getQuote(fromAsset: string, toAsset: string, amount: number) {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+
+    if (timeSinceLastRequest < this.minInterval) {
+      await new Promise(resolve =>
+        setTimeout(resolve, this.minInterval - timeSinceLastRequest)
+      );
+    }
+
+    this.lastRequestTime = Date.now();
+    return await client.quoteRequestWS(fromAsset, toAsset, amount);
+  }
+}
+```
+
+</CodeGroup>
+
+## Complete Example
+
+<CodeGroup>
+
+```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.exceptions import WebSocketError
+
+class RealtimeQuoteService:
+    def __init__(self):
+        self.client = KaleidoClient(
+            api_url="https://api.staging.kaleidoswap.com/api/v1",
+            node_url="<Your node URL>"
+        )
+        self.subscribers = {}
+
+    async def connect(self):
+        try:
+            await self.client.connect()
+            print("WebSocket connected")
+        except Exception as e:
+            print(f"Failed to connect: {e}")
+            raise
+
+    async def subscribe_to_quotes(self, from_asset, to_asset, callback):
+        pair_key = f"{from_asset}_{to_asset}"
+
+        if pair_key not in self.subscribers:
+            self.subscribers[pair_key] = []
+
+        self.subscribers[pair_key].append(callback)
+
+        async def wrapped_callback(quote):
+            for cb in self.subscribers[pair_key]:
+                await cb(quote)
+
+        # Subscribe to pair updates
+        await self.client.get_quote_websocket(
+            from_asset=from_asset,
+            to_asset=to_asset,
+            amount=100000,
+            callback=wrapped_callback
+        )
+
+    async def disconnect(self):
+        await self.client.disconnect()
+        await self.client.close()
+        self.subscribers.clear()
+
+# Usage
+async def main():
+    service = RealtimeQuoteService()
+
+    async def handle_quote(quote):
+        print(f"New BTC/USDT quote: {quote}")
+
+    await service.connect()
+
+    # Subscribe to BTC/USDT quotes
+    await service.subscribe_to_quotes('BTC', 'USDT', handle_quote)
+
+    # Keep connection alive
+    await asyncio.sleep(300)
+
+    # Clean up
+    await service.disconnect()
+
+asyncio.run(main())
+```
+
+```typescript TypeScript
+import {
+  KaleidoClient,
+  WebSocketClient,
+  WebSocketError,
+  TimeoutError
+} from 'kaleidoswap-sdk';
+
+class RealtimeQuoteService {
+  private client: KaleidoClient;
+  private wsClient: WebSocketClient;
+  private subscribers: Map<string, Set<(quote: any) => void>> = new Map();
+
+  constructor() {
+    this.client = new KaleidoClient({
+      baseUrl: 'https://api.kaleidoswap.com/api/v1',
+      wsUrl: 'wss://api.kaleidoswap.com/ws'
+    });
+
+    this.wsClient = new WebSocketClient({
+      baseUrl: 'wss://api.kaleidoswap.com/ws',
+      reconnectInterval: 5000,
+      maxReconnectAttempts: 10
+    });
+
+    this.setupEventHandlers();
+  }
+
+  private setupEventHandlers() {
+    // Handle quote responses
+    this.wsClient.on('quote_response', (data) => {
+      const pairKey = `${data.from_asset}_${data.to_asset}`;
+      const callbacks = this.subscribers.get(pairKey);
+
+      if (callbacks) {
+        callbacks.forEach(callback => callback(data));
+      }
+    });
+
+    // Handle connection errors
+    this.wsClient.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+
+    // Handle reconnection
+    this.wsClient.on('reconnected', () => {
+      console.log('WebSocket reconnected');
+      // Re-subscribe to all pairs
+      this.resubscribeAll();
+    });
+  }
+
+  async connect() {
+    try {
+      await this.wsClient.connect();
+      console.log('WebSocket connected');
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+      throw error;
+    }
+  }
+
+  async subscribeToQuotes(
+    fromAsset: string,
+    toAsset: string,
+    callback: (quote: any) => void
+  ) {
+    const pairKey = `${fromAsset}_${toAsset}`;
+
+    if (!this.subscribers.has(pairKey)) {
+      this.subscribers.set(pairKey, new Set());
+    }
+
+    this.subscribers.get(pairKey)!.add(callback);
+
+    // Subscribe to pair updates
+    await this.wsClient.subscribe(pairKey);
+  }
+
+  async getRealtimeQuote(fromAsset: string, toAsset: string, amount: number) {
+    try {
+      return await this.client.quoteRequestWS(fromAsset, toAsset, amount);
+    } catch (error) {
+      if (error instanceof WebSocketError || error instanceof TimeoutError) {
+        // Fall back to HTTP
+        console.log('WebSocket failed, falling back to HTTP');
+        return await this.client.quoteRequest(fromAsset, toAsset, amount);
+      }
+      throw error;
+    }
+  }
+
+  private async resubscribeAll() {
+    for (const pairKey of this.subscribers.keys()) {
+      try {
+        await this.wsClient.subscribe(pairKey);
+      } catch (error) {
+        console.error(`Failed to resubscribe to ${pairKey}:`, error);
+      }
+    }
+  }
+
+  async disconnect() {
+    await this.wsClient.disconnect();
+    this.subscribers.clear();
+  }
+}
+
+// Usage
+const quoteService = new RealtimeQuoteService();
+
+async function example() {
+  await quoteService.connect();
+
+  // Subscribe to BTC/USDT quotes
+  quoteService.subscribeToQuotes('btc_id', 'usdt_id', (quote) => {
+    console.log('New BTC/USDT quote:', quote);
+  });
+
+  // Get a one-time quote
+  const quote = await quoteService.getRealtimeQuote('btc_id', 'usdt_id', 100000);
+  console.log('One-time quote:', quote);
+
+  // Clean up
+  setTimeout(async () => {
+    await quoteService.disconnect();
+  }, 60000);
+}
+
+example().catch(console.error);
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+### Connection Fails
+
+**Issue**: WebSocket connection fails to establish
+
+**Solutions**:
+- Check API URL is correct
+- Verify network connectivity
+- Check firewall settings
+- Ensure WebSocket port is not blocked
+
+### Messages Not Received
+
+**Issue**: Connected but no messages received
+
+**Solutions**:
+- Verify subscription was successful
+- Check callback function is async (Python) or properly registered (TypeScript)
+- Ensure connection is still alive
+- Review ping/pong settings
+
+### Memory Usage Growing
+
+**Issue**: Memory usage increases over time
+
+**Solutions**:
+- Limit message queue size
+- Process messages promptly
+- Unsubscribe from unused channels
+- Implement message rate limiting
+
+### Common Issues
+
+<CodeGroup>
+
+```python Python
+# 1. Connection Timeout
+# Increase timeout values when creating client
+client = KaleidoClient(
+    api_url="...",
+    node_url="...",
+    ping_timeout=15,  # Increase from default 10
+    close_timeout=15
+)
+
+# 2. Message Not Received
+# Enable logging to debug
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# 3. Frequent Reconnections
+# Check network stability and increase retry delays
+```
+
+```typescript TypeScript
+// 1. Connection Timeout
+const wsClient = new WebSocketClient({
+  baseUrl: 'wss://api.kaleidoswap.com/ws',
+  pingTimeout: 15000,      // Increase from default 10s
+  reconnectInterval: 10000 // Increase from default 5s
+});
+
+// 2. Message Not Received
+// Enable debug logging
+process.env.DEBUG_WS = 'true';
+console.log('Connection state:', wsClient.getConnectionState());
+
+// 3. Frequent Reconnections
+// Check network stability
+wsClient.on('reconnecting', (attempt) => {
+  console.log(`Reconnection attempt ${attempt} - check network`);
+});
+```
+
+</CodeGroup>
+
+## Comparison: WebSocket vs REST
+
+| Feature | WebSocket | REST API |
+|---------|-----------|----------|
+| Latency | Low (~10-50ms) | Higher (~100-500ms) |
+| Updates | Real-time push | Poll required |
+| Efficiency | High | Lower |
+| Complexity | More complex | Simpler |
+| Use Case | Live data | One-time queries |
+
+## Next Steps
+
+- **[Examples](./examples.md)** - See complete WebSocket examples
+- **[Error Handling](./error-handling.md)** - Handle WebSocket errors
+- **[API Reference](./api-reference.md)** - WebSocket method documentation

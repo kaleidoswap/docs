@@ -124,33 +124,30 @@
       ]
     },
     {
-      "group": "Python SDK",
-      "icon": "python",
+      "group": "Getting Started",
+      "icon": "rocket",
       "pages": [
-        "sdk/python/index",
-        "sdk/python/getting-started",
-        "sdk/python/examples",
-        "sdk/python/api-reference",
-        "sdk/python/types",
-        "sdk/python/websocket",
-        "sdk/python/error-handling",
-        "sdk/python/utilities"
+        "sdk/getting-started",
+        "sdk/examples"
       ]
     },
     {
-      "group": "TypeScript SDK",
-      "icon": "js",
+      "group": "Core Concepts",
+      "icon": "code",
       "pages": [
-        "sdk/typescript/index",
-        "sdk/typescript/getting-started",
-        "sdk/typescript/examples",
-        "sdk/typescript/api-reference",
-        "sdk/typescript/types",
-        "sdk/typescript/websocket",
-        "sdk/typescript/error-handling",
-        "sdk/typescript/utilities",
-        "sdk/typescript/best-practices",
-        "sdk/typescript/troubleshooting"
+        "sdk/api-reference",
+        "sdk/types",
+        "sdk/websocket",
+        "sdk/utilities"
+      ]
+    },
+    {
+      "group": "Advanced",
+      "icon": "book",
+      "pages": [
+        "sdk/error-handling",
+        "sdk/best-practices",
+        "sdk/troubleshooting"
       ]
     }
   ],

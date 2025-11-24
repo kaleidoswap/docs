@@ -36,7 +36,19 @@
             "name": "get_lsp_info",
             "description": "Get Lightning Service Provider information and capabilities"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Get LSP Info",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst lspInfo = await client.getLspInfo();\nconsole.log(`LSP Pubkey: ${lspInfo.pubkey}`);\nconsole.log(`Connection URL: ${lspInfo.lsp_connection_url}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Get LSP Info",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        lsp_info = await client.get_lsp_info()\n        print(f\"LSP Pubkey: {lsp_info.pubkey}\")\n        print(f\"Connection URL: {lsp_info.lsp_connection_url}\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/lsps1/network_info": {
@@ -379,7 +391,19 @@
             "description": "Start an atomic swap between RGB assets"
           },
           "content": "## Atomic Swap Flow\n\n1. Get a quote using `/api/v1/market/quote`\n2. Initiate the swap with this endpoint\n3. Confirm the swap using `/api/v1/swaps/execute`\n\n<Warning>Swaps must be confirmed within the quote expiration time.</Warning>"
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Initialize Swap",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\n// First get a quote\nconst quote = await client.quoteRequest('BTC', 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', 1000000);\n\n// Initialize the swap\nconst swap = await client.initMakerSwap({\n  rfq_id: quote.rfq_id,\n  from_asset: 'BTC',\n  to_asset: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  from_amount: 1000000,\n  to_amount: quote.to_amount\n});\nconsole.log(`Swap initialized: ${swap.payment_hash}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Initialize Swap",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient, InitMakerSwapRequest\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        # First get a quote\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000\n        )\n        \n        # Initialize the swap\n        swap = await client.init_maker_swap(\n            InitMakerSwapRequest(\n                rfq_id=quote.rfq_id,\n                from_asset=\"BTC\",\n                to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n                from_amount=1000000,\n                to_amount=quote.to_amount\n            )\n        )\n        print(f\"Swap initialized: {swap.payment_hash}\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/swaps/execute": {
@@ -508,7 +532,19 @@
             "name": "list_available_assets",
             "description": "List all available RGB assets for trading"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst assets = await client.listAssets();\nconsole.log(`Found ${assets.assets.length} assets`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        assets = await client.list_assets()\n        print(f\"Found {len(assets.assets)} assets\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/market/pairs": {
@@ -540,7 +576,19 @@
             "name": "get_trading_pairs",
             "description": "Get available trading pairs with min/max order sizes"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst pairs = await client.listPairs();\nconsole.log(`Found ${pairs.pairs.length} trading pairs`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        pairs = await client.list_pairs()\n        print(f\"Found {len(pairs.pairs)} trading pairs\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/market/quote": {
@@ -593,7 +641,19 @@
             "name": "get_asset_quote",
             "description": "Get current exchange rate quote between two assets"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - BTC to USDT",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst quote = await client.quoteRequest(\n  'BTC',\n  'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  1000000 // 0.01 BTC minimum\n);\nconsole.log(`Exchange rate: ${quote.price}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000  # 0.01 BTC minimum\n        )\n        print(f\"Exchange rate: {quote.price}\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/swaps/orders": {
@@ -641,7 +701,19 @@
             "description": "Create a new swap order with on-chain or Lightning settlement"
           },
           "content": "## Settlement Types\n\n- **LIGHTNING**: Instant settlement via Lightning Network\n- **ONCHAIN**: Settlement via on-chain Bitcoin transaction\n\n<Tip>Lightning settlement is recommended for faster finality and lower fees.</Tip>"
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Create Order",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\n// First get a quote\nconst quote = await client.quoteRequest('BTC', 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', 1000000);\n\n// Create order\nconst order = await client.createOrder({\n  rfq_id: quote.rfq_id,\n  from_type: 'ONCHAIN',\n  to_type: 'LIGHTNING',\n  from_asset: 'BTC',\n  to_asset: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  from_amount: 1000000,\n  to_amount: quote.to_amount\n});\nconsole.log(`Order created: ${order.id}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Create Order",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient, CreateOrderRequest\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        # First get a quote\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000\n        )\n        \n        # Create order\n        order = await client.create_order(\n            CreateOrderRequest(\n                rfq_id=quote.rfq_id,\n                from_type=\"ONCHAIN\",\n                to_type=\"LIGHTNING\",\n                from_asset=\"BTC\",\n                to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n                from_amount=1000000,\n                to_amount=quote.to_amount\n            )\n        )\n        print(f\"Order created: {order.id}\")\n\nasyncio.run(main())"
+          }
+        ]
       }
     },
     "/api/v1/swaps/orders/status": {

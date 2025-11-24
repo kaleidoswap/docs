@@ -1,0 +1,693 @@
+---
+title: Utilities
+description: Helper functions and best practices for working with the KaleidoSwap SDK
+---
+
+The KaleidoSwap SDK includes utility functions to make your life easier when working with assets and amounts. These helpers simplify common operations like precision conversion, asset mapping, and error handling.
+
+## Precision Handling
+
+Assets use atomic units with varying precision. The precision handler converts between decimal amounts (what users see) and atomic units (what the API expects).
+
+### Converting Between Units
+
+<CodeGroup>
+```python Python
+def atomic_to_decimal(atomic_amount: int, precision: int) -> float:
+    """Convert atomic units to decimal representation."""
+    return atomic_amount / (10 ** precision)
+
+def decimal_to_atomic(decimal_amount: float, precision: int) -> int:
+    """Convert decimal amount to atomic units."""
+    return int(decimal_amount * (10 ** precision))
+
+# Usage
+btc_atomic = 100000000  # 1 BTC in satoshis
+btc_decimal = atomic_to_decimal(btc_atomic, 8)  # 1.0 BTC
+print(f"{btc_atomic} sats = {btc_decimal} BTC")
+
+# Convert back
+amount = 0.001  # 0.001 BTC
+atomic = decimal_to_atomic(amount, 8)  # 100,000 sats
+```
+
+```typescript TypeScript
+// Automatically retry on network failures
+const quote = await retry(async () => {
+  return await client.quoteRequest(btc.asset_id, usdt.asset_id, amount);
+});
+```
+</CodeGroup>
+
+### Asset Precision Helper
+
+<CodeGroup>
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+class AssetPrecisionHelper:
+    """Helper for managing asset precision conversions."""
+
+    def __init__(self, assets):
+        self.precision_map = {
+            asset.ticker: asset.precision
+            for asset in assets
+        }
+
+    def to_atomic(self, ticker: str, amount: float) -> int:
+        """Convert decimal amount to atomic units."""
+        precision = self.precision_map.get(ticker, 8)
+        return int(amount * (10 ** precision))
+
+    def to_decimal(self, ticker: str, atomic_amount: int) -> float:
+        """Convert atomic units to decimal amount."""
+        precision = self.precision_map.get(ticker, 8)
+        return atomic_amount / (10 ** precision)
+
+# Usage
+async def use_precision_helper():
+    async with KaleidoClient(...) as client:
+        assets = await client.list_assets()
+        helper = AssetPrecisionHelper(assets.assets)
+
+        # Convert 1.5 USDT to atomic units
+        usdt_atomic = helper.to_atomic("USDT", 1.5)
+        print(f"1.5 USDT = {usdt_atomic} atomic units")
+
+        # Convert back
+        usdt_decimal = helper.to_decimal("USDT", usdt_atomic)
+        print(f"{usdt_atomic} atomic = {usdt_decimal} USDT")
+```
+
+```typescript TypeScript
+import { createPrecisionHandler } from 'kaleidoswap-sdk';
+
+const assets = assetMapper.getAllAssets();
+const precisionHandler = createPrecisionHandler(assets);
+
+// From decimal to atomic units (for API calls)
+const amountToSwap = 100; // 100 USDT
+const atomicAmount = precisionHandler.toAssetAmount(amountToSwap, usdt.asset_id);
+
+// Now use this in your API call
+const quote = await client.quoteRequest(btc.asset_id, usdt.asset_id, atomicAmount);
+
+// From atomic units back to decimal (for display)
+const receiveBTC = precisionHandler.toAssetDecimalAmount(quote.to_amount, btc.asset_id);
+console.log(`You will receive ${receiveBTC} BTC`);
+```
+</CodeGroup>
+
+### Validating Order Sizes
+
+<CodeGroup>
+```python Python
+def validate_swap_amount(
+    amount: int,
+    min_amount: int,
+    max_amount: int,
+    asset_name: str = "asset"
+) -> None:
+    """Validate swap amount is within limits."""
+    if amount < min_amount:
+        raise ValueError(
+            f"{asset_name} amount {amount} below minimum {min_amount}"
+        )
+    if amount > max_amount:
+        raise ValueError(
+            f"{asset_name} amount {amount} exceeds maximum {max_amount}"
+        )
+
+# Usage
+async def create_validated_order(client, pair):
+    amount = 100000
+
+    # Validate amount
+    validate_swap_amount(
+        amount=amount,
+        min_amount=pair.min_base_order_size,
+        max_amount=pair.max_base_order_size,
+        asset_name=pair.base_asset
+    )
+
+    # Proceed with order
+    quote = await client.get_quote(
+        from_asset=pair.base_asset,
+        to_asset=pair.quote_asset,
+        amount=amount
+    )
+```
+
+```typescript TypeScript
+// Before making an API call, validate that the amount is within the allowed limits
+const validation = precisionHandler.validateOrderSize(100, usdt);
+
+if (!validation.valid) {
+  throw new Error(validation.error);
+}
+
+// If valid, use the atomic amount
+const quote = await client.quoteRequest(btc.asset_id, usdt.asset_id, validation.asset_amount);
+
+// Want to show users the min/max they can swap?
+const limits = precisionHandler.getOrderSizeLimits(btc);
+
+console.log(`You can swap between ${limits.asset_min_decimal_amount} and ${limits.asset_max_decimal_amount} BTC`);
+```
+</CodeGroup>
+
+## Asset ID Resolution
+
+### Ticker to Asset ID Mapper
+
+<CodeGroup>
+```python Python
+from typing import Dict
+from kaleidoswap_sdk import KaleidoClient
+
+class AssetMapper:
+    """Map between tickers and asset IDs."""
+
+    def __init__(self, assets):
+        self.ticker_to_id: Dict[str, str] = {}
+        self.id_to_ticker: Dict[str, str] = {}
+
+        for asset in assets:
+            self.ticker_to_id[asset.ticker] = asset.asset_id
+            self.id_to_ticker[asset.asset_id] = asset.ticker
+
+    def get_asset_id(self, ticker: str) -> str:
+        """Get asset ID from ticker."""
+        return self.ticker_to_id.get(ticker, ticker)
+
+    def get_ticker(self, asset_id: str) -> str:
+        """Get ticker from asset ID."""
+        return self.id_to_ticker.get(asset_id, asset_id)
+
+# Usage
+async def use_asset_mapper():
+    async with KaleidoClient(...) as client:
+        assets = await client.list_assets()
+        mapper = AssetMapper(assets.assets)
+
+        # Get asset ID from ticker
+        usdt_id = mapper.get_asset_id("USDT")
+        print(f"USDT asset ID: {usdt_id}")
+
+        # Get ticker from asset ID
+        ticker = mapper.get_ticker(usdt_id)
+        print(f"Asset ticker: {ticker}")
+
+        # Use in quote request
+        quote = await client.get_quote(
+            from_asset="BTC",
+            to_asset=mapper.get_asset_id("USDT"),
+            amount=100000
+        )
+```
+
+```typescript TypeScript
+import { createAssetPairMapper } from 'kaleidoswap-sdk';
+
+// Fetch pairs and create the mapper
+const pairs = await client.pairList();
+const assetMapper = createAssetPairMapper(pairs);
+
+// Find assets by their ticker
+const btc = assetMapper.findByTicker('BTC');
+const usdt = assetMapper.findByTicker('USDT');
+
+if (!btc || !usdt) {
+  throw new Error('Assets not found');
+}
+
+console.log(`BTC asset ID: ${btc.asset_id}`);
+console.log(`Precision: ${btc.precision} decimal places`);
+
+// You can also search by asset ID if you already have it
+const asset = assetMapper.findById('some_asset_id');
+
+// Check if two assets can be traded
+const canSwap = assetMapper.canTrade(usdt.asset_id, btc.asset_id);
+if (!canSwap) {
+  console.log('This pair cannot be traded directly');
+}
+
+// Get a list of all available assets
+const allAssets = assetMapper.getAllAssets();
+
+allAssets.forEach(asset => {
+  console.log(`${asset.ticker}: ${asset.min_order_size} - ${asset.max_order_size} units`);
+});
+```
+</CodeGroup>
+
+## Retry Utilities
+
+Network hiccups happen. The retry utilities help you handle temporary failures gracefully with exponential backoff.
+
+### Basic Usage
+
+<CodeGroup>
+```python Python
+import asyncio
+from functools import wraps
+from typing import Type, Tuple
+
+def async_retry(
+    max_attempts: int = 3,
+    delay: float = 1.0,
+    backoff: float = 2.0,
+    exceptions: Tuple[Type[Exception], ...] = (Exception,)
+):
+    """Retry decorator for async functions."""
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            attempt = 0
+            current_delay = delay
+
+            while attempt < max_attempts:
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions as e:
+                    attempt += 1
+                    if attempt >= max_attempts:
+                        raise
+
+                    print(f"Attempt {attempt} failed: {e}")
+                    print(f"Retrying in {current_delay}s...")
+                    await asyncio.sleep(current_delay)
+                    current_delay *= backoff
+
+        return wrapper
+    return decorator
+
+# Usage
+from kaleidoswap_sdk.exceptions import NetworkError, TimeoutError
+
+@async_retry(max_attempts=3, delay=2.0, exceptions=(NetworkError, TimeoutError))
+async def get_quote_with_retry(client):
+    """Get quote with automatic retry."""
+    return await client.get_quote("BTC", "USDT", 100000)
+```
+
+```typescript TypeScript
+import { retry } from 'kaleidoswap-sdk';
+
+// Automatically retry on network failures with default config
+const quote = await retry(async () => {
+  return await client.quoteRequest(btc.asset_id, usdt.asset_id, amount);
+});
+
+// Custom configuration for more control
+const quote = await retry(
+  async () => client.quoteRequest(btc.asset_id, usdt.asset_id, amount),
+  {
+    maxRetries: 5,        // Try up to 5 times
+    initialDelay: 2000,   // Wait 2 seconds between retries
+    maxDelay: 30000,      // Never wait more than 30 seconds
+  }
+);
+```
+</CodeGroup>
+
+## Context Managers & Sessions
+
+### Custom Context Manager for Operations
+
+<CodeGroup>
+```python Python
+from contextlib import asynccontextmanager
+from kaleidoswap_sdk import KaleidoClient
+
+@asynccontextmanager
+async def kaleido_session(api_url: str, node_url: str):
+    """Context manager for KaleidoSwap operations."""
+    client = KaleidoClient(api_url=api_url, node_url=node_url)
+
+    try:
+        yield client
+    finally:
+        await client.close()
+
+# Usage
+async def main():
+    async with kaleido_session(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    ) as client:
+        pairs = await client.list_pairs()
+        print(f"Found {len(pairs.pairs)} pairs")
+```
+
+```typescript TypeScript
+import {
+  KaleidoClient,
+  createAssetPairMapper,
+  createPrecisionHandler,
+  retry
+} from 'kaleidoswap-sdk';
+
+// Create client once
+const client = new KaleidoClient({
+  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+});
+
+// Setup utilities (do this once when your app starts, then reuse them)
+const pairs = await retry(() => client.pairList());
+const assetMapper = createAssetPairMapper(pairs);
+const precisionHandler = createPrecisionHandler(assetMapper.getAllAssets());
+```
+</CodeGroup>
+
+## Data Formatting
+
+### Format Asset Balance
+
+<CodeGroup>
+```python Python
+def format_balance(balance: int, precision: int, ticker: str) -> str:
+    """Format asset balance for display."""
+    decimal_balance = balance / (10 ** precision)
+    return f"{decimal_balance:,.{precision}f} {ticker}"
+
+# Usage
+async def display_balances(client):
+    assets = await client.list_assets()
+
+    print("Asset Balances:")
+    for asset in assets.assets:
+        if asset.balance.spendable > 0:
+            formatted = format_balance(
+                balance=asset.balance.spendable,
+                precision=asset.precision,
+                ticker=asset.ticker
+            )
+            print(f"  {formatted}")
+```
+
+```typescript TypeScript
+// Format amounts for display using the precision handler
+const receiveBTC = precisionHandler.toAssetDecimalAmount(quote.to_amount, btc.asset_id);
+console.log(`You will receive ${receiveBTC} BTC`);
+```
+</CodeGroup>
+
+### Format Quote Output
+
+<CodeGroup>
+```python Python
+from datetime import datetime
+
+def format_quote(quote, from_ticker: str, to_ticker: str) -> str:
+    """Format quote for human-readable display."""
+    from_amount = quote.from_amount
+    to_amount = quote.to_amount
+    rate = quote.exchange_rate
+
+    return (
+        f"Quote:\n"
+        f"  From: {from_amount} {from_ticker}\n"
+        f"  To: {to_amount} {to_ticker}\n"
+        f"  Rate: {rate:,.2f}\n"
+        f"  Expires: {datetime.fromtimestamp(quote.expires_at)}"
+    )
+
+# Usage
+async def get_and_display_quote(client):
+    quote = await client.get_quote("BTC", "USDT", 100000)
+    print(format_quote(quote, "BTC", "USDT"))
+```
+
+```typescript TypeScript
+// Build a formatted output for the user
+console.log(`Swapping ${amountToSwap} USDT for ${receiveBTC} BTC`);
+console.log(`Quote ID: ${quote.rfq_id}`);
+```
+</CodeGroup>
+
+## Environment Configuration
+
+### Configuration Manager
+
+<CodeGroup>
+```python Python
+import os
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class KaleidoConfig:
+    """Configuration for KaleidoSwap SDK."""
+
+    api_url: str
+    node_url: str
+    api_key: Optional[str] = None
+
+    @classmethod
+    def from_env(cls) -> 'KaleidoConfig':
+        """Load configuration from environment variables."""
+        return cls(
+            api_url=os.getenv(
+                "KALEIDO_API_URL",
+                "https://api.staging.kaleidoswap.com/api/v1"
+            ),
+            node_url=os.getenv("KALEIDO_NODE_URL", ""),
+            api_key=os.getenv("KALEIDO_API_KEY")
+        )
+
+# Usage
+from kaleidoswap_sdk import KaleidoClient
+
+async def main():
+    config = KaleidoConfig.from_env()
+
+    async with KaleidoClient(
+        api_url=config.api_url,
+        node_url=config.node_url,
+        api_key=config.api_key
+    ) as client:
+        # Operations
+        pass
+```
+
+```typescript TypeScript
+// Initialize once, use everywhere
+const client = new KaleidoClient({
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.staging.kaleidoswap.com/api/v1'
+});
+```
+</CodeGroup>
+
+## Logging Utilities
+
+### Structured Logging
+
+<CodeGroup>
+```python Python
+import logging
+import json
+from datetime import datetime
+
+class StructuredLogger:
+    """Structured logger for KaleidoSwap operations."""
+
+    def __init__(self, name: str):
+        self.logger = logging.getLogger(name)
+
+    def log_quote(self, quote, level=logging.INFO):
+        """Log quote with structured data."""
+        self.logger.log(
+            level,
+            json.dumps({
+                "event": "quote_received",
+                "timestamp": datetime.utcnow().isoformat(),
+                "rfq_id": quote.rfq_id,
+                "rate": quote.exchange_rate,
+                "from_asset": quote.from_asset,
+                "to_asset": quote.to_asset,
+            })
+        )
+
+    def log_swap(self, swap_status, level=logging.INFO):
+        """Log swap status with structured data."""
+        self.logger.log(
+            level,
+            json.dumps({
+                "event": "swap_status",
+                "timestamp": datetime.utcnow().isoformat(),
+                "payment_hash": swap_status.payment_hash,
+                "status": swap_status.status,
+            })
+        )
+
+# Usage
+logger = StructuredLogger(__name__)
+
+async def monitored_swap(client):
+    quote = await client.get_quote("BTC", "USDT", 100000)
+    logger.log_quote(quote)
+
+    # Execute swap
+    # ...
+
+    logger.log_swap(swap_status)
+```
+
+```typescript TypeScript
+// Log events for monitoring and debugging
+console.log('Quote received:', {
+  event: 'quote_received',
+  timestamp: new Date().toISOString(),
+  rfq_id: quote.rfq_id,
+  rate: quote.exchange_rate,
+  from_asset: 'BTC',
+  to_asset: 'USDT'
+});
+```
+</CodeGroup>
+
+## Complete Utility Example
+
+Here's a comprehensive example showing how to use all utilities together:
+
+<CodeGroup>
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+from typing import Dict
+
+class AssetMapper:
+    """Map between tickers and asset IDs."""
+    def __init__(self, assets):
+        self.ticker_to_id: Dict[str, str] = {}
+        self.id_to_ticker: Dict[str, str] = {}
+        for asset in assets:
+            self.ticker_to_id[asset.ticker] = asset.asset_id
+            self.id_to_ticker[asset.asset_id] = asset.ticker
+
+    def get_asset_id(self, ticker: str) -> str:
+        return self.ticker_to_id.get(ticker, ticker)
+
+class AssetPrecisionHelper:
+    """Helper for managing asset precision conversions."""
+    def __init__(self, assets):
+        self.precision_map = {asset.ticker: asset.precision for asset in assets}
+
+    def to_atomic(self, ticker: str, amount: float) -> int:
+        precision = self.precision_map.get(ticker, 8)
+        return int(amount * (10 ** precision))
+
+    def to_decimal(self, ticker: str, atomic_amount: int) -> float:
+        precision = self.precision_map.get(ticker, 8)
+        return atomic_amount / (10 ** precision)
+
+async def swap_example():
+    """Complete swap example using all utilities."""
+    async with KaleidoClient(...) as client:
+        # Step 1: Setup utilities
+        assets = await client.list_assets()
+        asset_mapper = AssetMapper(assets.assets)
+        precision_helper = AssetPrecisionHelper(assets.assets)
+
+        # Step 2: Find your assets
+        usdt_id = asset_mapper.get_asset_id("USDT")
+        btc_id = asset_mapper.get_asset_id("BTC")
+
+        # Step 3: Validate the amount
+        amount_to_swap = 100  # 100 USDT
+        usdt_atomic = precision_helper.to_atomic("USDT", amount_to_swap)
+
+        # Step 4: Get a quote
+        quote = await client.get_quote(
+            from_asset=btc_id,
+            to_asset=usdt_id,
+            amount=usdt_atomic
+        )
+
+        # Step 5: Show the user what they'll get
+        btc_received = precision_helper.to_decimal("BTC", quote.to_amount)
+        print(f"Swapping {amount_to_swap} USDT for {btc_received} BTC")
+```
+
+```typescript TypeScript
+import {
+  KaleidoClient,
+  createAssetPairMapper,
+  createPrecisionHandler,
+  retry
+} from 'kaleidoswap-sdk';
+
+async function swapExample() {
+  const client = new KaleidoClient({
+    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  });
+
+  // Step 1: Setup utilities (do this once)
+  const pairs = await retry(() => client.pairList());
+  const assetMapper = createAssetPairMapper(pairs);
+  const precisionHandler = createPrecisionHandler(assetMapper.getAllAssets());
+
+  // Step 2: Find your assets
+  const usdt = assetMapper.findByTicker('USDT');
+  const btc = assetMapper.findByTicker('BTC');
+
+  if (!usdt || !btc) {
+    throw new Error('Assets not found');
+  }
+
+  // Step 3: Check if they can be traded
+  if (!assetMapper.canTrade(usdt.asset_id, btc.asset_id)) {
+    throw new Error('This pair cannot be traded');
+  }
+
+  // Step 4: Validate the amount
+  const amountToSwap = 100; // 100 USDT
+  const validation = precisionHandler.validateOrderSize(amountToSwap, usdt);
+
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  // Step 5: Get a quote with retry logic
+  const quote = await retry(
+    () => client.quoteRequest(
+      btc.asset_id,
+      usdt.asset_id,
+      validation.asset_amount
+    )
+  );
+
+  // Step 6: Show the user what they'll get
+  const receiveBTC = precisionHandler.toAssetDecimalAmount(quote.to_amount, btc.asset_id);
+  console.log(`Swapping ${amountToSwap} USDT for ${receiveBTC} BTC`);
+
+  // Step 7: Create the order
+  const order = await client.createOrder({
+    rfq_id: quote.rfq_id,
+    from_type: 'ONCHAIN',
+    to_type: 'ONCHAIN',
+    min_onchain_conf: 1,
+    dest_rgb_invoice: 'your_btc_address',
+    refund_address: 'your_refund_address',
+  });
+
+  console.log('Order created! Pay to:', order.onchain_address);
+}
+```
+</CodeGroup>
+
+## Quick Tips
+
+- **Initialize once, use everywhere**: Create your asset mapper and precision handler once when your app starts, then reuse them.
+- **Always validate**: Use validation functions before making API calls. It'll save you from errors.
+- **Check assets exist**: Always verify that asset lookups actually found the asset before using it.
+- **Use retry for network calls**: Wrap your API calls in retry logic to handle temporary network issues gracefully.
+- **Work with maker node**: Asset mappers work best when connecting to the maker node, where each ticker maps to one asset ID.
+
+## Next Steps
+
+- **[Examples](./examples.md)** - See utilities in action
+- **[API Reference](./api-reference.md)** - Complete method documentation
+- **[Types](./types.md)** - Understanding data models

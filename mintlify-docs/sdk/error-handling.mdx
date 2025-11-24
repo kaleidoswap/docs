@@ -1,0 +1,1075 @@
+---
+title: Error Handling
+description: Error handling patterns for Python and TypeScript SDKs
+---
+
+## Overview
+
+Both the Python and TypeScript SDKs provide robust error handling capabilities. The Python SDK offers a rich exception hierarchy with specific error classes, while the TypeScript SDK uses standard JavaScript `Error` objects with additional HTTP properties.
+
+All SDK errors include clear, actionable error messages from the API, making it easy to diagnose and respond to issues in your application.
+
+## Error Structure
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk.exceptions import KaleidoError
+
+# All SDK exceptions inherit from KaleidoError
+# Exception attributes:
+# - message: str - Error description
+# - status_code: Optional[int] - HTTP status code (if applicable)
+# - response: Optional[Dict[str, Any]] - API response data (if available)
+  ```
+
+  ```typescript TypeScript
+interface SDKError extends Error {
+  message: string;      // Descriptive error message from the API
+  statusCode?: number;  // HTTP status code (404, 500, etc.)
+  response?: string;    // Raw JSON response from the server
+}
+  ```
+</CodeGroup>
+
+## Exception Hierarchy (Python)
+
+The Python SDK provides a hierarchical exception structure:
+
+```
+Exception
+└── KaleidoError (base SDK exception)
+    ├── NetworkError
+    ├── AuthenticationError
+    ├── RateLimitError
+    ├── ValidationError
+    ├── SwapError
+    ├── TimeoutError
+    ├── WebSocketError
+    ├── AssetError
+    ├── PairError
+    ├── QuoteError
+    └── NodeError
+```
+
+## Importing Exceptions
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk.exceptions import (
+    KaleidoError,          # Base exception
+    NetworkError,          # Network issues
+    AuthenticationError,   # Auth problems
+    RateLimitError,        # Rate limiting
+    ValidationError,       # Invalid input
+    SwapError,             # Swap failures
+    TimeoutError,          # Operation timeout
+    WebSocketError,        # WebSocket issues
+    AssetError,            # Asset operations
+    PairError,             # Pair operations
+    QuoteError,            # Quote operations
+    NodeError,             # Node operations
+)
+  ```
+
+  ```typescript TypeScript
+import {
+  KaleidoClient,
+  NetworkError,
+  SwapError,
+  ValidationError,
+  ErrorCode
+} from '@kaleidoswap/sdk';
+  ```
+</CodeGroup>
+
+## Common HTTP Status Codes
+
+| Status Code | Meaning | Example |
+|-------------|---------|---------|
+| 400 | Bad Request | Invalid parameters sent to API |
+| 401 | Unauthorized | Missing or invalid API key |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Asset, pair, or resource doesn't exist |
+| 422 | Validation Error | Request data failed validation |
+| 429 | Rate Limited | Too many requests |
+| 500 | Server Error | Internal server error |
+| 503 | Service Unavailable | Service temporarily down |
+
+## Exception Reference (Python)
+
+### KaleidoError
+
+Base exception for all SDK errors.
+
+**Attributes**:
+- `message: str` - Error description
+- `status_code: Optional[int]` - HTTP status code (if applicable)
+- `response: Optional[Dict[str, Any]]` - API response data (if available)
+
+**Usage**:
+```python
+try:
+    # SDK operation
+    pass
+except KaleidoError as e:
+    print(f"SDK Error: {e.message}")
+    if e.status_code:
+        print(f"Status code: {e.status_code}")
+    if e.response:
+        print(f"Response: {e.response}")
+```
+
+### NetworkError
+
+Raised when network-related issues occur.
+
+**Common Causes**:
+- Connection timeout
+- DNS resolution failure
+- Server unreachable
+- SSL/TLS errors
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.exceptions import NetworkError
+
+async def handle_network_errors():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    try:
+        pairs = await client.list_pairs()
+    except NetworkError as e:
+        print(f"Network error: {e.message}")
+        print("Please check your internet connection")
+        # Implement retry logic or fallback
+    finally:
+        await client.close()
+  ```
+
+  ```typescript TypeScript
+try {
+  const pairs = await client.pairList();
+} catch (error: any) {
+  if (!error.statusCode) {
+    // Network error - no response from server
+    console.error('Network connection failed');
+
+    if (error.message.includes('timeout')) {
+      showTimeoutMessage();
+    } else {
+      showOfflineMessage();
+    }
+  }
+}
+  ```
+</CodeGroup>
+
+### AuthenticationError
+
+Raised when authentication fails.
+
+**Common Causes**:
+- Invalid API key
+- Expired credentials
+- Missing authentication header
+
+```python
+from kaleidoswap_sdk.exceptions import AuthenticationError
+
+try:
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>",
+        api_key="invalid_key"
+    )
+    await client.list_assets()
+except AuthenticationError as e:
+    print(f"Authentication failed: {e.message}")
+    print("Please check your API credentials")
+```
+
+### RateLimitError
+
+Raised when API rate limits are exceeded.
+
+**Common Causes**:
+- Too many requests in short time
+- Quota exceeded
+
+<CodeGroup>
+  ```python Python
+import asyncio
+from kaleidoswap_sdk.exceptions import RateLimitError
+
+try:
+    for i in range(100):
+        quote = await client.get_quote("BTC", "USDT", 100000)
+except RateLimitError as e:
+    print(f"Rate limit exceeded: {e.message}")
+    print("Waiting before retry...")
+    await asyncio.sleep(60)  # Wait 1 minute
+    # Retry operation
+  ```
+
+  ```typescript TypeScript
+try {
+  const quote = await client.quoteRequest('BTC', 'USDT', 100000);
+} catch (error: any) {
+  if (error.statusCode === 429) {
+    // Rate limited - wait and retry
+    console.warn('Rate limited, waiting before retry...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Retry the operation
+  }
+}
+  ```
+</CodeGroup>
+
+### ValidationError
+
+Raised when input validation fails.
+
+**Common Causes**:
+- Invalid parameter format
+- Missing required fields
+- Out-of-range values
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk import CreateOrderRequest
+from kaleidoswap_sdk.exceptions import ValidationError
+
+try:
+    order = await client.create_order(
+        CreateOrderRequest(
+            rfq_id="",  # Empty string - invalid
+            from_amount=-100  # Negative amount - invalid
+        )
+    )
+except ValidationError as e:
+    print(f"Validation error: {e.message}")
+    print("Please check your input parameters")
+  ```
+
+  ```typescript TypeScript
+try {
+  const quote = await client.quoteRequest('INVALID_ASSET', 'BTC', 100000);
+} catch (error: any) {
+  if (error.statusCode === 422) {
+    console.error('Validation error:', error.message);
+  }
+}
+  ```
+</CodeGroup>
+
+### SwapError
+
+Raised when swap operations fail.
+
+**Common Causes**:
+- Insufficient balance
+- Expired quote
+- Swap already executed
+- Invalid swap state
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk import InitMakerSwapRequest
+from kaleidoswap_sdk.exceptions import SwapError
+
+try:
+    swap = await client.init_maker_swap(
+        InitMakerSwapRequest(
+            rfq_id=quote.rfq_id,
+            from_asset="BTC",
+            to_asset="USDT",
+            from_amount=100000,
+            to_amount=quote.to_amount
+        )
+    )
+except SwapError as e:
+    print(f"Swap failed: {e.message}")
+    if "balance" in e.message.lower():
+        print("Insufficient balance for swap")
+    elif "expired" in e.message.lower():
+        print("Quote has expired, request a new one")
+  ```
+
+  ```typescript TypeScript
+try {
+  const swap = await client.initMakerSwap(request);
+} catch (error: any) {
+  console.error(error.message);
+  // Example: "HTTP 422: Invalid amount: must be positive"
+
+  if (error.response) {
+    try {
+      const details = JSON.parse(error.response);
+      console.log('Error detail:', details.detail);
+    } catch {
+      console.log('Raw response:', error.response);
+    }
+  }
+}
+  ```
+</CodeGroup>
+
+### TimeoutError
+
+Raised when operations take too long.
+
+**Common Causes**:
+- Slow network connection
+- Server processing delay
+- Client timeout configuration
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk.exceptions import TimeoutError
+
+try:
+    # Operation with custom timeout
+    final_status = await client.wait_for_swap_completion(
+        payment_hash=swap.payment_hash,
+        timeout_seconds=60  # Short timeout
+    )
+except TimeoutError as e:
+    print(f"Operation timed out: {e.message}")
+    print("You can check the status manually later")
+  ```
+
+  ```typescript TypeScript
+try {
+  const result = await client.quoteRequest('BTC', 'USDT', 100000);
+} catch (error: any) {
+  if (error.message.includes('timeout')) {
+    console.error('Request timed out after 30 seconds');
+    // Retry with same or longer timeout
+    // Or show "server is slow" message to user
+  }
+}
+  ```
+</CodeGroup>
+
+### WebSocketError (Python)
+
+Raised when WebSocket operations fail.
+
+**Common Causes**:
+- Connection dropped
+- Invalid message format
+- WebSocket not connected
+
+```python
+from kaleidoswap_sdk.exceptions import WebSocketError
+
+try:
+    # Try to use WebSocket before connecting
+    await client.get_quote_websocket(
+        from_asset="BTC",
+        to_asset="USDT",
+        amount=100000,
+        callback=handler
+    )
+except WebSocketError as e:
+    print(f"WebSocket error: {e.message}")
+    print("Connecting to WebSocket...")
+    await client.connect()
+    # Retry operation
+```
+
+### AssetError (Python)
+
+Raised when asset operations fail.
+
+**Common Causes**:
+- Asset not found
+- Asset not supported
+- Invalid asset ID
+
+```python
+from kaleidoswap_sdk.exceptions import AssetError
+
+try:
+    assets = await client.list_assets()
+except AssetError as e:
+    print(f"Asset error: {e.message}")
+```
+
+### PairError (Python)
+
+Raised when trading pair operations fail.
+
+**Common Causes**:
+- Pair not found
+- Pair not active
+- Invalid pair combination
+
+```python
+from kaleidoswap_sdk.exceptions import PairError
+
+try:
+    pair = await client.get_pair_by_assets("BTC", "INVALID_ASSET")
+except PairError as e:
+    print(f"Pair error: {e.message}")
+    print("This trading pair is not available")
+```
+
+### QuoteError (Python)
+
+Raised when quote operations fail.
+
+**Common Causes**:
+- Invalid quote parameters
+- Quote expired
+- Market conditions changed
+
+```python
+from kaleidoswap_sdk.exceptions import QuoteError
+
+try:
+    quote = await client.get_quote(
+        from_asset="BTC",
+        to_asset="USDT",
+        amount=0  # Invalid amount
+    )
+except QuoteError as e:
+    print(f"Quote error: {e.message}")
+```
+
+### NodeError (Python)
+
+Raised when node operations fail.
+
+**Common Causes**:
+- Node offline
+- Node not synchronized
+- Invalid node configuration
+
+```python
+from kaleidoswap_sdk.exceptions import NodeError
+
+try:
+    node_info = await client.get_node_info()
+except NodeError as e:
+    print(f"Node error: {e.message}")
+    print("Please check your node connection")
+```
+
+## Error Handling Patterns
+
+### Basic Pattern
+
+Catch specific exceptions for precise error handling:
+
+<CodeGroup>
+  ```python Python
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.exceptions import (
+    NetworkError,
+    ValidationError,
+    SwapError,
+    KaleidoError,
+)
+
+async def safe_swap_operation():
+    client = KaleidoClient(
+        api_url="https://api.staging.kaleidoswap.com/api/v1",
+        node_url="<Your node URL>"
+    )
+
+    try:
+        # Get quote
+        quote = await client.get_quote("BTC", "USDT", 100000)
+
+        # Execute swap
+        # ... swap logic
+
+    except NetworkError as e:
+        print(f"Network issue: {e.message}")
+        # Retry logic
+    except ValidationError as e:
+        print(f"Invalid input: {e.message}")
+        # Fix parameters
+    except SwapError as e:
+        print(f"Swap failed: {e.message}")
+        # Handle swap failure
+    except KaleidoError as e:
+        print(f"SDK error: {e.message}")
+        # Generic error handling
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+    finally:
+        await client.close()
+
+asyncio.run(safe_swap_operation())
+  ```
+
+  ```typescript TypeScript
+const client = new KaleidoClient({
+  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+});
+
+async function getQuote(fromAsset: string, toAsset: string, amount: number) {
+  try {
+    return await client.quoteRequest(fromAsset, toAsset, amount);
+  } catch (error: any) {
+    // Log the full error for debugging
+    console.error('Quote request failed:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      response: error.response
+    });
+
+    // Handle based on status code
+    if (error.statusCode === 404) {
+      throw new Error(`Trading pair ${fromAsset}/${toAsset} not found`);
+    } else if (error.statusCode === 422) {
+      throw new Error(`Invalid amount: ${amount}`);
+    } else if (!error.statusCode) {
+      throw new Error('Network connection failed. Please check your internet.');
+    } else {
+      throw new Error('Failed to get quote. Please try again.');
+    }
+  }
+}
+  ```
+</CodeGroup>
+
+### Handling API Errors by Status Code (TypeScript)
+
+```typescript
+try {
+  const quote = await client.quoteRequest('BTC', 'USDT', 100000);
+} catch (error: any) {
+  if (error.statusCode) {
+    switch (error.statusCode) {
+      case 400:
+      case 422:
+        // Validation error - show message to user
+        console.error('Invalid request:', error.message);
+        showUserError(error.message);
+        break;
+
+      case 401:
+        // Authentication error
+        console.error('Not authenticated');
+        redirectToLogin();
+        break;
+
+      case 404:
+        // Resource not found
+        console.error('Resource not found:', error.message);
+        showNotFoundMessage();
+        break;
+
+      case 429:
+        // Rate limited - wait and retry
+        console.warn('Rate limited, waiting before retry...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Retry the operation
+        break;
+
+      case 500:
+      case 502:
+      case 503:
+        // Server error - retry with backoff
+        console.error('Server error, will retry');
+        await retryWithBackoff();
+        break;
+
+      default:
+        console.error('Unexpected error:', error.message);
+    }
+  } else {
+    // Network error (no HTTP response)
+    console.error('Network error:', error.message);
+    showOfflineMessage();
+  }
+}
+```
+
+### Retry Pattern
+
+Implement automatic retries for transient errors:
+
+<CodeGroup>
+  ```python Python
+import asyncio
+from kaleidoswap_sdk.exceptions import NetworkError, TimeoutError
+
+async def get_quote_with_retry(client, max_retries=3):
+    """Get quote with automatic retry on network errors."""
+
+    for attempt in range(max_retries):
+        try:
+            quote = await client.get_quote("BTC", "USDT", 100000)
+            return quote
+
+        except (NetworkError, TimeoutError) as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Retry {attempt + 1}/{max_retries} after {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                print(f"Failed after {max_retries} attempts")
+                raise
+
+    return None
+  ```
+
+  ```typescript TypeScript
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      const isLastAttempt = attempt === maxRetries - 1;
+      const shouldRetry = !error.statusCode || error.statusCode >= 500;
+
+      if (isLastAttempt || !shouldRetry) {
+        throw error;
+      }
+
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+      console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+// Usage
+const quote = await retryWithBackoff(() =>
+  client.quoteRequest('BTC', 'USDT', 100000)
+);
+  ```
+</CodeGroup>
+
+### Context Manager Pattern (Python)
+
+Use context managers for automatic cleanup:
+
+```python
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.exceptions import KaleidoError
+
+async def safe_operation():
+    """Operation with automatic cleanup."""
+
+    try:
+        async with KaleidoClient(
+            api_url="https://api.staging.kaleidoswap.com/api/v1",
+            node_url="<Your node URL>"
+        ) as client:
+            # Client automatically closes even if errors occur
+            pairs = await client.list_pairs()
+            return pairs
+
+    except KaleidoError as e:
+        print(f"Error: {e.message}")
+        return None
+```
+
+### Logging Pattern
+
+Log errors for debugging and monitoring:
+
+<CodeGroup>
+  ```python Python
+import logging
+from kaleidoswap_sdk.exceptions import KaleidoError
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
+
+async def operation_with_logging():
+    try:
+        # SDK operation
+        pass
+    except KaleidoError as e:
+        logger.error(
+            "SDK error occurred",
+            extra={
+                "error_type": type(e).__name__,
+                "message": e.message,
+                "status_code": e.status_code,
+                "response": e.response,
+            }
+        )
+        raise
+  ```
+
+  ```typescript TypeScript
+function setupErrorTracking(client: KaleidoClient) {
+  const originalRequest = client.quoteRequest.bind(client);
+
+  client.quoteRequest = async (...args) => {
+    try {
+      return await originalRequest(...args);
+    } catch (error: any) {
+      // Send to error tracking service
+      trackError(error, {
+        operation: 'quoteRequest',
+        args: args
+      });
+      throw error;
+    }
+  };
+}
+
+function trackError(error: any, context: any) {
+  // Example with Sentry
+  if (typeof Sentry !== 'undefined') {
+    Sentry.captureException(error, {
+      tags: {
+        operation: context.operation,
+        statusCode: error.statusCode
+      },
+      extra: {
+        response: error.response,
+        context: context
+      }
+    });
+  }
+
+  // Or custom analytics
+  console.log('Error tracked:', {
+    message: error.message,
+    statusCode: error.statusCode,
+    operation: context.operation,
+    timestamp: new Date().toISOString()
+  });
+}
+  ```
+</CodeGroup>
+
+### Graceful Degradation Pattern
+
+Provide fallback behavior when operations fail:
+
+<CodeGroup>
+  ```python Python
+from kaleidoswap_sdk.exceptions import QuoteError
+
+async def get_quote_or_estimate(client):
+    """Try to get quote, fall back to estimation if unavailable."""
+
+    try:
+        quote = await client.get_quote("BTC", "USDT", 100000)
+        return quote.exchange_rate
+
+    except QuoteError:
+        # Fallback to historical rate or estimation
+        print("Live quote unavailable, using estimated rate")
+        return 50000.0  # Fallback rate
+  ```
+
+  ```typescript TypeScript
+async function getQuoteOrEstimate(
+  client: KaleidoClient,
+  fromAsset: string,
+  toAsset: string,
+  amount: number
+): Promise<number> {
+  try {
+    const quote = await client.quoteRequest(fromAsset, toAsset, amount);
+    return quote.exchange_rate;
+  } catch (error: any) {
+    if (error.statusCode === 404) {
+      // Fallback to historical rate or estimation
+      console.log("Live quote unavailable, using estimated rate");
+      return 50000.0; // Fallback rate
+    }
+    throw error;
+  }
+}
+  ```
+</CodeGroup>
+
+### Production-Ready Error Handling (TypeScript)
+
+```typescript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+class TradingService {
+  private client: KaleidoClient;
+
+  constructor() {
+    this.client = new KaleidoClient({
+      baseUrl: 'https://api.kaleidoswap.com/api/v1'
+    });
+  }
+
+  async executeSwap(fromAsset: string, toAsset: string, amount: number) {
+    try {
+      // Get quote
+      const quote = await this.retryOperation(() =>
+        this.client.quoteRequest(fromAsset, toAsset, amount)
+      );
+
+      // Initialize swap
+      const swapResponse = await this.client.initMakerSwap({
+        rfq_id: quote.rfq_id,
+        from_asset: fromAsset,
+        to_asset: toAsset,
+        from_amount: amount,
+        to_amount: quote.to_amount
+      });
+
+      return swapResponse;
+
+    } catch (error: any) {
+      // Log for debugging
+      console.error('Swap failed:', error);
+
+      // Provide user-friendly error message
+      throw new Error(this.getUserFriendlyMessage(error));
+    }
+  }
+
+  private async retryOperation<T>(
+    operation: () => Promise<T>,
+    maxRetries = 3
+  ): Promise<T> {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        const shouldRetry =
+          !error.statusCode || // Network error
+          error.statusCode >= 500 || // Server error
+          error.statusCode === 429; // Rate limit
+
+        if (attempt === maxRetries - 1 || !shouldRetry) {
+          throw error;
+        }
+
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error('Max retries exceeded');
+  }
+
+  private getUserFriendlyMessage(error: any): string {
+    // Extract message from API response
+    if (error.response) {
+      try {
+        const parsed = JSON.parse(error.response);
+        if (parsed.detail) return parsed.detail;
+      } catch {}
+    }
+
+    // Fallback to error message
+    const match = error.message?.match(/HTTP \d+: (.+)/);
+    if (match) return match[1];
+
+    // Generic fallback
+    if (!error.statusCode) {
+      return 'Network connection failed. Please check your internet connection.';
+    }
+
+    return 'An error occurred. Please try again.';
+  }
+}
+```
+
+## Best Practices
+
+### 1. Use Specific Exceptions
+
+<CodeGroup>
+  ```python Python
+# Good - catches specific errors
+try:
+    quote = await client.get_quote("BTC", "USDT", 100000)
+except QuoteError as e:
+    # Handle quote-specific error
+    pass
+
+# Avoid - too broad
+try:
+    quote = await client.get_quote("BTC", "USDT", 100000)
+except Exception as e:
+    # Catches everything, hard to debug
+    pass
+  ```
+
+  ```typescript TypeScript
+// Good - check status codes
+try {
+  const result = await client.quoteRequest(fromAsset, toAsset, amount);
+} catch (error: any) {
+  if (error.statusCode) {
+    // HTTP error from API
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      // Client error - don't retry, show to user
+      showUserError(error.message);
+    } else if (error.statusCode >= 500) {
+      // Server error - can retry
+      await retryOperation();
+    }
+  } else {
+    // Network error - no response
+    showNetworkError();
+  }
+}
+  ```
+</CodeGroup>
+
+### 2. Log Error Details
+
+<CodeGroup>
+  ```python Python
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    swap = await client.init_maker_swap(request)
+except SwapError as e:
+    logger.error(f"Swap initialization failed: {e.message}")
+    logger.debug(f"Status code: {e.status_code}")
+    logger.debug(f"Response: {e.response}")
+  ```
+
+  ```typescript TypeScript
+try {
+  const result = await client.quoteRequest(fromAsset, toAsset, amount);
+} catch (error: any) {
+  console.log('Error tracked:', {
+    message: error.message,
+    statusCode: error.statusCode,
+    response: error.response,
+    timestamp: new Date().toISOString()
+  });
+}
+  ```
+</CodeGroup>
+
+### 3. Clean Up Resources
+
+<CodeGroup>
+  ```python Python
+client = KaleidoClient(api_url="...", node_url="...")
+
+try:
+    # Operations
+    pass
+except KaleidoError as e:
+    # Handle error
+    pass
+finally:
+    # Always close the client
+    await client.close()
+  ```
+
+  ```typescript TypeScript
+// For TypeScript, ensure proper cleanup in promise chains
+try {
+  const result = await client.quoteRequest(fromAsset, toAsset, amount);
+} catch (error: any) {
+  // Handle error
+} finally {
+  // Any cleanup needed
+}
+  ```
+</CodeGroup>
+
+### 4. Provide User-Friendly Messages
+
+<CodeGroup>
+  ```python Python
+try:
+    order = await client.create_order(request)
+except ValidationError as e:
+    # Convert technical error to user-friendly message
+    user_message = "Please check your order details and try again"
+    print(user_message)
+    logger.error(f"Technical details: {e.message}")
+  ```
+
+  ```typescript TypeScript
+try {
+  const quote = await client.quoteRequest('BTC', 'INVALID', 100000);
+} catch (error: any) {
+  // error.message is: "HTTP 404: Pair not found: BTC/INVALID"
+  // Extract just the detail
+
+  const match = error.message.match(/HTTP \d+: (.+)/);
+  const userMessage = match ? match[1] : error.message;
+
+  showToast(userMessage); // "Pair not found: BTC/INVALID"
+}
+  ```
+</CodeGroup>
+
+### 5. Check Status Codes First
+
+<CodeGroup>
+  ```python Python
+# Python: Check exception type first
+try:
+    result = await operation()
+except ValidationError as e:
+    # Client error - don't retry
+    show_user_error(e.message)
+except (NetworkError, TimeoutError) as e:
+    # Can retry with backoff
+    await retry_with_backoff()
+  ```
+
+  ```typescript TypeScript
+// TypeScript: Check statusCode first
+try {
+  const result = await operation();
+} catch (error: any) {
+  if (error.statusCode >= 400 && error.statusCode < 500) {
+    // Client error - don't retry
+    showUserError(error.message);
+  } else if (!error.statusCode || error.statusCode >= 500) {
+    // Network or server error - can retry
+    await retryWithBackoff();
+  }
+}
+  ```
+</CodeGroup>
+
+### 6. Retry Strategy
+
+**Retry on**:
+- Network errors (no statusCode)
+- Server errors (5xx)
+- Rate limits (429)
+
+**Don't retry**:
+- Validation errors (400, 422)
+- Authentication errors (401)
+- Not found errors (404)
+
+## Summary
+
+Both SDKs provide comprehensive error handling:
+
+**Python SDK**:
+- Rich exception hierarchy with specific error classes
+- All errors inherit from `KaleidoError`
+- Easy to catch and handle specific error types
+- Includes status codes and response data
+
+**TypeScript SDK**:
+- Standard `Error` objects with HTTP properties
+- Check `statusCode` to determine error type and retry strategy
+- Clear error messages from API
+- Flexible for custom error handling
+
+Use the appropriate strategy for your language and follow the best practices above to build robust applications.

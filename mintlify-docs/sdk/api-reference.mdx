@@ -1,13 +1,27 @@
 ---
 title: API Reference
-description: Complete reference for the KaleidoSwap Python SDK client methods, configuration options, and response types.
+description: Complete reference for the KaleidoSwap SDK (Python & TypeScript) client methods, configuration options, and response types.
 ---
 
 ## Overview
 
-The `KaleidoClient` is the main entry point for interacting with the KaleidoSwap API. It provides async methods for asset discovery, quote generation, swap execution, wallet operations, and Lightning Network management.
+The `KaleidoClient` is the main entry point for interacting with the KaleidoSwap API. It provides methods for asset discovery, quote generation, swap execution, wallet operations, and Lightning Network management.
 
-```python
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+const client = new KaleidoClient({
+  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
+  nodeUrl: 'https://your-lightning-node.com', // Optional
+  wsUrl: 'wss://api.staging.kaleidoswap.com/api/v1', // Optional
+  apiKey: process.env.KALEIDO_API_KEY, // leave empty for now
+  timeout: 30000,
+  retries: 3
+});
+```
+
+```python Python
 from kaleidoswap_sdk import KaleidoClient
 
 client = KaleidoClient(
@@ -22,32 +36,53 @@ client = KaleidoClient(
     compression=None
 )
 ```
+</CodeGroup>
 
 ## Client Configuration
 
-### KaleidoClient Parameters
+### Configuration Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `api_url` | `str` | Yes | - | KaleidoSwap API base URL |
-| `node_url` | `str` | Yes | - | RGB Lightning node URL |
-| `api_key` | `str` | No | `None` | API key for authenticated requests (future use) |
-| `ping_interval` | `int` | No | `30` | WebSocket ping interval in seconds |
-| `ping_timeout` | `int` | No | `10` | WebSocket ping timeout in seconds |
-| `close_timeout` | `int` | No | `10` | WebSocket close timeout in seconds |
-| `max_size` | `int` | No | `2**20` | Maximum WebSocket message size (1MB) |
-| `max_queue` | `int` | No | `32` | Maximum WebSocket message queue size |
-| `compression` | `str` | No | `None` | Optional WebSocket compression method |
+<CodeGroup>
+```typescript TypeScript
+// KaleidoConfig Interface
+interface KaleidoConfig {
+  baseUrl?: string;        // KaleidoSwap API base URL (default: staging)
+  nodeUrl?: string;        // Lightning node URL (optional)
+  wsUrl?: string;          // WebSocket URL (auto-derived from baseUrl)
+  timeout?: number;        // Request timeout in ms (default: 30000)
+  retries?: number;        // Automatic retries (default: 3)
+  apiKey?: string;         // API key for authenticated requests
+  userAgent?: string;      // Custom User-Agent header
+}
+```
+
+```python Python
+# KaleidoClient Parameters
+class KaleidoClient:
+    def __init__(
+        self,
+        api_url: str,                    # KaleidoSwap API base URL
+        node_url: str,                   # RGB Lightning node URL
+        api_key: Optional[str] = None,   # API key (future use)
+        ping_interval: int = 30,         # WebSocket ping interval (seconds)
+        ping_timeout: int = 10,          # WebSocket ping timeout (seconds)
+        close_timeout: int = 10,         # WebSocket close timeout (seconds)
+        max_size: int = 2**20,           # Max message size (1MB)
+        max_queue: int = 32,             # Max message queue size
+        compression: Optional[str] = None # WebSocket compression
+    )
+```
+</CodeGroup>
 
 ## API Methods Overview
 
-The Python SDK provides 50+ methods organized into the following categories:
+The KaleidoSwap SDK provides 50+ methods organized into the following categories:
 
 - **[Market Operations](#market-operations)** - Asset and pair discovery, quotes
 - **[Swap Operations](#swap-operations)** - Atomic swap execution
 - **[Order Management](#order-management)** - Order creation and tracking
 - **[LSP Operations](#lsp-operations)** - Lightning Service Provider interactions
-- **[Wallet Operations](#wallet-operations)** - Wallet initialization and management
+- **[Wallet Operations](#wallet-operations)** - Wallet initialization and management (Python only)
 - **[Balance & Assets](#balance--asset-operations)** - Balance queries and asset management
 - **[Channel Management](#channel-management)** - Lightning channel operations
 - **[Payment Operations](#payment-operations)** - Lightning payments and invoices
@@ -61,49 +96,101 @@ The Python SDK provides 50+ methods organized into the following categories:
 
 Methods for retrieving market data, assets, and quotes.
 
-### `list_assets()`
+### `list_assets()` / `assetList()`
 
 Lists all available assets on the platform.
 
 **Parameters**: None
 
-**Returns**: `ListAssetsResponse`
+**Returns**: Asset list response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const assets = await client.assetList();
+for (const asset of assets) {
+  console.log(`${asset.ticker}: ${asset.name} (${asset.asset_id})`);
+}
+```
+
+```python Python
 assets = await client.list_assets()
 for asset in assets.assets:
     print(f"{asset.ticker}: {asset.name} ({asset.asset_id})")
 ```
+</CodeGroup>
 
 **Response Structure**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+interface AssetResponse {
+  assets: Asset[];
+  network: string;
+  timestamp: number;
+}
+```
+
+```python Python
 class ListAssetsResponse(BaseModel):
     assets: List[Asset]
     network: str
     timestamp: int
 ```
+</CodeGroup>
 
 ---
 
-### `list_pairs()`
+### `list_pairs()` / `pairList()`
 
 Retrieves all available trading pairs with their configuration.
 
 **Parameters**: None
 
-**Returns**: `ListPairsResponse`
+**Returns**: Trading pairs response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const pairs = await client.pairList();
+for (const pair of pairs) {
+  if (pair.is_active) {
+    console.log(`${pair.base_asset}/${pair.quote_asset}`);
+  }
+}
+```
+
+```python Python
 pairs = await client.list_pairs()
 for pair in pairs.pairs:
     if pair.is_active:
         print(f"{pair.base_asset}/{pair.quote_asset}")
 ```
+</CodeGroup>
 
 **Response Structure**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+interface TradingPair {
+  id: string;
+  base_asset: string;
+  base_asset_id: string;
+  base_precision: number;
+  quote_asset: string;
+  quote_asset_id: string;
+  quote_precision: number;
+  is_active: boolean;
+  min_base_order_size: number;
+  max_base_order_size: number;
+  min_quote_order_size: number;
+  max_quote_order_size: number;
+}
+```
+
+```python Python
 class TradingPair(BaseModel):
     id: str
     base_asset: str
@@ -118,23 +205,50 @@ class TradingPair(BaseModel):
     min_quote_order_size: int
     max_quote_order_size: int
 ```
+</CodeGroup>
 
 ---
 
-### `get_quote(from_asset, to_asset, amount, to_amount=None)`
+### `get_quote()` / `quoteRequest()`
 
 Generates a price quote for a potential trade.
 
 **Parameters**:
-- `from_asset: str` - Source asset ID or ticker
-- `to_asset: str` - Destination asset ID or ticker
-- `amount: int` - Amount to trade in atomic units
-- `to_amount: int` (optional) - Target amount to receive
+- `from_asset: string` - Source asset ID or ticker
+- `to_asset: string` - Destination asset ID or ticker
+- `from_amount?: number` - Amount to trade in atomic units (use this OR to_amount)
+- `to_amount?: number` - Target amount to receive in atomic units (use this OR from_amount)
 
-**Returns**: `QuoteResponse`
+**Returns**: Quote response
+
+**Error Conditions**:
+- `ValidationError` - Invalid parameters
+- `NetworkError` - Connection issues
+- `QuoteError` - Quote generation failed
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+// Quote for selling 0.001 BTC (100,000 satoshis)
+const quote = await client.quoteRequest({
+  from_asset: 'BTC',
+  from_amount: 100000,
+  to_asset: 'USDT'
+});
+console.log('Rate:', quote.exchange_rate || quote.price);
+console.log('Will receive:', quote.to_amount, 'atomic USDT');
+
+// Alternative: Quote for buying specific amount
+const buyQuote = await client.quoteRequest({
+  to_asset: 'USDT',
+  to_amount: 45000000,
+  from_asset: 'BTC'
+});
+console.log('BTC required:', buyQuote.from_amount);
+```
+
+```python Python
 # Quote for selling 0.001 BTC (100,000 satoshis)
 quote = await client.get_quote(
     from_asset="BTC",
@@ -144,28 +258,34 @@ quote = await client.get_quote(
 print(f"Rate: {quote.exchange_rate}")
 print(f"Will receive: {quote.to_amount} atomic USDT")
 ```
-
-**Error Conditions**:
-- `ValidationError` - Invalid parameters
-- `NetworkError` - Connection issues
-- `QuoteError` - Quote generation failed
+</CodeGroup>
 
 ---
 
-### `get_quote_websocket(from_asset, to_asset, amount, callback)`
+### `get_quote_websocket()` / `quoteRequestWS()`
 
 Get real-time quote updates via WebSocket.
 
 **Parameters**:
-- `from_asset: str` - Source asset ID or ticker
-- `to_asset: str` - Destination asset ID or ticker
+- `from_asset: string` - Source asset ID or ticker
+- `to_asset: string` - Destination asset ID or ticker
 - `amount: int` - Amount to trade in atomic units
-- `callback: Callable` - Async callback function for quote updates
 
-**Returns**: None (uses callback)
+**Returns**: Real-time quote response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.quoteRequestWS({
+  from_asset: 'BTC',
+  from_amount: 100000,
+  to_asset: 'USDT'
+});
+console.log('Real-time rate:', quote.price);
+```
+
+```python Python
 async def quote_handler(quote):
     print(f"Real-time rate: {quote.exchange_rate}")
 
@@ -177,20 +297,31 @@ await client.get_quote_websocket(
     callback=quote_handler
 )
 ```
+</CodeGroup>
 
 ---
 
-### `get_asset_metadata(request: GetAssetMetadataRequest)`
+### `get_asset_metadata()`
 
 Get detailed metadata for a specific RGB asset.
 
 **Parameters**:
-- `request: GetAssetMetadataRequest` - Contains `asset_id`
+- `asset_id: string` - RGB asset ID
 
-**Returns**: `AssetMetadataResponse`
+**Returns**: Asset metadata response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const metadata = await client.getAssetMetadata(
+  'rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg'
+);
+console.log('Contract ID:', metadata.contract_id);
+console.log('Schema:', metadata.schema);
+```
+
+```python Python
 from kaleidoswap_sdk import GetAssetMetadataRequest
 
 metadata = await client.get_asset_metadata(
@@ -201,25 +332,37 @@ metadata = await client.get_asset_metadata(
 print(f"Contract ID: {metadata.contract_id}")
 print(f"Schema: {metadata.schema}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_pair_by_assets(base_asset, quote_asset)`
+### `get_pair_by_assets()`
 
 Get specific trading pair information by asset identifiers.
 
 **Parameters**:
-- `base_asset: str` - Base asset ID or ticker
-- `quote_asset: str` - Quote asset ID or ticker
+- `base_asset: string` - Base asset ID or ticker
+- `quote_asset: string` - Quote asset ID or ticker
 
-**Returns**: `TradingPair`
+**Returns**: Trading pair information
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const pair = await client.pairList(); // Filter manually or use helper
+const btcUsdtPair = pair.find(p =>
+  p.base_asset === 'BTC' && p.quote_asset === 'USDT'
+);
+console.log('Min order:', btcUsdtPair?.min_base_order_size);
+```
+
+```python Python
 pair = await client.get_pair_by_assets("BTC", "USDT")
 print(f"Min order: {pair.min_base_order_size}")
 print(f"Max order: {pair.max_base_order_size}")
 ```
+</CodeGroup>
 
 ---
 
@@ -227,17 +370,42 @@ print(f"Max order: {pair.max_base_order_size}")
 
 Methods for executing atomic swaps on-chain and off-chain.
 
-### `init_maker_swap(request: InitMakerSwapRequest)`
+### `init_maker_swap()` / `initMakerSwap()`
 
 Initialize a swap transaction as the maker.
 
 **Parameters**:
-- `request: InitMakerSwapRequest` - Swap initialization parameters
+- `rfq_id: string` - Quote ID from previous quote request
+- `from_asset: string` - Source asset
+- `to_asset: string` - Destination asset
+- `from_amount: number` - Amount to send (atomic units)
+- `to_amount: number` - Amount to receive (atomic units)
 
-**Returns**: `InitMakerSwapResponse`
+**Returns**: Swap response with payment hash and swapstring
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.quoteRequest({
+  from_asset: 'BTC',
+  from_amount: 100000,
+  to_asset: 'USDT'
+});
+
+const swap = await client.initMakerSwap({
+  rfq_id: quote.rfq_id,
+  from_asset: 'BTC',
+  to_asset: 'USDT',
+  from_amount: 100000,
+  to_amount: quote.to_amount
+});
+
+console.log('Payment hash:', swap.payment_hash);
+console.log('Swapstring:', swap.swapstring);
+```
+
+```python Python
 from kaleidoswap_sdk import InitMakerSwapRequest
 
 # First get a quote
@@ -256,20 +424,35 @@ swap = await client.init_maker_swap(
 print(f"Payment hash: {swap.payment_hash}")
 print(f"Swapstring: {swap.swapstring}")
 ```
+</CodeGroup>
 
 ---
 
-### `execute_maker_swap(request: ExecuteMakerSwapRequest)`
+### `execute_maker_swap()` / `executeMakerSwap()`
 
 Execute a previously initialized swap.
 
 **Parameters**:
-- `request: ExecuteMakerSwapRequest` - Execution parameters
+- `swapstring: string` - Swap data from initMakerSwap
+- `payment_hash: string` - Payment hash from initMakerSwap
+- `taker_pubkey?: string` - Taker's Lightning node public key
 
-**Returns**: `ExecuteMakerSwapResponse`
+**Returns**: Swap execution response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.executeMakerSwap({
+  swapstring: swap.swapstring,
+  payment_hash: swap.payment_hash,
+  taker_pubkey: await client.getNodePubkey()
+});
+
+console.log('Swap executed:', result);
+```
+
+```python Python
 from kaleidoswap_sdk import ExecuteMakerSwapRequest
 
 result = await client.execute_maker_swap(
@@ -280,12 +463,13 @@ result = await client.execute_maker_swap(
 )
 print(f"Swap executed: {result.success}")
 ```
+</CodeGroup>
 
 ---
 
-### `complete_maker_swap(payment_hash, swapstring, invoice, input_asset)`
+### `complete_maker_swap()`
 
-Complete a maker swap operation.
+Complete a maker swap operation (Python only).
 
 **Parameters**:
 - `payment_hash: str` - Payment hash from swap initialization
@@ -293,9 +477,10 @@ Complete a maker swap operation.
 - `invoice: str` - Invoice for the swap
 - `input_asset: str` - Input asset identifier
 
-**Returns**: `Dict[str, Any]`
+**Returns**: Swap completion response
 
 **Example**:
+
 ```python
 result = await client.complete_maker_swap(
     payment_hash=swap.payment_hash,
@@ -307,17 +492,24 @@ result = await client.complete_maker_swap(
 
 ---
 
-### `get_swap_status(request: GetSwapStatusRequest)`
+### `get_swap_status()` / `atomicSwapStatus()`
 
-Check the status of a swap by payment hash.
+Check the status of a swap.
 
 **Parameters**:
-- `request: GetSwapStatusRequest` - Contains `payment_hash`
+- `payment_hash: string` - Payment hash from swap initialization
 
-**Returns**: `GetSwapStatusResponse`
+**Returns**: Swap status response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.atomicSwapStatus(order.id);
+console.log('Status:', status.status);
+```
+
+```python Python
 from kaleidoswap_sdk import GetSwapStatusRequest
 
 status = await client.get_swap_status(
@@ -325,22 +517,49 @@ status = await client.get_swap_status(
 )
 print(f"Status: {status.status}")
 ```
+</CodeGroup>
 
 ---
 
-### `wait_for_swap_completion(payment_hash, timeout_seconds=300, poll_interval=5)`
+### `wait_for_swap_completion()` / `waitForSwapCompletion()`
 
 Wait for a swap to complete with automatic polling.
 
 **Parameters**:
-- `payment_hash: str` - Payment hash from swap initialization
-- `timeout_seconds: int` - Maximum wait time (default: 300)
-- `poll_interval: int` - Seconds between status checks (default: 5)
+- `payment_hash: string` - Payment hash from swap initialization
+- `timeout_seconds?: number` - Maximum wait time (default: 300 seconds)
+- `poll_interval_seconds?: number` - Seconds between status checks (default: 5 seconds)
 
-**Returns**: `SwapStatus`
+**Returns**: Final swap status
+
+**Error Conditions**:
+- `TimeoutError` - Swap didn't complete within timeout
+- `SwapError` - Status check failed
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+try {
+  const finalSwap = await client.waitForSwapCompletion(
+    swap.payment_hash,
+    600,  // 10 minutes
+    2     // Poll every 2 seconds
+  );
+
+  if (finalSwap.status === 'Succeeded') {
+    console.log('Swap completed successfully!');
+  } else {
+    console.error('Swap failed:', finalSwap.status);
+  }
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error('Swap timed out');
+  }
+}
+```
+
+```python Python
 try:
     final_status = await client.wait_for_swap_completion(
         payment_hash=swap.payment_hash,
@@ -351,26 +570,34 @@ try:
 except TimeoutError:
     print("Swap did not complete in time")
 ```
+</CodeGroup>
 
 ---
 
-### `whitelist_trade(request: WhitelistTradeRequest)`
+### `whitelist_trade()`
 
 Whitelist a trade on the Lightning node.
 
 **Parameters**:
-- `request: WhitelistTradeRequest` - Contains `swapstring`
+- `swapstring: string` - Swapstring from swap initialization
 
-**Returns**: `Dict[str, Any]`
+**Returns**: Response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+await client.whitelistTrade(swap.swapstring);
+```
+
+```python Python
 from kaleidoswap_sdk import WhitelistTradeRequest
 
 await client.whitelist_trade(
     WhitelistTradeRequest(swapstring=swap.swapstring)
 )
 ```
+</CodeGroup>
 
 ---
 
@@ -378,17 +605,38 @@ await client.whitelist_trade(
 
 Methods for creating and managing swap orders.
 
-### `create_order(request: CreateOrderRequest)`
+### `create_order()` / `createOrder()`
 
 Create a new swap order.
 
 **Parameters**:
-- `request: CreateOrderRequest` - Order parameters
+- `rfq_id: string` - Quote request ID
+- `from_type: string` - Payment method (ONCHAIN, LIGHTNING)
+- `to_type: string` - Settlement method
+- `from_asset: string` - Source asset
+- `to_asset: string` - Destination asset
+- `from_amount: number` - Send amount (atomic units)
+- `to_amount: number` - Receive amount (atomic units)
 
-**Returns**: `OrderResponse`
+**Returns**: Order response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.createOrder({
+  rfq_id: quote.rfq_id,
+  from_asset: 'BTC',
+  to_asset: 'USDT',
+  from_amount: 100000,
+  to_amount: quote.to_amount
+});
+
+console.log('Order ID:', order.id);
+console.log('Payment address:', order.onchain_address);
+```
+
+```python Python
 from kaleidoswap_sdk import CreateOrderRequest
 
 order = await client.create_order(
@@ -405,9 +653,25 @@ order = await client.create_order(
 print(f"Order ID: {order.id}")
 print(f"Payment address: {order.onchain_address}")
 ```
+</CodeGroup>
 
 **Response Structure**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+interface OrderResponse {
+  id: string;
+  rfq_id: string;
+  pay_in: string;  // ONCHAIN or LIGHTNING
+  onchain_address?: string;
+  ln_invoice?: string;
+  rgb_recipient_id?: string;
+  rgb_invoice?: string;
+  status: 'PENDING_PAYMENT' | 'COMPLETED' | 'FAILED';
+}
+```
+
+```python Python
 class OrderResponse(BaseModel):
     id: str
     rfq_id: str
@@ -418,19 +682,24 @@ class OrderResponse(BaseModel):
     rgb_invoice: Optional[str]
     status: str  # PENDING_PAYMENT, COMPLETED, FAILED
 ```
+</CodeGroup>
 
 ---
 
-### `create_swap_order(request: CreateSwapOrderRequest)`
+### `create_swap_order()`
 
-Create a swap order with custom parameters.
+Create a swap order with custom parameters (Python only).
 
 **Parameters**:
-- `request: CreateSwapOrderRequest` - Swap order parameters
+- `pair_id: string` - Trading pair ID
+- `side: string` - "BUY" or "SELL"
+- `amount: int` - Amount in atomic units
+- `settlement: string` - "ONCHAIN" or "LIGHTNING"
 
-**Returns**: `CreateSwapOrderResponse`
+**Returns**: Swap order response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import CreateSwapOrderRequest
 
@@ -446,17 +715,24 @@ swap_order = await client.create_swap_order(
 
 ---
 
-### `get_order(request: GetOrderRequest)`
+### `get_order()` / `swapOrderStatus()`
 
 Get details of a specific order.
 
 **Parameters**:
-- `request: GetOrderRequest` - Contains `order_id`
+- `order_id: string` - Order ID
 
-**Returns**: `OrderResponse`
+**Returns**: Order response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.swapOrderStatus(order.id);
+console.log('Status:', status.status);
+```
+
+```python Python
 from kaleidoswap_sdk import GetOrderRequest
 
 order = await client.get_order(
@@ -464,19 +740,23 @@ order = await client.get_order(
 )
 print(f"Status: {order.status}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_order_history(request: OrderHistoryRequest)`
+### `get_order_history()`
 
-Get order history with optional filtering.
+Get order history with optional filtering (Python only).
 
 **Parameters**:
-- `request: OrderHistoryRequest` - Filter parameters
+- `limit: int` - Number of orders to return
+- `offset: int` - Pagination offset
+- `status?: str` - Filter by status
 
-**Returns**: `OrderHistoryResponse`
+**Returns**: Order history response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import OrderHistoryRequest
 
@@ -493,33 +773,42 @@ for order in history.orders:
 
 ---
 
-### `get_order_analytics()`
+### `get_order_analytics()` / `swapOrderAnalytic()`
 
 Get order analytics and statistics.
 
 **Parameters**: None
 
-**Returns**: `OrderStatsResponse`
+**Returns**: Order statistics response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const analytics = await client.swapOrderAnalytic();
+console.log('Analytics:', analytics);
+```
+
+```python Python
 stats = await client.get_order_analytics()
 print(f"Total orders: {stats.total_orders}")
 print(f"Total volume: {stats.total_volume}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_swap_order_status(request: SwapOrderStatusRequest)`
+### `get_swap_order_status()`
 
-Get the status of a swap order.
+Get the status of a swap order (Python only).
 
 **Parameters**:
-- `request: SwapOrderStatusRequest` - Contains `order_id`
+- `order_id: string` - Order ID
 
-**Returns**: `SwapOrderStatusResponse`
+**Returns**: Swap order status response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import SwapOrderStatusRequest
 
@@ -535,84 +824,140 @@ print(f"Order status: {status.status}")
 
 Methods for interacting with Lightning Service Providers.
 
-### `get_lsp_info()`
+### `get_lsp_info()` / `getLspInfo()`
 
 Get Lightning Service Provider information.
 
 **Parameters**: None
 
-**Returns**: `GetLspInfoResponse`
+**Returns**: LSP info response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const lspInfo = await client.getLspInfo();
+console.log('LSP Pubkey:', lspInfo.pubkey);
+console.log('LSP connection URL:', lspInfo.lsp_connection_url);
+```
+
+```python Python
 lsp_info = await client.get_lsp_info()
 print(f"LSP Pubkey: {lsp_info.pubkey}")
 print(f"Host: {lsp_info.host}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_lsp_connection_url()`
+### `get_lsp_connection_url()` / `getLspConnectionUrl()`
 
 Get LSP connection URL for peer connection.
 
 **Parameters**: None
 
-**Returns**: `str`
+**Returns**: Connection URL string
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const url = await client.getLspConnectionUrl();
+console.log('Connect to LSP:', url);
+```
+
+```python Python
 connection_url = await client.get_lsp_connection_url()
 print(f"Connect to LSP: {connection_url}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_lsp_network_info()`
+### `get_lsp_network_info()` / `getLspNetworkInfo()`
 
 Get LSP network information.
 
 **Parameters**: None
 
-**Returns**: `NetworkInfoResponse`
+**Returns**: Network info response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const networkInfo = await client.getLspNetworkInfo();
+console.log('Network:', networkInfo.network);
+```
+
+```python Python
 network_info = await client.get_lsp_network_info()
 print(f"Network: {network_info.network}")
 print(f"Block height: {network_info.block_height}")
 ```
+</CodeGroup>
 
 ---
 
-### `get_lsp_node_info()`
+### `get_lsp_node_info()` / `getNodeInfo()`
 
 Get LSP node information.
 
 **Parameters**: None
 
-**Returns**: `NodeInfoResponse`
+**Returns**: Node info response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+const nodeInfo = await client.getNodeInfo();
+console.log('Pubkey:', nodeInfo.pubkey);
+```
+
+```python Python
 node_info = await client.get_lsp_node_info()
 print(f"Pubkey: {node_info.pubkey}")
 print(f"Channels: {node_info.num_channels}")
 ```
+</CodeGroup>
 
 ---
 
-### `connect_peer(request: ConnectPeerRequest)`
+### `get_node_pubkey()`
+
+Get node public key (TypeScript only).
+
+**Parameters**: None
+
+**Returns**: Node public key string
+
+**Example**:
+
+```typescript
+const pubkey = await client.getNodePubkey();
+console.log('Node pubkey:', pubkey);
+```
+
+---
+
+### `connect_peer()` / `connectPeer()`
 
 Connect to a Lightning Network peer.
 
 **Parameters**:
-- `request: ConnectPeerRequest` - Contains connection URL
+- `connection_url: string` - Peer connection URL (format: pubkey@host:port)
 
-**Returns**: `Dict[str, Any]`
+**Returns**: Response
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+await client.connectPeer(connectionUrl);
+```
+
+```python Python
 from kaleidoswap_sdk import ConnectPeerRequest
 
 await client.connect_peer(
@@ -621,18 +966,20 @@ await client.connect_peer(
     )
 )
 ```
+</CodeGroup>
 
 ---
 
 ### `list_peers()`
 
-List all connected peers.
+List all connected peers (Python only).
 
 **Parameters**: None
 
-**Returns**: `ListPeersResponse`
+**Returns**: Peers list response
 
 **Example**:
+
 ```python
 peers = await client.list_peers()
 for peer in peers.peers:
@@ -643,18 +990,20 @@ for peer in peers.peers:
 
 ## Wallet Operations
 
-Methods for wallet initialization and management.
+Methods for wallet initialization and management (Python SDK only).
 
-### `init_wallet(request: InitRequest)`
+### `init_wallet()`
 
 Initialize a new wallet.
 
 **Parameters**:
-- `request: InitRequest` - Contains `password` and optional `seed`
+- `password: str` - Wallet password
+- `seed?: str` - Optional seed for deterministic wallet
 
-**Returns**: `InitResponse`
+**Returns**: Wallet initialization response with mnemonic
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import InitRequest
 
@@ -667,16 +1016,17 @@ print("Save this mnemonic safely!")
 
 ---
 
-### `unlock_wallet(request: UnlockRequest)`
+### `unlock_wallet()`
 
 Unlock an existing wallet.
 
 **Parameters**:
-- `request: UnlockRequest` - Contains `password`
+- `password: str` - Wallet password
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import UnlockRequest
 
@@ -688,16 +1038,18 @@ print("Wallet unlocked")
 
 ---
 
-### `backup_wallet(request: BackupRequest)`
+### `backup_wallet()`
 
 Backup the wallet.
 
 **Parameters**:
-- `request: BackupRequest` - Contains backup parameters
+- `backup_path: str` - Path to save backup
+- `password: str` - Backup encryption password
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import BackupRequest
 
@@ -711,16 +1063,18 @@ await client.backup_wallet(
 
 ---
 
-### `restore_wallet(request: RestoreRequest)`
+### `restore_wallet()`
 
 Restore wallet from backup or mnemonic.
 
 **Parameters**:
-- `request: RestoreRequest` - Contains restore parameters
+- `mnemonic: str` - BIP39 mnemonic phrase
+- `password: str` - New wallet password
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import RestoreRequest
 
@@ -734,16 +1088,18 @@ await client.restore_wallet(
 
 ---
 
-### `change_password(request: ChangePasswordRequest)`
+### `change_password()`
 
 Change wallet password.
 
 **Parameters**:
-- `request: ChangePasswordRequest` - Contains old and new passwords
+- `old_password: str` - Current password
+- `new_password: str` - New password
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import ChangePasswordRequest
 
@@ -763,9 +1119,10 @@ Synchronize wallet with the blockchain.
 
 **Parameters**: None
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 await client.sync_wallet()
 print("Wallet synchronized")
@@ -777,16 +1134,17 @@ print("Wallet synchronized")
 
 Methods for querying balances and managing assets.
 
-### `get_btc_balance(skip_sync=False)`
+### `get_btc_balance()`
 
 Get Bitcoin balance.
 
 **Parameters**:
-- `skip_sync: bool` - Skip wallet sync (default: False)
+- `skip_sync?: bool` - Skip wallet sync (default: False)
 
-**Returns**: `BtcBalanceResponse`
+**Returns**: Bitcoin balance response
 
 **Example**:
+
 ```python
 balance = await client.get_btc_balance()
 print(f"Available: {balance.vanilla.spendable} sats")
@@ -795,16 +1153,17 @@ print(f"Pending: {balance.vanilla.pending} sats")
 
 ---
 
-### `get_asset_balance(request: AssetBalanceRequest)`
+### `get_asset_balance()`
 
 Get RGB asset balance.
 
 **Parameters**:
-- `request: AssetBalanceRequest` - Contains `asset_id`
+- `asset_id: string` - RGB asset ID
 
-**Returns**: `AssetBalanceResponse`
+**Returns**: Asset balance response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import AssetBalanceRequest
 
@@ -818,16 +1177,19 @@ print(f"Spendable: {balance.spendable}")
 
 ---
 
-### `create_utxos(request: CreateUtxosRequest)`
+### `create_utxos()`
 
 Create UTXOs for RGB transfers.
 
 **Parameters**:
-- `request: CreateUtxosRequest` - UTXO creation parameters
+- `up_to: bool` - Create up to specified number
+- `num: int` - Number of UTXOs
+- `size: int` - UTXO size in satoshis
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import CreateUtxosRequest
 
@@ -852,9 +1214,10 @@ List all Lightning channels.
 
 **Parameters**: None
 
-**Returns**: `ListChannelsResponse`
+**Returns**: Channels list response
 
 **Example**:
+
 ```python
 channels = await client.list_channels()
 for channel in channels.channels:
@@ -863,16 +1226,21 @@ for channel in channels.channels:
 
 ---
 
-### `open_channel(request: OpenChannelRequest)`
+### `open_channel()`
 
 Open a new Lightning channel.
 
 **Parameters**:
-- `request: OpenChannelRequest` - Channel parameters
+- `peer_pubkey: string` - Peer's public key
+- `capacity_sat: int` - Channel capacity in satoshis
+- `push_msat?: int` - Initial push amount (default: 0)
+- `asset_amount?: int` - RGB asset amount
+- `asset_id?: string` - RGB asset ID
 
-**Returns**: `OpenChannelResponse`
+**Returns**: Channel opening response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import OpenChannelRequest
 
@@ -890,16 +1258,17 @@ print(f"Channel opened: {channel.temporary_channel_id}")
 
 ---
 
-### `close_channel(request: CloseChannelRequest)`
+### `close_channel()`
 
 Close a Lightning channel.
 
 **Parameters**:
-- `request: CloseChannelRequest` - Contains channel ID
+- `channel_id: string` - Channel identifier
 
-**Returns**: `EmptyResponse`
+**Returns**: Empty response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import CloseChannelRequest
 
@@ -914,16 +1283,18 @@ await client.close_channel(
 
 Methods for Lightning payments and invoices.
 
-### `send_payment(request: SendPaymentRequest)`
+### `send_payment()`
 
 Send a Lightning payment.
 
 **Parameters**:
-- `request: SendPaymentRequest` - Payment parameters
+- `invoice: string` - Lightning invoice
+- `amount_msat?: int` - Amount in millisatoshis
 
-**Returns**: `SendPaymentResponse`
+**Returns**: Payment response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import SendPaymentRequest
 
@@ -938,16 +1309,19 @@ print(f"Payment hash: {payment.payment_hash}")
 
 ---
 
-### `generate_ln_invoice(request: LNInvoiceRequest)`
+### `generate_ln_invoice()`
 
 Create a Lightning invoice.
 
 **Parameters**:
-- `request: LNInvoiceRequest` - Invoice parameters
+- `amount_msat: int` - Invoice amount in millisatoshis
+- `description?: str` - Invoice description
+- `expiry_secs?: int` - Invoice expiry (default: 3600)
 
-**Returns**: `LNInvoiceResponse`
+**Returns**: Lightning invoice response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import LNInvoiceRequest
 
@@ -963,16 +1337,17 @@ print(f"Invoice: {invoice.invoice}")
 
 ---
 
-### `decode_ln_invoice(request: DecodeLNInvoiceRequest)`
+### `decode_ln_invoice()`
 
 Decode a Lightning invoice.
 
 **Parameters**:
-- `request: DecodeLNInvoiceRequest` - Contains invoice string
+- `invoice: string` - Lightning invoice string
 
-**Returns**: `DecodeLNInvoiceResponse`
+**Returns**: Decoded invoice information
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import DecodeLNInvoiceRequest
 
@@ -984,16 +1359,18 @@ print(f"Amount: {decoded.amount_msat} msat")
 
 ---
 
-### `get_invoice_status(request: InvoiceStatusRequest)`
+### `get_invoice_status()`
 
 Get the status of an invoice.
 
 **Parameters**:
-- `request: InvoiceStatusRequest` - Contains invoice or payment hash
+- `payment_hash?: string` - Payment hash
+- `invoice?: string` - Invoice string
 
-**Returns**: `InvoiceStatusResponse`
+**Returns**: Invoice status response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import InvoiceStatusRequest
 
@@ -1005,16 +1382,18 @@ print(f"Status: {status.status}")
 
 ---
 
-### `keysend(request: KeysendRequest)`
+### `keysend()`
 
 Send a keysend payment.
 
 **Parameters**:
-- `request: KeysendRequest` - Keysend parameters
+- `dest_pubkey: string` - Destination public key
+- `amount_msat: int` - Amount in millisatoshis
 
-**Returns**: `KeysendResponse`
+**Returns**: Keysend response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import KeysendRequest
 
@@ -1039,9 +1418,10 @@ Get a new on-chain Bitcoin address.
 
 **Parameters**: None
 
-**Returns**: `AddressResponse`
+**Returns**: Bitcoin address response
 
 **Example**:
+
 ```python
 address = await client.get_onchain_address()
 print(f"Address: {address.address}")
@@ -1049,16 +1429,19 @@ print(f"Address: {address.address}")
 
 ---
 
-### `send_btc(request: SendBtcRequest)`
+### `send_btc()`
 
 Send Bitcoin on-chain.
 
 **Parameters**:
-- `request: SendBtcRequest` - Transaction parameters
+- `address: string` - Destination Bitcoin address
+- `amount: int` - Amount in satoshis
+- `fee_rate: int` - Fee rate in sat/vB
 
-**Returns**: `SendBtcResponse`
+**Returns**: Transaction response with TXID
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import SendBtcRequest
 
@@ -1074,16 +1457,17 @@ print(f"TXID: {tx.txid}")
 
 ---
 
-### `list_unspents(request: ListUnspentsRequest)`
+### `list_unspents()`
 
 List unspent transaction outputs.
 
 **Parameters**:
-- `request: ListUnspentsRequest` - Optional filters
+- Optional filters
 
-**Returns**: `ListUnspentsResponse`
+**Returns**: UTXOs list response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import ListUnspentsRequest
 
@@ -1096,16 +1480,17 @@ for utxo in unspents.utxos:
 
 ---
 
-### `estimate_fee(request: EstimateFeeRequest)`
+### `estimate_fee()`
 
 Estimate transaction fee.
 
 **Parameters**:
-- `request: EstimateFeeRequest` - Contains target blocks
+- `target_blocks: int` - Target confirmation blocks
 
-**Returns**: `EstimateFeeResponse`
+**Returns**: Fee estimation response
 
 **Example**:
+
 ```python
 from kaleidoswap_sdk import EstimateFeeRequest
 
@@ -1130,10 +1515,17 @@ Connect to the WebSocket server.
 **Returns**: None
 
 **Example**:
-```python
+
+<CodeGroup>
+```typescript TypeScript
+// TypeScript WebSocket support is implicit via methods like quoteRequestWS()
+```
+
+```python Python
 await client.connect()
 print("WebSocket connected")
 ```
+</CodeGroup>
 
 ---
 
@@ -1146,6 +1538,7 @@ Disconnect from the WebSocket server.
 **Returns**: None
 
 **Example**:
+
 ```python
 await client.disconnect()
 print("WebSocket disconnected")
@@ -1166,7 +1559,7 @@ async with KaleidoClient(api_url="...", node_url="...") as client:
 
 ## Next Steps
 
-- **[Types](./types.md)** - Explore all Pydantic models and type definitions
+- **[Types](./types.md)** - Explore all type definitions
 - **[Examples](./examples.md)** - See complete workflow examples
 - **[Error Handling](./error-handling.md)** - Learn about exception handling
 - **[WebSocket](./websocket.md)** - Deep dive into real-time data streaming

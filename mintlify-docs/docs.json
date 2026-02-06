@@ -78,6 +78,49 @@
         ]
       },
       {
+        "tab": "Web App",
+        "groups": [
+          {
+            "group": "Tutorial: First Steps",
+            "icon": "rocket",
+            "pages": [
+              "web-app/getting-started/introduction",
+              "web-app/getting-started/installation",
+              "web-app/getting-started/verify-binaries",
+              "web-app/wallet/creating-wallet",
+              "web-app/wallet/unlocking-wallet",
+              "web-app/trading/asset-swaps"
+            ]
+          },
+          {
+            "group": "How-To: Wallet Operations",
+            "icon": "wallet",
+            "pages": [
+              "web-app/wallet/initializing-mnemonic",
+              "web-app/wallet/deposits",
+              "web-app/wallet/withdrawals"
+            ]
+          },
+          {
+            "group": "How-To: Channel Management",
+            "icon": "git-branch",
+            "pages": [
+              "web-app/channels/opening-channel",
+              "web-app/channels/order-new-channel",
+              "web-app/channels/channel-backups"
+            ]
+          },
+          {
+            "group": "How-To: Configuration",
+            "icon": "sliders",
+            "pages": [
+              "web-app/getting-started/node-hosting",
+              "web-app/support/settings"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "SDK",
         "groups": [
           {

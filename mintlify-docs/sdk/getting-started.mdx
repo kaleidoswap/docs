@@ -1,27 +1,25 @@
 ---
-title: Getting Started
-description: Quick start guide for the KaleidoSwap SDK (Python & TypeScript)
+title: 'Getting Started'
+description: 'Install and configure the KaleidoSwap SDK for Python or TypeScript'
 ---
 
 ## Installation
 
-Install the SDK using your preferred package manager:
-
 <CodeGroup>
 ```bash npm
-npm install @kaleidoswap/kaleidoswap-sdk
+npm install @kaleidoswap/sdk
+```
+
+```bash pnpm
+pnpm add @kaleidoswap/sdk
 ```
 
 ```bash yarn
-yarn add @kaleidoswap/kaleidoswap-sdk
+yarn add @kaleidoswap/sdk
 ```
 
 ```bash pip
-pip install kaleidoswap-sdk
-```
-
-```bash poetry
-poetry add kaleidoswap-sdk
+pip install kaleidoswap
 ```
 </CodeGroup>
 
@@ -29,464 +27,318 @@ poetry add kaleidoswap-sdk
 
 <Tabs>
   <Tab title="TypeScript">
-    - Node.js 16 or higher
-    - TypeScript 4.5 or higher (optional)
+    - Node.js 18 or higher
+    - No additional dependencies (native bindings bundled)
   </Tab>
   <Tab title="Python">
-    - Python 3.11 or higher
-    - Dependencies will be automatically installed:
-      - `httpx` - Modern HTTP client
-      - `websockets` - WebSocket support
-      - `aiohttp` - Async HTTP operations
-      - `pydantic` - Data validation and type safety
+    - Python 3.9 or higher
+    - No additional dependencies (native bindings bundled)
   </Tab>
 </Tabs>
 
-## Understanding RGB Assets
+## Configuration
 
-Before you start, it's helpful to understand how RGB assets work:
-
-- **name**: The full name of the asset (e.g., "Bitcoin", "Tether USD")
-- **ticker**: Abbreviated symbol (e.g., "BTC", "USDT")
-- **asset_id**: Unique identifier for verification, usually starts with `rgb:x...`
-
-> **Note**: BTC is not an RGB asset - it's the native Bitcoin blockchain coin, so its asset_id remains as `BTC`.
-
-## Basic Setup
-
-### 1. Import the SDK
+### Basic Setup
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+const client = await KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+// Make your first API call
+const assets = await client.listAssets();
+console.log(`Found ${assets.length} assets`);
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+client = KaleidoClient(config)
+
+# Make your first API call
+assets = client.list_assets()
+print(f"Found {len(assets)} assets")
 ```
 </CodeGroup>
 
-### 2. Initialize the Client
+### Full Configuration
 
 <CodeGroup>
 ```typescript TypeScript
-const client = new KaleidoClient({
-  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-  // nodeUrl: '<Address of your RGB Lightning node>',
+import { KaleidoClient, KaleidoConfig } from '@kaleidoswap/sdk';
+
+const config: KaleidoConfig = {
+  // Required: API base URL
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+
+  // Optional: Your RGB Lightning Node URL (for swap execution)
+  nodeUrl: 'http://localhost:3001',
+
+  // Optional: API key for authenticated requests
+  apiKey: undefined,
+
+  // Optional: Request timeout in seconds (default: 30.0)
+  timeout: 30.0,
+
+  // Optional: Maximum retries (default: 3)
+  maxRetries: 3,
+};
+
+const client = await KaleidoClient.create(config);
+```
+
+```python Python
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+config = KaleidoConfig(
+    # Required: API base URL
+    base_url="https://api.regtest.kaleidoswap.com",
+
+    # Optional: Your RGB Lightning Node URL (for swap execution)
+    node_url="http://localhost:3001",
+
+    # Optional: API key for authenticated requests
+    api_key=None,
+
+    # Optional: Request timeout in seconds (default: 30.0)
+    timeout=30.0,
+
+    # Optional: Maximum retries (default: 3)
+    max_retries=3,
+)
+
+client = KaleidoClient(config)
+```
+</CodeGroup>
+
+### Environment Variables
+
+You can also configure the SDK using environment variables:
+
+```bash
+export KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
+export KALEIDO_NODE_URL=http://localhost:3001
+export KALEIDO_API_KEY=your_api_key_here
+```
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+const client = await KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: process.env.KALEIDO_NODE_URL || null,
+  apiKey: process.env.KALEIDO_API_KEY || null,
 });
 ```
 
 ```python Python
-# Basic initialization
-client = KaleidoClient(
-    api_url="https://api.staging.kaleidoswap.com/api/v1",
-    node_url="<Address of your RGB Lightning node>"
-)
-```
-</CodeGroup>
-
-<Info>
-**TypeScript**: The `nodeUrl` parameter is optional and only required for some node operations.
-
-**Python**: The Python SDK requires both `api_url` and `node_url` parameters. More configuration options are covered later in this page.
-</Info>
-
-### 3. Make Your First API Call
-
-<CodeGroup>
-```typescript TypeScript
-// Get available trading pairs
-const pairs = await client.listPairs();
-console.log(`Found ${pairs.pairs.length} trading pairs`);
-```
-
-```python Python
-async def main():
-    # Get available trading pairs
-    pairs = await client.list_pairs()
-    print(f"Found {len(pairs.pairs)} trading pairs")
-
-    # Remember to close the client when done
-    await client.close()
-
-# Run the async function
-asyncio.run(main())
-```
-</CodeGroup>
-
-<details>
-  <summary>
-    Available Pairs Response:
-  </summary>
-
-  ```json
-  {
-    "pairs": [
-      {
-        "id": "ba650d73-5543-47e3-b984-5c3003357fef",
-        "base_asset": "BTC",
-        "base_asset_id": "BTC",
-        "base_precision": 11,
-        "quote_asset": "USDT",
-        "quote_asset_id": "rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-        "quote_precision": 6,
-        "is_active": true,
-        "min_base_order_size": 1000000,
-        "max_base_order_size": 1000000000,
-        "min_quote_order_size": 2000000,
-        "max_quote_order_size": 1000000000
-      },
-      {
-        "id": "e2cb7eaf-3ebb-44e0-9935-99bb28f55e95",
-        "base_asset": "BTC",
-        "base_asset_id": "BTC",
-        "base_precision": 11,
-        "quote_asset": "XAUT",
-        "quote_asset_id": "rgb:_nNpbZ~6-UQEWpzH-wY4hmqv-CvHtBVO-SiEUNOO-C2q5VSE",
-        "quote_precision": 9,
-        "is_active": true,
-        "min_base_order_size": 1000000,
-        "max_base_order_size": 1000000000,
-        "min_quote_order_size": 1000000,
-        "max_quote_order_size": 1000000000
-      },
-      {
-        "id": "c462c076-1279-43cc-a848-9e125fd5ed0a",
-        "base_asset": "XAUT",
-        "base_asset_id": "rgb:_nNpbZ~6-UQEWpzH-wY4hmqv-CvHtBVO-SiEUNOO-C2q5VSE",
-        "base_precision": 9,
-        "quote_asset": "USDT",
-        "quote_asset_id": "rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-        "quote_precision": 6,
-        "is_active": true,
-        "min_base_order_size": 1000000,
-        "max_base_order_size": 1000000000,
-        "min_quote_order_size": 1000000,
-        "max_quote_order_size": 1000000000
-      }
-    ]
-  }
-  ```
-</details>
-
-### Get Available Assets
-
-<CodeGroup>
-```typescript TypeScript
-// Get available assets
-const assets = await client.listAssets();
-console.log(`Found ${assets.assets.length} assets`);
-```
-
-```python Python
-async def main():
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    )
-
-    try:
-        # Get available assets
-        assets = await client.list_assets()
-        print(f"Found {len(assets.assets)} assets")
-    finally:
-        await client.close()
-
-asyncio.run(main())
-```
-</CodeGroup>
-
-<details>
-  <summary>
-    Available Assets Response:
-  </summary>
-
-  ```json
-  {
-    "assets": [
-      {
-        "asset_id": "rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-        "ticker": "USDT",
-        "name": "Tether USD",
-        "details": null,
-        "precision": 6,
-        "issued_supply": 1000000000000000,
-        "timestamp": 1762951158,
-        "added_at": 1762951158,
-        "balance": {
-          "settled": 999999726039172,
-          "future": 999999726039172,
-          "spendable": 999999726039172,
-          "offchain_outbound": 195540180,
-          "offchain_inbound": 74459820
-        },
-        "media": null,
-        "asset_iface": null,
-        "is_active": true
-      },
-      {
-        "asset_id": "rgb:_nNpbZ~6-UQEWpzH-wY4hmqv-CvHtBVO-SiEUNOO-C2q5VSE",
-        "ticker": "XAUT",
-        "name": "Tether Gold",
-        "details": null,
-        "precision": 9,
-        "issued_supply": 1000000000000000,
-        "timestamp": 1762951159,
-        "added_at": 1762951159,
-        "balance": {
-          "settled": 1000000000000000,
-          "future": 1000000000000000,
-          "spendable": 1000000000000000,
-          "offchain_outbound": 0,
-          "offchain_inbound": 0
-        },
-        "media": null,
-        "asset_iface": null,
-        "is_active": true
-      },
-      {
-        "asset_id": "rgb:U04mTeAf-t4qtDkP-N9KMHF8-bbyUzkA-mOsLkM8-uOIPDlo",
-        "ticker": "XAG",
-        "name": "Tether Silver",
-        "details": null,
-        "precision": 9,
-        "issued_supply": 1000000000000000,
-        "timestamp": 1762951159,
-        "added_at": 1762951159,
-        "balance": {
-          "settled": 1000000000000000,
-          "future": 1000000000000000,
-          "spendable": 1000000000000000,
-          "offchain_outbound": 0,
-          "offchain_inbound": 0
-        },
-        "media": null,
-        "asset_iface": null,
-        "is_active": true
-      }
-    ],
-    "network": "regtest",
-    "timestamp": 1763564986
-  }
-  ```
-</details>
-
-## Configuration Options
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, KaleidoConfig } from '@kaleidoswap/kaleidoswap-sdk';
-
-const config: KaleidoConfig = {
-  // Required: API base URL (defaults to staging if skipped)
-  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-
-  // Your RGB Lightning Node (required for some node operations)
-  nodeUrl: '',
-
-  // API key for authenticated requests (not yet implemented)
-  apiKey: '',
-};
-
-const client = new KaleidoClient(config);
-```
-
-```python Python
-from kaleidoswap_sdk import KaleidoClient
-
-client = KaleidoClient(
-    # Required: API base URL
-    api_url="https://api.staging.kaleidoswap.com/api/v1",
-
-    # Required: Your RGB Lightning Node URL
-    node_url="<Your node URL>",
-
-    # Optional: API key for authenticated requests (future use)
-    api_key=None,
-
-    # Optional: WebSocket configuration
-    ping_interval=30,        # WebSocket ping interval in seconds
-    ping_timeout=10,          # WebSocket ping timeout in seconds
-    close_timeout=10,         # WebSocket close timeout in seconds
-    max_size=2**20,           # Maximum message size (1MB)
-    max_queue=32,             # Maximum message queue size
-    compression=None          # Optional compression method
-)
-```
-</CodeGroup>
-
-## Environment Variables
-
-You can use environment variables for configuration:
-
-<CodeGroup>
-```bash TypeScript
-# Set the API URL
-export KALEIDO_API_URL=https://api.staging.kaleidoswap.com/api/v1
-```
-
-```bash Python
-# Set the API URL
-export KALEIDO_API_URL=https://api.staging.kaleidoswap.com/api/v1
-
-# Set the node URL
-export KALEIDO_NODE_URL=<Your node URL>
-
-# Optional: Set API key
-export KALEIDO_API_KEY=your_api_key_here
-```
-</CodeGroup>
-
-Then use them in your code:
-
-<CodeGroup>
-```typescript TypeScript
-// SDK automatically uses KALEIDO_API_URL if no baseUrl is provided
-const client = new KaleidoClient();
-```
-
-```python Python
 import os
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-client = KaleidoClient(
-    api_url=os.getenv("KALEIDO_API_URL"),
-    node_url=os.getenv("KALEIDO_NODE_URL"),
-    api_key=os.getenv("KALEIDO_API_KEY")
+config = KaleidoConfig(
+    base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com"),
+    node_url=os.environ.get("KALEIDO_NODE_URL"),
+    api_key=os.environ.get("KALEIDO_API_KEY"),
 )
+
+client = KaleidoClient(config)
 ```
 </CodeGroup>
 
-## Available Nodes
+## Available Environments
 
-KaleidoSwap provides different environments for testing and production:
+| Environment | API URL | Description |
+|-------------|---------|-------------|
+| **Regtest** | `https://api.regtest.kaleidoswap.com` | Local development and testing |
+| **Signet** | `https://api.signet.kaleidoswap.com` | Bitcoin Signet testnet |
+| **Mainnet** | `https://api.kaleidoswap.com` | Production environment |
 
-- **Staging**: `https://api.staging.kaleidoswap.com/api/v1`
-- **Regtest**: `https://api.regtest.kaleidoswap.com/api/v1`
-- **Signet**: `https://api.signet.kaleidoswap.com/api/v1`
+## Sub-Client Architecture
 
-## Using Async Context Manager (Python)
-
-The recommended way to use the Python client is with an async context manager, which automatically handles cleanup:
-
-```python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
-
-async def main():
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Client is automatically closed when exiting this block
-        pairs = await client.list_pairs()
-        print(f"Found {len(pairs.pairs)} trading pairs")
-
-asyncio.run(main())
-```
-
-## Error Handling
-
-Always wrap your API calls in try-catch/try-except blocks to handle errors gracefully:
+The SDK organizes API operations into domain-specific sub-clients:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+// Market operations - assets, pairs, quotes
+const assets = await client.listAssets();
+const pairs = await client.listPairs();
+const quote = await client.getQuoteByPair('BTC/USDT', 1_000_000n);
 
-async function fetchPairs() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
-  });
+// Order management
+const history = await client.getOrderHistory();
+const status = await client.getSwapOrderStatus('order-id');
 
-  try {
-    const pairs = await client.pairList();
-    console.log(`Success: ${pairs.pairs.length} pairs found`);
-  } catch (error) {
-    console.error('Error fetching pairs:', error);
+// Swap operations
+const result = await client.createSwapOrder(request);
+
+// LSP operations
+const lspInfo = await client.getLspInfo();
+
+// RGB Node operations (requires nodeUrl)
+if (client.hasNode()) {
+  const nodeInfo = await client.getNodeInfo();
+}
+```
+
+```python Python
+# Market operations - assets, pairs, quotes
+assets = client.market.list_assets()
+pairs = client.market.list_pairs()
+quote = client.market.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
+
+# Order management
+history = client.orders.get_order_history()
+status = client.orders.get_swap_order_status("order-id")
+
+# Swap operations
+result = client.swaps.init_swap(request)
+
+# LSP operations
+lsp_info = client.lsp.get_lsp_info()
+
+# RGB Node operations (requires node_url)
+if client.has_node():
+    channels = client.node.list_channels()
+    balance = client.node.get_btc_balance()
+```
+</CodeGroup>
+
+## Checking Node Configuration
+
+Before executing swaps or node operations, verify that your node is configured:
+
+<CodeGroup>
+```typescript TypeScript
+if (client.hasNode()) {
+  console.log('✅ Node configured - can execute swaps');
+  
+  const nodeInfo = await client.getRgbNodeInfo();
+  console.log(`Node pubkey: ${nodeInfo.pubkey}`);
+} else {
+  console.log('⚠️ Node not configured - limited to market data');
+}
+```
+
+```python Python
+if client.has_node():
+    print("✅ Node configured - can execute swaps")
+    
+    node_info = client.get_rgb_node_info()
+    print(f"Node pubkey: {node_info.pubkey}")
+else:
+    print("⚠️ Node not configured - limited to market data")
+```
+</CodeGroup>
+
+## Basic Error Handling
+
+<CodeGroup>
+```typescript TypeScript
+import { 
+  KaleidoClient, 
+  KaleidoError,
+  NetworkError,
+  ValidationError,
+  APIError,
+} from '@kaleidoswap/sdk';
+
+try {
+  const pairs = await client.listPairs();
+  console.log(`Success: ${pairs.length} pairs found`);
+} catch (error) {
+  if (error instanceof NetworkError) {
+    console.log(`Network error: ${error.message}`);
+  } else if (error instanceof ValidationError) {
+    console.log(`Validation error: ${error.message}`);
+  } else if (error instanceof APIError) {
+    console.log(`API error: ${error.message}`);
+  } else if (error instanceof KaleidoError) {
+    console.log(`SDK error: ${error.message}`);
   }
 }
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient
-from kaleidoswap_sdk.exceptions import (
-    KaleidoException,
+from kaleidoswap import (
+    KaleidoClient,
+    KaleidoConfig,
+    KaleidoError,
     NetworkError,
-    ValidationError
+    ValidationError,
+    APIError,
 )
 
-async def main():
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    )
-
-    try:
-        pairs = await client.list_pairs()
-        print(f"Success: {len(pairs.pairs)} pairs found")
-    except NetworkError as e:
-        print(f"Network error: {e}")
-    except ValidationError as e:
-        print(f"Validation error: {e}")
-    except KaleidoException as e:
-        print(f"API error: {e}")
-    finally:
-        await client.close()
-
-asyncio.run(main())
+try:
+    pairs = client.list_pairs()
+    print(f"Success: {len(pairs)} pairs found")
+except NetworkError as e:
+    print(f"Network error: {e}")
+except ValidationError as e:
+    print(f"Validation error: {e}")
+except APIError as e:
+    print(f"API error: {e}")
+except KaleidoError as e:
+    print(f"SDK error: {e}")
 ```
 </CodeGroup>
 
-See the [Error Handling](./error-handling) guide for comprehensive error management patterns.
-
 ## Complete Example
-
-Here's a complete example that demonstrates initialization, making API calls, and proper cleanup:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient, KaleidoError } from '@kaleidoswap/sdk';
 
 async function getMarketOverview() {
-  const client = new KaleidoClient({
-    baseUrl: process.env.KALEIDO_API_URL || 'https://api.staging.kaleidoswap.com/api/v1'
+  const client = await KaleidoClient.create({
+    baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
   });
 
   try {
     // Fetch market data
-    console.log('Fetching market data...');
+    console.log('Fetching market data...\n');
 
-    const pairs = await client.listPairs();
-    const assets = await client.listAssets();
+    const [assets, pairs] = await Promise.all([
+      client.listAssets(),
+      client.listPairs(),
+    ]);
 
-    console.log(`\n📊 Market Overview`);
-    console.log(`Trading Pairs: ${pairs.pairs.length}`);
-    console.log(`Available Assets: ${assets.assets.length}`);
+    console.log('📊 Market Overview');
+    console.log(`   Assets: ${assets.length}`);
+    console.log(`   Trading Pairs: ${pairs.length}`);
 
-    // Display active trading pairs
-    console.log(`\n💱 Active Trading Pairs:`);
-    for (const pair of pairs.pairs) {
-      if (pair.is_active) {
-        console.log(`  - ${pair.base_asset}/${pair.quote_asset}`);
-      }
-    }
+    // Display trading pairs
+    console.log('\n💱 Active Trading Pairs:');
+    pairs.forEach(pair => {
+      // Assuming pair has isActive property, adjust based on actual type
+      console.log(`   ${pair.baseAsset}/${pair.quoteAsset}`);
+    });
 
     // Get a sample quote
-    if (pairs.pairs.length > 0) {
-      const pair = pairs.pairs[0];
-      const quote = await client.getQuote({
-        from_asset: pair.base_asset_id,
-        to_asset: pair.quote_asset_id,
-        amount: pair.min_base_order_size
-      });
-      console.log(`\n💰 Sample Quote:`);
-      console.log(`  ${pair.base_asset} → ${pair.quote_asset}`);
-      console.log(`  Rate: ${quote.exchange_rate}`);
+    if (pairs.length > 0) {
+      const pair = pairs[0];
+      const pairTicker = `${pair.baseAsset}/${pair.quoteAsset}`;
+      // Amounts should be BigInt or number. Using BigInt literal 1_000_000n
+      const amount = 1_000_000n;
+      
+      const quote = await client.getQuoteByPair(pairTicker, amount);
+      
+      console.log(`\n💰 Sample Quote for ${pairTicker}:`);
+      console.log(`   From: ${quote.fromAmount}`);
+      console.log(`   To: ${quote.toAmount}`);
+      console.log(`   Price: ${quote.price}`);
     }
-    
+
   } catch (error) {
-    console.error('Error:', error);
+    if (error instanceof KaleidoError) {
+      console.error(`Error: ${error.message}`);
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -494,67 +346,74 @@ getMarketOverview();
 ```
 
 ```python Python
-import asyncio
+from kaleidoswap import KaleidoClient, KaleidoConfig, KaleidoError
 import os
-from kaleidoswap_sdk import KaleidoClient
-from kaleidoswap_sdk.exceptions import KaleidoException
 
-async def get_market_overview():
-    """Get an overview of the KaleidoSwap market."""
-
-    client = KaleidoClient(
-        api_url=os.getenv("KALEIDO_API_URL", "https://api.staging.kaleidoswap.com/api/v1"),
-        node_url=os.getenv("KALEIDO_NODE_URL")
+def get_market_overview():
+    config = KaleidoConfig(
+        base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com")
     )
+    client = KaleidoClient(config)
 
     try:
         # Fetch market data
-        print("Fetching market data...")
+        print("Fetching market data...\n")
 
-        pairs = await client.list_pairs()
-        assets = await client.list_assets()
+        assets = client.list_assets()
+        pairs = client.list_pairs()
 
-        print(f"\n📊 Market Overview")
-        print(f"Trading Pairs: {len(pairs.pairs)}")
-        print(f"Available Assets: {len(assets.assets)}")
+        print("📊 Market Overview")
+        print(f"   Assets: {len(assets)}")
+        print(f"   Trading Pairs: {len(pairs)}")
 
         # Display trading pairs
-        print(f"\n💱 Active Trading Pairs:")
-        for pair in pairs.pairs:
+        print("\n💱 Active Trading Pairs:")
+        for pair in pairs:
             if pair.is_active:
-                print(f"  - {pair.base_asset}/{pair.quote_asset}")
+                base = pair.base.ticker if pair.base else "?"
+                quote = pair.quote.ticker if pair.quote else "?"
+                print(f"   {base}/{quote}")
 
         # Get a sample quote
-        if pairs.pairs:
-            pair = pairs.pairs[0]
-            quote = await client.get_quote(
-                from_asset=pair.base_asset_id,
-                to_asset=pair.quote_asset_id,
-                amount=pair.min_base_order_size
-            )
-            print(f"\n💰 Sample Quote:")
-            print(f"  {pair.base_asset} → {pair.quote_asset}")
-            print(f"  Rate: {quote.exchange_rate}")
+        if pairs:
+            pair = pairs[0]
+            base = pair.base.ticker if pair.base else "BTC"
+            quote = pair.quote.ticker if pair.quote else "USDT"
+            pair_ticker = f"{base}/{quote}"
+            
+            # Use minimum amount from routes if available
+            amount = 1_000_000
+            if pair.routes and pair.routes[0].min_from_amount:
+                amount = pair.routes[0].min_from_amount
+            
+            swap_quote = client.get_quote_by_pair(pair_ticker, from_amount=amount)
+            
+            print(f"\n💰 Sample Quote for {pair_ticker}:")
+            print(f"   From: {swap_quote.from_asset.amount}")
+            print(f"   To: {swap_quote.to_asset.amount}")
+            print(f"   Price: {swap_quote.price}")
 
-    except KaleidoException as e:
+    except KaleidoError as e:
         print(f"Error: {e}")
-    finally:
-        await client.close()
 
 if __name__ == "__main__":
-    asyncio.run(get_market_overview())
+    get_market_overview()
 ```
 </CodeGroup>
 
 ## Next Steps
 
-Now that you have the basics, explore these guides:
-
-- **[API Reference](./api-reference)** - Complete method documentation
-- **[Types](./types)** - Type definitions and data models
-- **[Examples](./examples)** - Full swap workflows and use cases
-- **[Error Handling](./error-handling)** - Comprehensive error management
-- **[WebSocket](./websocket)** - Real-time market data streaming
-- **[Utilities](./utilities)** - Helper functions and utilities
-
-You're now ready to start building with the KaleidoSwap SDK!
+<CardGroup cols={2}>
+  <Card title="Examples" icon="code" href="/sdk/examples">
+    See complete code examples for common use cases
+  </Card>
+  <Card title="API Reference" icon="book" href="/sdk/api-reference">
+    Explore all available methods and parameters
+  </Card>
+  <Card title="Types" icon="brackets-curly" href="/sdk/types">
+    Learn about data models and type definitions
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/sdk/error-handling">
+    Handle errors gracefully in your applications
+  </Card>
+</CardGroup>

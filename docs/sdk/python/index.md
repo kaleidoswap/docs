@@ -1,154 +1,148 @@
 ---
 id: index
-title: KaleidoSwap Python SDK
+title: Python SDK
 sidebar_position: 1
 ---
 
-# KaleidoSwap Python SDK
+# Kaleidoswap Python SDK
 
-The official Python SDK for KaleidoSwap - a decentralized exchange for Bitcoin and RGB assets.
+The official Python SDK for Kaleidoswap - a decentralized exchange for Bitcoin and RGB assets on the Lightning Network.
 
 ## Overview
 
-KaleidoSwap SDK provides a comprehensive Python interface for interacting with the KaleidoSwap API. This SDK enables seamless integration of onchain and Lightning Network swaps for RGB assets with full async/await support and type safety through Pydantic models.
+The Kaleidoswap Python SDK provides native Python bindings to the Rust core library via PyO3. This means you get the performance of Rust with the convenience of Python, including fully typed Pydantic models for all API responses.
 
 ## Key Features
 
-- 🐍 **Pythonic & Async** - Full async/await support with modern Python 3.11+
-- 📊 **Comprehensive API** - 50+ methods covering all KaleidoSwap operations
-- 🔒 **Type Safe** - Complete type annotations with Pydantic models (340+ exports)
-- 🛡️ **Production Ready** - Robust error handling, retry mechanisms, and connection pooling
-- 🌐 **Real-time Data** - WebSocket support for live quotes and market updates
-- 🔧 **Rich Ecosystem** - Built-in utilities for common trading workflows
-
-## What You Can Build
-
-- **Trading Applications** - Build DEX interfaces and trading bots
-- **Portfolio Management** - Track and manage Bitcoin and RGB assets
-- **Payment Systems** - Integrate atomic swaps into payment flows
-- **Market Makers** - Implement automated market making strategies
-- **Analytics Platforms** - Monitor swap activity and market trends
+- 🐍 **Native Python** - PyO3 bindings for native performance
+- 📊 **Type Safe** - Auto-generated Pydantic models from OpenAPI specs
+- 🏗️ **Sub-client Architecture** - Organized API access via `client.market`, `client.orders`, etc.
+- 🛡️ **Robust Error Handling** - Comprehensive exception hierarchy
+- 📡 **WebSocket Support** - Real-time quote streaming
+- 🔧 **Built-in Utilities** - Amount conversion, asset lookup, and validation
 
 ## Installation
 
-Install via pip:
-
 ```bash
-pip install kaleidoswap-sdk
-```
-
-Or with optional development dependencies:
-
-```bash
-pip install kaleidoswap-sdk[dev]
+pip install kaleidoswap
 ```
 
 ### Requirements
 
-- Python 3.11 or higher
-- Dependencies: `httpx`, `websockets`, `aiohttp`, `pydantic`
+- Python 3.8 or higher
+- No additional dependencies required (Rust core is bundled)
 
 ## Quick Start
 
-Here's a simple example to get you started:
-
 ```python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def main():
-    # Initialize client
-    client = KaleidoClient(
-        base_url="https://api.staging.kaleidoswap.com/api/v1"
-    )
+# Initialize client
+config = KaleidoConfig(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+client = KaleidoClient(config)
 
-    try:
-        # Get available trading pairs
-        pairs = await client.list_pairs()
-        print(f"Available pairs: {len(pairs)}")
+# List available assets
+assets = client.list_assets()
+print(f"Found {len(assets)} assets")
 
-        # Get available assets
-        assets = await client.list_assets()
-        print(f"Available assets: {len(assets)}")
+for asset in assets:
+    print(f"  {asset.ticker}: {asset.name}")
 
-        # Get a quote for BTC to USDT
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",  # USDT
-            amount=100000000  # 1 BTC in satoshis
-        )
-        print(f"Quote: {quote.exchange_rate}")
-
-    finally:
-        await client.close()
-
-# Run the async function
-asyncio.run(main())
+# Get a quote for a swap
+quote = client.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
+print(f"Quote: {quote.from_asset.amount} {quote.from_asset.ticker}")
+print(f"    -> {quote.to_asset.amount} {quote.to_asset.ticker}")
+print(f"Price: {quote.price}")
 ```
 
-## Core Capabilities
+## Sub-Client Architecture
 
-### Market Operations
-Access real-time market data and quotes:
-- `list_assets()` - Get all available assets
-- `list_pairs()` - Get all trading pairs
-- `get_quote()` - Request quotes for swaps
-- `get_asset_metadata()` - Get detailed asset information
+The SDK organizes API operations into domain-specific sub-clients:
 
-### Swap Operations
-Execute atomic swaps on-chain and off-chain:
-- `init_maker_swap()` - Initialize a swap as maker
-- `execute_maker_swap()` - Execute the swap
-- `complete_maker_swap()` - Complete the swap
-- `get_swap_status()` - Check swap status
-- `wait_for_swap_completion()` - Wait for swap to complete
+```python
+# Market operations
+assets = client.market.list_assets()
+pairs = client.market.list_pairs()
+quote = client.market.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
 
-### Order Management
-Create and manage swap orders:
-- `create_order()` - Create a new swap order
-- `get_order()` - Get order details
-- `get_order_history()` - View order history
-- `get_order_analytics()` - Get order statistics
+# Order management
+history = client.orders.get_order_history()
+status = client.orders.get_swap_order_status("order-id")
 
-### Lightning Service Provider (LSP)
-Manage LSP connections and channels:
-- `get_lsp_info()` - Get LSP information
-- `connect_peer()` - Connect to peers
-- `open_channel()` - Open Lightning channels
-- `list_channels()` - List all channels
+# Swap operations
+result = client.swaps.init_swap(request)
 
-### Wallet & Bitcoin Operations
-Manage your Bitcoin wallet:
-- `init_wallet()` - Initialize a new wallet
-- `get_btc_balance()` - Get Bitcoin balance
-- `get_asset_balance()` - Get RGB asset balance
-- `send_btc()` - Send Bitcoin on-chain
-- `create_ln_invoice()` - Create Lightning invoices
+# LSP operations
+info = client.lsp.get_lsp_info()
 
-### Real-time WebSocket
-Subscribe to live market data:
-- `get_quote_websocket()` - Get real-time quote updates
-- Event-driven architecture for market changes
+# RGB Node operations (if configured)
+if client.node:
+    channels = client.node.list_channels()
+    balance = client.node.get_btc_balance()
+```
+
+## Configuration
+
+```python
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+config = KaleidoConfig(
+    # Required: API base URL
+    base_url="https://api.regtest.kaleidoswap.com",
+    
+    # Optional: Your RGB Lightning Node URL (for swap execution)
+    node_url="http://localhost:3001",
+    
+    # Optional: API key for authenticated requests
+    api_key=None,
+    
+    # Optional: Request timeout in seconds (default: 30.0)
+    timeout=30.0,
+)
+
+client = KaleidoClient(config)
+```
+
+## Error Handling
+
+The SDK provides a comprehensive exception hierarchy:
+
+```python
+from kaleidoswap import (
+    KaleidoError,
+    APIError,
+    NetworkError,
+    ValidationError,
+    QuoteExpiredError,
+    InsufficientBalanceError,
+    NodeNotConfiguredError,
+)
+
+try:
+    quote = client.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
+except QuoteExpiredError:
+    print("Quote has expired, getting a fresh one")
+except InsufficientBalanceError as e:
+    print(f"Insufficient balance: {e}")
+except NetworkError as e:
+    print(f"Network error: {e}")
+except APIError as e:
+    print(f"API error {e.status_code}: {e}")
+except KaleidoError as e:
+    print(f"SDK error: {e}")
+```
 
 ## Documentation Structure
 
-- **[Getting Started](./getting-started.md)** - Installation, configuration, and first steps
+- **[Getting Started](./getting-started.md)** - Installation and configuration
 - **[API Reference](./api-reference.md)** - Complete method documentation
 - **[Types](./types.md)** - Pydantic models and type definitions
-- **[Examples](./examples.md)** - Complete code examples and workflows
-- **[Error Handling](./error-handling.md)** - Exception types and error management
-- **[WebSocket](./websocket.md)** - Real-time data streaming guide
-- **[Utilities](./utilities.md)** - Helper functions and common patterns
-
-## Why Python SDK?
-
-The Python SDK is the **most complete and production-ready** implementation of the KaleidoSwap API:
-
-- ✅ **Complete Coverage** - All 50+ API endpoints implemented
-- ✅ **Type Safety** - 340+ Pydantic models for validation
-- ✅ **Async First** - Built for high-performance async applications
-- ✅ **Well Tested** - Comprehensive test suite with pytest
-- ✅ **Developer Friendly** - Excellent IDE support with full type hints
+- **[Examples](./examples.md)** - Complete code examples
+- **[Error Handling](./error-handling.md)** - Exception types and patterns
+- **[WebSocket](./websocket.md)** - Real-time streaming
+- **[Utilities](./utilities.md)** - Helper functions
 
 ## Support
 

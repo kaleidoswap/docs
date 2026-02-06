@@ -1,84 +1,227 @@
 ---
-title: Web App FAQ
-description: Frequently asked questions about KaleidoSwap Web App
+title: FAQ & Troubleshooting
+description: Frequently asked questions and common solutions
 ---
 
-
-<Info>
-  **Note**: Web app is under development. These FAQs cover planned features.
-</Info>
-
-## General Questions
+## Frequently Asked Questions
 
 <AccordionGroup>
-  <Accordion title="When will the web app be available?">
-    We're targeting Q3 2025 for public beta. Join our [Telegram](https://t.me/kaleidoswap) for updates.
+  <Accordion title="What wallets are supported?">
+    Currently supported:
+    - **Alby** - Lightning browser wallet
+    - **Xverse** - Bitcoin Web3 wallet  
+    - **BitMask** - RGB & Lightning wallet
+    
+    More wallets coming soon, including WalletConnect for mobile.
   </Accordion>
 
-  <Accordion title="Is it free to use?">
-    Yes! The web app is free. You only pay network fees for transactions.
-  </Accordion>
-
-  <Accordion title="Which browsers are supported?">
-    Chrome, Firefox, Safari, and Edge (latest versions).
-  </Accordion>
-
-  <Accordion title="Do I need to download anything?">
-    No installation required - just visit the web app URL in your browser.
-  </Accordion>
-</AccordionGroup>
-
-## Wallet & Security
-
-<AccordionGroup>
-  <Accordion title="Which wallets can I use?">
-    MetaMask, WalletConnect, Coinbase Wallet, Rainbow, Trust Wallet, and more.
-  </Accordion>
-
-  <Accordion title="Is it safe?">
-    Yes! Non-custodial architecture means you maintain control of your keys.
-  </Accordion>
-
-  <Accordion title="Can I use hardware wallet?">
-    Yes, via wallet providers that support hardware wallets (e.g., MetaMask + Ledger).
-  </Accordion>
-</AccordionGroup>
-
-## Trading
-
-<AccordionGroup>
-  <Accordion title="What can I trade?">
-    RGB20 assets like USDT, XAUT, and other supported assets.
-  </Accordion>
-
-  <Accordion title="Are there trading fees?">
-    Only network fees for Lightning transactions - typically very low (< $0.01).
+  <Accordion title="Is KaleidoSwap custodial?">
+    **No.** KaleidoSwap is fully non-custodial:
+    - Your keys stay in your wallet
+    - Swaps are atomic (all-or-nothing)
+    - No account or registration needed
+    - Funds move directly peer-to-peer
   </Accordion>
 
   <Accordion title="How fast are swaps?">
-    Lightning swaps complete in seconds.
+    - **Lightning swaps** - Typically 1-10 seconds
+    - **On-chain swaps** - 10+ minutes (requires confirmations)
+    
+    Lightning is recommended for speed.
+  </Accordion>
+
+  <Accordion title="What fees are charged?">
+    Fees include:
+    - **Network fee** - Lightning/Bitcoin network costs
+    - **Protocol fee** - Small percentage for market makers
+    
+    All fees are shown before you confirm the swap.
+  </Accordion>
+
+  <Accordion title="What assets can I trade?">
+    Current supported assets:
+    - **BTC** - Bitcoin (Lightning & On-chain)
+    - **USDT** - Tether USD (RGB)
+    - **XAUT** - Tether Gold (RGB)
+    
+    More RGB assets are added regularly.
+  </Accordion>
+
+  <Accordion title="Are there trading limits?">
+    Yes, each pair has min/max limits:
+    - Limits are shown below the input field
+    - Depend on available liquidity
+    - May change based on market conditions
+  </Accordion>
+
+  <Accordion title="Can I use the app on mobile?">
+    Yes! The web app is responsive and works on mobile browsers. 
+    
+    For best experience:
+    - Use Chrome or Safari on mobile
+    - Ensure your wallet app is installed
+    - WalletConnect support coming soon
+  </Accordion>
+
+  <Accordion title="What networks are supported?">
+    - **Bitcoin Mainnet** - Production trading
+    - **Bitcoin Signet** - Testing environment
+    - **Regtest** - Development/testing
+    
+    The app connects to the appropriate network automatically.
   </Accordion>
 </AccordionGroup>
 
-## Comparison
+## Troubleshooting
+
+### Wallet Issues
 
 <AccordionGroup>
-  <Accordion title="Web app vs Desktop app?">
-    **Web App**: Browser-based, quick access, casual trading
-    **Desktop App**: Full features, node management, power users
+  <Accordion title="Wallet not detected">
+    **Symptoms:** "No wallets found" or wallet not in list
+    
+    **Solutions:**
+    1. Install a supported wallet extension
+    2. Enable the extension for app.kaleidoswap.com
+    3. Refresh the page after installing
+    4. Try restarting your browser
+    5. Check if extension is up to date
   </Accordion>
 
-  <Accordion title="Can I use both?">
-    Yes! Both can connect to the same RGB Lightning node.
+  <Accordion title="Connection fails">
+    **Symptoms:** Clicking connect does nothing or shows error
+    
+    **Solutions:**
+    1. Unlock your wallet first
+    2. Check if another site has wallet locked
+    3. Disconnect from wallet settings, then reconnect
+    4. Clear browser cache and cookies
+    5. Try incognito/private mode
   </Accordion>
 
-  <Accordion title="Which should I use?">
-    Desktop app for full control, web app for quick trading access.
+  <Accordion title="Wrong address displayed">
+    **Symptoms:** Address shown doesn't match expected wallet
+    
+    **Solutions:**
+    1. Check which account is active in wallet
+    2. Switch accounts in wallet extension
+    3. Disconnect and reconnect
+    4. Verify you're using the right wallet
   </Accordion>
 </AccordionGroup>
 
-## Get Started Now
+### Trading Issues
 
-<Card title="Desktop App Available" icon="desktop" href="/desktop-app/getting-started/installation">
-  Start trading today with the desktop application →
-</Card>
+<AccordionGroup>
+  <Accordion title="Quote not loading">
+    **Symptoms:** Spinning loader, no quote appears
+    
+    **Solutions:**
+    1. Check internet connection
+    2. Refresh the page
+    3. Try different asset pair
+    4. Amount might be outside valid range
+    5. Server might be under maintenance
+  </Accordion>
+
+  <Accordion title="Amount validation error">
+    **Symptoms:** Red error message about amount
+    
+    **Solutions:**
+    1. Check min/max limits shown below input
+    2. Adjust amount to be within limits
+    3. Different pairs have different limits
+    4. Ensure proper decimal format
+  </Accordion>
+
+  <Accordion title="Swap button disabled">
+    **Symptoms:** Button is grayed out
+    
+    **Possible causes:**
+    - No wallet connected → Connect wallet
+    - Invalid amount → Adjust amount
+    - Missing asset selection → Select both assets
+    - Quote expired → Wait for new quote
+    - Invalid pair → Select valid pair
+  </Accordion>
+
+  <Accordion title="Swap failed">
+    **Symptoms:** Error message after clicking swap
+    
+    **Solutions:**
+    1. Check wallet balance is sufficient
+    2. Ensure wallet is unlocked
+    3. Quote may have expired → Get fresh quote
+    4. Network congestion → Wait and retry
+    5. Check for pending transactions
+  </Accordion>
+</AccordionGroup>
+
+### Display Issues
+
+<AccordionGroup>
+  <Accordion title="Page not loading">
+    **Solutions:**
+    1. Clear browser cache
+    2. Disable ad blockers temporarily
+    3. Try different browser
+    4. Check if JavaScript is enabled
+    5. Verify URL is app.kaleidoswap.com
+  </Accordion>
+
+  <Accordion title="Prices not updating">
+    **Symptoms:** Stale prices, no real-time updates
+    
+    **Solutions:**
+    1. WebSocket connection may be lost
+    2. Refresh the page
+    3. Check internet stability
+    4. Browser tab may be throttled (bring to focus)
+  </Accordion>
+
+  <Accordion title="Layout broken on mobile">
+    **Solutions:**
+    1. Rotate device to portrait mode
+    2. Clear browser cache
+    3. Update mobile browser
+    4. Try Chrome or Safari
+  </Accordion>
+</AccordionGroup>
+
+## Error Messages
+
+| Error | Meaning | Solution |
+|-------|---------|----------|
+| "Wallet not connected" | No wallet linked | Click Connect button |
+| "Amount too low" | Below minimum | Increase amount |
+| "Amount too high" | Above maximum | Decrease amount |
+| "Quote expired" | Quote timed out | Wait for fresh quote |
+| "Insufficient balance" | Not enough funds | Add funds to wallet |
+| "Network error" | Connection issue | Check internet, retry |
+| "Transaction rejected" | User cancelled | Try again, approve in wallet |
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Join our community for quick help
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report bugs or request features
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues
+  </Card>
+  <Card title="Documentation" icon="book" href="/">
+    Browse all documentation
+  </Card>
+</CardGroup>
+
+## Reporting Issues
+
+When reporting problems, include:
+1. Browser and version
+2. Wallet extension name and version
+3. Steps to reproduce
+4. Error messages (screenshots help)
+5. Network (Mainnet/Signet/Regtest)

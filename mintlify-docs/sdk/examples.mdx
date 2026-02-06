@@ -1,409 +1,362 @@
 ---
-title: Examples
-description: Real-world code examples demonstrating common workflows with the KaleidoSwap SDK
----
-
-## Table of Contents
-
-- [Market Data](#market-data)
-- [Getting Price Quotes](#getting-price-quotes)
-- [Atomic Swaps](#atomic-swaps)
-- [Order Management](#order-management)
-- [Lightning Operations](#lightning-operations)
-- [Wallet Management](#wallet-management)
-- [Real-time Data with WebSocket](#real-time-data-with-websocket)
-
+title: 'Examples'
+description: 'Complete code examples for common SDK use cases'
 ---
 
 ## Market Data
 
-### List Available Assets and Trading Pairs
+### Exploring Assets and Pairs
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
 async function exploreMarket() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
   });
 
-  try {
-    // Get all available assets
-    const assets = await client.listAssets();
-    console.log(`📊 Found ${assets.assets.length} assets on ${assets.network}\n`);
+  // Get all available assets
+  const assets = await client.listAssets();
+  console.log(`📊 Available Assets: ${assets.length}`);
 
-    for (const asset of assets.assets) {
-      if (asset.is_active) {
-        const balance = asset.balance.spendable / (10 ** asset.precision);
-        console.log(`${asset.ticker.padEnd(6)} - ${asset.name}`);
-        console.log(`  Balance: ${balance.toFixed(asset.precision)}`);
-        console.log(`  Asset ID: ${asset.asset_id}\n`);
-      }
-    }
+  assets.forEach(asset => {
+    console.log(`  ${asset.ticker} (${asset.name})`);
+    console.log(`    Precision: ${asset.precision}`);
+  });
 
-    // Get all trading pairs
-    const pairs = await client.listPairs();
-    console.log(`\n💱 Active Trading Pairs:\n`);
+  // Get all trading pairs
+  const pairs = await client.listPairs();
+  console.log(`\n💱 Trading Pairs: ${pairs.length}`);
 
-    for (const pair of pairs.pairs) {
-      if (pair.is_active) {
-        const minOrder = pair.min_base_order_size / (10 ** pair.base_precision);
-        console.log(`${pair.base_asset}/${pair.quote_asset}`);
-        console.log(`  Min order: ${minOrder} ${pair.base_asset}`);
-        console.log(`  Pair ID: ${pair.id}\n`);
-      }
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+  pairs.forEach(pair => {
+    console.log(`  ${pair.baseAsset}/${pair.quoteAsset}`);
+    console.log(`    Min: ${pair.minBaseOrderSize}`);
+    console.log(`    Max: ${pair.maxBaseOrderSize}`);
+  });
 }
 
 exploreMarket();
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def explore_market():
-    """Explore available assets and trading pairs."""
-
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    )
-
-    try:
-        # Get all available assets
-        assets = await client.list_assets()
-        print(f"📊 Found {len(assets.assets)} assets on {assets.network}\n")
-
-        for asset in assets.assets:
-            if asset.is_active:
-                balance = asset.balance.spendable / (10 ** asset.precision)
-                print(f"{asset.ticker:6} - {asset.name}")
-                print(f"  Balance: {balance:.{asset.precision}f}")
-                print(f"  Asset ID: {asset.asset_id}\n")
-
-        # Get all trading pairs
-        pairs = await client.list_pairs()
-        print(f"\n💱 Active Trading Pairs:\n")
-
-        for pair in pairs.pairs:
-            if pair.is_active:
-                min_order = pair.min_base_order_size / (10 ** pair.base_precision)
-                print(f"{pair.base_asset}/{pair.quote_asset}")
-                print(f"  Min order: {min_order} {pair.base_asset}")
-                print(f"  Pair ID: {pair.id}\n")
-
-    finally:
-        await client.close()
+def explore_market():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
+    
+    # Get all available assets
+    assets = client.list_assets()
+    print(f"📊 Available Assets: {len(assets)}")
+    
+    for asset in assets:
+        print(f"  {asset.ticker} ({asset.name})")
+        print(f"    Precision: {asset.precision}")
+    
+    # Get all trading pairs
+    pairs = client.list_pairs()
+    print(f"\n💱 Trading Pairs: {len(pairs)}")
+    
+    for pair in pairs:
+        base = pair.base.ticker if pair.base else "?"
+        quote = pair.quote.ticker if pair.quote else "?"
+        print(f"  {base}/{quote}")
+        if pair.routes:
+            route = pair.routes[0]
+            print(f"    Min: {route.min_from_amount}")
+            print(f"    Max: {route.max_from_amount}")
 
 if __name__ == "__main__":
-    asyncio.run(explore_market())
+    explore_market()
 ```
 </CodeGroup>
 
 ---
 
-## Getting Price Quotes
-
-### Request a Simple Quote
+### Getting Quotes
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
-async function getBtcUsdtQuote() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+async function getQuotes() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
   });
 
-  try {
-    // Quote for selling 0.01 BTC (minimum order size)
-    const quote = await client.quoteRequest(
-      'BTC',
-      'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', // USDT
-      1000000 // 0.01 BTC = 1,000,000 satoshis
-    );
+  const pairs = await client.listPairs();
+  if (pairs.length === 0) return;
 
-    console.log('💰 Quote Details:');
-    console.log(`  Selling: 0.001 BTC`);
-    console.log(`  Receiving: ${(quote.to_amount / 1_000_000).toFixed(2)} USDT`);
-    console.log(`  Exchange Rate: ${quote.price}`);
-    console.log(`  Fee Rate: ${(quote.fee.fee_rate * 100).toFixed(2)}%`);
-    console.log(`  Quote ID: ${quote.rfq_id}`);
-    console.log(`  Expires at: ${quote.expires_at}`);
-  } catch (error) {
-    console.error('Error:', error);
+  const pair = pairs[0];
+  const pairTicker = `${pair.baseAsset}/${pair.quoteAsset}`;
+
+  // Test different amounts (using BigInt literal or simple number if supported by helper)
+  // For getQuoteByPair, amounts are BigInt or number. Best to use BigInt for large values.
+  const amounts = [1_000_000n, 10_000_000n, 100_000_000n];
+
+  for (const amount of amounts) {
+    try {
+      const quote = await client.getQuoteByPair(pairTicker, amount);
+      console.log(`\nAmount: ${amount}`);
+      console.log(`  Price: ${quote.price}`);
+      console.log(`  Output: ${quote.toAmount}`);
+      console.log(`  Fee: ${quote.fee.finalFee}`);
+    } catch (error) {
+      console.log(`\nAmount ${amount}: ${error}`);
+    }
   }
 }
 
-getBtcUsdtQuote();
+getQuotes();
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def get_btc_usdt_quote():
-    """Get a quote for swapping BTC to USDT."""
+def get_quotes():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
+    
+    pairs = client.list_pairs()
+    if not pairs:
+        return
+    
+    pair = pairs[0]
+    base = pair.base.ticker if pair.base else "BTC"
+    quote = pair.quote.ticker if pair.quote else "USDT"
+    pair_ticker = f"{base}/{quote}"
+    
+    # Test different amounts
+    amounts = [1_000_000, 10_000_000, 100_000_000]
+    
+    for amount in amounts:
+        try:
+            quote_resp = client.get_quote_by_pair(pair_ticker, from_amount=amount)
+            print(f"\nAmount: {amount}")
+            print(f"  Price: {quote_resp.price}")
+            print(f"  Output: {quote_resp.to_asset.amount}")
+            print(f"  Fee: {quote_resp.fee.final_fee}")
+        except Exception as e:
+            print(f"\nAmount {amount}: {e}")
 
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Quote for selling 0.01 BTC (minimum order size)
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",  # USDT
-            amount=1000000  # 0.01 BTC = 1,000,000 satoshis
-        )
-
-        print(f"💰 Quote Details:")
-        print(f"  Selling: 0.01 BTC (1,000,000 sats)")
-        print(f"  Receiving: {quote.to_amount / 1_000_000:.6f} USDT")
-        print(f"  Price: {quote.price}")
-        print(f"  Fee Rate: {quote.fee.fee_rate:.2%}")
-        print(f"  Quote ID: {quote.rfq_id}")
-        print(f"  Expires at: {quote.expires_at}")
-
-asyncio.run(get_btc_usdt_quote())
-```
-</CodeGroup>
-
-<details>
-  <summary>Real API Response Example</summary>
-
-```json
-{
-  "rfq_id": "7f3ab43f-923f-4c85-90b8-af8f2b7a6576",
-  "from_asset": "BTC",
-  "from_amount": 1000000,
-  "to_asset": "rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-  "to_amount": 903888,
-  "price": 91301854050,
-  "fee": {
-    "base_fee": 0,
-    "variable_fee": 9130,
-    "fee_rate": 0.01,
-    "final_fee": 9130,
-    "fee_asset": "rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-    "fee_asset_precision": 6
-  },
-  "timestamp": 1763565003,
-  "expires_at": 1763565063
-}
-```
-</details>
-
-### Compare Quotes for Different Amounts
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
-
-async function compareQuotes() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
-  });
-
-  const amounts = [10000, 50000, 100000, 500000]; // Different BTC amounts in sats
-
-  console.log('📊 Comparing quotes for different amounts:\n');
-
-  for (const amountSats of amounts) {
-    const quote = await client.quoteRequest('BTC', 'USDT', amountSats);
-
-    const btcAmount = amountSats / 100_000_000;
-    const usdtAmount = quote.to_amount / 1_000_000;
-
-    console.log(`${btcAmount.toFixed(4)} BTC → ${(quote.to_amount / 1_000_000).toFixed(2)} USDT`);
-    console.log(`  Rate: ${quote.price}`);
-    console.log(`  Fee: ${(quote.fee.fee_rate * 100).toFixed(2)}%\n`);
-  }
-}
-
-compareQuotes();
-```
-
-```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
-
-async def compare_quotes():
-    """Compare quotes for different trade amounts."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        amounts = [10000, 50000, 100000, 500000]  # Different BTC amounts in sats
-
-        print("📊 Comparing quotes for different amounts:\n")
-
-        for amount_sats in amounts:
-            quote = await client.get_quote(
-                from_asset="BTC",
-                to_asset="USDT",
-                amount=amount_sats
-            )
-
-            btc_amount = amount_sats / 100_000_000
-            usdt_amount = quote.to_amount / 1_000_000
-
-            print(f"{btc_amount:.4f} BTC → {(quote.to_amount / 1_000_000):.2f} USDT")
-            print(f"  Rate: {quote.price}")
-            print(f"  Fee: {quote.fee.fee_rate:.2%}\n")
-
-asyncio.run(compare_quotes())
+if __name__ == "__main__":
+    get_quotes()
 ```
 </CodeGroup>
 
 ---
 
-## Atomic Swaps
+## Complete Atomic Swap
 
-### Complete Atomic Swap Workflow
-
-For more control, you can execute each step of the swap process manually.
+This example demonstrates the full atomic swap workflow:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient, Layer } from '@kaleidoswap/sdk';
 
-async function executeAtomicSwap() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-    nodeUrl: '<Your node URL>'
+async function atomicSwap() {
+  const client = await KaleidoClient.create({
+    baseUrl: process.env.KALEIDO_API_URL || 'http://localhost:8000',
+    nodeUrl: process.env.KALEIDO_NODE_URL || 'http://localhost:3001',
   });
 
-  try {
-    // Step 1: Get a quote
-    console.log('Step 1: Getting quote...');
-    const quote = await client.quoteRequest(
-      'BTC',
-      'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',
-      1000000 // 0.01 BTC (minimum)
-    );
-    console.log(`  Quote received: ${quote.exchange_rate}`);
+  console.log('=== Atomic Swap Flow ===\n');
 
-    // Step 2: Initialize the swap
-    console.log('\nStep 2: Initializing swap...');
-    const swap = await client.initMakerSwap({
-      rfq_id: quote.rfq_id,
-      from_asset: 'BTC',
-      to_asset: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',
-      from_amount: 1000000,
-      to_amount: quote.to_amount
-    });
-    console.log('  Swap initialized');
-    console.log(`  Payment hash: ${swap.payment_hash}`);
-
-    // Step 3: Whitelist the trade on your node
-    console.log('\nStep 3: Whitelisting trade...');
-    await client.whitelistTrade({ swapstring: swap.swapstring });
-    console.log('  Trade whitelisted');
-
-    // Step 4: Execute the swap
-    console.log('\nStep 4: Executing swap...');
-    const result = await client.executeMakerSwap({
-      payment_hash: swap.payment_hash,
-      swapstring: swap.swapstring
-    });
-    console.log('  Swap executed successfully!');
-
-    // Step 5: Wait for completion
-    console.log('\nStep 5: Waiting for swap completion...');
-    const finalStatus = await client.waitForSwapCompletion(
-      swap.payment_hash,
-      300, // timeout_seconds
-      5 // poll_interval
-    );
-    console.log(`  Swap completed with status: ${finalStatus.status}`);
-
-  } catch (error) {
-    console.error('Error during swap:', error);
+  if (!client.hasNode()) {
+    console.log('⚠️ Node not configured');
+    return;
   }
+
+  // Step 1: Get trading pairs
+  console.log('📋 Step 1: Getting pairs...');
+  const pairs = await client.listPairs();
+  if (pairs.length === 0) return;
+
+  const pair = pairs[0];
+  const pairTicker = `${pair.baseAsset}/${pair.quoteAsset}`;
+  console.log(`   Using: ${pairTicker}`);
+
+  // Step 2: Get a quote
+  console.log('\n💱 Step 2: Getting quote...');
+  const amount = pair.minBaseOrderSize ? BigInt(pair.minBaseOrderSize) : 10_000_000n;
+  const quote = await client.getQuoteByPair(pairTicker, amount);
+  console.log(`   Price: ${quote.price}`);
+
+  // Step 3: Get taker node info
+  console.log('\n🔑 Step 3: Getting node info...');
+  const nodeInfo = await client.getNodeInfo();
+  console.log(`   Pubkey: ${nodeInfo.pubkey.substring(0, 20)}...`);
+
+  // Step 4: Create Swap Order
+  console.log('\n🔄 Step 4: Creating swap order...');
+  const order = await client.createSwapOrder({
+    from_asset: quote.fromAsset.assetId,
+    to_asset: quote.toAsset.assetId,
+    from_amount: quote.fromAmount, // BigInt
+    to_amount: quote.toAmount,     // BigInt
+    taker_pubkey: nodeInfo.pubkey,
+    // Define layers
+    from_layer: Layer.BTC_LN,
+    to_layer: Layer.RGB_LN,
+  });
+
+  console.log(`   Order ID: ${order.id}`);
+  console.log(`   Payment Request: ${order.paymentRequest}`);
+
+  // Step 5: Wait for completion
+  console.log('\n⏳ Step 5: Waiting for completion...');
+  // Assuming payment is made externally or via node wallet hook if integrated
+  // Here we just monitor status
+  const status = await client.getSwapOrderStatus(order.id);
+  console.log(`   Final Status: ${status.status}`);
 }
 
-executeAtomicSwap();
+atomicSwap().catch(console.error);
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import (
-    KaleidoClient,
-    InitMakerSwapRequest,
-    ExecuteMakerSwapRequest,
-    WhitelistTradeRequest,
-)
+import json
+import os
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def execute_atomic_swap():
-    """Execute a complete atomic swap from BTC to USDT."""
-
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
+def atomic_swap():
+    config = KaleidoConfig(
+        base_url=os.environ.get("KALEIDO_API_URL", "http://localhost:8000"),
+        node_url=os.environ.get("KALEIDO_NODE_URL", "http://localhost:3001"),
     )
+    client = KaleidoClient(config)
+    
+    print("=== Atomic Swap Flow ===\n")
+    
+    if not client.has_node():
+        print("⚠️ Node not configured")
+        return
+    
+    # Step 1: Get trading pairs
+    print("📋 Step 1: Getting pairs...")
+    pairs = client.list_pairs()
+    if not pairs:
+        return
+    
+    pair = pairs[0]
+    base = pair.base.ticker if pair.base else "BTC"
+    quote = pair.quote.ticker if pair.quote else "USDT"
+    pair_ticker = f"{base}/{quote}"
+    print(f"   Using: {pair_ticker}")
+    
+    # Step 2: Get a quote
+    print("\n💱 Step 2: Getting quote...")
+    amount = 10_000_000
+    if pair.routes and pair.routes[0].min_from_amount:
+        amount = pair.routes[0].min_from_amount
+    
+    quote_resp = client.get_quote_by_pair(pair_ticker, from_amount=amount)
+    print(f"   RFQ ID: {quote_resp.rfq_id}")
+    print(f"   Price: {quote_resp.price}")
+    
+    # Step 3: Get taker node info
+    print("\n🔑 Step 3: Getting node info...")
+    node_info_json = client.get_rgb_node_info()
+    node_info = json.loads(node_info_json)
+    print(f"   Pubkey: {node_info['pubkey'][:20]}...")
+    
+    # Step 4: Initialize swap
+    print("\n🔄 Step 4: Initializing swap...")
+    init_result = client.init_swap({
+        "rfq_id": quote_resp.rfq_id,
+        "from_asset": quote_resp.from_asset.asset_id,
+        "from_amount": quote_resp.from_asset.amount,
+        "to_asset": quote_resp.to_asset.asset_id,
+        "to_amount": quote_resp.to_asset.amount,
+    })
+    init_data = json.loads(init_result)
+    swapstring = init_data["swapstring"]
+    payment_hash = init_data["payment_hash"]
+    print(f"   Payment hash: {payment_hash}")
+    
+    # Step 5: Whitelist trade
+    print("\n🔐 Step 5: Whitelisting...")
+    client.whitelist_trade(swapstring)
+    print("   ✅ Done")
+    
+    # Step 6: Execute swap
+    print("\n⚡ Step 6: Executing...")
+    client.execute_swap({
+        "swapstring": swapstring,
+        "payment_hash": payment_hash,
+        "taker_pubkey": node_info["pubkey"],
+    })
+    print("   ✅ Done")
+    
+    # Step 7: Wait for completion
+    print("\n⏳ Step 7: Waiting...")
+    final_status = client.wait_for_swap_completion(
+        payment_hash,
+        timeout_secs=180.0,
+        poll_interval_secs=2.0,
+    )
+    print("   ✅ Swap completed!")
 
-    try:
-        # Step 1: Get a quote
-        print("Step 1: Getting quote...")
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",
-            amount=100000  # 0.001 BTC
-        )
-        print(f"  Quote received: {quote.exchange_rate}")
+if __name__ == "__main__":
+    atomic_swap()
+```
+</CodeGroup>
 
-        # Step 2: Initialize the swap
-        print("\nStep 2: Initializing swap...")
-        swap = await client.init_maker_swap(
-            InitMakerSwapRequest(
-                rfq_id=quote.rfq_id,
-                from_asset="BTC",
-                to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",
-                from_amount=100000,
-                to_amount=quote.to_amount
-            )
-        )
-        print(f"  Swap initialized")
-        print(f"  Payment hash: {swap.payment_hash}")
+---
 
-        # Step 3: Whitelist the trade on your node
-        print("\nStep 3: Whitelisting trade...")
-        await client.whitelist_trade(
-            WhitelistTradeRequest(swapstring=swap.swapstring)
-        )
-        print("  Trade whitelisted")
+## WebSocket Streaming
 
-        # Step 4: Execute the swap
-        print("\nStep 4: Executing swap...")
-        result = await client.execute_maker_swap(
-            ExecuteMakerSwapRequest(
-                payment_hash=swap.payment_hash,
-                swapstring=swap.swapstring
-            )
-        )
-        print(f"  Swap executed successfully!")
+### Real-time Quote Monitoring
 
-        # Step 5: Wait for completion
-        print("\nStep 5: Waiting for swap completion...")
-        final_status = await client.wait_for_swap_completion(
-            payment_hash=swap.payment_hash,
-            timeout_seconds=300,
-            poll_interval=5
-        )
-        print(f"  Swap completed with status: {final_status.status}")
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
-    except Exception as e:
-        print(f"Error during swap: {e}")
-    finally:
-        await client.close()
+async function streamQuotes() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
+  });
 
-asyncio.run(execute_atomic_swap())
+  console.log('Streaming BTC/USDT quotes...\n');
+
+  const stream = await client.createQuoteStream('BTC/USDT');
+
+  try {
+    for (let i = 0; i < 5; i++) {
+      const quoteJson = await stream.recv(10.0);
+
+      if (quoteJson === null) {
+        console.log('Timeout');
+        break;
+      }
+
+      const quote = JSON.parse(quoteJson);
+      console.log(`Quote ${i + 1}: Price ${quote.price}`);
+    }
+  } finally {
+    stream.close();
+  }
+}
+
+streamQuotes().catch(console.error);
+```
+
+```python Python
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+def stream_quotes():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
+    
+    print("Streaming BTC/USDT quotes...\n")
+    
+    with client.subscribe_quotes("BTC/USDT") as stream:
+        for i, quote in enumerate(stream.iter_quotes(timeout=10.0, max_quotes=5)):
+            print(f"Quote {i+1}: Price {quote.price}")
+
+if __name__ == "__main__":
+    stream_quotes()
 ```
 </CodeGroup>
 
@@ -411,653 +364,301 @@ asyncio.run(execute_atomic_swap())
 
 ## Order Management
 
-### Create and Track an Order
-
-This example shows the complete flow of creating an order and monitoring its status until completion.
-
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
-async function createAndTrackOrder() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+async function manageOrders() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
   });
 
-  try {
-    // Step 1: Get a quote
-    console.log('Step 1: Getting quote...');
-    const quote = await client.getQuoteByPair('BTC/USDT', { fromAmount: 100000 });
+  // Get order history
+  console.log('📋 Order History');
+  const historyJson = await client.getOrderHistory(null, 10, 0);
+  const history = JSON.parse(historyJson);
+  console.log(`   Total: ${history.total}`);
+
+  // Get analytics
+  console.log('\n📊 Analytics');
+  const analyticsJson = await client.getOrderAnalytics();
+  const analytics = JSON.parse(analyticsJson);
+  console.log(`   Completed: ${analytics.completed_orders}`);
+  console.log(`   Pending: ${analytics.pending_orders}`);
+}
+
+manageOrders().catch(console.error);
+```
+
+```python Python
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+def manage_orders():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
     
-    // Create the order
-    console.log('Creating order...');
-    const order = await client.createOrder({
-      rfq_id: quote.rfq_id,
-      from_type: 'ONCHAIN',
-      to_type: 'LIGHTNING',
-      from_asset: quote.from_asset,
-      to_asset: quote.to_asset,
-      from_amount: 100000,
-      to_amount: quote.to_amount
-    });
+    # Get order history
+    print("📋 Order History")
+    history = client.get_order_history(limit=10)
+    print(f"   Total: {history.total}")
+    
+    # Get analytics
+    print("\n📊 Analytics")
+    analytics = client.get_order_analytics()
+    print(f"   Completed: {analytics.completed_orders}")
+    print(f"   Pending: {analytics.pending_orders}")
 
-    console.log('\n✅ Order Created!');
-    console.log(`  Order ID: ${order.id}`);
-    console.log(`  Status: ${order.status}`);
-
-    if (order.pay_in === 'ONCHAIN') {
-      console.log(`  Payment Address: ${order.onchain_address}`);
-      console.log('\n  Send BTC to the address above to complete the order');
-    } else if (order.pay_in === 'LIGHTNING') {
-      console.log(`  Lightning Invoice: ${order.ln_invoice}`);
-      console.log('\n  Pay the invoice above to complete the order');
-    }
-
-    // Poll order status
-    console.log('\n  Monitoring order status...');
-    while (true) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      const status = await client.swapOrderStatus(order.id);
-      console.log(`  Status: ${status.status}`);
-
-      if (['COMPLETED', 'FAILED', 'CANCELLED'].includes(status.status)) {
-        break;
-      }
-    }
-
-    console.log(`\n  Order final status: ${status.status}`);
-
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-createAndTrackOrder();
-```
-
-```python Python
-import asyncio
-from kaleidoswap_sdk import (
-    KaleidoClient,
-    CreateOrderRequest,
-    SwapOrderStatusRequest,
-)
-
-async def create_and_track_order():
-    """Create an order and track its status."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Get a quote first
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-            amount=1000000
-        )
-
-        # Create the order
-        print("Creating order...")
-        order = await client.create_order(
-            CreateOrderRequest(
-                rfq_id=quote.rfq_id,
-                from_type="ONCHAIN",
-                to_type="LIGHTNING",
-                from_asset="BTC",
-                to_asset="rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-                from_amount=1000000,
-                to_amount=quote.to_amount
-            )
-        )
-
-        print(f"\n✅ Order Created!")
-        print(f"  Order ID: {order.id}")
-        print(f"  Status: {order.status}")
-
-        if order.pay_in == "ONCHAIN":
-            print(f"  Payment Address: {order.onchain_address}")
-            print(f"\n  Send BTC to the address above to complete the order")
-        elif order.pay_in == "LIGHTNING":
-            print(f"  Lightning Invoice: {order.ln_invoice}")
-            print(f"\n  Pay the invoice above to complete the order")
-
-        # Poll order status
-        print("\n  Monitoring order status...")
-        while True:
-            await asyncio.sleep(5)
-
-            status = await client.get_swap_order_status(
-                SwapOrderStatusRequest(order_id=order.id)
-            )
-
-            print(f"  Status: {status.status}")
-
-            if status.status in ["COMPLETED", "FAILED", "CANCELLED"]:
-                break
-
-        print(f"\n  Order final status: {status.status}")
-
-asyncio.run(create_and_track_order())
-```
-</CodeGroup>
-
-<details>
-  <summary>Order Response Example</summary>
-
-```json
-{
-  "id": "example-order-id",
-  "rfq_id": "7f3ab43f-923f-4c85-90b8-af8f2b7a6576",
-  "pay_in": "ONCHAIN",
-  "ln_invoice": null,
-  "onchain_address": "bcrt1p...example",
-  "rgb_recipient_id": null,
-  "rgb_invoice": null,
-  "status": "PENDING_PAYMENT"
-}
-```
-</details>
-
-### Get Order History
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
-
-async function viewOrderHistory() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
-  });
-
-  try {
-    // Get order history
-    const history = await client.getOrderHistory({
-      limit: 20,
-      offset: 0,
-      status: 'COMPLETED' // Filter for completed orders only
-    });
-
-    console.log(`📋 Order History (${history.orders.length} orders)\n`);
-
-    for (const order of history.orders) {
-      const created = new Date(order.created_at * 1000);
-      console.log(`Order ${order.id}`);
-      console.log(`  Status: ${order.status}`);
-      console.log(`  Created: ${created.toISOString()}`);
-      console.log(`  Type: ${order.pay_in}\n`);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-viewOrderHistory();
-```
-
-```python Python
-import asyncio
-from datetime import datetime
-from kaleidoswap_sdk import KaleidoClient, OrderHistoryRequest
-
-async def view_order_history():
-    """View your order history with filtering."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Get order history
-        history = await client.get_order_history(
-            OrderHistoryRequest(
-                limit=20,
-                offset=0,
-                status="COMPLETED"  # Filter for completed orders only
-            )
-        )
-
-        print(f"📋 Order History ({len(history.orders)} orders)\n")
-
-        for order in history.orders:
-            created = datetime.fromtimestamp(order.created_at)
-            print(f"Order {order.id}")
-            print(f"  Status: {order.status}")
-            print(f"  Created: {created.strftime('%Y-%m-%d %H:%M:%S')}")
-            print(f"  Type: {order.pay_in}")
-            print()
-
-asyncio.run(view_order_history())
+if __name__ == "__main__":
+    manage_orders()
 ```
 </CodeGroup>
 
 ---
 
-## Lightning Operations
-
-### Open a Lightning Channel
+## Error Handling
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import {
+  KaleidoClient,
+  KaleidoError,
+  NetworkError,
+  ValidationError,
+  QuoteExpiredError,
+} from '@kaleidoswap/sdk';
 
-async function openChannelWithLsp() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-    nodeUrl: '<Your node URL>'
+async function handleErrors() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
   });
 
+  // Handle validation errors
   try {
-    // Get LSP connection info
-    const lspUrl = await client.getLspConnectionUrl();
-    console.log(`LSP Connection URL: ${lspUrl}`);
-
-    // Connect to LSP peer
-    console.log('\nConnecting to LSP...');
-    await client.connectPeer({ connection_url: lspUrl });
-    console.log('Connected to LSP');
-
-    // Get LSP info
-    const lspInfo = await client.getLspInfo();
-
-    // Open a channel
-    console.log('\nOpening channel...');
-    const channel = await client.openChannel({
-      peer_pubkey: lspInfo.pubkey,
-      capacity_sat: 1000000, // 1M sats
-      push_msat: 0,
-      asset_amount: 100000000, // 100 USDT
-      asset_id: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',
-      public: true,
-      with_anchors: true
-    });
-
-    console.log('✅ Channel opened!');
-    console.log(`  Temporary Channel ID: ${channel.temporary_channel_id}`);
+    await client.getQuoteByPair('BTC/USDT', 100);
   } catch (error) {
-    console.error('Error:', error);
+    if (error instanceof ValidationError) {
+      console.log(`Validation: ${error.message}`);
+    } else if (error instanceof NetworkError) {
+      console.log(`Network: ${error.message}`);
+    } else if (error instanceof KaleidoError) {
+      console.log(`SDK: ${error.message}`);
+    }
   }
-}
 
-openChannelWithLsp();
-```
-
-```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient, OpenChannelRequest, ConnectPeerRequest
-
-async def open_channel_with_lsp():
-    """Connect to LSP and open a channel."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Get LSP connection info
-        lsp_url = await client.get_lsp_connection_url()
-        print(f"LSP Connection URL: {lsp_url}")
-
-        # Connect to LSP peer
-        print("\nConnecting to LSP...")
-        await client.connect_peer(
-            ConnectPeerRequest(connection_url=lsp_url)
-        )
-        print("Connected to LSP")
-
-        # Get LSP info
-        lsp_info = await client.get_lsp_info()
-
-        # Open a channel
-        print("\nOpening channel...")
-        channel = await client.open_channel(
-            OpenChannelRequest(
-                peer_pubkey=lsp_info.pubkey,
-                capacity_sat=1000000,  # 1M sats
-                push_msat=0,
-                asset_amount=100000000,  # 100 USDT
-                asset_id="rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-                public=True,
-                with_anchors=True
-            )
-        )
-
-        print(f"✅ Channel opened!")
-        print(f"  Temporary Channel ID: {channel.temporary_channel_id}")
-
-asyncio.run(open_channel_with_lsp())
-```
-</CodeGroup>
-
-### Create and Monitor Lightning Invoice
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
-
-async function createAndMonitorInvoice() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-    nodeUrl: '<Your node URL>'
-  });
-
-  try {
-    // Create invoice
-    const invoice = await client.generateLnInvoice({
-      amount_msat: 1000000, // 1000 sats
-      description: 'Payment for services',
-      expiry_secs: 3600 // 1 hour
-    });
-
-    console.log('📄 Invoice Created!');
-    console.log(`  Invoice: ${invoice.invoice}`);
-    console.log(`  Payment Hash: ${invoice.payment_hash}`);
-    console.log('\n  Waiting for payment...');
-
-    // Monitor invoice status
-    while (true) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      const status = await client.getInvoiceStatus({
-        payment_hash: invoice.payment_hash
-      });
-
-      if (status.status === 'Succeeded') {
-        console.log('\n  ✅ Payment received!');
-        break;
-      } else if (status.status === 'Failed') {
-        console.log('\n  ❌ Payment failed');
-        break;
-      } else if (status.status === 'Expired') {
-        console.log('\n  ⏰ Invoice expired');
-        break;
+  // Retry on quote expiry
+  async function executeWithRetry(pair: string, amount: number) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        const quote = await client.getQuoteByPair(pair, amount);
+        return await client.initSwap({
+          rfq_id: quote.rfqId,
+          from_asset: quote.fromAsset,
+          from_amount: quote.fromAmount,
+          to_asset: quote.toAsset,
+          to_amount: quote.toAmount,
+        });
+      } catch (error) {
+        if (error instanceof QuoteExpiredError) {
+          console.log('Quote expired, retrying...');
+          continue;
+        }
+        throw error;
       }
     }
-  } catch (error) {
-    console.error('Error:', error);
   }
 }
 
-createAndMonitorInvoice();
+handleErrors();
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import (
+from kaleidoswap import (
     KaleidoClient,
-    LNInvoiceRequest,
-    InvoiceStatusRequest,
-    InvoiceStatus,
+    KaleidoConfig,
+    KaleidoError,
+    NetworkError,
+    ValidationError,
+    QuoteExpiredError,
 )
 
-async def create_and_monitor_invoice():
-    """Create an invoice and monitor for payment."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Create invoice
-        invoice = await client.generate_ln_invoice(
-            LNInvoiceRequest(
-                amount_msat=1000000,  # 1000 sats
-                description="Payment for services",
-                expiry_secs=3600  # 1 hour
-            )
-        )
-
-        print(f"📄 Invoice Created!")
-        print(f"  Invoice: {invoice.invoice}")
-        print(f"  Payment Hash: {invoice.payment_hash}")
-        print(f"\n  Waiting for payment...")
-
-        # Monitor invoice status
-        while True:
-            await asyncio.sleep(5)
-
-            status = await client.get_invoice_status(
-                InvoiceStatusRequest(payment_hash=invoice.payment_hash)
-            )
-
-            if status.status == InvoiceStatus.Succeeded:
-                print(f"\n  ✅ Payment received!")
-                break
-            elif status.status == InvoiceStatus.Failed:
-                print(f"\n  ❌ Payment failed")
-                break
-            elif status.status == InvoiceStatus.Expired:
-                print(f"\n  ⏰ Invoice expired")
-                break
-
-asyncio.run(create_and_monitor_invoice())
-```
-</CodeGroup>
-
----
-
-## Wallet Management
-
-### Initialize and Manage Wallet
-
-<Note>
-This example is Python-specific as wallet management is handled directly through the node client.
-</Note>
-
-```python
-import asyncio
-from kaleidoswap_sdk import (
-    KaleidoClient,
-    InitRequest,
-    BackupRequest,
-)
-
-async def setup_wallet():
-    """Initialize a new wallet and perform basic operations."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Initialize wallet
-        print("Initializing new wallet...")
-        init_result = await client.init_wallet(
-            InitRequest(password="your_secure_password")
-        )
-
-        print(f"✅ Wallet Created!")
-        print(f"\n⚠️  IMPORTANT: Save this mnemonic securely!")
-        print(f"  Mnemonic: {init_result.mnemonic}\n")
-
-        # Backup wallet
-        print("Creating wallet backup...")
-        await client.backup_wallet(
-            BackupRequest(
-                backup_path="/path/to/secure/backup",
-                password="backup_password"
-            )
-        )
-        print("Backup created successfully")
-
-        # Sync wallet
-        print("\nSyncing wallet...")
-        await client.sync_wallet()
-        print("Wallet synchronized")
-
-        # Get balances
-        btc_balance = await client.get_btc_balance()
-        print(f"\n💰 BTC Balance:")
-        print(f"  Spendable: {btc_balance.vanilla.spendable / 100_000_000:.8f} BTC")
-
-asyncio.run(setup_wallet())
-```
-
-### Check Balances
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
-
-async function checkAllBalances() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-    nodeUrl: '<Your node URL>'
-  });
-
-  try {
-    // Check BTC balance
-    const btc = await client.getBtcBalance();
-    console.log('💰 Bitcoin Balance:');
-    console.log(`  Spendable: ${btc.vanilla.spendable.toLocaleString()} sats`);
-    console.log(`  Pending: ${btc.vanilla.pending.toLocaleString()} sats\n`);
-
-    // Get all assets
-    const assets = await client.assetList();
-
-    console.log('🎨 RGB Asset Balances:');
-    for (const asset of assets.assets) {
-      if (asset.balance.spendable > 0) {
-        const balance = asset.balance.spendable / (10 ** asset.precision);
-        console.log(`  ${asset.ticker}: ${balance.toFixed(asset.precision)}`);
-      }
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-checkAllBalances();
-```
-
-```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
-
-async def check_all_balances():
-    """Check Bitcoin and RGB asset balances."""
-
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    ) as client:
-        # Check BTC balance
-        btc = await client.get_btc_balance()
-        print(f"💰 Bitcoin Balance:")
-        print(f"  Spendable: {btc.vanilla.spendable:,} sats")
-        print(f"  Pending: {btc.vanilla.pending:,} sats\n")
-
-        # Get all assets
-        assets = await client.list_assets()
-
-        print(f"🎨 RGB Asset Balances:")
-        for asset in assets.assets:
-            if asset.balance.spendable > 0:
-                balance = asset.balance.spendable / (10 ** asset.precision)
-                print(f"  {asset.ticker}: {balance:.{asset.precision}f}")
-
-asyncio.run(check_all_balances())
-```
-</CodeGroup>
-
----
-
-## Real-time Data with WebSocket
-
-### Subscribe to Live Quote Updates
-
-<Note>
-This example is Python-specific. WebSocket support for TypeScript is coming soon.
-</Note>
-
-```python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
-
-async def stream_live_quotes():
-    """Subscribe to real-time quote updates."""
-
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your node URL>"
-    )
-
-    # Callback for quote updates
-    async def handle_quote(quote):
-        btc_amount = 0.001  # 0.001 BTC
-        usdt_amount = quote.to_amount / 1_000_000
-        print(f"📊 Live Quote: {btc_amount} BTC → {usdt_amount:.2f} USDT")
-        print(f"   Rate: {quote.exchange_rate:.2f}")
-        print(f"   Time: {quote.timestamp}\n")
-
+def handle_errors():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
+    
+    # Handle validation errors
     try:
-        # Connect WebSocket
-        await client.connect()
-        print("🔌 Connected to WebSocket\n")
+        client.get_quote_by_pair("BTC/USDT", from_amount=100)
+    except ValidationError as e:
+        print(f"Validation: {e}")
+    except NetworkError as e:
+        print(f"Network: {e}")
+    except KaleidoError as e:
+        print(f"SDK: {e}")
+    
+    # Retry on quote expiry
+    def execute_with_retry(pair, amount, max_retries=3):
+        for i in range(max_retries):
+            try:
+                quote = client.get_quote_by_pair(pair, from_amount=amount)
+                return client.init_swap({
+                    "rfq_id": quote.rfq_id,
+                    "from_asset": quote.from_asset.asset_id,
+                    "from_amount": quote.from_asset.amount,
+                    "to_asset": quote.to_asset.asset_id,
+                    "to_amount": quote.to_asset.amount,
+                })
+            except QuoteExpiredError:
+                print("Quote expired, retrying...")
+                continue
+        raise RuntimeError("Max retries exceeded")
 
-        # Subscribe to BTC/USDT quotes
-        await client.get_quote_websocket(
-            from_asset="BTC",
-            to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",
-            amount=100000,  # 0.001 BTC
-            callback=handle_quote
-        )
-
-        # Keep receiving updates for 60 seconds
-        await asyncio.sleep(60)
-
-    finally:
-        await client.disconnect()
-        await client.close()
-        print("Disconnected")
-
-asyncio.run(stream_live_quotes())
-```
-
----
-
-## Best Practices
-
-### Using Context Managers (Python)
-
-Always use async context managers for automatic cleanup:
-
-```python
-async with KaleidoClient(api_url="...", node_url="...") as client:
-    # Your code here
-    # Client automatically closes when done
-    pass
-```
-
-### Environment Variables
-
-Store sensitive configuration in environment variables:
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
-
-const client = new KaleidoClient({
-  baseUrl: process.env.KALEIDO_API_URL || 'https://api.staging.kaleidoswap.com/api/v1',
-  nodeUrl: process.env.KALEIDO_NODE_URL
-});
-```
-
-```python Python
-import os
-from kaleidoswap_sdk import KaleidoClient
-
-API_URL = os.getenv("KALEIDO_API_URL", "https://api.staging.kaleidoswap.com/api/v1")
-NODE_URL = os.getenv("KALEIDO_NODE_URL")
-
-async with KaleidoClient(api_url=API_URL, node_url=NODE_URL) as client:
-    # Your code
-    pass
+if __name__ == "__main__":
+    handle_errors()
 ```
 </CodeGroup>
 
 ---
 
-## Next Steps
+## Amount Conversion
 
-- **[API Reference](./api-reference)** - Complete method documentation
-- **[Types](./types)** - All available types and models
-- **[Error Handling](./error-handling)** - Exception handling guide
-- **[WebSocket](./websocket)** - Deep dive into real-time features
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, toSmallestUnits, toDisplayUnits } from '@kaleidoswap/sdk';
+
+async function amountConversion() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
+  });
+
+  // Need asset precision
+  const btc = await client.getAssetByTicker('BTC');
+
+  // Display to raw (using standalone utility)
+  const sats = await toSmallestUnits(0.01, btc.precision);
+  console.log(`0.01 BTC = ${sats} satoshis`);
+
+  // Raw to display
+  const btcDisplay = await toDisplayUnits(1_000_000n, btc.precision);
+  console.log(`1,000,000 sats = ${btcDisplay} BTC`);
+}
+
+amountConversion();
+```
+
+```python Python
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+def amount_conversion():
+    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+    client = KaleidoClient(config)
+    
+    # Display to raw
+    sats = client.to_raw(0.01, "BTC")
+    print(f"0.01 BTC = {sats} satoshis")
+    
+    # Raw to display
+    btc = client.to_display(1_000_000, "BTC")
+    print(f"1,000,000 sats = {btc} BTC")
+    
+    # Validate amount
+    result = client.validate_amount(0.001, "BTC")
+    print(f"Valid: {result['valid']}")
+    print(f"Raw: {result['raw_amount']}")
+
+if __name__ == "__main__":
+    amount_conversion()
+```
+</CodeGroup>
+
+---
+
+## LSP Channel Operations
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from '@kaleidoswap/sdk';
+
+async function lspOperations() {
+  const client = await KaleidoClient.create({
+    baseUrl: 'https://api.regtest.kaleidoswap.com',
+    nodeUrl: 'http://localhost:3001',
+  });
+
+  // Get LSP info
+  console.log('📡 LSP Info');
+  const lspInfo = await client.getLspInfo();
+  console.log(JSON.stringify(lspInfo, null, 2));
+
+  // Get network info
+  const networkInfo = await client.getLspNetworkInfo();
+  console.log(`Network: ${networkInfo.network}`);
+
+  // Estimate fees
+  const fees = await client.estimateLspFees(1_000_000);
+  console.log(`Fees for 1M sats: ${fees}`);
+
+  // Create channel order
+  if (client.hasNode()) {
+    const nodeInfoJson = await client.getRgbNodeInfo({ raw: true });
+    const nodeInfo = JSON.parse(nodeInfoJson as string);
+
+    const order = await client.createLspOrder({
+      client_pubkey: nodeInfo.pubkey,
+      lsp_balance_sat: 1_000_000,
+      client_balance_sat: 500_000,
+      required_channel_confirmations: 3,
+      funding_confirms_within_blocks: 144,
+      channel_expiry_blocks: 2016,
+      announce_channel: true,
+    });
+    console.log('Order created:', order);
+  }
+}
+
+lspOperations().catch(console.error);
+```
+
+```python Python
+import json
+from kaleidoswap import KaleidoClient, KaleidoConfig
+
+def lsp_operations():
+    config = KaleidoConfig(
+        base_url="https://api.regtest.kaleidoswap.com",
+        node_url="http://localhost:3001",
+    )
+    client = KaleidoClient(config)
+    
+    # Get LSP info
+    print("📡 LSP Info")
+    lsp_info = client.get_lsp_info()
+    print(lsp_info)
+    
+    # Get network info
+    network_info = client.get_lsp_network_info()
+    print(f"Network: {network_info.network}")
+    
+    # Estimate fees
+    fees = client.estimate_lsp_fees(1_000_000)
+    print(f"Fees for 1M sats: {fees}")
+    
+    # Create channel order
+    if client.has_node():
+        node_info_json = client.get_rgb_node_info()
+        node_info = json.loads(node_info_json)
+        
+        order = client.create_order({
+            "client_pubkey": node_info["pubkey"],
+            "lsp_balance_sat": 1_000_000,
+            "client_balance_sat": 500_000,
+            "required_channel_confirmations": 3,
+            "funding_confirms_within_blocks": 144,
+            "channel_expiry_blocks": 2016,
+            "announce_channel": True,
+        })
+        print(f"Order created: {order}")
+
+if __name__ == "__main__":
+    lsp_operations()
+```
+</CodeGroup>

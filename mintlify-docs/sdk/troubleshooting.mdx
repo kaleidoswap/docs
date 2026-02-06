@@ -1,1335 +1,431 @@
 ---
-title: Troubleshooting
-description: This guide helps you diagnose and resolve common issues when using the KaleidoSwap SDK across different languages.
+title: 'Troubleshooting'
+description: 'Common issues and solutions'
 ---
 
-## Common Issues
+## Installation Issues
 
-### 1. "Asset not found" Errors
+### Native Module Build Failures
 
-**Problem:** Getting errors when trying to find assets by ticker or ID.
-
-**Symptoms:**
-
-<CodeGroup>
-
-```typescript
-const btc = assetMapper.findByTicker('BTC');
-// btc is undefined
-```
-
-```python
-btc = asset_mapper.find_by_ticker('BTC')
-# btc is None
-```
-
-</CodeGroup>
-
-**Solutions:**
-
-#### Check Available Assets
-
-<CodeGroup>
-
-```typescript
-// List all available assets
-const pairs = await client.pairList();
-const assetMapper = createAssetPairMapper(pairs);
-const allAssets = assetMapper.getAllAssets();
-
-console.log('Available assets:');
-allAssets.forEach(asset => {
-  console.log(`- ${asset.ticker} (${asset.asset_id})`);
-});
-```
-
-```python
-# List all available assets
-pairs = await client.pair_list()
-asset_mapper = create_asset_pair_mapper(pairs)
-all_assets = asset_mapper.get_all_assets()
-
-print('Available assets:')
-for asset in all_assets:
-    print(f"- {asset.ticker} ({asset.asset_id})")
-```
-
-</CodeGroup>
-
-#### Case Sensitivity
-
-<CodeGroup>
-
-```typescript
-// ✅ Good: Use exact case
-const btc = assetMapper.findByTicker('BTC');
-
-// ❌ Bad: Wrong case
-const btc = assetMapper.findByTicker('btc'); // Returns undefined
-```
-
-```python
-# ✅ Good: Use exact case
-btc = asset_mapper.find_by_ticker('BTC')
-
-# ❌ Bad: Wrong case
-btc = asset_mapper.find_by_ticker('btc')  # Returns None
-```
-
-</CodeGroup>
-
-#### Asset Availability
-
-<CodeGroup>
-
-```typescript
-// Check if asset is active
-const asset = assetMapper.findByTicker('BTC');
-if (asset && !asset.is_active) {
-  console.log('Asset found but not active for trading');
-}
-```
-
-```python
-# Check if asset is active
-asset = asset_mapper.find_by_ticker('BTC')
-if asset and not asset.is_active:
-    print('Asset found but not active for trading')
-```
-
-</CodeGroup>
-
-### 2. "Invalid order size" Errors
-
-**Problem:** Order size validation fails with precision or limit errors.
+**Problem:** Error building native module during installation
 
 **Symptoms:**
-
 ```
-Error: Amount 0.0001 BTC is below minimum order size of 0.001 BTC
-Error: Amount 10 BTC exceeds maximum order size of 1 BTC
+npm ERR! code 1
+npm ERR! prebuild-install || node-gyp rebuild
 ```
 
 **Solutions:**
 
-#### Check Order Limits
+<Tabs>
+  <Tab title="TypeScript">
+    1. Ensure Node.js 18+:
+    ```bash
+    node --version  # Should be v18+
+    nvm install 18
+    ```
 
-<CodeGroup>
+    2. Install build tools:
+    ```bash
+    # macOS
+    xcode-select --install
 
-```typescript
-const asset = assetMapper.findByTicker('BTC');
-const limits = precisionHandler.getOrderSizeLimits(asset);
+    # Linux
+    sudo apt-get install build-essential
+    ```
 
-console.log(`${asset.ticker} order limits:`);
-console.log(`  Min: ${limits.minDecimal} ${asset.ticker}`);
-console.log(`  Max: ${limits.maxDecimal} ${asset.ticker}`);
-console.log(`  Precision: ${limits.precision} decimal places`);
-```
+    3. Clear cache:
+    ```bash
+    rm -rf node_modules package-lock.json
+    npm cache clean --force
+    npm install
+    ```
+  </Tab>
+  <Tab title="Python">
+    1. Ensure Python 3.9+:
+    ```bash
+    python --version  # Should be 3.9+
+    ```
 
-```python
-asset = asset_mapper.find_by_ticker('BTC')
-limits = precision_handler.get_order_size_limits(asset)
+    2. Use a fresh virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    pip install kaleidoswap
+    ```
+  </Tab>
+</Tabs>
 
-print(f'{asset.ticker} order limits:')
-print(f"  Min: {limits['min_decimal']} {asset.ticker}")
-print(f"  Max: {limits['max_decimal']} {asset.ticker}")
-print(f"  Precision: {limits['precision']} decimal places")
-```
+---
 
-</CodeGroup>
+### Module Not Found
 
-#### Validate Before Trading
-
-<CodeGroup>
-
-```typescript
-function validateOrderSize(amount: number, ticker: string) {
-  const asset = assetMapper.findByTicker(ticker);
-  if (!asset) {
-    throw new Error(`Asset ${ticker} not found`);
-  }
-
-  const validation = precisionHandler.validateOrderSize(amount, asset);
-  if (!validation.valid) {
-    const limits = precisionHandler.getOrderSizeLimits(asset);
-    console.error(`Invalid order size: ${validation.error}`);
-    console.log(`Valid range: ${limits.minDecimal} - ${limits.maxDecimal} ${ticker}`);
-    return false;
-  }
-
-  return true;
-}
-
-// Usage
-if (validateOrderSize(0.001, 'BTC')) {
-  // Proceed with order
-}
-```
-
-```python
-def validate_order_size(amount: float, ticker: str) -> bool:
-    asset = asset_mapper.find_by_ticker(ticker)
-    if not asset:
-        raise ValueError(f'Asset {ticker} not found')
-
-    validation = precision_handler.validate_order_size(amount, asset)
-    if not validation.valid:
-        limits = precision_handler.get_order_size_limits(asset)
-        print(f"Invalid order size: {validation.error}")
-        print(
-            f"Valid range: {limits['min_decimal']} - {limits['max_decimal']} {ticker}"
-        )
-        return False
-
-    return True
-
-# Usage
-if validate_order_size(0.001, 'BTC'):
-    # Proceed with order
-    pass
-```
-
-</CodeGroup>
-
-### 3. Quote Expiration Issues
-
-**Problem:** Quotes expire before orders can be created.
-
-**Symptoms:**
-
-```
-Error: Quote expired
-Error: Invalid RFQ ID
-```
+**Problem:** `Cannot find module '@kaleidoswap/sdk'` or `ModuleNotFoundError: No module named 'kaleidoswap'`
 
 **Solutions:**
 
-#### Check Quote Expiration
+<Tabs>
+  <Tab title="TypeScript">
+    ```bash
+    npm list @kaleidoswap/sdk
+    npm uninstall @kaleidoswap/sdk
+    npm install @kaleidoswap/sdk
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```bash
+    pip show kaleidoswap
+    pip uninstall kaleidoswap
+    pip install kaleidoswap
+    ```
+  </Tab>
+</Tabs>
 
-<CodeGroup>
+---
 
-```typescript
-function isQuoteValid(quote: any): boolean {
-  const expiresAt = new Date(quote.expires_at).getTime();
-  const now = Date.now();
-  const timeLeft = expiresAt - now;
+## Runtime Errors
 
-  console.log(`Quote expires in ${Math.floor(timeLeft / 1000)} seconds`);
+### Network Errors
 
-  return timeLeft > 0;
-}
+**Problem:** `NetworkError: Connection refused` or timeout errors
 
-// Check before using quote
-if (isQuoteValid(quote)) {
-  const order = await client.createOrder({
-    rfq_id: quote.rfq_id,
-    // ... other parameters
-  });
-} else {
-  console.log('Quote expired, getting new quote...');
-  const newQuote = await client.quoteRequest(from, to, amount);
-}
-```
-
-```python
-from datetime import datetime
-
-def is_quote_valid(quote: dict) -> bool:
-    expires_at = datetime.fromisoformat(
-        quote['expires_at'].replace('Z', '+00:00')
-    )
-    now = datetime.now(expires_at.tzinfo)
-    time_left = (expires_at - now).total_seconds()
-
-    print(f'Quote expires in {int(time_left)} seconds')
-
-    return time_left > 0
-
-# Check before using quote
-if is_quote_valid(quote):
-    order = await client.create_order({
-        'rfq_id': quote['rfq_id'],
-        # ... other parameters
-    })
-else:
-    print('Quote expired, getting new quote...')
-    new_quote = await client.quote_request(from_id, to_id, amount)
-```
-
-</CodeGroup>
-
-#### Implement Quote Refresh
-
-<CodeGroup>
-
-```typescript
-class QuoteManager {
-  async getQuoteWithBuffer(from: string, to: string, amount: number) {
-    const quote = await client.quoteRequest(from, to, amount);
-    const expiresAt = new Date(quote.expires_at).getTime();
-    const now = Date.now();
-    const timeLeft = expiresAt - now;
-
-    // Warn if quote expires soon
-    if (timeLeft < 30000) { // Less than 30 seconds
-      console.warn('Quote expires soon, consider getting a fresh quote');
-    }
-
-    return quote;
-  }
-}
-```
-
-```python
-class QuoteManager:
-    async def get_quote_with_buffer(self, from_id: str, to_id: str, amount: int):
-        quote = await client.quote_request(from_id, to_id, amount)
-        expires_at = datetime.fromisoformat(
-            quote['expires_at'].replace('Z', '+00:00')
-        )
-        now = datetime.now(expires_at.tzinfo)
-        time_left = (expires_at - now).total_seconds()
-
-        # Warn if quote expires soon
-        if time_left < 30:  # Less than 30 seconds
-            logger.warning('Quote expires soon, consider getting a fresh quote')
-
-        return quote
-```
-
-</CodeGroup>
-
-### 4. WebSocket Connection Issues
-
-**Problem:** WebSocket connections fail or disconnect frequently.
-
-**Symptoms:**
-
-```
-WebSocket connection failed
-Connection timeout
-Frequent reconnections
-```
+**Causes:**
+- API server unreachable
+- Firewall blocking connections
+- DNS resolution failure
 
 **Solutions:**
 
-#### Enable Debug Logging
+1. Check API availability:
+```bash
+curl https://api.regtest.kaleidoswap.com/health
+```
 
+2. Verify URL configuration:
 <CodeGroup>
-
-```typescript
-// Enable WebSocket debugging
-process.env.DEBUG_WS = 'true';
-
-const wsClient = new WebSocketClient({
-  baseUrl: 'wss://api.kaleidoswap.com/ws'
-});
-
-// Check connection state
-console.log('WebSocket state:', wsClient.getConnectionState());
+```typescript TypeScript
+console.log('API URL:', process.env.KALEIDO_API_URL);
 ```
 
-```python
-# Enable WebSocket debugging
-import os
-os.environ['DEBUG_WS'] = 'true'
-
-ws_client = WebSocketClient(
-    base_url='wss://api.kaleidoswap.com/ws'
-)
-
-# Check connection state
-print('WebSocket state:', ws_client.get_connection_state())
+```python Python
+print(f"API URL: {config.base_url}")
 ```
-
 </CodeGroup>
 
-#### Check Network Connectivity
-
+3. Increase timeout:
 <CodeGroup>
-
-```typescript
-async function testConnectivity() {
-  try {
-    // Test HTTP first
-    const response = await fetch('https://api.kaleidoswap.com/api/v1/health');
-    console.log('HTTP connectivity: OK');
-
-    // Test WebSocket
-    const wsClient = new WebSocketClient({
-      baseUrl: 'wss://api.kaleidoswap.com/ws',
-      pingTimeout: 15000 // Increase timeout
-    });
-
-    await wsClient.connect();
-    console.log('WebSocket connectivity: OK');
-    await wsClient.disconnect();
-
-  } catch (error) {
-    console.error('Connectivity test failed:', error);
-  }
-}
-```
-
-```python
-import aiohttp
-import asyncio
-
-async def test_connectivity():
-    try:
-        # Test HTTP first
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                'https://api.kaleidoswap.com/api/v1/health'
-            ) as response:
-                print('HTTP connectivity: OK')
-
-        # Test WebSocket
-        ws_client = WebSocketClient(
-            base_url='wss://api.kaleidoswap.com/ws',
-            ping_timeout=15
-        )
-
-        await ws_client.connect()
-        print('WebSocket connectivity: OK')
-        await ws_client.disconnect()
-
-    except Exception as error:
-        print(f'Connectivity test failed: {error}')
-```
-
-</CodeGroup>
-
-#### Implement Fallback Strategy
-
-<CodeGroup>
-
-```typescript
-class RobustQuoteService {
-  async getQuote(from: string, to: string, amount: number) {
-    try {
-      // Try WebSocket first
-      return await client.quoteRequestWS(from, to, amount);
-    } catch (wsError) {
-      console.log('WebSocket failed, falling back to HTTP');
-
-      try {
-        return await client.quoteRequest(from, to, amount);
-      } catch (httpError) {
-        console.error('Both WebSocket and HTTP failed');
-        throw httpError;
-      }
-    }
-  }
-}
-```
-
-```python
-class RobustQuoteService:
-    async def get_quote(self, from_id: str, to_id: str, amount: int):
-        try:
-            # Try WebSocket first
-            return await self.client.quote_request_ws(from_id, to_id, amount)
-        except Exception as ws_error:
-            logger.info('WebSocket failed, falling back to HTTP')
-
-            try:
-                return await self.client.quote_request(from_id, to_id, amount)
-            except Exception as http_error:
-                logger.error('Both WebSocket and HTTP failed')
-                raise http_error
-```
-
-</CodeGroup>
-
-### 5. Rate Limiting Errors
-
-**Problem:** Hitting API rate limits with 429 errors.
-
-**Symptoms:**
-
-```
-Error: Rate limit exceeded
-HTTP 429 Too Many Requests
-```
-
-**Solutions:**
-
-#### Implement Client-Side Rate Limiting
-
-<CodeGroup>
-
-```typescript
-class RateLimitedClient {
-  private lastRequest = 0;
-  private minInterval = 1000; // 1 second between requests
-
-  async makeRequest<T>(requestFn: () => Promise<T>): Promise<T> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequest;
-
-    if (timeSinceLastRequest < this.minInterval) {
-      const waitTime = this.minInterval - timeSinceLastRequest;
-      console.log(`Rate limiting: waiting ${waitTime}ms`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
-
-    this.lastRequest = Date.now();
-    return await requestFn();
-  }
-}
-
-// Usage
-const rateLimitedClient = new RateLimitedClient();
-
-const quote = await rateLimitedClient.makeRequest(() =>
-  client.quoteRequest(from, to, amount)
-);
-```
-
-```python
-import asyncio
-from datetime import datetime
-
-class RateLimitedClient:
-    def __init__(self, min_interval_seconds: float = 1):
-        self.last_request = 0
-        self.min_interval = min_interval_seconds
-
-    async def make_request(self, request_fn):
-        now = datetime.now().timestamp()
-        time_since_last_request = now - self.last_request
-
-        if time_since_last_request < self.min_interval:
-            wait_time = self.min_interval - time_since_last_request
-            print(f'Rate limiting: waiting {wait_time:.2f}s')
-            await asyncio.sleep(wait_time)
-
-        self.last_request = datetime.now().timestamp()
-        return await request_fn()
-
-# Usage
-rate_limited_client = RateLimitedClient(min_interval_seconds=1)
-
-quote = await rate_limited_client.make_request(
-    lambda: client.quote_request(from_id, to_id, amount)
-)
-```
-
-</CodeGroup>
-
-#### Use Built-in Retry Logic
-
-<CodeGroup>
-
-```typescript
-// The SDK automatically retries rate-limited requests
+```typescript TypeScript
 const client = new KaleidoClient({
-  baseUrl: 'https://api.kaleidoswap.com/api/v1',
-  retryConfig: {
-    maxRetries: 5,
-    initialDelay: 2000,
-    maxDelay: 30000,
-    exponentialBase: 2,
-    jitter: true
-  }
+  baseUrl: '...',
+  timeout: 60,  // Increase from 30
 });
 ```
 
-```python
-# The SDK automatically retries rate-limited requests
-client = KaleidoClient(
-    base_url='https://api.kaleidoswap.com/api/v1',
-    retry_config={
-        'max_retries': 5,
-        'initial_delay': 2,
-        'max_delay': 30,
-        'exponential_base': 2,
-        'jitter': True
-    }
+```python Python
+config = KaleidoConfig(
+    base_url="...",
+    timeout=60.0,  # Increase from 30
 )
 ```
-
 </CodeGroup>
 
-### 6. Network Timeout Issues
+---
 
-**Problem:** Requests timeout or fail due to network issues.
+### Quote Expired Errors
 
-**Symptoms:**
+**Problem:** `QuoteExpiredError` when executing swap
 
+**Cause:** Too much time between getting quote and executing
+
+**Solution:** Get fresh quotes immediately before execution:
+
+<CodeGroup>
+```typescript TypeScript
+async function executeSwap(pair: string, amount: number) {
+  // Get fresh quote
+  const quote = await client.getQuoteByPair(pair, amount);
+  
+  // Execute immediately
+  return await client.initSwap({
+    rfq_id: quote.rfqId,
+    from_asset: quote.fromAsset,
+    from_amount: quote.fromAmount,
+    to_asset: quote.toAsset,
+    to_amount: quote.toAmount,
+  });
+}
 ```
-Error: Network timeout
-Error: Connection refused
-Error: DNS resolution failed
+
+```python Python
+def execute_swap(pair, amount):
+    # Get fresh quote
+    quote = client.get_quote_by_pair(pair, from_amount=amount)
+    
+    # Execute immediately
+    return client.init_swap({
+        "rfq_id": quote.rfq_id,
+        "from_asset": quote.from_asset.asset_id,
+        "from_amount": quote.from_asset.amount,
+        "to_asset": quote.to_asset.asset_id,
+        "to_amount": quote.to_asset.amount,
+    })
 ```
+</CodeGroup>
+
+---
+
+### Node Not Configured
+
+**Problem:** `NodeNotConfiguredError` when calling node operations
+
+**Cause:** `nodeUrl` / `node_url` not provided
+
+**Solution:**
+
+<CodeGroup>
+```typescript TypeScript
+// Check before node operations
+if (client.hasNode()) {
+  const channels = await client.listChannels();
+} else {
+  console.log('Configure nodeUrl for node operations');
+}
+```
+
+```python Python
+# Check before node operations
+if client.has_node():
+    channels = client.list_channels()
+else:
+    print("Configure node_url for node operations")
+```
+</CodeGroup>
+
+---
+
+### Invalid Amount Errors
+
+**Problem:** `ValidationError` for amount out of range
+
+**Cause:** Amount below minimum or above maximum for the pair
+
+**Solution:**
+
+<CodeGroup>
+```typescript TypeScript
+// Get pair limits
+const pair = await client.getPairByTicker('BTC/USDT');
+
+// Adjust amount
+let amount = requestedAmount;
+if (amount < pair.minBaseOrderSize) {
+  amount = pair.minBaseOrderSize;
+}
+if (amount > pair.maxBaseOrderSize) {
+  amount = pair.maxBaseOrderSize;
+}
+
+const quote = await client.getQuoteByPair('BTC/USDT', amount);
+```
+
+```python Python
+# Get pair limits
+pair = client.get_pair_by_ticker("BTC/USDT")
+
+# Adjust amount
+amount = requested_amount
+if pair.routes:
+    route = pair.routes[0]
+    if route.min_from_amount and amount < route.min_from_amount:
+        amount = route.min_from_amount
+    if route.max_from_amount and amount > route.max_from_amount:
+        amount = route.max_from_amount
+
+quote = client.get_quote_by_pair("BTC/USDT", from_amount=amount)
+```
+</CodeGroup>
+
+---
+
+## WebSocket Issues
+
+### Stream Disconnects
+
+**Problem:** WebSocket stream disconnects unexpectedly
+
+**Solution:** Implement reconnection logic:
+
+<CodeGroup>
+```typescript TypeScript
+async function resilientStream(pair: string, onQuote: (q: any) => void) {
+  let retries = 0;
+  const maxRetries = 5;
+
+  while (retries < maxRetries) {
+    try {
+      const stream = await client.createQuoteStream(pair);
+      
+      while (stream.isConnected()) {
+        const quoteJson = await stream.recv(30.0);
+        if (quoteJson) onQuote(JSON.parse(quoteJson));
+      }
+      
+      stream.close();
+      retries = 0;  // Reset on success
+    } catch (error) {
+      retries++;
+      console.log(`Reconnecting (${retries}/${maxRetries})...`);
+      await new Promise(r => setTimeout(r, 1000 * retries));
+    }
+  }
+}
+```
+
+```python Python
+import time
+
+def resilient_stream(pair, on_quote):
+    retries = 0
+    max_retries = 5
+    
+    while retries < max_retries:
+        try:
+            with client.subscribe_quotes(pair) as stream:
+                for quote in stream.iter_quotes(timeout=30.0):
+                    on_quote(quote)
+            retries = 0  # Reset on success
+        except Exception as e:
+            retries += 1
+            print(f"Reconnecting ({retries}/{max_retries})...")
+            time.sleep(retries)
+```
+</CodeGroup>
+
+---
+
+### No Quotes Received
+
+**Problem:** `stream.recv()` always returns `null`
+
+**Causes:**
+- No market activity
+- Wrong pair ticker
+- WebSocket connection failed
 
 **Solutions:**
 
-#### Increase Timeout Values
-
+1. Verify pair exists:
 <CodeGroup>
-
-```typescript
-async function requestWithTimeout<T>(
-  requestFn: () => Promise<T>,
-  timeoutMs: number = 30000
-): Promise<T> {
-  return Promise.race([
-    requestFn(),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
-    )
-  ]);
-}
-
-// Usage
-const quote = await requestWithTimeout(
-  () => client.quoteRequest(from, to, amount),
-  30000 // 30 seconds
+```typescript TypeScript
+const pairs = await client.listPairs();
+const exists = pairs.some(p => 
+  `${p.baseAsset}/${p.quoteAsset}` === 'BTC/USDT'
 );
 ```
 
-```python
-import asyncio
-
-async def request_with_timeout(request_fn, timeout_seconds: float = 30):
-    try:
-        return await asyncio.wait_for(request_fn(), timeout=timeout_seconds)
-    except asyncio.TimeoutError:
-        raise TimeoutError(f'Request timed out after {timeout_seconds} seconds')
-
-# Usage
-quote = await request_with_timeout(
-    lambda: client.quote_request(from_id, to_id, amount),
-    timeout_seconds=30
+```python Python
+pairs = client.list_pairs()
+exists = any(
+    f"{p.base.ticker}/{p.quote.ticker}" == "BTC/USDT"
+    for p in pairs if p.base and p.quote
 )
 ```
-
 </CodeGroup>
 
-#### Implement Retry with Exponential Backoff
+2. Increase timeout:
+```typescript
+const quote = await stream.recv(60.0);  // 60 seconds
+```
 
-<CodeGroup>
+---
+
+## Type Issues
+
+### Raw vs Parsed Responses
+
+**Problem:** TypeScript type errors with `{ raw: true }`
+
+**Solution:** Use proper type handling:
 
 ```typescript
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3
-): Promise<T> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (attempt === maxRetries) {
-        throw error;
-      }
+// Without raw - returns typed objects
+const assets = await client.listAssets();
+assets.forEach(a => console.log(a.ticker));  // ✅ TypeScript knows type
 
-      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-      console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-
-  throw new Error('Max retries exceeded');
+// With raw - returns JSON string
+const assetsJson = await client.listAssets({ raw: true });
+if (typeof assetsJson === 'string') {
+  const parsed = JSON.parse(assetsJson);
 }
 ```
 
-```python
-import asyncio
-import random
+---
 
-async def retry_with_backoff(fn, max_retries: int = 3):
-    for attempt in range(1, max_retries + 1):
-        try:
-            return await fn()
-        except Exception as error:
-            if attempt == max_retries:
-                raise error
+## Debugging Tips
 
-            delay = min(1 * (2 ** (attempt - 1)), 10)
-            # Add jitter
-            delay = delay + random.uniform(0, delay * 0.1)
-            print(f'Attempt {attempt} failed, retrying in {delay:.2f}s...')
-            await asyncio.sleep(delay)
-
-    raise RuntimeError('Max retries exceeded')
-```
-
-</CodeGroup>
-
-### 7. Precision and Rounding Errors
-
-**Problem:** Incorrect amount calculations due to floating-point precision.
-
-**Symptoms:**
-
-```
-Expected: 100000000 satoshis
-Actual: 99999999 satoshis
-```
-
-**Solutions:**
-
-#### Always Use PrecisionHandler
+### Enable Verbose Logging
 
 <CodeGroup>
-
-```typescript
-// ✅ Good: Use precision handler
-const precisionHandler = createPrecisionHandler(assets);
-const atomicAmount = precisionHandler.toAtomicAmount(0.001, 'btc_asset_id');
-
-// ❌ Bad: Manual calculation
-const atomicAmount = Math.floor(0.001 * 100000000); // Prone to floating-point errors
-```
-
-```python
-# ✅ Good: Use precision handler
-precision_handler = create_precision_handler(assets)
-atomic_amount = precision_handler.to_atomic_amount(0.001, 'btc_asset_id')
-
-# ❌ Bad: Manual calculation
-atomic_amount = int(0.001 * 100000000)  # Prone to floating-point errors
-```
-
-</CodeGroup>
-
-#### Validate Conversions
-
-<CodeGroup>
-
-```typescript
-function validateConversion(decimalAmount: number, assetId: string) {
-  const atomicAmount = precisionHandler.toAtomicAmount(decimalAmount, assetId);
-  const backToDecimal = precisionHandler.toDecimalAmount(atomicAmount, assetId);
-
-  const difference = Math.abs(decimalAmount - backToDecimal);
-  const tolerance = Math.pow(10, -precisionHandler.getPrecision(assetId));
-
-  if (difference > tolerance) {
-    console.warn(`Precision loss detected: ${decimalAmount} -> ${backToDecimal}`);
-  }
-
-  return atomicAmount;
-}
-```
-
-```python
-def validate_conversion(decimal_amount: float, asset_id: str) -> int:
-    atomic_amount = precision_handler.to_atomic_amount(decimal_amount, asset_id)
-    back_to_decimal = precision_handler.to_decimal_amount(atomic_amount, asset_id)
-
-    difference = abs(decimal_amount - back_to_decimal)
-    precision = precision_handler.get_precision(asset_id)
-    tolerance = 10 ** (-precision)
-
-    if difference > tolerance:
-        logger.warning(
-            f'Precision loss detected: {decimal_amount} -> {back_to_decimal}'
-        )
-
-    return atomic_amount
-```
-
-</CodeGroup>
-
-## Debugging Tools
-
-### 1. Enable Debug Logging
-
-<CodeGroup>
-
-```typescript
-// Enable all debug logging
-process.env.DEBUG = '*';
-
-// Enable specific debug logging
-process.env.DEBUG_WS = 'true'; // WebSocket debugging
-process.env.DEBUG_HTTP = 'true'; // HTTP debugging (if implemented)
-```
-
-```python
-# Enable debug logging
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('kaleido')
-logger.setLevel(logging.DEBUG)
-
-# Or for specific components
-logging.getLogger('kaleido.ws').setLevel(logging.DEBUG)
-logging.getLogger('kaleido.http').setLevel(logging.DEBUG)
-```
-
-</CodeGroup>
-
-### 2. Network Inspection
-
-<CodeGroup>
-
-```typescript
-// Log all HTTP requests and responses
-class DebuggingClient extends KaleidoClient {
-  async get<T>(endpoint: string): Promise<T> {
-    console.log(`GET ${endpoint}`);
-    const start = Date.now();
-
-    try {
-      const result = await super.get<T>(endpoint);
-      console.log(`GET ${endpoint} - ${Date.now() - start}ms - Success`);
-      return result;
-    } catch (error) {
-      console.log(`GET ${endpoint} - ${Date.now() - start}ms - Error:`, error);
-      throw error;
-    }
-  }
-
-  async post<T>(endpoint: string, data: any): Promise<T> {
-    console.log(`POST ${endpoint}`, JSON.stringify(data, null, 2));
-    const start = Date.now();
-
-    try {
-      const result = await super.post<T>(endpoint, data);
-      console.log(`POST ${endpoint} - ${Date.now() - start}ms - Success`);
-      return result;
-    } catch (error) {
-      console.log(`POST ${endpoint} - ${Date.now() - start}ms - Error:`, error);
-      throw error;
-    }
-  }
-}
-```
-
-```python
-# Log all HTTP requests and responses
-import logging
-from aiohttp import ClientSession
-
-class DebuggingClient:
-    def __init__(self, base_url: str, **kwargs):
-        self.base_url = base_url
-        self.logger = logging.getLogger(__name__)
-
-    async def get(self, endpoint: str):
-        url = f'{self.base_url}{endpoint}'
-        self.logger.debug(f'GET {url}')
-        start = datetime.now()
-
-        try:
-            async with ClientSession() as session:
-                async with session.get(url) as response:
-                    result = await response.json()
-            duration = (datetime.now() - start).total_seconds()
-            self.logger.debug(f'GET {url} - {duration:.2f}s - Success')
-            return result
-        except Exception as error:
-            duration = (datetime.now() - start).total_seconds()
-            self.logger.debug(f'GET {url} - {duration:.2f}s - Error: {error}')
-            raise
-
-    async def post(self, endpoint: str, data: dict):
-        url = f'{self.base_url}{endpoint}'
-        self.logger.debug(f'POST {url} {json.dumps(data, indent=2)}')
-        start = datetime.now()
-
-        try:
-            async with ClientSession() as session:
-                async with session.post(url, json=data) as response:
-                    result = await response.json()
-            duration = (datetime.now() - start).total_seconds()
-            self.logger.debug(f'POST {url} - {duration:.2f}s - Success')
-            return result
-        except Exception as error:
-            duration = (datetime.now() - start).total_seconds()
-            self.logger.debug(f'POST {url} - {duration:.2f}s - Error: {error}')
-            raise
-```
-
-</CodeGroup>
-
-### 3. Health Check Function
-
-<CodeGroup>
-
-```typescript
-async function healthCheck() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.kaleidoswap.com/api/v1'
-  });
-
-  const checks = {
-    apiConnection: false,
-    assetList: false,
-    pairList: false,
-    webSocket: false
-  };
-
-  try {
-    // Test basic API connection
-    await client.assetList();
-    checks.apiConnection = true;
-    checks.assetList = true;
-    console.log('✅ API connection: OK');
-  } catch (error) {
-    console.log('❌ API connection failed:', error.message);
-  }
-
-  try {
-    // Test pair list
-    await client.pairList();
-    checks.pairList = true;
-    console.log('✅ Pair list: OK');
-  } catch (error) {
-    console.log('❌ Pair list failed:', error.message);
-  }
-
-  try {
-    // Test WebSocket
-    const wsClient = new WebSocketClient({
-      baseUrl: 'wss://api.kaleidoswap.com/ws'
-    });
-
-    await wsClient.connect();
-    checks.webSocket = true;
-    console.log('✅ WebSocket: OK');
-    await wsClient.disconnect();
-  } catch (error) {
-    console.log('❌ WebSocket failed:', error.message);
-  }
-
-  return checks;
-}
-
-// Run health check
-healthCheck().then(results => {
-  console.log('\nHealth Check Results:', results);
-});
-```
-
-```python
-import asyncio
-import logging
-
-logger = logging.getLogger(__name__)
-
-async def health_check():
-    client = KaleidoClient(
-        base_url='https://api.kaleidoswap.com/api/v1'
-    )
-
-    checks = {
-        'api_connection': False,
-        'asset_list': False,
-        'pair_list': False,
-        'websocket': False
-    }
-
-    try:
-        # Test basic API connection
-        await client.asset_list()
-        checks['api_connection'] = True
-        checks['asset_list'] = True
-        print('✅ API connection: OK')
-    except Exception as error:
-        print(f'❌ API connection failed: {error}')
-
-    try:
-        # Test pair list
-        await client.pair_list()
-        checks['pair_list'] = True
-        print('✅ Pair list: OK')
-    except Exception as error:
-        print(f'❌ Pair list failed: {error}')
-
-    try:
-        # Test WebSocket
-        ws_client = WebSocketClient(
-            base_url='wss://api.kaleidoswap.com/ws'
-        )
-
-        await ws_client.connect()
-        checks['websocket'] = True
-        print('✅ WebSocket: OK')
-        await ws_client.disconnect()
-    except Exception as error:
-        print(f'❌ WebSocket failed: {error}')
-
-    return checks
-
-# Run health check
-if __name__ == '__main__':
-    results = asyncio.run(health_check())
-    print('\nHealth Check Results:', results)
-```
-
-</CodeGroup>
-
-## Environment-Specific Issues
-
-### 1. Development vs Production
-
-<CodeGroup>
-
-```typescript
-// Environment-specific configuration
-const getConfig = (): KaleidoConfig => {
-  const env = process.env.NODE_ENV || 'development';
-
-  switch (env) {
-    case 'production':
-      return {
-        baseUrl: 'https://api.kaleidoswap.com/api/v1',
-        wsUrl: 'wss://api.kaleidoswap.com/ws',
-        retryConfig: {
-          maxRetries: 5,
-          initialDelay: 1000
-        }
-      };
-
-    case 'staging':
-      return {
-        baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-        wsUrl: 'wss://api.staging.kaleidoswap.com/ws',
-        retryConfig: {
-          maxRetries: 3,
-          initialDelay: 500
-        }
-      };
-
-    default: // development
-      return {
-        baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-        wsUrl: 'wss://api.staging.kaleidoswap.com/ws',
-        retryConfig: {
-          maxRetries: 2,
-          initialDelay: 100
-        }
-      };
-  }
+```typescript TypeScript
+// Log API calls
+const originalFetch = global.fetch;
+global.fetch = async (...args) => {
+  console.log('Request:', args[0]);
+  const response = await originalFetch(...args);
+  console.log('Response:', response.status);
+  return response;
 };
 ```
 
-```python
-import os
-
-def get_config() -> dict:
-    env = os.getenv('NODE_ENV', 'development')
-
-    if env == 'production':
-        return {
-            'base_url': 'https://api.kaleidoswap.com/api/v1',
-            'ws_url': 'wss://api.kaleidoswap.com/ws',
-            'retry_config': {
-                'max_retries': 5,
-                'initial_delay': 1
-            }
-        }
-
-    elif env == 'staging':
-        return {
-            'base_url': 'https://api.staging.kaleidoswap.com/api/v1',
-            'ws_url': 'wss://api.staging.kaleidoswap.com/ws',
-            'retry_config': {
-                'max_retries': 3,
-                'initial_delay': 0.5
-            }
-        }
-
-    else:  # development
-        return {
-            'base_url': 'https://api.staging.kaleidoswap.com/api/v1',
-            'ws_url': 'wss://api.staging.kaleidoswap.com/ws',
-            'retry_config': {
-                'max_retries': 2,
-                'initial_delay': 0.1
-            }
-        }
+```python Python
+import logging
+logging.basicConfig(level=logging.DEBUG)
 ```
-
 </CodeGroup>
 
-### 2. Browser vs Node.js Issues
+### Validate Configuration
 
 <CodeGroup>
+```typescript TypeScript
+const config = {
+  baseUrl: process.env.KALEIDO_API_URL,
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+};
 
-```typescript
-// Check environment and adjust accordingly
-const isNode = typeof window === 'undefined';
-const isBrowser = typeof window !== 'undefined';
-
-if (isBrowser) {
-  // Browser-specific considerations
-  console.log('Running in browser environment');
-
-  // CORS might be an issue
-  // WebSocket connections might need different handling
-} else {
-  // Node.js specific considerations
-  console.log('Running in Node.js environment');
-
-  // Can use all Node.js features
-  // Environment variables available
-}
+console.log('Config:', {
+  ...config,
+  apiKey: config.apiKey ? '***' : undefined,
+});
 ```
 
-```python
-import sys
-
-is_node_like = 'window' not in dir()
-is_browser = 'window' in dir()
-
-if is_browser:
-    # Browser-specific considerations
-    print('Running in browser environment')
-    # CORS might be an issue
-else:
-    # Node.js-like or Python server considerations
-    print('Running in server environment')
-    # Can use all server features
-    # Environment variables available
+```python Python
+print(f"Base URL: {config.base_url}")
+print(f"Node URL: {config.node_url}")
+print(f"Timeout: {config.timeout}")
 ```
-
 </CodeGroup>
 
-## Performance Issues
-
-### 1. Slow Response Times
-
-**Diagnosis:**
-
-<CodeGroup>
-
-```typescript
-// Measure request times
-async function measureRequestTime<T>(
-  name: string,
-  requestFn: () => Promise<T>
-): Promise<T> {
-  const start = Date.now();
-
-  try {
-    const result = await requestFn();
-    const duration = Date.now() - start;
-    console.log(`${name} completed in ${duration}ms`);
-    return result;
-  } catch (error) {
-    const duration = Date.now() - start;
-    console.log(`${name} failed after ${duration}ms:`, error.message);
-    throw error;
-  }
-}
-
-// Usage
-const quote = await measureRequestTime(
-  'Quote Request',
-  () => client.quoteRequest(from, to, amount)
-);
-```
-
-```python
-import time
-
-async def measure_request_time(name: str, request_fn):
-    start = time.time()
-
-    try:
-        result = await request_fn()
-        duration = (time.time() - start) * 1000
-        print(f'{name} completed in {duration:.0f}ms')
-        return result
-    except Exception as error:
-        duration = (time.time() - start) * 1000
-        print(f'{name} failed after {duration:.0f}ms: {error}')
-        raise
-
-# Usage
-quote = await measure_request_time(
-    'Quote Request',
-    lambda: client.quote_request(from_id, to_id, amount)
-)
-```
-
-</CodeGroup>
-
-**Solutions:**
-
-- Use WebSocket for real-time data
-- Implement caching for frequently accessed data
-- Use batch operations when possible
-- Consider connection pooling
-
-### 2. Memory Leaks
-
-**Diagnosis:**
-
-<CodeGroup>
-
-```typescript
-// Monitor memory usage
-function logMemoryUsage() {
-  if (typeof process !== 'undefined' && process.memoryUsage) {
-    const usage = process.memoryUsage();
-    console.log('Memory usage:', {
-      rss: Math.round(usage.rss / 1024 / 1024) + 'MB',
-      heapTotal: Math.round(usage.heapTotal / 1024 / 1024) + 'MB',
-      heapUsed: Math.round(usage.heapUsed / 1024 / 1024) + 'MB'
-    });
-  }
-}
-
-// Call periodically
-setInterval(logMemoryUsage, 30000); // Every 30 seconds
-```
-
-```python
-import psutil
-import os
-
-def log_memory_usage():
-    process = psutil.Process(os.getpid())
-    memory_info = process.memory_info()
-    print('Memory usage:', {
-        'rss': round(memory_info.rss / 1024 / 1024, 2),
-        'vms': round(memory_info.vms / 1024 / 1024, 2)
-    })
-
-# Call periodically
-import asyncio
-async def memory_monitor():
-    while True:
-        log_memory_usage()
-        await asyncio.sleep(30)
-```
-
-</CodeGroup>
-
-**Solutions:**
-
-- Properly clean up WebSocket connections
-- Remove event listeners when done
-- Clear caches periodically
-- Avoid creating unnecessary client instances
+---
 
 ## Getting Help
 
-### 1. Collect Diagnostic Information
+If you're still experiencing issues:
 
-<CodeGroup>
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
+    Report bugs and request features
+  </Card>
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    Community support
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct assistance
+  </Card>
+</CardGroup>
 
-```typescript
-function collectDiagnostics() {
-  const diagnostics = {
-    timestamp: new Date().toISOString(),
-    environment: {
-      nodeVersion: typeof process !== 'undefined' ? process.version : 'N/A',
-      platform: typeof process !== 'undefined' ? process.platform : 'browser',
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'
-    },
-    sdkVersion: '0.1.0', // Replace with actual version
-    configuration: {
-      // Don't include sensitive data like API keys
-      hasApiKey: !!process.env.KALEIDO_API_KEY,
-      baseUrl: process.env.KALEIDO_API_URL || 'default'
-    }
-  };
-
-  return diagnostics;
-}
-
-// Include diagnostics when reporting issues
-console.log('Diagnostics:', JSON.stringify(collectDiagnostics(), null, 2));
-```
-
-```python
-import sys
-import platform
-
-def collect_diagnostics() -> dict:
-    import os
-    return {
-        'timestamp': datetime.now().isoformat(),
-        'environment': {
-            'python_version': sys.version,
-            'platform': platform.platform(),
-            'machine': platform.machine()
-        },
-        'sdk_version': '0.1.0',  # Replace with actual version
-        'configuration': {
-            # Don't include sensitive data like API keys
-            'has_api_key': bool(os.getenv('KALEIDO_API_KEY')),
-            'base_url': os.getenv('KALEIDO_API_URL', 'default')
-        }
-    }
-
-# Include diagnostics when reporting issues
-import json
-print('Diagnostics:', json.dumps(collect_diagnostics(), indent=2))
-```
-
-</CodeGroup>
-
-### 2. Create Minimal Reproduction
-
-<CodeGroup>
-
-```typescript
-// Minimal example that reproduces the issue
-async function reproduceIssue() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
-  });
-
-  try {
-    // Minimal steps to reproduce the problem
-    const pairs = await client.pairList();
-    console.log('Step 1: Got pairs');
-
-    const quote = await client.quoteRequest('asset1', 'asset2', 1000);
-    console.log('Step 2: Got quote');
-
-    // Issue occurs here...
-  } catch (error) {
-    console.error('Issue reproduced:', error);
-    console.log('Diagnostics:', collectDiagnostics());
-  }
-}
-```
-
-```python
-async def reproduce_issue():
-    client = KaleidoClient(
-        base_url='https://api.staging.kaleidoswap.com/api/v1'
-    )
-
-    try:
-        # Minimal steps to reproduce the problem
-        pairs = await client.pair_list()
-        print('Step 1: Got pairs')
-
-        quote = await client.quote_request('asset1', 'asset2', 1000)
-        print('Step 2: Got quote')
-
-        # Issue occurs here...
-    except Exception as error:
-        print(f'Issue reproduced: {error}')
-        import json
-        print('Diagnostics:', json.dumps(collect_diagnostics(), indent=2))
-```
-
-</CodeGroup>
-
-### 3. Support Channels
-
-- **GitHub Issues**: [Report bugs and feature requests](https://github.com/kaleidoswap/kaleidosdk/issues)
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/kaleidoswap/kaleidosdk/discussions)
-- **Documentation**: Check the [API Reference](./api-reference.md) and [Examples](./examples.md)
-- **Email Support**: support@kaleidoswap.com
-
-When reporting issues, please include:
+When reporting issues, include:
 - SDK version
-- Environment details (Node.js version, Python version, browser, OS)
-- Minimal code example that reproduces the issue
-- Error messages and stack traces
-- Expected vs actual behavior
-- Output from the health check function
+- Language version (Node.js / Python)
+- Operating system
+- Full error message and stack trace
+- Minimal reproduction code

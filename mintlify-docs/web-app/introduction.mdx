@@ -1,107 +1,104 @@
 ---
 title: Web App Introduction
-description: KaleidoSwap Web Application (Coming Soon)
+description: Trade RGB assets on Lightning directly from your browser
 ---
-
-<Info>
-  **Status**: In Development
-
-  The KaleidoSwap web application is currently under development. This page will be updated as features become available.
-</Info>
 
 ## What is the KaleidoSwap Web App?
 
-The KaleidoSwap Web App will provide browser-based access to RGB asset trading on the Lightning Network, complementing our desktop application with a lightweight, accessible interface.
-
-## Planned Features
+The KaleidoSwap Web App provides instant, browser-based access to decentralized RGB asset trading on the Lightning Network. Available at [app.kaleidoswap.com](https://app.kaleidoswap.com), it offers a seamless trading experience without requiring any software installation.
 
 <CardGroup cols={2}>
-  <Card title="Browser-Based Access" icon="globe">
-    Trade from any modern web browser without installing software
+  <Card title="Instant Access" icon="bolt">
+    Start trading immediately from any modern browser - no downloads required
   </Card>
-
   <Card title="Wallet Integration" icon="wallet">
-    Connect your favorite Web3 wallets for seamless trading
+    Connect popular Bitcoin wallets like Alby, Xverse, and BitMask
   </Card>
-
-  <Card title="Lightning Swaps" icon="bolt">
-    Execute instant atomic swaps directly from your browser
+  <Card title="Real-Time Quotes" icon="chart-line">
+    Live price updates via WebSocket for accurate trading
   </Card>
-
-  <Card title="Real-Time Data" icon="chart-line">
-    Live market data and price updates
+  <Card title="Atomic Swaps" icon="arrows-rotate">
+    Trustless RGB asset swaps on the Lightning Network
   </Card>
 </CardGroup>
 
-## Key Differences from Desktop App
+## Key Features
 
-| Feature | Desktop App | Web App |
-|---------|-------------|---------|
-| **Installation** | Download required | No installation |
-| **Node Hosting** | Self-hosted or remote | Remote only |
-| **Platform** | macOS, Windows, Linux | Any browser |
-| **Wallet** | Built-in wallet | External wallet connection |
-| **Best For** | Power users, node operators | Quick access, casual trading |
+### Lightning-Fast Trading
+Execute atomic swaps in seconds using the Lightning Network. Trade BTC for USDT, XAUT, or other RGB assets with instant settlement.
 
-## Supported Browsers
+### Multi-Wallet Support
+Connect your preferred Bitcoin wallet:
+- **Alby** - Lightning-native browser wallet
+- **Xverse** - Bitcoin Web3 wallet
+- **BitMask** - RGB & Lightning wallet
 
-The web app will support:
+### Protocol Support
+Trade across different protocols and layers:
+- **RGB on Lightning** - Instant RGB asset swaps
+- **RGB On-chain** - On-chain RGB settlements
+- **Bitcoin Lightning** - Native BTC swaps
 
-- Chrome/Chromium (v90+)
-- Firefox (v88+)
-- Safari (v14+)
-- Edge (v90+)
+### Real-Time Market Data
+- Live quotes with automatic refresh
+- USD price equivalents
+- Fee estimation before execution
+- Min/max amount validation
 
-## Timeline
+## Interface Overview
 
-<Steps>
-  <Step title="Q4 2025 - Alpha Release">
-    Internal testing with limited features
-  </Step>
+The trading interface provides:
 
-  <Step title="Q1 2026 - Beta Launch">
-    Public beta with wallet integration and basic trading
-  </Step>
+1. **From Card** - Select the asset you want to swap from
+2. **To Card** - Select the asset you want to receive
+3. **Network Selection** - Choose the protocol layer
+4. **Quote Display** - Real-time exchange rate and fees
+5. **Swap Button** - Execute the trade
 
-  <Step title="Q2 2026 - Production Release">
-    Full feature set with advanced trading capabilities
-  </Step>
-</Steps>
+## Comparison with Desktop App
 
-## Stay Updated
+| Feature | Web App | Desktop App |
+|---------|---------|-------------|
+| **Access** | Browser-based | Download required |
+| **Node** | Remote connection | Self-hosted or remote |
+| **Wallet** | External wallets | Built-in wallet |
+| **Advanced Features** | Trading focused | Full node management |
+| **Best For** | Quick trades | Power users |
+
+## Get Started
 
 <CardGroup cols={2}>
-  <Card title="Join Telegram" icon="telegram" href="https://t.me/kaleidoswap">
-    Get notified when web app launches
+  <Card title="Connect Wallet" icon="wallet" href="/web-app/wallet-connection">
+    Set up your wallet to start trading
   </Card>
-
-  <Card title="Follow on Twitter" icon="x-twitter" href="https://twitter.com/kaleidoswap">
-    Latest updates and announcements
+  <Card title="Trading Guide" icon="chart-mixed" href="/web-app/trading-interface">
+    Learn how to execute swaps
   </Card>
 </CardGroup>
 
-## Try the Desktop App Now
+## Supported Assets
 
-While the web app is in development, you can start trading today with our desktop application:
+Current trading pairs include:
+- **BTC/USDT** - Bitcoin to Tether USD
+- **BTC/XAUT** - Bitcoin to Tether Gold
+- Additional pairs added regularly
 
-<Card title="Download Desktop App" icon="download" href="/desktop-app/getting-started/installation">
-  Full-featured desktop application available now →
-</Card>
+## Browser Requirements
 
-## Questions?
+| Browser | Minimum Version |
+|---------|----------------|
+| Chrome/Chromium | 90+ |
+| Firefox | 88+ |
+| Safari | 14+ |
+| Edge | 90+ |
 
-<Accordion title="When will the web app be available?">
-  We're targeting a public beta launch in Q3 2025. Join our [Telegram channel](https://t.me/kaleidoswap) for updates.
-</Accordion>
+<Note>
+For the best experience, ensure you have a supported wallet extension installed before accessing the web app.
+</Note>
 
-<Accordion title="Will it have all desktop app features?">
-  The web app will focus on trading features. Advanced node management will remain in the desktop app.
-</Accordion>
+## Security
 
-<Accordion title="Is it safe to use a web app for trading?">
-  Yes! The web app will integrate with external wallets (MetaMask, WalletConnect, etc.) maintaining non-custodial security.
-</Accordion>
-
-<Accordion title="Can I use both desktop and web app?">
-  Absolutely! Both interfaces can connect to the same RGB Lightning node.
-</Accordion>
+- **Non-custodial** - You control your keys
+- **Atomic swaps** - No counterparty risk
+- **No account needed** - Just connect your wallet
+- **SSL encrypted** - All connections are secure

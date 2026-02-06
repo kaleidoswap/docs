@@ -31,6 +31,10 @@
       "url": "desktop-app"
     },
     {
+      "name": "Web App",
+      "url": "web-app"
+    },
+    {
       "name": "SDK",
       "url": "sdk"
     },
@@ -148,6 +152,30 @@
         "sdk/error-handling",
         "sdk/best-practices",
         "sdk/troubleshooting"
+      ]
+    },
+    {
+      "group": "Web App Overview",
+      "icon": "globe",
+      "pages": [
+        "web-app/introduction",
+        "web-app/getting-started"
+      ]
+    },
+    {
+      "group": "Web App Guide",
+      "icon": "chart-mixed",
+      "pages": [
+        "web-app/wallet-connection",
+        "web-app/trading-interface",
+        "web-app/advanced-features"
+      ]
+    },
+    {
+      "group": "Web App Reference",
+      "icon": "life-buoy",
+      "pages": [
+        "web-app/faq"
       ]
     }
   ],

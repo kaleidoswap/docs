@@ -1,50 +1,160 @@
 ---
 title: Advanced Features
-description: Advanced web app capabilities (Coming Soon)
+description: Power user features and advanced trading options
 ---
 
-<Info>
-  **Coming Soon**: Advanced features planned for future releases.
-</Info>
+## Display Settings
 
-## Planned Advanced Features
+Customize your trading experience through the settings panel:
 
-### Portfolio Management
+### BTC Display Unit
+
+Toggle between:
+- **BTC** - Standard notation (0.00021 BTC)
+- **Satoshis** - Smallest unit (21,000 sats)
+
+<Tip>
+Sats display can be easier for smaller amounts and helps avoid decimal point errors.
+</Tip>
+
+### Currency Display
+
+View USD equivalents for all amounts. Prices update in real-time.
+
+## Protocol Selection
+
+### Understanding Protocols
+
+Each asset can be traded on different protocol layers:
+
+| Layer | Format | Speed | Use Case |
+|-------|--------|-------|----------|
+| **RGB/LN** | `RGB/LN` | Instant | Day trading, frequent swaps |
+| **RGB/L1** | `RGB/L1` | 10+ min | Larger amounts, cold storage |
+| **BTC/LN** | `BTC/LN` | Instant | Bitcoin Lightning |
+| **BTC/L1** | `BTC/L1` | 10+ min | On-chain Bitcoin |
+
+### Choosing the Right Layer
+
+- **Speed priority**: Use Lightning (LN) variants
+- **Large amounts**: On-chain (L1) may be more suitable
+- **Liquidity**: Lightning typically has tighter spreads
+
+## Order Tracking
+
+### Active Orders
+
+While a swap is in progress:
+1. Modal shows real-time status
+2. Progress indicators for each step
+3. Transaction details upon completion
+
+### Order History
+
+View past orders at `/[orderId]` with:
+- Complete transaction details
+- Status timeline
+- Fee breakdown
+- Asset movements
+
+## API Integration
+
+### Quote API
+
+Direct API access for programmatic trading:
+
+```bash
+GET /api/get-quote?from=BTC&to=USDT&from_amount=1000000
+```
+
+Returns:
+- RFQ ID
+- Price quote
+- Expiry time
+- Fee breakdown
+
+### List Pairs API
+
+Discover available trading pairs:
+
+```bash
+GET /api/list-pairs
+```
+
+Returns all active pairs with:
+- Min/max amounts
+- Protocol layers
+- Asset metadata
+
+## WebSocket Updates
+
+The app uses WebSocket for real-time data:
+
+- **Quote streaming** - Live price updates
+- **Order status** - Swap progress notifications
+- **Market data** - Asset availability changes
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Tab` | Move between inputs |
+| `Enter` | Submit current action |
+| `Esc` | Close modals |
+
+## Mobile Experience
+
+The web app is fully responsive:
+
+- **Touch-optimized** - Large tap targets
+- **Swipe support** - Natural gestures
+- **Mobile wallets** - WalletConnect support (coming soon)
+
+## Performance Optimization
+
+### Caching
+
+Static data (assets, pairs) is cached for performance. Manual refresh:
+- Hard refresh: `Ctrl+Shift+R` / `Cmd+Shift+R`
+- Or close and reopen the app
+
+### Connection Issues
+
+If experiencing slowness:
+1. Check internet connectivity
+2. Try a different browser
+3. Clear browser cache
+4. Disable browser extensions that might interfere
+
+## Developer Features
+
+### Debug Mode
+
+Open browser console to see:
+- API request/response logs
+- WebSocket message flow
+- State transitions
+
+### Network Inspection
+
+Use browser DevTools Network tab to:
+- Monitor API calls
+- Check WebSocket frames
+- Debug connectivity issues
+
+## Coming Soon
 
 <CardGroup cols={2}>
-  <Card title="Multi-Asset Dashboard" icon="chart-pie">
-    Track all your RGB assets in one view
+  <Card title="WalletConnect" icon="link">
+    Connect mobile wallets via QR code
   </Card>
-
-  <Card title="Performance Analytics" icon="chart-line">
-    Detailed P&L tracking and analytics
+  <Card title="Price Charts" icon="chart-line">
+    Historical price visualization
   </Card>
-
-  <Card title="Balance History" icon="clock">
-    Historical balance tracking
+  <Card title="Limit Orders" icon="clock">
+    Set target prices for automatic execution
   </Card>
-
-  <Card title="Export Data" icon="file-export">
-    Export transaction history for accounting
+  <Card title="Portfolio View" icon="wallet">
+    Track all your RGB assets in one place
   </Card>
 </CardGroup>
-
-### Trading Tools
-
-- **Price Charts**: TradingView integration
-- **Technical Indicators**: RSI, MACD, Moving Averages
-- **Order Book**: Real-time depth visualization
-- **Trading Signals**: Automated alerts
-
-### Automation
-
-- **Limit Orders**: Set price targets
-- **Stop Loss**: Protect your positions
-- **DCA (Dollar Cost Averaging)**: Automated recurring buys
-- **Rebalancing**: Auto-rebalance portfolio
-
-## Desktop App Features
-
-<Card title="Advanced Features Now" icon="desktop" href="/desktop-app/getting-started/introduction">
-  Desktop app includes advanced node management →
-</Card>

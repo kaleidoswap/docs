@@ -5,30 +5,54 @@ description: 'Build applications on KaleidoSwap with our unified Python and Type
 
 ## Official SDKs
 
-KaleidoSwap provides official SDKs for both Python and TypeScript/JavaScript. Our unified documentation makes it easy to build applications in your preferred language with type-safe interfaces, comprehensive examples, and full support for all KaleidoSwap features.
+KaleidoSwap provides official SDKs for both Python and TypeScript. Built with a **Rust-first architecture**, our SDKs offer native performance, full type safety, and comprehensive support for all KaleidoSwap features.
+
+<CardGroup cols={2}>
+  <Card
+    title="Python SDK"
+    icon="python"
+    href="/sdk/getting-started"
+  >
+    Native bindings via PyO3 with Pydantic models for type-safe development
+  </Card>
+  <Card
+    title="TypeScript SDK"
+    icon="js"
+    href="/sdk/getting-started"
+  >
+    Native bindings via NAPI-RS with full TypeScript type definitions
+  </Card>
+</CardGroup>
+
+## Architecture
+
+The SDK follows a **Rust-first architecture** with language bindings generated via UniFFI:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Language Bindings                         │
+├───────────────────────┬───────────────────────┬─────────────────┤
+│    Python (PyO3)      │   TypeScript (NAPI)   │     Swift       │
+│      kaleidoswap      │   @kaleidoswap/sdk    │   (planned)     │
+└───────────────────────┴───────────────────────┴─────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Core Rust Library                          │
+│                     kaleidoswap-core                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Benefits
+
+- **Native Performance**: Rust core with zero-cost bindings
+- **Type Safety**: Auto-generated types from OpenAPI specs
+- **Consistent API**: Identical functionality across languages
+- **Memory Safe**: Rust's guarantees extended to bindings
 
 ## What is KaleidoSwap?
 
 KaleidoSwap is a decentralized exchange protocol for Bitcoin and RGB assets. It enables trustless trading of digital assets through atomic swaps on the Lightning Network and on-chain Bitcoin transactions.
-
-### Kaleido Protocol
-
-The Kaleido Protocol is an open-source framework that allows users to:
-
-**🔗 Lightning Channels with RGB Assets**
-- Buy and sell Lightning channels pre-funded with RGB assets
-- Open channels with RGB assets as channel funding
-- Trade assets through channel liquidity management
-
-**📊 Market Making & Trading**
-- Get real-time quotes for asset pairs
-- Execute atomic swaps using Request-for-Quote (RFQ) mechanism
-- Connect directly to market makers for trading
-
-**🔄 Atomic Swaps on Lightning**
-- Execute trustless swaps using the maker-init → taker → maker-execute flow
-- Support for both Lightning Network and on-chain settlements
-- Full RGB asset support with UTXO management
 
 ### SDK Dual Purpose
 
@@ -46,79 +70,25 @@ Direct interaction with RGB Lightning nodes for:
 - Lightning channel management with RGB assets
 - Node-to-node atomic swap coordination
 
-<CardGroup cols={2}>
-  <Card
-    title="Python SDK"
-    icon="python"
-    href="/sdk/getting-started"
-  >
-    Build Python applications with async/await support and Pydantic models
-  </Card>
-  <Card
-    title="TypeScript SDK"
-    icon="js"
-    href="/sdk/getting-started"
-  >
-    Type-safe JavaScript/TypeScript with full IDE autocomplete
-  </Card>
-</CardGroup>
-
 ## Key Features
 
-- **Multi-Language Support**: Full support for both Python and TypeScript with side-by-side examples
-- **Type Safety**: TypeScript type definitions and Python Pydantic models for type-safe development
-- **WebSocket Support**: Real-time updates for trades, orders, and market data in both languages
-- **Error Handling**: Consistent error handling patterns across both SDKs
-- **Authentication**: Built-in support for API authentication
-- **Comprehensive Examples**: Rich collection of examples showing both language implementations
+- **Sub-client Architecture**: Organized API access via `client.market`, `client.orders`, `client.swaps`, `client.lsp`, and `client.node`
+- **Type Safety**: Full TypeScript types and Python Pydantic models
+- **WebSocket Support**: Real-time updates for trades, orders, and market data
+- **Error Handling**: Comprehensive exception hierarchy across both SDKs
 - **Dual API Support**: Seamlessly work with both Market Maker APIs and RLN node operations
 - **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
 - **Atomic Swaps**: Execute trustless swaps using the complete RFQ flow
-
-## What's Included
-
-Our unified SDK documentation provides:
-
-- **[Getting Started](/sdk/getting-started)** - Installation and quick start guide for both languages
-- **[Examples](/sdk/examples)** - Real-world code examples in Python and TypeScript
-- **[API Reference](/sdk/api-reference)** - Complete method documentation with both language signatures
-- **[Types](/sdk/types)** - Type definitions and data models for both SDKs
-- **[WebSocket](/sdk/websocket)** - Real-time data streaming in both languages
-- **[Error Handling](/sdk/error-handling)** - Comprehensive error management patterns
-- **[Utilities](/sdk/utilities)** - Helper functions and utilities
-- **[Best Practices](/sdk/best-practices)** - Development guidelines and patterns
-- **[Troubleshooting](/sdk/troubleshooting)** - Common issues and solutions
-
-## Understanding the Architecture
-
-### Market Maker APIs
-Connect to centralized market makers for trading:
-- **Quote Requests**: Get prices for asset pairs
-- **Order Management**: Create and track swap orders
-- **WebSocket Feeds**: Real-time market data and order updates
-
-### RLN (RGB Lightning Network) Operations
-Direct peer-to-peer operations through RGB Lightning nodes:
-- **Wallet Operations**: Manage RGB assets and Bitcoin
-- **Channel Management**: Open/close channels with RGB assets
-- **Atomic Swaps**: Coordinate swaps between nodes using the RFQ protocol
-
-### The RFQ Swap Flow
-1. **Maker Init**: Market maker initializes a swap quote
-2. **Taker**: Client accepts the quote and provides settlement details
-3. **Maker Execute**: Market maker executes the swap on Lightning Network
-
-This trustless flow ensures atomic settlement of RGB assets across the Lightning Network.
 
 ## Quick Start
 
 <CodeGroup>
 ```bash npm
-npm install @kaleidoswap/kaleidoswap-sdk
+npm install @kaleidoswap/sdk
 ```
 
 ```bash pip
-pip install kaleidoswap-sdk
+pip install kaleidoswap
 ```
 </CodeGroup>
 
@@ -126,42 +96,36 @@ pip install kaleidoswap-sdk
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
 const client = new KaleidoClient({
-  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  baseUrl: 'https://api.regtest.kaleidoswap.com'
 });
 
 // Get available trading pairs
 const pairs = await client.listPairs();
-console.log(`Found ${pairs.pairs.length} trading pairs`);
+console.log(`Found ${pairs.length} trading pairs`);
 
 // Get a quote for BTC/USDT
-const quote = await client.quoteRequest('BTC', 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', 1000000);
-console.log(`BTC/USDT Rate: ${quote.price}`);
+const quote = await client.getQuoteByPair('BTC/USDT', 1_000_000);
+console.log(`Price: ${quote.price}`);
+console.log(`From: ${quote.fromAmount} -> To: ${quote.toAmount}`);
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def market_trading():
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1"
-    ) as client:
-        # Get available trading pairs
-        pairs = await client.list_pairs()
-        print(f"Found {len(pairs.pairs)} trading pairs")
+config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
+client = KaleidoClient(config)
 
-        # Get a quote for BTC/USDT
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak",
-            amount=1000000
-        )
-        print(f"BTC/USDT Rate: {quote.price}")
+# Get available trading pairs
+pairs = client.list_pairs()
+print(f"Found {len(pairs)} trading pairs")
 
-asyncio.run(market_trading())
+# Get a quote for BTC/USDT
+quote = client.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
+print(f"Price: {quote.price}")
+print(f"From: {quote.from_asset.amount} -> To: {quote.to_asset.amount}")
 ```
 </CodeGroup>
 
@@ -169,67 +133,57 @@ asyncio.run(market_trading())
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from '@kaleidoswap/sdk';
 
 const client = new KaleidoClient({
-  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-  nodeUrl: '<Your RGB Lightning Node URL>'
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001'  // Your RGB Lightning Node
 });
 
-// Get node info and balance
-const nodeInfo = await client.getNodeInfo();
-const balance = await client.getBtcBalance();
-console.log(`Node: ${nodeInfo.pubkey}`);
-console.log(`BTC Balance: ${balance.vanilla.spendable} sats`);
+// Check if node is configured
+if (client.hasNode()) {
+  // Get node info and balance
+  const nodeInfo = await client.getRgbNodeInfo();
+  const balance = await client.getBtcBalance();
+  console.log(`Node connected`);
+  console.log(`BTC Balance: ${balance.vanilla.spendable} sats`);
+}
 ```
 
 ```python Python
-import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap import KaleidoClient, KaleidoConfig
 
-async def rln_operations():
-    async with KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your RGB Lightning Node URL>"
-    ) as client:
-        # Get node info and balance
-        node_info = await client.get_node_info()
-        balance = await client.get_btc_balance()
-        print(f"Node: {node_info.pubkey}")
-        print(f"BTC Balance: {balance.vanilla.spendable} sats")
+config = KaleidoConfig(
+    base_url="https://api.regtest.kaleidoswap.com",
+    node_url="http://localhost:3001"  # Your RGB Lightning Node
+)
+client = KaleidoClient(config)
 
-asyncio.run(rln_operations())
+# Check if node is configured
+if client.has_node():
+    # Get node info and balance
+    node_info = client.get_rgb_node_info()
+    balance = client.get_btc_balance()
+    print("Node connected")
+    print(f"BTC Balance: {balance.vanilla.spendable} sats")
 ```
 </CodeGroup>
 
-## Use Cases
+## Documentation Structure
 
-### For Traders
-- **Market Making**: Connect to market makers for competitive pricing
-- **Portfolio Management**: Track balances and execute trades programmatically
-- **Arbitrage**: Monitor price differences across markets
-
-### For Node Operators
-- **Channel Management**: Open and manage Lightning channels with RGB assets
-- **Asset Issuance**: Issue and manage RGB assets on the Lightning Network
-- **Liquidity Provision**: Provide liquidity through atomic swap coordination
-
-### For Developers
-- **DEX Integration**: Build decentralized exchanges with RGB asset support
-- **Wallet Applications**: Create wallets with Lightning and RGB capabilities
-- **Trading Bots**: Automate trading strategies across Lightning and on-chain
-
-## Open Source & Community
-
-The Kaleido Protocol and SDK are fully open source, enabling anyone to:
-- Run their own market maker nodes
-- Build applications on the RGB Lightning Network
-- Contribute to the protocol development
-- Extend functionality for new use cases
+- **[Getting Started](/sdk/getting-started)** - Installation and quick start guide
+- **[Examples](/sdk/examples)** - Real-world code examples
+- **[API Reference](/sdk/api-reference)** - Complete method documentation
+- **[Types](/sdk/types)** - Type definitions and data models
+- **[WebSocket](/sdk/websocket)** - Real-time data streaming
+- **[Error Handling](/sdk/error-handling)** - Exception management patterns
+- **[Utilities](/sdk/utilities)** - Helper functions and utilities
+- **[Best Practices](/sdk/best-practices)** - Development guidelines
+- **[Troubleshooting](/sdk/troubleshooting)** - Common issues and solutions
 
 ## Support
 
 Need help? Check out our:
-- [GitHub Issues](https://github.com/kaleidoswap)
+- [GitHub Issues](https://github.com/kaleidoswap/kaleido-sdk/issues)
 - [Community Telegram](https://t.me/kaleidoswap)
 - [Support Email](mailto:support@kaleidoswap.com)

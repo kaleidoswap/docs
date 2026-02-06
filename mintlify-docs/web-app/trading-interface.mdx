@@ -1,65 +1,231 @@
 ---
 title: Trading Interface
-description: KaleidoSwap Web App trading features (Coming Soon)
+description: Complete guide to using the swap interface
 ---
 
-<Info>
-  **Coming Soon**: Web trading interface is in development.
-</Info>
+## Interface Overview
 
-## Planned Interface
-
-The web trading interface will feature:
-
-### Market Overview
-
-<Card title="Real-Time Markets" icon="chart-line">
-  Live market data for all RGB asset pairs with price charts
-</Card>
-
-### Trading Panel
-
-**Quick Swap**:
-- Select asset pair (e.g., BTC/USDT)
-- Enter amount to swap
-- Review quote and fees
-- Confirm swap
-
-**Advanced Features**:
-- Limit orders (planned)
-- Price alerts
-- Trading history
-- Portfolio tracking
-
-### Order Management
-
-- View open orders
-- Track order status
-- Cancel pending orders
-- Order history and analytics
-
-## Interface Preview
+The KaleidoSwap trading interface is designed for simplicity and efficiency:
 
 ```
-┌─────────────────────────────────────────┐
-│  KaleidoSwap Web App                    │
-├─────────────────────────────────────────┤
-│  Markets  │  Swap  │  History  │ Wallet │
-├───────────┼─────────────────────────────┤
-│           │  From: BTC                  │
-│  BTC/USDT │  Amount: 0.001              │
-│  ▲ 2.5%   │                             │
-│           │  To: USDT                   │
-│  BTC/XAUT │  Receive: ~45.23            │
-│  ▼ 0.8%   │                             │
-│           │  Rate: 45,230 USDT/BTC      │
-│  More...  │                             │
-│           │  [Get Quote] [Execute Swap] │
-└───────────┴─────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  Header: Logo | Wallet Button | Settings    │
+├─────────────────────────────────────────────┤
+│                                             │
+│  ┌─────────────────────────────────────┐    │
+│  │  From Card                          │    │
+│  │  [Asset Selector]  [Network Badge]  │    │
+│  │  [Amount Input]                     │    │
+│  │  ≈ $XX.XX                           │    │
+│  │  Min: XXX | Max: XXX                │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+│              ↕️ Swap Arrow                  │
+│                                             │
+│  ┌─────────────────────────────────────┐    │
+│  │  To Card                            │    │
+│  │  [Asset Selector]  [Network Badge]  │    │
+│  │  [Amount Display]                   │    │
+│  │  ≈ $XX.XX                           │    │
+│  │  Min: XXX | Max: XXX                │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+│  [Rate: X BTC = X USDT]                     │
+│  [Fee: X sats]                              │
+│                                             │
+│  ┌─────────────────────────────────────┐    │
+│  │          [SWAP BUTTON]              │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+└─────────────────────────────────────────────┘
 ```
 
-## Desktop App Available
+## Swap Cards
 
-<Card title="Trade Now" icon="desktop" href="/desktop-app/trading/asset-swaps">
-  Full trading interface available in desktop app →
-</Card>
+### From Card (Source)
+
+The top card represents what you're swapping **from**:
+
+| Element | Description |
+|---------|-------------|
+| **Asset Selector** | Click to choose the source asset |
+| **Network Badge** | Shows the protocol layer (RGB Lightning, etc.) |
+| **Amount Input** | Enter how much you want to swap |
+| **USD Equivalent** | Approximate USD value |
+| **Min/Max** | Amount limits for this pair |
+
+### To Card (Destination)
+
+The bottom card shows what you'll **receive**:
+
+| Element | Description |
+|---------|-------------|
+| **Asset Selector** | Click to choose the destination asset |
+| **Network Badge** | Shows the protocol layer |
+| **Amount Display** | Calculated output amount (read-only) |
+| **USD Equivalent** | Approximate USD value |
+
+## Executing a Swap
+
+<Steps>
+  <Step title="Select Source Asset">
+    Click the asset selector on the **From** card and choose the asset you want to trade.
+  </Step>
+
+  <Step title="Select Destination Asset">
+    Click the asset selector on the **To** card and choose the asset you want to receive.
+  </Step>
+
+  <Step title="Enter Amount">
+    Type the amount you want to swap in the **From** field. The **To** amount updates automatically.
+  </Step>
+
+  <Step title="Review Quote">
+    Check:
+    - Exchange rate
+    - Fee amount
+    - Output amount matches expectations
+  </Step>
+
+  <Step title="Execute Swap">
+    Click the **Swap** button. A confirmation modal will appear with final details.
+  </Step>
+
+  <Step title="Confirm in Wallet">
+    Your wallet extension will prompt you to sign the transaction. Review and approve.
+  </Step>
+
+  <Step title="Wait for Completion">
+    The swap executes on the Lightning Network. Usually completes in seconds.
+  </Step>
+</Steps>
+
+## Asset Selection
+
+### Choosing Assets
+
+1. Click the asset selector button
+2. Browse available assets or search
+3. Select an asset to populate the card
+
+### Network/Protocol Selection
+
+Each asset may support multiple protocols:
+
+| Protocol | Description | Speed |
+|----------|-------------|-------|
+| **RGB on Lightning** | RGB assets via Lightning | Instant |
+| **RGB On-chain** | RGB assets on Bitcoin | 10+ min |
+| **BTC Lightning** | Native Bitcoin Lightning | Instant |
+
+The network badge shows which protocol is active.
+
+### Valid Trading Pairs
+
+Not all assets can be traded with each other. Invalid pairs are automatically filtered out. Common pairs include:
+
+- BTC ↔ USDT
+- BTC ↔ XAUT
+
+## Amount Handling
+
+### Input Methods
+
+**From Amount (Exact Input):**
+- Enter the exact amount you want to spend
+- The To amount is calculated based on the quote
+
+**To Amount (Exact Output):**
+- Click on the To card's input
+- Enter the exact amount you want to receive
+- The From amount is calculated
+
+### Display Units
+
+For BTC, you can choose to display amounts in:
+- **BTC** - Standard Bitcoin notation (e.g., 0.00021)
+- **sats** - Satoshi notation (e.g., 21,000)
+
+Change this in Settings (gear icon).
+
+### Min/Max Limits
+
+Each trading pair has limits:
+- **Minimum** - Smallest tradeable amount
+- **Maximum** - Largest tradeable amount
+
+Amounts outside these limits show a validation error.
+
+## Quote Information
+
+The quote section displays:
+
+| Info | Description |
+|------|-------------|
+| **Rate** | Current exchange rate (e.g., 1 BTC = 95,000 USDT) |
+| **Fee** | Network and protocol fees |
+| **Slippage** | Price impact of your trade |
+| **Expires** | Quote validity countdown |
+
+<Tip>
+Quotes refresh automatically. The displayed rate is locked when you click Swap.
+</Tip>
+
+## Swap Arrow
+
+Click the swap arrow (↕️) to:
+- Reverse the trade direction
+- Swap From ↔ To assets
+- Amounts are also swapped
+
+## Confirmation Modal
+
+Before execution, a modal shows:
+
+1. **Recap** - From/To assets and amounts
+2. **Rate** - Locked exchange rate
+3. **Fees** - Breakdown of all fees
+4. **Total** - Final amounts after fees
+5. **Confirm/Cancel** - Final action buttons
+
+<Warning>
+Review all details carefully. Swaps are irreversible once confirmed.
+</Warning>
+
+## Real-Time Updates
+
+The interface provides live updates:
+
+- **Quote Refresh** - Rates update via WebSocket
+- **Price Changes** - Highlighted when price moves
+- **Validation** - Instant feedback on amounts
+- **Connection Status** - Wallet connectivity shown
+
+## Tips for Best Results
+
+<AccordionGroup>
+  <Accordion title="Minimize Quote Expiry">
+    Complete swaps quickly after getting a quote. Quotes expire after a short period.
+  </Accordion>
+
+  <Accordion title="Check Fees">
+    Larger trades may have proportionally lower fees. Consider consolidating small trades.
+  </Accordion>
+
+  <Accordion title="Use Lightning">
+    RGB on Lightning offers instant settlement. Prefer Lightning routes when available.
+  </Accordion>
+
+  <Accordion title="Verify Amounts">
+    Double-check the To amount before confirming. The confirmation modal shows final figures.
+  </Accordion>
+</AccordionGroup>
+
+## Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Quote loading slowly | Check internet, refresh page |
+| Amount validation error | Adjust to within min/max limits |
+| Wallet not responding | Ensure wallet is unlocked |
+| Swap failed | Check balance, retry with fresh quote |

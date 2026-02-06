@@ -1,1482 +1,569 @@
 ---
-title: Types & Models
-description: Comprehensive type reference for the KaleidoSwap SDK covering Python and TypeScript implementations. Includes enumerations, request/response models, and complex data structures.
+title: 'Types'
+description: 'Type definitions and data models for the SDK'
 ---
 
 ## Overview
 
-The KaleidoSwap SDK provides comprehensive type definitions for both Python and TypeScript, ensuring type safety and excellent IDE support. Both implementations include:
+Both SDKs provide strong typing for all API responses:
+- **TypeScript**: Native interfaces with full IDE autocomplete
+- **Python**: Pydantic models with automatic validation
 
-- **18+ Enumerations** - String-based enums for API constants
-- **80+ Request/Response Models** - Structured data models for API calls
-- **40+ Complex Models** - Nested data structures for complex operations
-- **6+ Assignment Models** - RGB asset assignment types
-
-All types are fully typed and validated, providing:
-- Automatic data validation
-- JSON serialization/deserialization
-- IDE autocomplete support
-- Type hints for better development experience
-
-## Importing Types
-
-<CodeGroup>
-```python Python
-from kaleidoswap_sdk import (
-    # Client
-    KaleidoClient,
-
-    # Enums
-    AssetIface,
-    BitcoinNetwork,
-    ChannelStatus,
-    InvoiceStatus,
-    OrderState,
-    SwapOrderSide,
-    SwapOrderStatus,
-    SwapSettlement,
-
-    # Request models
-    CreateOrderRequest,
-    InitMakerSwapRequest,
-    QuoteRequest,
-    OpenChannelRequest,
-
-    # Response models
-    OrderResponse,
-    QuoteResponse,
-    ListAssetsResponse,
-
-    # Complex models
-    Asset,
-    Channel,
-    Payment,
-    TradingPair,
-)
-```
-
-```typescript TypeScript
-import {
-  KaleidoClient,
-  KaleidoConfig,
-  SwapRequest,
-  PairQuoteResponse,
-  AssetResponse,
-  ErrorCode,
-  ClientAsset,
-  Pair,
-  Channel,
-  Payment
-} from '@kaleidoswap/sdk';
-```
-</CodeGroup>
+All types are auto-generated from OpenAPI specifications to ensure consistency.
 
 ---
 
-## Enumerations
-
-### AssetIface
-
-RGB asset interface types.
-
-<CodeGroup>
-```python Python
-class AssetIface(str, Enum):
-    RGB20 = "RGB20"  # Fungible assets
-    RGB21 = "RGB21"  # NFTs / Collectibles
-    RGB25 = "RGB25"  # Unique Digital Assets
-
-# Usage
-if asset.asset_iface == AssetIface.RGB20:
-    print("This is a fungible asset")
-```
-
-```typescript TypeScript
-enum AssetIface {
-  RGB20 = "RGB20",  // Fungible assets
-  RGB21 = "RGB21",  // NFTs / Collectibles
-  RGB25 = "RGB25"   // Unique Digital Assets
-}
-
-// Usage
-if (asset.assetIface === AssetIface.RGB20) {
-  console.log("This is a fungible asset");
-}
-```
-</CodeGroup>
-
----
-
-### AssetSchema
-
-RGB asset schema types.
-
-<CodeGroup>
-```python Python
-class AssetSchema(str, Enum):
-    Nia = "Nia"  # Native Issued Assets
-    Uda = "Uda"  # Unique Digital Assets
-    Cfa = "Cfa"  # Collectible Fungible Assets
-```
-
-```typescript TypeScript
-enum AssetSchema {
-  Nia = "Nia",  // Native Issued Assets
-  Uda = "Uda",  // Unique Digital Assets
-  Cfa = "Cfa"   // Collectible Fungible Assets
-}
-```
-</CodeGroup>
-
----
-
-### BitcoinNetwork
-
-Bitcoin network types.
-
-<CodeGroup>
-```python Python
-class BitcoinNetwork(str, Enum):
-    Mainnet = "Mainnet"  # Bitcoin mainnet
-    Testnet = "Testnet"  # Bitcoin testnet
-    Signet = "Signet"    # Bitcoin signet
-    Regtest = "Regtest"  # Local regression test network
-
-# Usage
-assets = await client.list_assets()
-print(f"Network: {assets.network}")
-```
-
-```typescript TypeScript
-enum BitcoinNetwork {
-  Mainnet = "Mainnet",  // Bitcoin mainnet
-  Testnet = "Testnet",  // Bitcoin testnet
-  Signet = "Signet",    // Bitcoin signet
-  Regtest = "Regtest"   // Local regression test network
-}
-
-// Usage
-const assets = await client.assetList();
-console.log(`Network: ${assets.network}`);
-```
-</CodeGroup>
-
----
-
-### ChannelStatus
-
-Lightning channel status values.
-
-<CodeGroup>
-```python Python
-class ChannelStatus(str, Enum):
-    Opening = "Opening"  # Channel is being opened
-    Opened = "Opened"    # Channel is active
-    Closing = "Closing"  # Channel is being closed
-    Closed = "Closed"    # Channel is closed
-
-# Usage
-channels = await client.list_channels()
-for channel in channels.channels:
-    if channel.status == ChannelStatus.Opened:
-        print(f"Active channel: {channel.channel_id}")
-```
-
-```typescript TypeScript
-enum ChannelStatus {
-  Opening = "Opening",  // Channel is being opened
-  Opened = "Opened",    // Channel is active
-  Closing = "Closing",  // Channel is being closed
-  Closed = "Closed"     // Channel is closed
-}
-
-// Usage
-const channels = await client.listChannels();
-for (const channel of channels.channels) {
-  if (channel.status === ChannelStatus.Opened) {
-    console.log(`Active channel: ${channel.channelId}`);
-  }
-}
-```
-</CodeGroup>
-
----
-
-### InvoiceStatus
-
-Lightning invoice status.
-
-<CodeGroup>
-```python Python
-class InvoiceStatus(str, Enum):
-    Pending = "Pending"      # Invoice awaiting payment
-    Succeeded = "Succeeded"  # Invoice paid successfully
-    Failed = "Failed"        # Invoice payment failed
-    Expired = "Expired"      # Invoice expired
-```
-
-```typescript TypeScript
-enum InvoiceStatus {
-  Pending = "Pending",      // Invoice awaiting payment
-  Succeeded = "Succeeded",  // Invoice paid successfully
-  Failed = "Failed",        // Invoice payment failed
-  Expired = "Expired"       // Invoice expired
-}
-```
-</CodeGroup>
-
----
-
-### OrderState
-
-Swap order state.
-
-<CodeGroup>
-```python Python
-class OrderState(str, Enum):
-    CREATED = "CREATED"      # Order created
-    COMPLETED = "COMPLETED"  # Order completed successfully
-    FAILED = "FAILED"        # Order failed
-    CANCELLED = "CANCELLED"  # Order cancelled
-
-# Usage
-order = await client.get_order(GetOrderRequest(order_id=order_id))
-if order.status == OrderState.COMPLETED:
-    print("Order completed successfully!")
-```
-
-```typescript TypeScript
-enum OrderState {
-  CREATED = "CREATED",        // Order created
-  COMPLETED = "COMPLETED",    // Order completed successfully
-  FAILED = "FAILED",          // Order failed
-  CANCELLED = "CANCELLED"     // Order cancelled
-}
-
-// Usage
-const order = await client.getOrder(orderId);
-if (order.status === OrderState.COMPLETED) {
-  console.log("Order completed successfully!");
-}
-```
-</CodeGroup>
-
----
-
-### SwapOrderSide
-
-Trading side for swap orders.
-
-<CodeGroup>
-```python Python
-class SwapOrderSide(str, Enum):
-    BUY = "BUY"    # Taker sends quote asset, receives base asset
-    SELL = "SELL"  # Taker sends base asset, receives quote asset
-
-# Usage
-from kaleidoswap_sdk import CreateSwapOrderRequest, SwapOrderSide
-
-order = await client.create_swap_order(
-    CreateSwapOrderRequest(
-        pair_id="...",
-        side=SwapOrderSide.BUY,
-        amount=100000
-    )
-)
-```
-
-```typescript TypeScript
-enum SwapOrderSide {
-  BUY = "BUY",    // Taker sends quote asset, receives base asset
-  SELL = "SELL"   // Taker sends base asset, receives quote asset
-}
-
-// Usage
-const order = await client.createSwapOrder({
-  pairId: "...",
-  side: SwapOrderSide.BUY,
-  amount: 100000
-});
-```
-</CodeGroup>
-
----
-
-### SwapOrderStatus
-
-Swap order status values.
-
-<CodeGroup>
-```python Python
-class SwapOrderStatus(str, Enum):
-    OPEN = "OPEN"                      # Order is open
-    PENDING_PAYMENT = "PENDING_PAYMENT"  # Awaiting payment
-    PAID = "PAID"                      # Payment received
-    COMPLETED = "COMPLETED"            # Order completed
-    FAILED = "FAILED"                  # Order failed
-    CANCELLED = "CANCELLED"            # Order cancelled
-```
-
-```typescript TypeScript
-enum SwapOrderStatus {
-  OPEN = "OPEN",                          // Order is open
-  PENDING_PAYMENT = "PENDING_PAYMENT",    // Awaiting payment
-  PAID = "PAID",                          // Payment received
-  COMPLETED = "COMPLETED",                // Order completed
-  FAILED = "FAILED",                      // Order failed
-  CANCELLED = "CANCELLED"                 // Order cancelled
-}
-```
-</CodeGroup>
-
----
-
-### SwapSettlement
-
-Settlement method for swaps.
-
-<CodeGroup>
-```python Python
-class SwapSettlement(str, Enum):
-    LIGHTNING = "LIGHTNING"  # Settle via Lightning Network
-    ONCHAIN = "ONCHAIN"      # Settle on-chain
-
-# Usage
-order = await client.create_swap_order(
-    CreateSwapOrderRequest(
-        pair_id="...",
-        side=SwapOrderSide.BUY,
-        amount=100000,
-        settlement=SwapSettlement.LIGHTNING
-    )
-)
-```
-
-```typescript TypeScript
-enum OrderSettlement {
-  LIGHTNING = "LIGHTNING",  // Lightning Network settlement
-  ONCHAIN = "ONCHAIN"       // On-chain settlement
-}
-
-// Usage
-const order = await client.createSwapOrder({
-  pairId: "...",
-  side: SwapOrderSide.BUY,
-  amount: 100000,
-  settlement: OrderSettlement.LIGHTNING
-});
-```
-</CodeGroup>
-
----
-
-### HTLCStatus
-
-Hash Time-Locked Contract status.
-
-<CodeGroup>
-```python Python
-class HTLCStatus(str, Enum):
-    Pending = "Pending"      # HTLC pending
-    Succeeded = "Succeeded"  # HTLC succeeded
-    Failed = "Failed"        # HTLC failed
-```
-
-```typescript TypeScript
-enum HTLCStatus {
-  Pending = "Pending",      // HTLC pending
-  Succeeded = "Succeeded",  // HTLC succeeded
-  Failed = "Failed"         // HTLC failed
-}
-```
-</CodeGroup>
-
----
-
-### PaymentState
-
-Payment state in the swap flow.
-
-<CodeGroup>
-```python Python
-class PaymentState(str, Enum):
-    EXPECT_PAYMENT = "EXPECT_PAYMENT"  # Expecting payment
-    HOLD = "HOLD"                      # Payment on hold
-    PAID = "PAID"                      # Payment completed
-```
-
-```typescript TypeScript
-enum PaymentState {
-  EXPECT_PAYMENT = "EXPECT_PAYMENT",  // Expecting payment
-  HOLD = "HOLD",                      // Payment on hold
-  PAID = "PAID"                       // Payment completed
-}
-```
-</CodeGroup>
-
----
-
-### TransferStatus
-
-RGB asset transfer status.
-
-<CodeGroup>
-```python Python
-class TransferStatus(str, Enum):
-    WaitingCounterparty = "WaitingCounterparty"    # Waiting for counterparty
-    WaitingConfirmations = "WaitingConfirmations"  # Waiting for blockchain confirmations
-    Settled = "Settled"                            # Transfer settled
-    Failed = "Failed"                              # Transfer failed
-```
-
-```typescript TypeScript
-enum TransferStatus {
-  WaitingCounterparty = "WaitingCounterparty",      // Waiting for counterparty
-  WaitingConfirmations = "WaitingConfirmations",    // Waiting for blockchain confirmations
-  Settled = "Settled",                              // Transfer settled
-  Failed = "Failed"                                 // Transfer failed
-}
-```
-</CodeGroup>
-
----
-
-### Additional Enums
-
-<CodeGroup>
-```python Python
-# Channel check error types
-class ChannelCheckErrorType(str, Enum):
-    NO_CHANNEL = "no_channel"
-    INSUFFICIENT_LIQUIDITY = "insufficient_liquidity"
-    ERROR = "error"
-
-# Indexer protocol
-class IndexerProtocol(str, Enum):
-    Electrum = "Electrum"
-    Esplora = "Esplora"
-
-# Transaction types
-class TransactionType(str, Enum):
-    RgbSend = "RgbSend"
-    Drain = "Drain"
-    CreateUtxos = "CreateUtxos"
-
-# Transfer kinds
-class TransferKind(str, Enum):
-    Issuance = "Issuance"
-    ReceiveBlind = "ReceiveBlind"
-    ReceiveWitness = "ReceiveWitness"
-    Send = "Send"
-
-# Transport types
-class TransportType(str, Enum):
-    JsonRpc = "JsonRpc"
-```
-
-```typescript TypeScript
-enum ErrorCode {
-  // Network errors (1000-1099)
-  NETWORK_UNREACHABLE = 'NETWORK_UNREACHABLE',
-  CONNECTION_TIMEOUT = 'CONNECTION_TIMEOUT',
-  WEBSOCKET_CONNECTION_FAILED = 'WEBSOCKET_CONNECTION_FAILED',
-
-  // HTTP errors (1100-1199)
-  HTTP_UNAUTHORIZED = 'HTTP_UNAUTHORIZED',
-  HTTP_NOT_FOUND = 'HTTP_NOT_FOUND',
-  HTTP_INTERNAL_SERVER_ERROR = 'HTTP_INTERNAL_SERVER_ERROR',
-
-  // Validation errors (1300-1399)
-  VALIDATION_INVALID_AMOUNT = 'VALIDATION_INVALID_AMOUNT',
-  VALIDATION_INVALID_ASSET_ID = 'VALIDATION_INVALID_ASSET_ID',
-
-  // Trading errors (1500-1599)
-  SWAP_FAILED = 'SWAP_FAILED',
-  INSUFFICIENT_LIQUIDITY = 'INSUFFICIENT_LIQUIDITY',
-  SWAP_SLIPPAGE_EXCEEDED = 'SWAP_SLIPPAGE_EXCEEDED',
-
-  // Lightning errors (1600-1699)
-  LN_NODE_UNREACHABLE = 'LN_NODE_UNREACHABLE',
-  LN_PAYMENT_FAILED = 'LN_PAYMENT_FAILED'
-}
-
-enum ErrorSeverity {
-  LOW = 'low',           // Minor issues, app can continue
-  MEDIUM = 'medium',     // Moderate issues, feature degradation
-  HIGH = 'high',         // Serious issues, major functionality affected
-  CRITICAL = 'critical'  // Critical issues, app unusable
-}
-
-enum ErrorCategory {
-  NETWORK = 'network',
-  HTTP = 'http',
-  AUTHENTICATION = 'authentication',
-  VALIDATION = 'validation',
-  BUSINESS_LOGIC = 'business_logic',
-  TRADING = 'trading',
-  LIGHTNING_NETWORK = 'lightning_network',
-  CONFIGURATION = 'configuration'
-}
-```
-</CodeGroup>
-
----
-
-## Core Data Models
+## Core Types
 
 ### Asset
 
-Represents an RGB asset with balance information.
+Represents a tradeable asset.
 
-<CodeGroup>
-```python Python
-class Asset(BaseModel):
-    asset_id: str              # Unique asset identifier (e.g., "rgb:...")
-    ticker: str                # Asset ticker (e.g., "USDT")
-    name: str                  # Full asset name (e.g., "Tether USD")
-    details: Optional[str]     # Additional details
-    precision: int             # Decimal precision (e.g., 6 for USDT)
-    issued_supply: int         # Total issued supply
-    timestamp: int             # Creation timestamp
-    added_at: int              # When added to platform
-    balance: AssetBalance      # Balance information
-    media: Optional[Media]     # Asset media/logo
-    asset_iface: Optional[AssetIface]  # Asset interface type
-    is_active: bool            # Whether asset is active for trading
-
-# Usage
-assets = await client.list_assets()
-for asset in assets.assets:
-    print(f"{asset.ticker}: {asset.name}")
-    print(f"  Balance: {asset.balance.spendable / (10 ** asset.precision)}")
-```
-
-```typescript TypeScript
-interface ClientAsset {
-  asset_id: string;        // Unique asset identifier
-  ticker: string;          // Asset ticker symbol (e.g., "BTC")
-  name: string;            // Human-readable asset name
-  precision: number;       // Decimal precision for amounts
-  is_active: boolean;      // Whether asset is available for trading
-  min_order_size: number;  // Minimum order size (atomic units)
-  max_order_size: number;  // Maximum order size (atomic units)
-  icon_url?: string;       // Asset icon URL
-  description?: string;    // Asset description
-}
-
-// Usage
-const assets = await client.assetList();
-for (const asset of assets.assets) {
-  console.log(`${asset.ticker}: ${asset.name}`);
-  console.log(`  Min order: ${asset.minOrderSize / Math.pow(10, asset.precision)}`);
-}
-```
-</CodeGroup>
-
----
-
-### AssetBalance
-
-Balance information for an asset.
-
-<CodeGroup>
-```python Python
-class AssetBalance(BaseModel):
-    settled: int               # Settled balance
-    future: int                # Future balance
-    spendable: int             # Spendable balance
-    offchain_outbound: int     # Outbound Lightning balance
-    offchain_inbound: int      # Inbound Lightning balance
-```
-
-```typescript TypeScript
-interface AssetBalance {
-  settled: number;           // Settled balance
-  future: number;            // Future balance
-  spendable: number;         // Spendable balance
-  offchain_outbound: number; // Outbound Lightning balance
-  offchain_inbound: number;  // Inbound Lightning balance
-}
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface Asset {
+    assetId: string;        // Unique identifier
+    ticker: string;         // Symbol (e.g., "BTC")
+    name: string;           // Full name
+    precision: number;      // Decimal places
+    issuedSupply: number;   // Total supply
+    isActive?: boolean;     // Trading status
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class Asset(BaseModel):
+      ticker: str               # Symbol (e.g., "BTC")
+      name: str                 # Full name
+      precision: int            # Decimal places
+      is_active: Optional[bool] # Trading status
+      protocol_ids: Optional[Dict[str, str]]
+      endpoints: Optional[List[Any]]
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
 ### TradingPair
 
-Represents a trading pair on the exchange.
+Represents a trading pair between two assets.
 
-<CodeGroup>
-```python Python
-class TradingPair(BaseModel):
-    id: str                    # Unique pair ID
-    base_asset: str            # Base asset ticker (e.g., "BTC")
-    base_asset_id: str         # Base asset ID
-    base_precision: int        # Base asset precision
-    quote_asset: str           # Quote asset ticker (e.g., "USDT")
-    quote_asset_id: str        # Quote asset ID
-    quote_precision: int       # Quote asset precision
-    is_active: bool            # Whether pair is active
-    min_base_order_size: int   # Minimum order size (atomic units)
-    max_base_order_size: int   # Maximum order size (atomic units)
-    min_quote_order_size: int  # Minimum quote size (atomic units)
-    max_quote_order_size: int  # Maximum quote size (atomic units)
-
-# Usage
-pairs = await client.list_pairs()
-btc_usdt = next(p for p in pairs.pairs if p.base_asset == "BTC" and p.quote_asset == "USDT")
-print(f"Min order: {btc_usdt.min_base_order_size / (10 ** btc_usdt.base_precision)} BTC")
-```
-
-```typescript TypeScript
-interface Pair {
-  pair_id: string;         // Unique pair identifier
-  base_asset: string;      // Base asset ticker
-  base_asset_id: string;   // Base asset ID
-  quote_asset: string;     // Quote asset ticker
-  quote_asset_id: string;  // Quote asset ID
-  is_active: boolean;      // Trading availability
-  base_precision: number;  // Base asset precision
-  quote_precision: number; // Quote asset precision
-  min_base_order_size: number;   // Min base amount
-  max_base_order_size: number;   // Max base amount
-  min_quote_order_size: number;  // Min quote amount
-  max_quote_order_size: number;  // Max quote amount
-  fee_rate: number;        // Trading fee rate
-}
-
-// Usage
-const pairs = await client.pairList();
-const btcUsdt = pairs.pairs.find(p =>
-  p.base_asset === "BTC" && p.quote_asset === "USDT"
-);
-console.log(`Min order: ${btcUsdt.minBaseOrderSize / Math.pow(10, btcUsdt.basePrecision)} BTC`);
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface TradingPair {
+    id?: string;
+    baseAsset: string;        // Base ticker
+    baseAssetId: string;
+    basePrecision: number;
+    quoteAsset: string;       // Quote ticker
+    quoteAssetId: string;
+    quotePrecision: number;
+    isActive: boolean;
+    minBaseOrderSize: number;
+    maxBaseOrderSize: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class TradingPair(BaseModel):
+      id: Optional[str]
+      base: Optional[TradableAsset]   # Base asset info
+      quote: Optional[TradableAsset]  # Quote asset info
+      price: Optional[str]
+      is_active: Optional[bool]
+      routes: Optional[List[SwapRoute]]
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-### Channel
+### Quote
 
-Lightning Network channel information.
+Quote information for a swap.
 
-<CodeGroup>
-```python Python
-class Channel(BaseModel):
-    channel_id: str                    # Unique channel ID
-    funding_txid: Optional[str]        # Funding transaction ID
-    peer_pubkey: str                   # Peer public key
-    ready: bool                        # Whether channel is ready
-    capacity_sat: int                  # Channel capacity in satoshis
-    balance_sat: int                   # Local balance in satoshis
-    outbound_balance_sat: int          # Outbound balance
-    inbound_balance_sat: int           # Inbound balance
-    is_usable: bool                    # Whether channel can be used
-    status: ChannelStatus              # Channel status
-    rgb_info: Optional[RgbAllocation]  # RGB asset allocation
-```
-
-```typescript TypeScript
-interface Channel {
-  channel_id: string;                  // Unique channel ID
-  funding_txid?: string;               // Funding transaction ID
-  peer_pubkey: string;                 // Peer public key
-  ready: boolean;                      // Whether channel is ready
-  capacity_sat: number;                // Channel capacity in satoshis
-  balance_sat: number;                 // Local balance in satoshis
-  outbound_balance_sat: number;        // Outbound balance
-  inbound_balance_sat: number;         // Inbound balance
-  is_usable: boolean;                  // Whether channel can be used
-  status: ChannelStatus;               // Channel status
-  rgb_info?: RgbAllocation;            // RGB asset allocation
-}
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface Quote {
+    rfqId: string;       // Request for Quote ID
+    fromAsset: string;
+    fromAmount: number;
+    toAsset: string;
+    toAmount: number;
+    price: number;
+    fee: Fee;
+    expiresAt: number;   // Unix timestamp
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class PairQuoteResponse(BaseModel):
+      rfq_id: str
+      from_asset: SwapLeg
+      to_asset: SwapLeg
+      price: str
+      fee: Fee
+      expires_at: str
+      created_at: Optional[str]
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-### Payment
+### SwapLeg
 
-Lightning payment information.
+Details of one side of a swap.
 
-<CodeGroup>
-```python Python
-class Payment(BaseModel):
-    payment_hash: str           # Payment hash
-    preimage: Optional[str]     # Payment preimage
-    secret: Optional[str]       # Payment secret
-    status: InvoiceStatus       # Payment status
-    amt_msat: int               # Amount in millisatoshis
-    fee_msat: Optional[int]     # Fee in millisatoshis
-    route: Optional[List[str]]  # Payment route
-    created_at: int             # Creation timestamp
-    expires_at: Optional[int]   # Expiration timestamp
-```
-
-```typescript TypeScript
-interface Payment {
-  payment_hash: string;        // Payment hash
-  preimage?: string;           // Payment preimage
-  secret?: string;             // Payment secret
-  status: InvoiceStatus;       // Payment status
-  amt_msat: number;            // Amount in millisatoshis
-  fee_msat?: number;           // Fee in millisatoshis
-  route?: string[];            // Payment route
-  created_at: number;          // Creation timestamp
-  expires_at?: number;         // Expiration timestamp
-}
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface SwapLeg {
+    asset_id: string;
+    name: string;
+    ticker: string;
+    layer: Layer;
+    amount: number;
+    precision: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class SwapLeg(BaseModel):
+      asset_id: str
+      name: str
+      ticker: str
+      layer: Layer
+      amount: int
+      precision: int
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-### BtcBalance
+### Fee
 
-Bitcoin balance information.
+Fee information.
 
-<CodeGroup>
-```python Python
-class BtcBalance(BaseModel):
-    settled: int      # Settled balance in satoshis
-    future: int       # Future balance in satoshis
-    spendable: int    # Spendable balance in satoshis
-    pending: int      # Pending balance in satoshis
-
-# Usage
-balance = await client.get_btc_balance()
-print(f"Spendable: {balance.vanilla.spendable} sats")
-print(f"Pending: {balance.vanilla.pending} sats")
-```
-
-```typescript TypeScript
-interface BtcBalance {
-  settled: number;   // Settled balance in satoshis
-  future: number;    // Future balance in satoshis
-  spendable: number; // Spendable balance in satoshis
-  pending: number;   // Pending balance in satoshis
-}
-
-// Usage
-const balance = await client.getBtcBalance();
-console.log(`Spendable: ${balance.vanilla.spendable} sats`);
-console.log(`Pending: ${balance.vanilla.pending} sats`);
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface Fee {
+    baseFee: number;
+    variableFee: number;
+    feeRate: number;
+    finalFee: number;
+    feeAsset: string;
+    feeAssetPrecision: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class Fee(BaseModel):
+      base_fee: Optional[int]
+      variable_fee: Optional[int]
+      fee_rate: Optional[str]
+      final_fee: int
+      fee_asset: Optional[str]
+      fee_asset_precision: Optional[int]
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Request Models
-
-### QuoteRequest
-
-Request a price quote for a swap.
-
-<CodeGroup>
-```python Python
-class QuoteRequest(BaseModel):
-    from_asset: str              # Source asset ID or ticker
-    to_asset: str                # Destination asset ID or ticker
-    from_amount: Optional[int]   # Amount to send (atomic units)
-    to_amount: Optional[int]     # Amount to receive (atomic units)
-    # Note: Provide either from_amount OR to_amount, not both
-```
-
-```typescript TypeScript
-interface PairQuoteRequest {
-  from_asset: string;      // Source asset ID
-  to_asset: string;        // Destination asset ID
-  from_amount?: number;    // Amount to send (atomic units)
-  to_amount?: number;      // Amount to receive (atomic units)
-  timestamp?: number;      // Request timestamp
-}
-```
-</CodeGroup>
-
----
-
-### CreateOrderRequest
-
-Create a new swap order.
-
-<CodeGroup>
-```python Python
-class CreateOrderRequest(BaseModel):
-    rfq_id: str           # Quote request ID
-    from_type: str        # "ONCHAIN" or "LIGHTNING"
-    to_type: str          # "ONCHAIN" or "LIGHTNING"
-    from_asset: str       # Source asset
-    to_asset: str         # Destination asset
-    from_amount: int      # Amount to send
-    to_amount: int        # Amount to receive
-```
-
-```typescript TypeScript
-interface CreateOrderRequest {
-  from_asset: string;      // Source asset ID
-  to_asset: string;        // Destination asset ID
-  from_amount: number;     // Amount to trade
-  order_type: OrderType;   // Order type (market, limit, etc.)
-  settlement: OrderSettlement; // Settlement method
-  expires_at?: number;     // Order expiration
-}
-```
-</CodeGroup>
-
----
-
-### InitMakerSwapRequest / SwapRequest
-
-Initialize a maker swap.
-
-<CodeGroup>
-```python Python
-class InitMakerSwapRequest(BaseModel):
-    rfq_id: str         # Quote request ID
-    from_asset: str     # Source asset
-    to_asset: str       # Destination asset
-    from_amount: int    # Amount to send (atomic units)
-    to_amount: int      # Amount to receive (atomic units)
-```
-
-```typescript TypeScript
-interface SwapRequest {
-  rfq_id: string;          // Quote ID from PairQuoteResponse
-  from_asset: string;      // Source asset ID
-  to_asset: string;        // Destination asset ID
-  from_amount: number;     // Amount to send (atomic units)
-  to_amount: number;       // Amount to receive (atomic units)
-}
-```
-</CodeGroup>
-
----
-
-### OpenChannelRequest
-
-Open a Lightning channel.
-
-<CodeGroup>
-```python Python
-class OpenChannelRequest(BaseModel):
-    peer_pubkey: str           # Peer's public key
-    capacity_sat: int          # Channel capacity in satoshis
-    push_msat: Optional[int]   # Amount to push (millisatoshis)
-    asset_amount: Optional[int]  # RGB asset amount
-    asset_id: Optional[str]    # RGB asset ID
-    public: bool = True        # Whether channel is public
-    with_anchors: bool = True  # Use anchor outputs
-```
-
-```typescript TypeScript
-interface OpenChannelRequest {
-  peer_pubkey: string;           // Peer's public key
-  capacity_sat: number;          // Channel capacity in satoshis
-  push_msat?: number;            // Amount to push (millisatoshis)
-  asset_amount?: number;         // RGB asset amount
-  asset_id?: string;             // RGB asset ID
-  public?: boolean;              // Whether channel is public
-  with_anchors?: boolean;        // Use anchor outputs
-}
-```
-</CodeGroup>
-
----
-
-### SendPaymentRequest
-
-Send a Lightning payment.
-
-<CodeGroup>
-```python Python
-class SendPaymentRequest(BaseModel):
-    invoice: str              # Lightning invoice (BOLT11)
-    amount_msat: Optional[int]  # Amount in millisatoshis (for zero-amount invoices)
-    timeout_seconds: int = 60 # Payment timeout
-```
-
-```typescript TypeScript
-interface SendPaymentRequest {
-  invoice: string;           // Lightning invoice (BOLT11)
-  amount_msat?: number;      // Amount in millisatoshis (for zero-amount invoices)
-  timeout_seconds?: number;  // Payment timeout (default: 60)
-}
-```
-</CodeGroup>
-
----
-
-### SendBtcRequest
-
-Send Bitcoin on-chain.
-
-<CodeGroup>
-```python Python
-class SendBtcRequest(BaseModel):
-    address: str       # Destination Bitcoin address
-    amount: int        # Amount in satoshis
-    fee_rate: int      # Fee rate in sat/vB
-    min_confirmations: int = 1  # Minimum confirmations for inputs
-```
-
-```typescript TypeScript
-interface SendBtcRequest {
-  address: string;   // Destination Bitcoin address
-  amount: number;    // Amount in satoshis
-  fee_rate: number;  // Fee rate in sat/vB
-  min_confirmations?: number; // Minimum confirmations for inputs
-}
-```
-</CodeGroup>
-
----
-
-## Response Models
-
-### QuoteResponse / PairQuoteResponse
-
-Price quote response.
-
-<CodeGroup>
-```python Python
-class QuoteResponse(BaseModel):
-    rfq_id: str              # Request for quote ID
-    from_asset: str          # Source asset
-    to_asset: str            # Destination asset
-    from_amount: int         # Amount to send (atomic units)
-    to_amount: int           # Amount to receive (atomic units)
-    exchange_rate: float     # Exchange rate
-    expires_at: int          # Quote expiration timestamp
-    price_impact: float      # Price impact percentage
-```
-
-```typescript TypeScript
-interface PairQuoteResponse {
-  rfq_id: string;          // Request for Quote ID
-  from_asset: string;      // Source asset ID
-  to_asset: string;        // Destination asset ID
-  from_amount: number;     // Source amount (atomic units)
-  to_amount: number;       // Destination amount (atomic units)
-  price: number;           // Exchange rate
-  fee: number;             // Trading fee (atomic units)
-  expires_at: number;      // Quote expiration timestamp
-  slippage?: number;       // Price slippage percentage
-}
-```
-</CodeGroup>
-
----
-
-### OrderResponse
-
-Order creation response.
-
-<CodeGroup>
-```python Python
-class OrderResponse(BaseModel):
-    id: str                          # Unique order ID
-    rfq_id: str                      # Quote request ID
-    pay_in: str                      # Payment method (ONCHAIN/LIGHTNING)
-    onchain_address: Optional[str]   # Payment address (for onchain)
-    ln_invoice: Optional[str]        # Lightning invoice
-    rgb_recipient_id: Optional[str]  # RGB recipient ID
-    rgb_invoice: Optional[str]       # RGB invoice
-    status: str                      # Order status
-    created_at: int                  # Creation timestamp
-    expires_at: int                  # Expiration timestamp
-```
-
-```typescript TypeScript
-interface OrderResponse {
-  id: string;                        // Unique order ID
-  rfq_id: string;                    // Quote request ID
-  pay_in: string;                    // Payment method (ONCHAIN/LIGHTNING)
-  onchain_address?: string;          // Payment address (for onchain)
-  ln_invoice?: string;               // Lightning invoice
-  rgb_recipient_id?: string;         // RGB recipient ID
-  rgb_invoice?: string;              // RGB invoice
-  status: string;                    // Order status
-  created_at: number;                // Creation timestamp
-  expires_at: number;                // Expiration timestamp
-}
-```
-</CodeGroup>
-
----
-
-### SwapResponse
-
-Swap initialization response.
-
-<CodeGroup>
-```python Python
-# Python response is similar to OrderResponse
-```
-
-```typescript TypeScript
-interface SwapResponse {
-  payment_hash: string;       // Unique payment identifier
-  swapstring: string;         // Swap execution data
-  expires_at: number;         // Swap expiration time
-  lightning_invoice?: string; // Lightning payment invoice
-}
-```
-</CodeGroup>
-
----
-
-### ConfirmSwapRequest / ConfirmSwapResponse
-
-Swap execution parameters and response.
-
-<CodeGroup>
-```python Python
-# Python SDK uses different swap execution flow
-```
-
-```typescript TypeScript
-interface ConfirmSwapRequest {
-  swapstring: string;      // Swap data from SwapResponse
-  payment_hash: string;    // Payment hash from SwapResponse
-  taker_pubkey: string;    // Taker's Lightning node public key
-}
-
-interface ConfirmSwapResponse {
-  success: boolean;        // Execution success status
-  transaction_id?: string; // Transaction identifier
-  message?: string;        // Status message
-}
-```
-</CodeGroup>
-
----
-
-### Swap Status
-
-Swap status information and enumeration.
-
-<CodeGroup>
-```python Python
-class Swap(BaseModel):
-    order_id: str           # Order identifier
-    payment_hash: str       # Payment hash
-    status: OrderState      # Swap status
-    from_asset: str         # Source asset
-    to_asset: str           # Destination asset
-    from_amount: int        # Source amount
-    to_amount: int          # Destination amount
-    created_at: int         # Creation timestamp
-    updated_at: int         # Last update timestamp
-```
-
-```typescript TypeScript
-interface Swap {
-  order_id: string;        // Order identifier
-  payment_hash: string;    // Payment hash
-  status: SwapStatus;      // Current swap status
-  from_asset: string;      // Source asset
-  to_asset: string;        // Destination asset
-  from_amount: number;     // Source amount
-  to_amount: number;       // Destination amount
-  created_at: number;      // Creation timestamp
-  updated_at: number;      // Last update timestamp
-  expires_at?: number;     // Expiration timestamp
-  error_message?: string;  // Error description if failed
-}
-
-enum SwapStatus {
-  PENDING = "Pending",         // Swap initiated, awaiting execution
-  IN_PROGRESS = "InProgress",  // Currently executing
-  SUCCEEDED = "Succeeded",     // Successfully completed
-  FAILED = "Failed",           // Failed to execute
-  EXPIRED = "Expired",         // Expired before completion
-  CANCELLED = "Cancelled"      // Manually cancelled
-}
-```
-</CodeGroup>
-
----
-
-### ListAssetsResponse / AssetResponse
-
-Asset list response.
-
-<CodeGroup>
-```python Python
-class ListAssetsResponse(BaseModel):
-    assets: List[Asset]   # List of available assets
-    network: str          # Network name (mainnet, testnet, etc.)
-    timestamp: int        # Response timestamp
-```
-
-```typescript TypeScript
-interface AssetResponse {
-  assets: ClientAsset[];   // List of available assets
-  network: string;         // Network name (mainnet, testnet, etc.)
-  timestamp: number;       // Response timestamp
-}
-```
-</CodeGroup>
-
----
-
-### ListPairsResponse / PairResponse
-
-Trading pairs list response.
-
-<CodeGroup>
-```python Python
-class ListPairsResponse(BaseModel):
-    pairs: List[TradingPair]  # List of trading pairs
-```
-
-```typescript TypeScript
-interface PairResponse {
-  pairs: Pair[];  // List of trading pairs
-}
-```
-</CodeGroup>
-
----
-
-### NodeInfoResponse / GetInfoResponseModel
-
-Node information response.
-
-<CodeGroup>
-```python Python
-class NodeInfoResponse(BaseModel):
-    pubkey: str                 # Node public key
-    alias: Optional[str]        # Node alias
-    color: Optional[str]        # Node color
-    num_peers: int              # Number of connected peers
-    num_active_channels: int    # Number of active channels
-    num_inactive_channels: int  # Number of inactive channels
-    num_pending_channels: int   # Number of pending channels
-    block_height: int           # Current block height
-    synced_to_chain: bool       # Whether synced to blockchain
-```
-
-```typescript TypeScript
-interface GetInfoResponseModel {
-  lsp_connection_url: string;    // LSP connection string
-  node_pubkey: string;           // LSP node public key
-  features: number[];            // Supported Lightning features
-  min_channel_size: number;      // Minimum channel size
-  max_channel_size: number;      // Maximum channel size
-  fee_rate: number;              // Channel opening fee rate
-}
-
-interface NetworkInfoResponse {
-  block_height: number;          // Current block height
-  block_hash: string;            // Latest block hash
-  network: string;               // Network name (mainnet, testnet)
-  synced_to_chain: boolean;      // Chain synchronization status
-  num_peers: number;             // Connected peer count
-  num_channels: number;          // Active channel count
-}
-```
-</CodeGroup>
-
----
-
-## Error Handling
-
-### Error Metadata and Types
-
-TypeScript provides comprehensive error metadata for debugging:
-
-<CodeGroup>
-```python Python
-from pydantic import ValidationError
-
-try:
-    order = CreateOrderRequest(
-        rfq_id="",  # Empty string not allowed
-        from_amount=-100  # Negative amount not allowed
-    )
-except ValidationError as e:
-    print(f"Validation error: {e}")
-```
-
-```typescript TypeScript
-interface ErrorMetadata {
-  statusCode?: number;           // HTTP status code
-  response?: any;                // Raw server response
-  requestData?: any;             // Original request data
-  timestamp?: Date;              // Error occurrence time
-  requestId?: string;            // Request tracking ID
-  context?: Record<string, any>; // Additional context
-  recoveryActions?: string[];    // Suggested recovery steps
-  retryable?: boolean;           // Whether retry is recommended
-  retryStrategy?: RetryStrategy; // Suggested retry approach
-  retryDelay?: number;           // Recommended retry delay (ms)
-  maxRetries?: number;           // Maximum retry attempts
-}
-
-// Type guards for error handling
-function isKaleidoSDKError(error: unknown): error is KaleidoSDKError {
-  return error instanceof KaleidoSDKError;
-}
-
-function isRetryableError(error: unknown): boolean {
-  return isKaleidoSDKError(error) && error.isRetryable();
-}
-
-function getErrorCategory(error: unknown): ErrorCategory | null {
-  return isKaleidoSDKError(error) ? error.category : null;
-}
-```
-</CodeGroup>
+## Layer Enum
+
+Protocol layers for swaps.
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  type Layer =
+    | 'BTC_L1'       // Bitcoin on-chain
+    | 'BTC_LN'       // Bitcoin Lightning
+    | 'BTC_SPARK'
+    | 'BTC_LIQUID'
+    | 'RGB_L1'       // RGB on-chain
+    | 'RGB_LN'       // RGB on Lightning
+    | 'TAPASS_L1'
+    | 'TAPASS_LN';
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class Layer(str, Enum):
+      BTC_L1 = "BTC_L1"       # Bitcoin on-chain
+      BTC_LN = "BTC_LN"       # Bitcoin Lightning
+      BTC_SPARK = "BTC_SPARK"
+      BTC_LIQUID = "BTC_LIQUID"
+      RGB_L1 = "RGB_L1"       # RGB on-chain
+      RGB_LN = "RGB_LN"       # RGB on Lightning
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
 ## Configuration Types
 
-### Client Configuration
+### KaleidoConfig
 
-<CodeGroup>
-```python Python
-# Python SDK uses simple keyword arguments for configuration
-client = KaleidoClient(
-    api_url="https://api.example.com",
-    api_key="your-api-key",
-    timeout=30
-)
-```
-
-```typescript TypeScript
-interface KaleidoConfig extends Omit<HttpClientConfig, 'baseUrl'> {
-  baseUrl?: string;        // API base URL
-  nodeUrl?: string;        // Lightning node URL
-  wsUrl?: string;          // WebSocket URL
-  timeout?: number;        // Request timeout (ms)
-  retries?: number;        // Max retry attempts
-  apiKey?: string;         // API authentication key
-  userAgent?: string;      // Custom User-Agent header
-}
-
-interface HttpClientConfig {
-  baseUrl: string;         // Required base URL
-  timeout?: number;        // Request timeout in milliseconds
-  retries?: number;        // Number of retry attempts
-  headers?: Record<string, string>; // Custom headers
-  apiKey?: string;         // API key for authentication
-}
-
-interface WebSocketConfig {
-  baseUrl: string;         // WebSocket URL
-  timeout?: number;        // Connection timeout
-  reconnect?: boolean;     // Auto-reconnect on disconnect
-  maxReconnectAttempts?: number; // Max reconnection attempts
-}
-
-interface RetryConfig {
-  maxRetries: number;              // Maximum retry attempts
-  initialDelay: number;            // Initial delay in milliseconds
-  maxDelay: number;                // Maximum delay in milliseconds
-  exponentialBase: number;         // Exponential backoff base
-  jitter: boolean;                 // Add random jitter to delays
-  retryOnExceptions: Array<new (...args: any[]) => Error>; // Exception types
-  respectErrorRetryConfig?: boolean; // Use error's own retry settings
-  customRetryStrategy?: RetryStrategy; // Override retry strategy
-}
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface KaleidoConfig {
+    baseUrl: string;
+    nodeUrl?: string;
+    apiKey?: string;
+    timeout?: number;
+    maxRetries?: number;
+    cacheTtl?: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class KaleidoConfig:
+      base_url: str
+      node_url: Optional[str] = None
+      api_key: Optional[str] = None
+      timeout: float = 30.0
+      max_retries: int = 3
+      cache_ttl: int = 60
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-## WebSocket Types
+## Order Types
 
-WebSocket message formats for real-time communication.
+### OrderHistoryResponse
 
-<CodeGroup>
-```python Python
-# Python SDK uses standard WebSocket libraries
-# Message handling through async callbacks
-```
-
-```typescript TypeScript
-interface WebSocketMessage {
-  action: string;              // Message type/action
-  data?: any;                  // Message payload
-  error?: {                    // Error information
-    code: string;
-    message: string;
-  };
-  request_id?: string;         // Request correlation ID
-  timestamp?: number;          // Message timestamp
-}
-
-type MessageHandler = (message: WebSocketMessage) => void;
-```
-</CodeGroup>
-
----
-
-## Utility Types
-
-Additional utility types for asset mapping and type checking:
-
-<CodeGroup>
-```python Python
-class MappedAsset(BaseModel):
-    asset_id: str
-    ticker: str
-    name: str
-    precision: int
-    is_active: bool
-    min_order_size: int
-    max_order_size: int
-    trading_pairs: List[str]
-```
-
-```typescript TypeScript
-interface MappedAsset {
-  asset_id: string;        // Asset identifier
-  ticker: string;          // Asset ticker
-  name: string;            // Asset name
-  precision: number;       // Decimal precision
-  is_active: boolean;      // Active status
-  min_order_size: number;  // Minimum order size
-  max_order_size: number;  // Maximum order size
-  trading_pairs: string[]; // Compatible asset IDs for trading
-}
-```
-</CodeGroup>
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface OrderHistoryResponse {
+    orders: any[];
+    total: number;
+    limit: number;
+    skip: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class OrderHistoryResponse(BaseModel):
+      orders: List[Any]
+      total: int
+      limit: int
+      skip: int
+  ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Complete Type Usage Examples
+### SwapOrderStatusResponse
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface SwapOrderStatusResponse {
+    id: string;
+    status: string;
+    from_asset: SwapLeg;
+    to_asset: SwapLeg;
+    created_at: string;
+    updated_at?: string;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class SwapOrderStatusResponse(BaseModel):
+      id: str
+      status: str
+      from_asset: SwapLeg
+      to_asset: SwapLeg
+      created_at: str
+      updated_at: Optional[str]
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+## Request Types
+
+### SwapRequest
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface SwapRequest {
+    rfq_id: string;
+    from_asset: string;
+    from_amount: number;
+    to_asset: string;
+    to_amount: number;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  # Dictionary format
+  {
+      "rfq_id": str,
+      "from_asset": str,
+      "from_amount": int,
+      "to_asset": str,
+      "to_amount": int,
+  }
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+### ConfirmSwapRequest
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface ConfirmSwapRequest {
+    swapstring: string;
+    taker_pubkey: string;
+    payment_hash: string;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  # Dictionary format
+  {
+      "swapstring": str,
+      "taker_pubkey": str,
+      "payment_hash": str,
+  }
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+### CreateOrderRequest (LSP)
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface CreateOrderRequest {
+    client_pubkey: string;
+    lsp_balance_sat: number;
+    client_balance_sat: number;
+    required_channel_confirmations: number;
+    funding_confirms_within_blocks: number;
+    channel_expiry_blocks: number;
+    announce_channel?: boolean;
+    asset_id?: string;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  # Dictionary format
+  {
+      "client_pubkey": str,
+      "lsp_balance_sat": int,
+      "client_balance_sat": int,
+      "required_channel_confirmations": int,
+      "funding_confirms_within_blocks": int,
+      "channel_expiry_blocks": int,
+      "announce_channel": Optional[bool],
+      "asset_id": Optional[str],
+  }
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+## RGB Node Types
+
+### BtcBalanceResponse
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface BtcBalanceResponse {
+    vanilla: {
+      settled: number;
+      future: number;
+      spendable: number;
+      offchainOutbound: number;
+      offchainInbound: number;
+    };
+    colored?: Record<string, any>;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class BtcBalanceResponse(BaseModel):
+      vanilla: BtcBalance
+      colored: Optional[Dict]
+
+  class BtcBalance(BaseModel):
+      settled: int
+      future: int
+      spendable: int
+      offchain_outbound: int
+      offchain_inbound: int
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+### Channel
+
+<Tabs>
+  <Tab title="TypeScript">
+  ```typescript
+  interface Channel {
+    channel_id: string;
+    peer_pubkey: string;
+    capacity_sat: number;
+    local_balance_sat: number;
+    remote_balance_sat: number;
+    is_usable: boolean;
+    is_public: boolean;
+  }
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  class Channel(BaseModel):
+      channel_id: str
+      peer_pubkey: str
+      capacity_sat: int
+      local_balance_sat: int
+      remote_balance_sat: int
+      is_usable: bool
+      is_public: bool
+  ```
+  </Tab>
+</Tabs>
+
+---
+
+## Importing Types
 
 <CodeGroup>
-```python Python
-from kaleidoswap_sdk import (
-    KaleidoClient,
-    QuoteRequest,
-    QuoteResponse,
-    CreateOrderRequest,
-    SwapOrderSide
-)
-
-async def get_price_quote(
-    client: KaleidoClient,
-    from_asset: str,
-    to_asset: str,
-    amount: int
-) -> QuoteResponse:
-    """Get a price quote with full type safety."""
-    quote: QuoteResponse = await client.get_quote(
-        QuoteRequest(
-            from_asset=from_asset,
-            to_asset=to_asset,
-            from_amount=amount
-        )
-    )
-    return quote
-
-async def create_and_execute_order(
-    client: KaleidoClient,
-    from_asset: str,
-    to_asset: str,
-    amount: int
-):
-    """Create and execute a typed swap order."""
-    quote = await get_price_quote(client, from_asset, to_asset, amount)
-
-    order = await client.create_order(
-        CreateOrderRequest(
-            rfq_id=quote.rfq_id,
-            from_asset=from_asset,
-            to_asset=to_asset,
-            from_amount=amount,
-            to_amount=quote.to_amount
-        )
-    )
-
-    return order
-```
-
 ```typescript TypeScript
 import {
-  KaleidoClient,
+  // Configuration
   KaleidoConfig,
-  PairQuoteResponse,
+  
+  // Core types
+  Asset,
+  TradingPair,
+  Quote,
+  Fee,
+  SwapLeg,
+  
+  // Enums
+  Layer,
+  
+  // Request types
   SwapRequest,
-  SwapResponse,
-  ErrorCode,
-  NetworkError,
-  MappedAsset
+  ConfirmSwapRequest,
+  CreateOrderRequest,
+  
+  // Response types
+  OrderHistoryResponse,
+  SwapOrderStatusResponse,
 } from '@kaleidoswap/sdk';
+```
 
-// Type-safe client configuration
-const config: KaleidoConfig = {
-  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1',
-  nodeUrl: 'https://lightning.example.com',
-  timeout: 30000,
-  retries: 3
-};
-
-const client = new KaleidoClient(config);
-
-// Type-safe trading function
-async function executeTypedSwap(
-  fromAsset: string,
-  toAsset: string,
-  amount: number
-): Promise<SwapResponse> {
-  try {
-    // Get quote with proper typing
-    const quote: PairQuoteResponse = await client.quoteRequest(
-      fromAsset,
-      toAsset,
-      amount
-    );
-
-    // Create typed swap request
-    const swapRequest: SwapRequest = {
-      rfq_id: quote.rfq_id,
-      from_asset: fromAsset,
-      to_asset: toAsset,
-      from_amount: amount,
-      to_amount: quote.to_amount
-    };
-
-    // Execute swap with typed response
-    const swapResponse: SwapResponse = await client.initMakerSwap(swapRequest);
-
-    return swapResponse;
-
-  } catch (error) {
-    // Type-safe error handling
-    if (error instanceof NetworkError) {
-      if (error.code === ErrorCode.NETWORK_UNREACHABLE) {
-        throw new Error('Network is unreachable');
-      }
-    }
-    throw error;
-  }
-}
-
-// Using utility types with proper generics
-function processAssets(assets: MappedAsset[]): Record<string, MappedAsset> {
-  return assets.reduce((acc, asset) => {
-    acc[asset.ticker] = asset;
-    return acc;
-  }, {} as Record<string, MappedAsset>);
-}
+```python Python
+from kaleidoswap import (
+    # Configuration
+    KaleidoConfig,
+    
+    # Core types
+    Asset,
+    TradingPair,
+    PairQuoteResponse,
+    Fee,
+    SwapLeg,
+    Layer,
+    
+    # Order types
+    OrderHistoryResponse,
+    SwapOrderStatusResponse,
+    
+    # RGB Node types
+    BtcBalanceResponse,
+    AddressResponse,
+    RgbChannel,
+    RgbPeer,
+)
 ```
 </CodeGroup>
 
 ---
 
-## Important Notes
+## Model Serialization (Python)
 
-Important considerations when working with types:
+Pydantic models can be easily serialized:
 
-- **Atomic Units**: All amounts in the API use atomic units (smallest divisible unit for each asset). Use the precision field to convert between decimal and atomic amounts.
+```python
+# To dictionary
+asset_dict = asset.model_dump()
 
-- **Runtime Validation**: Always validate input types at runtime when dealing with external data, even with TypeScript. The SDK provides comprehensive error handling for invalid inputs.
+# To JSON string
+asset_json = asset.model_dump_json()
 
-- **Optional Fields**: Many fields are optional (marked with `?` in TypeScript, `Optional[]` in Python). Check the documentation for your SDK version to see which fields are required vs optional.
+# From dictionary
+asset = Asset.model_validate(asset_dict)
 
-- **Enum Usage**: Both SDKs provide type-safe enums for constants. Use these instead of magic strings to prevent errors and improve IDE support.
+# From JSON string
+import json
+asset = Asset.model_validate(json.loads(asset_json))
+```
+
+---
+
+## Type Guards (TypeScript)
+
+Create type guards for runtime type checking:
+
+```typescript
+import { Asset, TradingPair } from '@kaleidoswap/sdk';
+
+function isAsset(obj: unknown): obj is Asset {
+  return typeof obj === 'object' && 
+         obj !== null && 
+         'ticker' in obj && 
+         'precision' in obj;
+}
+
+function isTradingPair(obj: unknown): obj is TradingPair {
+  return typeof obj === 'object' && 
+         obj !== null && 
+         'baseAsset' in obj && 
+         'quoteAsset' in obj;
+}
+```

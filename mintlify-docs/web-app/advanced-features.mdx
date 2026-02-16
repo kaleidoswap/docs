@@ -1,6 +1,6 @@
 ---
 title: Advanced Features
-description: Power user features and advanced trading options
+description: Order tracking, rate decisions, and power user features
 ---
 
 ## Display Settings
@@ -29,9 +29,9 @@ Each asset can be traded on different protocol layers:
 
 | Layer | Format | Speed | Use Case |
 |-------|--------|-------|----------|
-| **RGB/LN** | `RGB/LN` | Instant | Day trading, frequent swaps |
+| **RGB/LN** | `RGB/LN` | Fast | Day trading, frequent swaps |
 | **RGB/L1** | `RGB/L1` | 10+ min | Larger amounts, cold storage |
-| **BTC/LN** | `BTC/LN` | Instant | Bitcoin Lightning |
+| **BTC/LN** | `BTC/LN` | Fast | Bitcoin Lightning |
 | **BTC/L1** | `BTC/L1` | 10+ min | On-chain Bitcoin |
 
 ### Choosing the Right Layer
@@ -42,20 +42,93 @@ Each asset can be traded on different protocol layers:
 
 ## Order Tracking
 
-### Active Orders
+### Order States
 
-While a swap is in progress:
-1. Modal shows real-time status
-2. Progress indicators for each step
-3. Transaction details upon completion
+Every swap order progresses through a series of states. The order page displays a visual timeline so you can track progress in real time.
+
+| State | Description | User Action |
+|-------|-------------|-------------|
+| **Awaiting Deposit** | Order created, waiting for your payment | Pay the deposit address/invoice |
+| **Payment Confirmed** | Your payment has been received | Wait for the maker to process |
+| **Executing Swap** | The maker is processing and sending the asset | Wait for completion |
+| **Swap Completed** | The swapped asset has been sent to your recipient address | Done |
+| **Expired** | The order expired before payment was received | Create a new order |
+| **Cancelled** | The order was cancelled | Create a new order |
+| **Failed** | Something went wrong during execution | Check details, contact support |
+| **Pending Rate Decision** | The rate changed and you need to decide | Accept or reject the new rate |
+
+### Order Timeline
+
+The order page shows a four-step visual timeline:
+
+```
+  Awaiting Deposit  →  Confirming  →  Exchanging  →  Completed
+```
+
+Each step is highlighted as the order progresses. The current step shows an active indicator.
 
 ### Order History
 
-View past orders at `/[orderId]` with:
-- Complete transaction details
-- Status timeline
-- Fee breakdown
-- Asset movements
+You can view your recent orders from the home page. The **Recent Activity** section lists your past orders with:
+- Order ID
+- Asset pair and amounts
+- Order status
+- Timestamp
+
+Click any order to open its detail page.
+
+### Polling
+
+The order page automatically polls for status updates every 10 seconds. You do not need to refresh the page. Polling stops once the order reaches a final state (completed, expired, cancelled, or failed).
+
+## Rate Decision
+
+If the exchange rate changes after your order is created but before the swap is executed, you may be presented with a **Rate Decision** screen.
+
+### What Happens
+
+1. The rate changed between order creation and execution
+2. The order is paused at the **Pending Rate Decision** state
+3. You are shown the updated rate
+
+### Your Options
+
+| Option | What Happens |
+|--------|-------------|
+| **Accept New Rate & Swap** | The swap continues with the updated rate |
+| **Cancel & Request Refund** | The order is cancelled and a refund is initiated |
+
+<Warning>
+If you do not make a decision before the order expires, the order will be automatically cancelled and a refund initiated.
+</Warning>
+
+### How It Looks
+
+When a rate decision is needed, a full-screen overlay appears on the order page showing:
+- A warning that the rate has been updated
+- The new rate details
+- Two buttons: **Accept New Rate & Swap** or **Cancel & Request Refund**
+
+## Payment Issues
+
+### Overpayment or Underpayment
+
+If the amount you paid does not match the expected deposit amount, the order page will display a **Payment Issue** screen.
+
+| Scenario | What You See |
+|----------|-------------|
+| **Overpaid** | The expected amount, the amount you sent, and the difference |
+| **Underpaid** | The expected amount, the amount you sent, and the shortfall |
+
+### Resolution
+
+Payment discrepancies require manual resolution. The payment issue screen provides:
+- **Email Support** button - contact the team directly
+- **Telegram Support** button - reach out via Telegram
+
+<Tip>
+Always pay the exact amount shown on the order page. Copy the invoice or address to avoid manual entry errors.
+</Tip>
 
 ## API Integration
 
@@ -90,9 +163,8 @@ Returns all active pairs with:
 
 The app uses WebSocket for real-time data:
 
-- **Quote streaming** - Live price updates
-- **Order status** - Swap progress notifications
-- **Market data** - Asset availability changes
+- **Quote streaming** - Live price updates as you type amounts
+- **Connection quality** - Monitored and displayed in the UI
 
 ## Keyboard Shortcuts
 
@@ -108,7 +180,7 @@ The web app is fully responsive:
 
 - **Touch-optimized** - Large tap targets
 - **Swipe support** - Natural gestures
-- **Mobile wallets** - WalletConnect support (coming soon)
+- **QR Codes** - Scan deposit addresses from a mobile wallet
 
 ## Performance Optimization
 
@@ -141,20 +213,3 @@ Use browser DevTools Network tab to:
 - Monitor API calls
 - Check WebSocket frames
 - Debug connectivity issues
-
-## Coming Soon
-
-<CardGroup cols={2}>
-  <Card title="WalletConnect" icon="link">
-    Connect mobile wallets via QR code
-  </Card>
-  <Card title="Price Charts" icon="chart-line">
-    Historical price visualization
-  </Card>
-  <Card title="Limit Orders" icon="clock">
-    Set target prices for automatic execution
-  </Card>
-  <Card title="Portfolio View" icon="wallet">
-    Track all your RGB assets in one place
-  </Card>
-</CardGroup>

@@ -5,381 +5,265 @@ description: 'Common issues and solutions'
 
 ## Installation Issues
 
-### Native Module Build Failures
+<AccordionGroup>
+  <Accordion title="npm install fails (TypeScript)">
+    **Symptoms:** `npm install kaleidoswap-sdk` fails with errors
 
-**Problem:** Error building native module during installation
+    **Solutions:**
+    1. Ensure Node.js 18+ is installed: `node --version`
+    2. Clear npm cache: `npm cache clean --force`
+    3. Delete `node_modules` and `package-lock.json`, then reinstall
+    4. Try with a different package manager: `pnpm add kaleidoswap-sdk`
+  </Accordion>
 
-**Symptoms:**
-```
-npm ERR! code 1
-npm ERR! prebuild-install || node-gyp rebuild
-```
+  <Accordion title="pip install fails (Python)">
+    **Symptoms:** `pip install kaleidoswap-sdk` fails
 
-**Solutions:**
+    **Solutions:**
+    1. Ensure Python 3.10+ is installed: `python --version`
+    2. Use a virtual environment: `python -m venv .venv && source .venv/bin/activate`
+    3. Upgrade pip: `pip install --upgrade pip`
+    4. Try: `pip install kaleidoswap-sdk --no-cache-dir`
+  </Accordion>
 
-<Tabs>
-  <Tab title="TypeScript">
-    1. Ensure Node.js 18+:
-    ```bash
-    node --version  # Should be v18+
-    nvm install 18
-    ```
+  <Accordion title="Module not found after installation">
+    **Symptoms:** `Cannot find module 'kaleidoswap-sdk'` or `ModuleNotFoundError`
 
-    2. Install build tools:
-    ```bash
-    # macOS
-    xcode-select --install
-
-    # Linux
-    sudo apt-get install build-essential
-    ```
-
-    3. Clear cache:
-    ```bash
-    rm -rf node_modules package-lock.json
-    npm cache clean --force
-    npm install
-    ```
-  </Tab>
-  <Tab title="Python">
-    1. Ensure Python 3.9+:
-    ```bash
-    python --version  # Should be 3.9+
-    ```
-
-    2. Use a fresh virtual environment:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate
-    pip install kaleidoswap
-    ```
-  </Tab>
-</Tabs>
-
----
-
-### Module Not Found
-
-**Problem:** `Cannot find module '@kaleidoswap/sdk'` or `ModuleNotFoundError: No module named 'kaleidoswap'`
-
-**Solutions:**
-
-<Tabs>
-  <Tab title="TypeScript">
-    ```bash
-    npm list @kaleidoswap/sdk
-    npm uninstall @kaleidoswap/sdk
-    npm install @kaleidoswap/sdk
-    ```
-  </Tab>
-  <Tab title="Python">
-    ```bash
-    pip show kaleidoswap
-    pip uninstall kaleidoswap
-    pip install kaleidoswap
-    ```
-  </Tab>
-</Tabs>
-
----
+    **Solutions:**
+    - **TypeScript:** Check your `tsconfig.json` has `"moduleResolution": "node"` or `"bundler"`
+    - **Python:** Verify you are in the correct virtual environment
+    - Verify the package is installed: `npm list kaleidoswap-sdk` or `pip show kaleidoswap-sdk`
+  </Accordion>
+</AccordionGroup>
 
 ## Runtime Errors
 
-### Network Errors
+<AccordionGroup>
+  <Accordion title="NetworkError: Connection refused">
+    **Symptoms:** `NetworkError` when making API calls
 
-**Problem:** `NetworkError: Connection refused` or timeout errors
+    **Causes:**
+    - API server unreachable
+    - Incorrect `baseUrl`
+    - Firewall blocking requests
 
-**Causes:**
-- API server unreachable
-- Firewall blocking connections
-- DNS resolution failure
+    **Solutions:**
+    1. Verify the `baseUrl` is correct and accessible
+    2. Check internet connectivity
+    3. Try accessing the API URL in a browser: `https://api.regtest.kaleidoswap.com/api/v1/market/assets`
+    4. If behind a firewall, ensure outbound HTTPS is allowed
+  </Accordion>
 
-**Solutions:**
+  <Accordion title="NodeNotConfiguredError">
+    **Symptoms:** `NodeNotConfiguredError` when calling `client.rln.*` methods
 
-1. Check API availability:
-```bash
-curl https://api.regtest.kaleidoswap.com/health
-```
+    **Cause:** No `nodeUrl` / `node_url` was provided when creating the client.
 
-2. Verify URL configuration:
-<CodeGroup>
-```typescript TypeScript
-console.log('API URL:', process.env.KALEIDO_API_URL);
-```
+    **Solution:**
 
-```python Python
-print(f"API URL: {config.base_url}")
-```
-</CodeGroup>
+    <CodeGroup>
+    ```typescript TypeScript
+    const client = KaleidoClient.create({
+      baseUrl: 'https://api.regtest.kaleidoswap.com',
+      nodeUrl: 'http://localhost:3001',  // Add this
+    });
+    ```
 
-3. Increase timeout:
-<CodeGroup>
-```typescript TypeScript
-const client = new KaleidoClient({
-  baseUrl: '...',
-  timeout: 60,  // Increase from 30
-});
-```
+    ```python Python
+    client = KaleidoClient.create(
+        base_url="https://api.regtest.kaleidoswap.com",
+        node_url="http://localhost:3001",  # Add this
+    )
+    ```
+    </CodeGroup>
 
-```python Python
-config = KaleidoConfig(
-    base_url="...",
-    timeout=60.0,  # Increase from 30
-)
-```
-</CodeGroup>
+    Always check `client.hasNode()` / `client.has_node()` before calling RLN methods.
+  </Accordion>
 
----
+  <Accordion title="QuoteExpiredError">
+    **Symptoms:** `QuoteExpiredError` when creating a swap order
 
-### Quote Expired Errors
+    **Cause:** The quote's `expires_at` time has passed.
 
-**Problem:** `QuoteExpiredError` when executing swap
+    **Solutions:**
+    1. Get a fresh quote immediately before creating the order
+    2. Use WebSocket streaming for always-current quotes
+    3. Reduce the time between getting a quote and creating the order
+  </Accordion>
 
-**Cause:** Too much time between getting quote and executing
+  <Accordion title="ValidationError: Invalid amount">
+    **Symptoms:** `ValidationError` with amount-related message
 
-**Solution:** Get fresh quotes immediately before execution:
+    **Causes:**
+    - Amount below minimum or above maximum
+    - Wrong precision (sending display units instead of raw)
+    - Negative or zero amount
 
-<CodeGroup>
-```typescript TypeScript
-async function executeSwap(pair: string, amount: number) {
-  // Get fresh quote
-  const quote = await client.getQuoteByPair(pair, amount);
-  
-  // Execute immediately
-  return await client.initSwap({
-    rfq_id: quote.rfqId,
-    from_asset: quote.fromAsset,
-    from_amount: quote.fromAmount,
-    to_asset: quote.toAsset,
-    to_amount: quote.toAmount,
-  });
-}
-```
+    **Solutions:**
+    1. Check min/max limits from `listPairs` response
+    2. Ensure you are sending raw amounts (use `toSmallestUnits` / `to_smallest_units`)
+    3. Validate amounts before sending
 
-```python Python
-def execute_swap(pair, amount):
-    # Get fresh quote
-    quote = client.get_quote_by_pair(pair, from_amount=amount)
-    
-    # Execute immediately
-    return client.init_swap({
-        "rfq_id": quote.rfq_id,
-        "from_asset": quote.from_asset.asset_id,
-        "from_amount": quote.from_asset.amount,
-        "to_asset": quote.to_asset.asset_id,
-        "to_amount": quote.to_asset.amount,
-    })
-```
-</CodeGroup>
+    <CodeGroup>
+    ```typescript TypeScript
+    import { toSmallestUnits } from 'kaleidoswap-sdk';
 
----
+    // Convert 0.001 BTC to satoshis (100000)
+    const amount = toSmallestUnits(0.001, 8);
+    ```
 
-### Node Not Configured
+    ```python Python
+    from kaleidoswap_sdk import to_smallest_units
 
-**Problem:** `NodeNotConfiguredError` when calling node operations
+    # Convert 0.001 BTC to satoshis (100000)
+    amount = to_smallest_units(0.001, 8)
+    ```
+    </CodeGroup>
+  </Accordion>
 
-**Cause:** `nodeUrl` / `node_url` not provided
+  <Accordion title="APIError: 401 Unauthorized">
+    **Symptoms:** `APIError` with status 401
 
-**Solution:**
+    **Cause:** Invalid or missing API key.
 
-<CodeGroup>
-```typescript TypeScript
-// Check before node operations
-if (client.hasNode()) {
-  const channels = await client.listChannels();
-} else {
-  console.log('Configure nodeUrl for node operations');
-}
-```
+    **Solutions:**
+    1. Check that `apiKey` / `api_key` is set correctly
+    2. Verify the key is valid and not expired
+    3. Some endpoints may not require an API key -- check the [API Reference](/sdk/api-reference)
+  </Accordion>
 
-```python Python
-# Check before node operations
-if client.has_node():
-    channels = client.list_channels()
-else:
-    print("Configure node_url for node operations")
-```
-</CodeGroup>
+  <Accordion title="TimeoutError">
+    **Symptoms:** `TimeoutError` on API calls
 
----
+    **Causes:**
+    - Slow network connection
+    - Server under heavy load
+    - Timeout too short
 
-### Invalid Amount Errors
-
-**Problem:** `ValidationError` for amount out of range
-
-**Cause:** Amount below minimum or above maximum for the pair
-
-**Solution:**
-
-<CodeGroup>
-```typescript TypeScript
-// Get pair limits
-const pair = await client.getPairByTicker('BTC/USDT');
-
-// Adjust amount
-let amount = requestedAmount;
-if (amount < pair.minBaseOrderSize) {
-  amount = pair.minBaseOrderSize;
-}
-if (amount > pair.maxBaseOrderSize) {
-  amount = pair.maxBaseOrderSize;
-}
-
-const quote = await client.getQuoteByPair('BTC/USDT', amount);
-```
-
-```python Python
-# Get pair limits
-pair = client.get_pair_by_ticker("BTC/USDT")
-
-# Adjust amount
-amount = requested_amount
-if pair.routes:
-    route = pair.routes[0]
-    if route.min_from_amount and amount < route.min_from_amount:
-        amount = route.min_from_amount
-    if route.max_from_amount and amount > route.max_from_amount:
-        amount = route.max_from_amount
-
-quote = client.get_quote_by_pair("BTC/USDT", from_amount=amount)
-```
-</CodeGroup>
-
----
+    **Solutions:**
+    1. Increase the timeout: `timeout: 60` (seconds)
+    2. Check network connectivity
+    3. Implement retry logic using `error.isRetryable()`
+  </Accordion>
+</AccordionGroup>
 
 ## WebSocket Issues
 
-### Stream Disconnects
+<AccordionGroup>
+  <Accordion title="WebSocket not connecting">
+    **Symptoms:** `connected` event never fires, or `WebSocketError`
 
-**Problem:** WebSocket stream disconnects unexpectedly
+    **Solutions:**
+    1. Verify the WebSocket URL is correct (should start with `wss://`)
+    2. Ensure `enableWebSocket` / `enable_websocket` was called before streaming
+    3. Check that WebSocket connections are not blocked by firewall or proxy
+    4. Try with a different client ID in the URL
+  </Accordion>
 
-**Solution:** Implement reconnection logic:
+  <Accordion title="No quotes received">
+    **Symptoms:** `quoteResponse` / `quote_response` event never fires
 
-<CodeGroup>
-```typescript TypeScript
-async function resilientStream(pair: string, onQuote: (q: any) => void) {
-  let retries = 0;
-  const maxRetries = 5;
+    **Solutions:**
+    1. Verify the asset pair is valid and has available routes
+    2. Check that the amount is within min/max limits
+    3. Listen for `error` events on the WSClient
+    4. Verify the connection is established (check `connected` event)
+  </Accordion>
 
-  while (retries < maxRetries) {
-    try {
-      const stream = await client.createQuoteStream(pair);
-      
-      while (stream.isConnected()) {
-        const quoteJson = await stream.recv(30.0);
-        if (quoteJson) onQuote(JSON.parse(quoteJson));
-      }
-      
-      stream.close();
-      retries = 0;  // Reset on success
-    } catch (error) {
-      retries++;
-      console.log(`Reconnecting (${retries}/${maxRetries})...`);
-      await new Promise(r => setTimeout(r, 1000 * retries));
-    }
-  }
-}
-```
+  <Accordion title="Frequent disconnections">
+    **Symptoms:** WebSocket disconnects and reconnects frequently
 
-```python Python
-import time
+    **Solutions:**
+    1. Check internet stability
+    2. The WSClient auto-reconnects with exponential backoff
+    3. Monitor `reconnecting` events to track attempts
+    4. If `maxReconnectExceeded` fires, manually reconnect:
 
-def resilient_stream(pair, on_quote):
-    retries = 0
-    max_retries = 5
-    
-    while retries < max_retries:
-        try:
-            with client.subscribe_quotes(pair) as stream:
-                for quote in stream.iter_quotes(timeout=30.0):
-                    on_quote(quote)
-            retries = 0  # Reset on success
-        except Exception as e:
-            retries += 1
-            print(f"Reconnecting ({retries}/{max_retries})...")
-            time.sleep(retries)
-```
-</CodeGroup>
+    <CodeGroup>
+    ```typescript TypeScript
+    ws.on('maxReconnectExceeded', async () => {
+      console.log('Reconnecting manually...');
+      await ws.connect();
+    });
+    ```
 
----
+    ```python Python
+    async def manual_reconnect():
+        print("Reconnecting manually...")
+        await ws.connect()
 
-### No Quotes Received
+    ws.on("max_reconnect_exceeded", manual_reconnect)
+    ```
+    </CodeGroup>
+  </Accordion>
+</AccordionGroup>
 
-**Problem:** `stream.recv()` always returns `null`
+## TypeScript-Specific Issues
 
-**Causes:**
-- No market activity
-- Wrong pair ticker
-- WebSocket connection failed
+<AccordionGroup>
+  <Accordion title="Type errors with OpenAPI types">
+    **Symptoms:** TypeScript compiler errors about incompatible types
 
-**Solutions:**
+    **Solutions:**
+    1. Ensure you are importing types from `kaleidoswap-sdk`:
+       ```typescript
+       import type { Asset, TradingPair } from 'kaleidoswap-sdk';
+       ```
+    2. Check your TypeScript version is 5.0+
+    3. If using strict mode, you may need to handle `undefined` explicitly
+  </Accordion>
 
-1. Verify pair exists:
-<CodeGroup>
-```typescript TypeScript
-const pairs = await client.listPairs();
-const exists = pairs.some(p => 
-  `${p.baseAsset}/${p.quoteAsset}` === 'BTC/USDT'
-);
-```
+  <Accordion title="ESM / CommonJS issues">
+    **Symptoms:** `ERR_REQUIRE_ESM` or import syntax errors
 
-```python Python
-pairs = client.list_pairs()
-exists = any(
-    f"{p.base.ticker}/{p.quote.ticker}" == "BTC/USDT"
-    for p in pairs if p.base and p.quote
-)
-```
-</CodeGroup>
+    **Solutions:**
+    1. The SDK is ESM-only. Ensure your project uses ESM:
+       - `"type": "module"` in `package.json`
+       - Or use `.mts` file extension
+    2. If you must use CommonJS, use dynamic import: `const sdk = await import('kaleidoswap-sdk')`
+  </Accordion>
+</AccordionGroup>
 
-2. Increase timeout:
-```typescript
-const quote = await stream.recv(60.0);  // 60 seconds
-```
+## Python-Specific Issues
 
----
+<AccordionGroup>
+  <Accordion title="Pydantic validation errors">
+    **Symptoms:** `ValidationError` from Pydantic when parsing API responses
 
-## Type Issues
+    **Solutions:**
+    1. Ensure `pydantic>=2.0` is installed
+    2. Check that you are using the correct request format
+    3. The API may have been updated -- try updating the SDK: `pip install --upgrade kaleidoswap-sdk`
+  </Accordion>
 
-### Raw vs Parsed Responses
+  <Accordion title="httpx connection errors">
+    **Symptoms:** `httpx.ConnectError` or similar
 
-**Problem:** TypeScript type errors with `{ raw: true }`
+    **Solutions:**
+    1. Check that the API URL is reachable
+    2. If using a proxy, configure it via environment variables: `HTTP_PROXY`, `HTTPS_PROXY`
+    3. Increase timeout if the connection is slow
+  </Accordion>
+</AccordionGroup>
 
-**Solution:** Use proper type handling:
-
-```typescript
-// Without raw - returns typed objects
-const assets = await client.listAssets();
-assets.forEach(a => console.log(a.ticker));  // ✅ TypeScript knows type
-
-// With raw - returns JSON string
-const assetsJson = await client.listAssets({ raw: true });
-if (typeof assetsJson === 'string') {
-  const parsed = JSON.parse(assetsJson);
-}
-```
-
----
-
-## Debugging Tips
+## Debugging
 
 ### Enable Verbose Logging
 
 <CodeGroup>
 ```typescript TypeScript
-// Log API calls
-const originalFetch = global.fetch;
-global.fetch = async (...args) => {
-  console.log('Request:', args[0]);
-  const response = await originalFetch(...args);
-  console.log('Response:', response.status);
-  return response;
-};
+// Use Node.js debugging
+// Set environment variable: NODE_DEBUG=http
+// Or inspect network with browser DevTools
 ```
 
 ```python Python
 import logging
+
+# Enable debug logging for httpx
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("websockets").setLevel(logging.DEBUG)
 ```
 </CodeGroup>
 
@@ -387,45 +271,74 @@ logging.basicConfig(level=logging.DEBUG)
 
 <CodeGroup>
 ```typescript TypeScript
-const config = {
-  baseUrl: process.env.KALEIDO_API_URL,
-  nodeUrl: process.env.KALEIDO_NODE_URL,
-};
-
-console.log('Config:', {
-  ...config,
-  apiKey: config.apiKey ? '***' : undefined,
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
 });
+
+console.log(`Has node: ${client.hasNode()}`);
+
+// Test connectivity
+try {
+  const assets = await client.maker.listAssets();
+  console.log(`API connected: ${assets.assets.length} assets`);
+} catch (error) {
+  console.error('API connection failed:', error);
+}
+
+if (client.hasNode()) {
+  try {
+    const nodeInfo = await client.rln.getNodeInfo();
+    console.log(`Node connected: ${nodeInfo.pubkey}`);
+  } catch (error) {
+    console.error('Node connection failed:', error);
+  }
+}
 ```
 
 ```python Python
-print(f"Base URL: {config.base_url}")
-print(f"Node URL: {config.node_url}")
-print(f"Timeout: {config.timeout}")
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com",
+    node_url="http://localhost:3001",
+)
+
+print(f"Has node: {client.has_node()}")
+
+try:
+    assets = client.maker.list_assets()
+    print(f"API connected: {len(assets.assets)} assets")
+except Exception as e:
+    print(f"API connection failed: {e}")
+
+if client.has_node():
+    try:
+        node_info = client.rln.get_node_info()
+        print(f"Node connected: {node_info.pubkey}")
+    except Exception as e:
+        print(f"Node connection failed: {e}")
 ```
 </CodeGroup>
 
----
-
 ## Getting Help
-
-If you're still experiencing issues:
 
 <CardGroup cols={2}>
   <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
-    Report bugs and request features
+    Report bugs or request features
   </Card>
-  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
-    Community support
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Get help from the community
   </Card>
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct assistance
+    Direct support for urgent issues
+  </Card>
+  <Card title="API Reference" icon="book" href="/sdk/api-reference">
+    Complete method documentation
   </Card>
 </CardGroup>
 
 When reporting issues, include:
-- SDK version
-- Language version (Node.js / Python)
-- Operating system
-- Full error message and stack trace
-- Minimal reproduction code
+1. SDK version (`getVersion()` / `get_version()`)
+2. Language and runtime version (Node.js / Python)
+3. Error message and stack trace
+4. Minimal code to reproduce
+5. Environment (Regtest / Signet / Mainnet)

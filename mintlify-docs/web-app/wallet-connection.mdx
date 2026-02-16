@@ -7,21 +7,26 @@ description: Connect your Bitcoin wallet to start trading
 
 The KaleidoSwap Web App supports multiple Bitcoin wallet extensions:
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Alby" icon="bolt">
     Lightning-native browser wallet with WebLN support
     
-    [Install Alby →](https://getalby.com)
+    [Install Alby](https://getalby.com)
   </Card>
   <Card title="Xverse" icon="wallet">
     Full-featured Bitcoin Web3 wallet
     
-    [Install Xverse →](https://xverse.app)
+    [Install Xverse](https://xverse.app)
   </Card>
   <Card title="BitMask" icon="palette">
     RGB & Lightning wallet with asset support
     
-    [Install BitMask →](https://bitmask.app)
+    [Install BitMask](https://bitmask.app)
+  </Card>
+  <Card title="Rate" icon="puzzle-piece">
+    Bitcoin Layer 2 extension with built-in RGB, swap, and DApp support
+    
+    [Install Rate](/extensions/rate/installation)
   </Card>
 </CardGroup>
 
@@ -108,6 +113,30 @@ BitMask specializes in RGB assets and Lightning:
 3. Authorize the connection
 4. Access to RGB capabilities enabled
 
+### Rate
+
+<Note>
+**Best for:** Users who want a self-contained Bitcoin Layer 2 wallet with built-in swap support
+</Note>
+
+Rate is a Chrome extension wallet purpose-built for Bitcoin Layer 2 networks:
+
+- **Multi-Protocol** - Supports RGB, with Spark, Arkade, and Liquid planned
+- **Built-in Swaps** - Swap assets directly within the extension via the Kaleidoswap maker API
+- **WebLN Provider** - Exposes `window.rgbwebln` for seamless DApp integration
+- **Nostr Signer** - NIP-07 support for Nostr-based apps
+- **Pay with Wallet** - On the order page, pay deposit invoices directly from Rate without leaving the browser
+
+**Connection Flow:**
+1. Select Rate from the wallet list
+2. Rate popup appears requesting permission
+3. Approve the connection
+4. Your node address is linked and you can pay invoices directly from the order page
+
+<Tip>
+With Rate connected, you can use the **Pay with Wallet** button on the order page to pay your deposit invoice without switching apps.
+</Tip>
+
 ## Managing Your Connection
 
 ### Viewing Wallet Details
@@ -147,10 +176,13 @@ Disconnecting is recommended when using a shared computer.
 ### What We Access
 
 When you connect, KaleidoSwap can:
-- ✅ See your public address
-- ✅ Request transaction signatures
-- ❌ Access your private keys
-- ❌ Move funds without approval
+- See your public address
+- Request transaction signatures
+- Request invoice payments (with your approval)
+
+KaleidoSwap **cannot**:
+- Access your private keys
+- Move funds without your approval
 
 ## Troubleshooting
 

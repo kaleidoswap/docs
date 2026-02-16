@@ -3,9 +3,13 @@ title: Quickstart
 description: Get started with KaleidoSwap in minutes
 ---
 
-<CardGroup cols={2}>
-  <Card title="Desktop App User" icon="desktop" href="#desktop-app-quickstart">
-    Start trading RGB assets with the desktop application
+<CardGroup cols={3}>
+  <Card title="Desktop App" icon="desktop" href="#desktop-app-quickstart">
+    Atomic swaps via the desktop application
+  </Card>
+
+  <Card title="Web App" icon="globe" href="#web-app-quickstart">
+    Order-based swaps from your browser
   </Card>
 
   <Card title="Developer" icon="code" href="#developer-quickstart">
@@ -76,8 +80,53 @@ description: Get started with KaleidoSwap in minutes
 </Steps>
 
 <Check>
-  **Congratulations!** You've completed your first RGB asset swap on Lightning Network.
+  **Congratulations!** You've completed your first atomic RGB asset swap on Lightning Network.
 </Check>
+
+---
+
+## Web App Quickstart
+
+<Note>
+  The web app currently uses **order-based swaps** -- you create an order, pay, and wait for the maker to fulfill it. This is different from the desktop app's atomic swaps.
+</Note>
+
+<Steps>
+  <Step title="Open the Web App">
+    Navigate to the KaleidoSwap web app in your browser -- no installation needed.
+  </Step>
+
+  <Step title="Connect Your Wallet">
+    Connect a supported wallet:
+
+    | Wallet | Best For |
+    |--------|----------|
+    | **Alby** | Lightning payments |
+    | **Xverse** | Bitcoin & Ordinals |
+    | **BitMask** | RGB asset management |
+    | **Rate** | Bitcoin Layer 2 with built-in swaps |
+
+    <Tip>
+      Don't have a wallet? [Install the Rate extension](/extensions/rate/installation) for a complete Bitcoin Layer 2 experience.
+    </Tip>
+  </Step>
+
+  <Step title="Select Assets & Amount">
+    Choose the asset pair (e.g., BTC → USDT), enter the amount, and provide your **recipient address** where you want to receive the swapped asset.
+  </Step>
+
+  <Step title="Create Order & Pay">
+    Review the quote, confirm the order, and pay the deposit invoice shown on the order page.
+  </Step>
+
+  <Step title="Wait for Execution">
+    After payment is detected, the maker will execute your swap. Track progress on the order page.
+  </Step>
+</Steps>
+
+<Card title="Web App Guide" icon="globe" href="/web-app/introduction">
+  Full web app documentation with detailed trading guides →
+</Card>
 
 ---
 
@@ -97,34 +146,30 @@ from kaleidoswap_sdk import KaleidoClient
 
 async def main():
     # Initialize client
-    client = KaleidoClient(
-        api_url="https://api.staging.kaleidoswap.com/api/v1",
-        node_url="<Your RGB Lightning Node URL>"
+    client = KaleidoClient.create(
+        maker_url="https://api.staging.kaleidoswap.com/api/v1",
+        rln_url="<Your RGB Lightning Node URL>"
     )
 
-    try:
-        # Get available trading pairs
-        pairs = await client.list_pairs()
-        print(f"Available pairs: {len(pairs.pairs)}")
+    # Get available assets
+    assets = await client.maker.list_assets()
+    print(f"Available assets: {len(assets)}")
 
-        # Get a quote for BTC to USDT
-        quote = await client.get_quote(
-            from_asset="BTC",
-            to_asset="rgb:q1O5Mn5y-7EoxdTy-xu3ChkP-HmhgGvJ-vQ3ryQ9-CcMxkfg",
-            amount=100000  # 0.001 BTC
-        )
-        print(f"Exchange rate: {quote.exchange_rate}")
-
-    finally:
-        await client.close()
+    # Get a quote for BTC to USDT
+    quote = await client.maker.get_quote(
+        from_asset="BTC",
+        to_asset="USDT",
+        amount=100000
+    )
+    print(f"Quote received: {quote}")
 
 asyncio.run(main())
 ```
 
 </CodeGroup>
 
-<Card title="Python SDK Documentation" icon="python" href="/sdk/python/index">
-  Explore the complete Python SDK documentation →
+<Card title="Python SDK Documentation" icon="python" href="/sdk/introduction">
+  Explore the complete SDK documentation →
 </Card>
 
 ### TypeScript SDK
@@ -132,33 +177,33 @@ asyncio.run(main())
 <CodeGroup>
 
 ```bash npm
-npm install @kaleidoswap/kaleidoswap-sdk
+npm install kaleidoswap-sdk
 ```
 
 ```bash yarn
-yarn add @kaleidoswap/kaleidoswap-sdk
+yarn add kaleidoswap-sdk
 ```
 
 ```typescript Basic Usage
-import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
 async function main() {
   // Initialize client
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  const client = KaleidoClient.create({
+    makerUrl: 'https://api.staging.kaleidoswap.com/api/v1'
   });
 
-  // Get available trading pairs
-  const pairs = await client.pairList();
-  console.log(`Available pairs: ${pairs.pairs.length}`);
+  // Get available assets
+  const assets = await client.maker.listAssets();
+  console.log(`Available assets: ${assets.length}`);
 
   // Get a quote for BTC to USDT
-  const quote = await client.quoteRequest({
-    from_asset: 'BTC',
-    from_amount: 100000, // 0.001 BTC in satoshis
-    to_asset: 'USDT'
+  const quote = await client.maker.getQuote({
+    fromAsset: 'BTC',
+    toAsset: 'USDT',
+    amount: 100000
   });
-  console.log(`Exchange rate: ${quote.price}`);
+  console.log(`Quote received:`, quote);
 }
 
 main().catch(console.error);
@@ -166,8 +211,8 @@ main().catch(console.error);
 
 </CodeGroup>
 
-<Card title="TypeScript SDK Documentation" icon="js" href="/sdk/typescript/index">
-  Explore the complete TypeScript SDK documentation →
+<Card title="TypeScript SDK Documentation" icon="js" href="/sdk/introduction">
+  Explore the complete SDK documentation →
 </Card>
 
 ### API Quick Reference
@@ -202,17 +247,25 @@ curl -X POST https://api.staging.kaleidoswap.com/api/v1/quotes \
 
 ## Next Steps
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Desktop App Guide" icon="book-open" href="/desktop-app/getting-started/introduction">
-    Learn about advanced features like channel management and backups
+    Advanced features: channels, backups, and more
   </Card>
 
-  <Card title="SDK Examples" icon="code" href="/sdk/python/examples">
-    Explore real-world code examples for common workflows
+  <Card title="Web App Guide" icon="globe" href="/web-app/introduction">
+    Full web app trading guide
+  </Card>
+
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
+    Bitcoin Layer 2 wallet extension
+  </Card>
+
+  <Card title="SDK Examples" icon="code" href="/sdk/examples">
+    Real-world code examples for common workflows
   </Card>
 
   <Card title="API Documentation" icon="brackets-curly" href="/api-reference/introduction">
-    Deep dive into our REST API endpoints
+    Deep dive into REST API endpoints
   </Card>
 
   <Card title="Join Community" icon="users" href="https://t.me/kaleidoswap">

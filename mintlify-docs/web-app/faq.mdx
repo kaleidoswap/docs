@@ -11,23 +11,36 @@ description: Frequently asked questions and common solutions
     - **Alby** - Lightning browser wallet
     - **Xverse** - Bitcoin Web3 wallet  
     - **BitMask** - RGB & Lightning wallet
+    - **Rate** - Bitcoin Layer 2 extension with built-in RGB and swap support
     
-    More wallets coming soon, including WalletConnect for mobile.
+    More wallets may be added in the future.
   </Accordion>
 
   <Accordion title="Is KaleidoSwap custodial?">
-    **No.** KaleidoSwap is fully non-custodial:
-    - Your keys stay in your wallet
-    - Swaps are atomic (all-or-nothing)
+    **No.** KaleidoSwap does not hold your keys or funds:
+    - Your keys stay in your wallet extension
     - No account or registration needed
-    - Funds move directly peer-to-peer
+    
+    However, in this phase swaps are **order-based, not atomic**. When you create a swap order, you pay a deposit first. The maker then processes the swap and sends the asset to your recipient address. This means there is a trust component during the execution window -- you rely on the maker to fulfill the order after receiving your payment.
+  </Accordion>
+
+  <Accordion title="How do order-based swaps work?">
+    The swap process has several steps:
+    
+    1. **Create an order** - Select assets, enter amount and recipient address, confirm the swap
+    2. **Pay the deposit** - You are shown a deposit address or invoice. Pay the exact amount.
+    3. **Maker executes** - Once your payment is confirmed, the maker processes the swap and sends the asset to your recipient address.
+    4. **Order complete** - The order page shows the final status.
+    
+    Swaps are not atomic in this phase. You pay first, then wait for the maker to send the swapped asset.
   </Accordion>
 
   <Accordion title="How fast are swaps?">
-    - **Lightning swaps** - Typically 1-10 seconds
-    - **On-chain swaps** - 10+ minutes (requires confirmations)
+    Swap speed depends on:
+    - **Payment confirmation** - Lightning payments are detected quickly. On-chain payments require block confirmations.
+    - **Maker execution** - After your payment is confirmed, the maker processes the swap. This typically takes a short time but is not instant.
     
-    Lightning is recommended for speed.
+    Overall, Lightning-based swaps are faster than on-chain swaps.
   </Accordion>
 
   <Accordion title="What fees are charged?">
@@ -35,7 +48,7 @@ description: Frequently asked questions and common solutions
     - **Network fee** - Lightning/Bitcoin network costs
     - **Protocol fee** - Small percentage for market makers
     
-    All fees are shown before you confirm the swap.
+    All fees are shown before you confirm the swap order.
   </Accordion>
 
   <Accordion title="What assets can I trade?">
@@ -45,6 +58,40 @@ description: Frequently asked questions and common solutions
     - **XAUT** - Tether Gold (RGB)
     
     More RGB assets are added regularly.
+  </Accordion>
+
+  <Accordion title="Where do I enter my recipient address?">
+    The recipient address field is on the swap panel, below the "To" card. This is where the maker will send the swapped asset after your payment is confirmed.
+    
+    The address format depends on the destination layer:
+    - **Lightning** - A BOLT11 invoice
+    - **Bitcoin on-chain** - A Bitcoin address (bc1q..., etc.)
+    - **RGB** - An RGB invoice
+  </Accordion>
+
+  <Accordion title="What happens if the rate changes?">
+    If the exchange rate changes after your order is created, you may see a **Rate Decision** screen on the order page. You have two options:
+    
+    - **Accept the new rate** - The swap continues with the updated rate
+    - **Cancel and request a refund** - The order is cancelled and your payment is refunded
+    
+    If you do not respond before the order expires, it is automatically cancelled and a refund is initiated.
+  </Accordion>
+
+  <Accordion title="What if I overpay or underpay?">
+    If your payment does not match the expected amount, the order page will show a **Payment Issue** screen displaying the expected amount, the amount received, and the difference.
+    
+    Payment discrepancies require manual resolution through support. Use the email or Telegram links on the payment issue screen.
+  </Accordion>
+
+  <Accordion title="Can I cancel an order?">
+    Orders cannot be manually cancelled once created. However:
+    - If you do not pay the deposit before the expiry countdown, the order **expires automatically**.
+    - If you are presented with a rate decision, you can choose to **cancel and request a refund**.
+  </Accordion>
+
+  <Accordion title="What if the maker doesn't send the asset?">
+    If the maker does not fulfill your order after payment, the order will eventually show a **Failed** status. Contact support via email or Telegram to resolve the issue and initiate a refund.
   </Accordion>
 
   <Accordion title="Are there trading limits?">
@@ -59,8 +106,8 @@ description: Frequently asked questions and common solutions
     
     For best experience:
     - Use Chrome or Safari on mobile
+    - Scan the deposit QR code with your mobile wallet
     - Ensure your wallet app is installed
-    - WalletConnect support coming soon
   </Accordion>
 
   <Accordion title="What networks are supported?">
@@ -138,22 +185,34 @@ description: Frequently asked questions and common solutions
     **Symptoms:** Button is grayed out
     
     **Possible causes:**
-    - No wallet connected → Connect wallet
-    - Invalid amount → Adjust amount
-    - Missing asset selection → Select both assets
-    - Quote expired → Wait for new quote
-    - Invalid pair → Select valid pair
+    - No wallet connected - Connect wallet
+    - Invalid amount - Adjust amount
+    - Missing asset selection - Select both assets
+    - Quote expired - Wait for new quote
+    - Invalid pair - Select valid pair
+    - Missing recipient address - Enter a valid address
   </Accordion>
 
-  <Accordion title="Swap failed">
-    **Symptoms:** Error message after clicking swap
+  <Accordion title="Order expired">
+    **Symptoms:** Order page shows "Expired" status
+    
+    **Causes:**
+    - The deposit was not paid within the expiry window
     
     **Solutions:**
-    1. Check wallet balance is sufficient
-    2. Ensure wallet is unlocked
-    3. Quote may have expired → Get fresh quote
-    4. Network congestion → Wait and retry
-    5. Check for pending transactions
+    1. Create a new swap order with a fresh quote
+    2. Pay the deposit promptly after order creation
+  </Accordion>
+
+  <Accordion title="Payment not detected">
+    **Symptoms:** Order still shows "Awaiting Deposit" after payment
+    
+    **Solutions:**
+    1. For on-chain payments, wait for block confirmations
+    2. Check your wallet to confirm the transaction was sent
+    3. Verify you paid the exact amount shown
+    4. Wait for the next status poll (every 10 seconds)
+    5. Contact support if the issue persists
   </Accordion>
 </AccordionGroup>
 
@@ -199,6 +258,9 @@ description: Frequently asked questions and common solutions
 | "Insufficient balance" | Not enough funds | Add funds to wallet |
 | "Network error" | Connection issue | Check internet, retry |
 | "Transaction rejected" | User cancelled | Try again, approve in wallet |
+| "Order expired" | Deposit not paid in time | Create a new order |
+| "Rate changed" | Exchange rate updated | Accept or reject new rate |
+| "Payment issue" | Deposit mismatch | Contact support |
 
 ## Getting Help
 
@@ -222,6 +284,7 @@ description: Frequently asked questions and common solutions
 When reporting problems, include:
 1. Browser and version
 2. Wallet extension name and version
-3. Steps to reproduce
-4. Error messages (screenshots help)
-5. Network (Mainnet/Signet/Regtest)
+3. Order ID (if applicable)
+4. Steps to reproduce
+5. Error messages (screenshots help)
+6. Network (Mainnet/Signet/Regtest)

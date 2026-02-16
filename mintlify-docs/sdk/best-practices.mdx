@@ -1,18 +1,20 @@
 ---
 title: 'Best Practices'
-description: 'Recommended patterns for SDK development'
+description: 'Development guidelines for building with the KaleidoSwap SDK'
 ---
 
 ## Client Initialization
 
 ### Use Environment Variables
 
+Keep configuration out of source code:
+
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
-const client = new KaleidoClient({
-  baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
+const client = KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL!,
   nodeUrl: process.env.KALEIDO_NODE_URL,
   apiKey: process.env.KALEIDO_API_KEY,
 });
@@ -20,29 +22,30 @@ const client = new KaleidoClient({
 
 ```python Python
 import os
-from kaleidoswap import KaleidoClient, KaleidoConfig
+from kaleidoswap_sdk import KaleidoClient
 
-config = KaleidoConfig(
-    base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com"),
+client = KaleidoClient.create(
+    base_url=os.environ["KALEIDO_API_URL"],
     node_url=os.environ.get("KALEIDO_NODE_URL"),
     api_key=os.environ.get("KALEIDO_API_KEY"),
 )
-client = KaleidoClient(config)
 ```
 </CodeGroup>
 
-### Create a Singleton Client
+### Use a Singleton Client
 
-For most applications, reuse a single client instance:
+Create one client instance and reuse it throughout your application:
 
 <CodeGroup>
 ```typescript TypeScript
 // lib/kaleido.ts
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
 let client: KaleidoClient | null = null;
 
 export function getClient(): KaleidoClient {
   if (!client) {
-    client = new KaleidoClient({
+    client = KaleidoClient.create({
       baseUrl: process.env.KALEIDO_API_URL!,
     });
   }
@@ -52,350 +55,339 @@ export function getClient(): KaleidoClient {
 
 ```python Python
 # lib/kaleido.py
+from kaleidoswap_sdk import KaleidoClient
+
 _client = None
 
-def get_client():
+def get_client() -> KaleidoClient:
     global _client
     if _client is None:
-        from kaleidoswap import KaleidoClient, KaleidoConfig
-        config = KaleidoConfig(base_url=os.environ["KALEIDO_API_URL"])
-        _client = KaleidoClient(config)
+        _client = KaleidoClient.create(
+            base_url=os.environ["KALEIDO_API_URL"]
+        )
     return _client
 ```
 </CodeGroup>
 
----
-
 ## Error Handling
 
-### Always Catch Errors
+### Always Handle Errors
+
+Wrap SDK calls in try/catch blocks and handle specific error types:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient, KaleidoError } from '@kaleidoswap/sdk';
+import { KaleidoError, NetworkError, QuoteExpiredError } from 'kaleidoswap-sdk';
 
 try {
-  const assets = await client.listAssets();
+  const quote = await client.maker.getQuote({ /* ... */ });
 } catch (error) {
-  if (error instanceof KaleidoError) {
-    console.error('SDK error:', error.message);
-  } else {
-    throw error;  // Re-throw unexpected errors
+  if (error instanceof QuoteExpiredError) {
+    // Retry with a fresh quote
+  } else if (error instanceof NetworkError && error.isRetryable()) {
+    // Retry after a delay
+  } else if (error instanceof KaleidoError) {
+    // Log and handle gracefully
+    console.error(`[${error.code}] ${error.message}`);
   }
 }
 ```
 
 ```python Python
-from kaleidoswap import KaleidoError
+from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError
 
 try:
-    assets = client.list_assets()
-except KaleidoError as e:
-    print(f"SDK error: {e}")
-```
-</CodeGroup>
-
-### Use Specific Exception Types
-
-Handle different errors appropriately:
-
-<CodeGroup>
-```typescript TypeScript
-import { 
-  ValidationError, 
-  QuoteExpiredError, 
-  NetworkError 
-} from '@kaleidoswap/sdk';
-
-try {
-  const quote = await client.getQuoteByPair('BTC/USDT', amount);
-} catch (error) {
-  if (error instanceof ValidationError) {
-    // User input error - show message
-  } else if (error instanceof QuoteExpiredError) {
-    // Get fresh quote
-  } else if (error instanceof NetworkError) {
-    // Retry with backoff
-  }
-}
-```
-
-```python Python
-from kaleidoswap import ValidationError, QuoteExpiredError, NetworkError
-
-try:
-    quote = client.get_quote_by_pair("BTC/USDT", from_amount=amount)
-except ValidationError as e:
-    # User input error - show message
-    pass
+    quote = client.maker.get_quote({...})
 except QuoteExpiredError:
-    # Get fresh quote
+    # Retry with a fresh quote
     pass
-except NetworkError:
-    # Retry with backoff
+except NetworkError as e:
+    if e.is_retryable():
+        # Retry after a delay
+        pass
+except KaleidoError as e:
+    print(f"[{e.code}] {e}")
+```
+</CodeGroup>
+
+### Check Retryability
+
+Use `isRetryable()` before implementing retry logic:
+
+<CodeGroup>
+```typescript TypeScript
+if (error instanceof KaleidoError && error.isRetryable()) {
+  // Safe to retry: NetworkError, TimeoutError, 5xx errors, 429
+}
+```
+
+```python Python
+if isinstance(error, KaleidoError) and error.is_retryable():
+    # Safe to retry
     pass
 ```
 </CodeGroup>
 
----
+## Async Patterns
 
-## Async Patterns (TypeScript)
+### TypeScript: Parallel Requests
 
-### Use Promise.all for Parallel Requests
+Use `Promise.all` for independent requests:
 
 ```typescript
-// ❌ Sequential (slow)
-const assets = await client.listAssets();
-const pairs = await client.listPairs();
-
-// ✅ Parallel (fast)
-const [assets, pairs] = await Promise.all([
-  client.listAssets(),
-  client.listPairs(),
+const [assets, pairs, lspInfo] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+  client.maker.getLspInfo(),
 ]);
 ```
 
-### Handle Partial Failures
+Use `Promise.allSettled` when you want partial results:
 
 ```typescript
 const results = await Promise.allSettled([
-  client.getQuoteByPair('BTC/USDT', 1_000_000),
-  client.getQuoteByPair('BTC/XAUT', 1_000_000),
+  client.maker.listAssets(),
+  client.maker.listPairs(),
 ]);
 
-const successful = results
-  .filter((r): r is PromiseFulfilledResult<Quote> => r.status === 'fulfilled')
-  .map(r => r.value);
+for (const result of results) {
+  if (result.status === 'fulfilled') {
+    console.log('Success:', result.value);
+  } else {
+    console.error('Failed:', result.reason);
+  }
+}
 ```
 
----
+### Python: Sequential with Error Recovery
+
+```python
+results = {}
+for name, fn in [
+    ("assets", lambda: client.maker.list_assets()),
+    ("pairs", lambda: client.maker.list_pairs()),
+]:
+    try:
+        results[name] = fn()
+    except KaleidoError as e:
+        print(f"Failed to fetch {name}: {e}")
+        results[name] = None
+```
 
 ## Amount Handling
 
-### Use Atomic Units Internally
+### Always Use Raw Units for API Calls
+
+The API works with raw (smallest unit) amounts. Convert display amounts before sending:
 
 <CodeGroup>
 ```typescript TypeScript
-// ❌ Floating point issues
-const btcAmount = 0.1 + 0.2;  // 0.30000000000000004
+import { toSmallestUnits } from 'kaleidoswap-sdk';
 
-// ✅ Use atomic units
-const satsAmount = 10_000_000 + 20_000_000;  // 30000000
+// User enters 0.001 BTC
+const userInput = 0.001;
+const rawAmount = toSmallestUnits(userInput, 8);  // 100000
 
-// Convert only for display
-const displayAmount = await client.toDisplay(satsAmount, 'BTC');
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: rawAmount },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
 ```
 
 ```python Python
-# ❌ Floating point issues
-btc_amount = 0.1 + 0.2  # 0.30000000000000004
+from kaleidoswap_sdk import to_smallest_units
 
-# ✅ Use atomic units
-sats_amount = 10_000_000 + 20_000_000  # 30000000
+# User enters 0.001 BTC
+user_input = 0.001
+raw_amount = to_smallest_units(user_input, 8)  # 100000
 
-# Convert only for display
-display_amount = client.to_display(sats_amount, "BTC")
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": raw_amount},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
 ```
 </CodeGroup>
 
-### Validate Before API Calls
+### Use PrecisionHandler for Multi-Asset Apps
+
+When working with multiple assets, use `PrecisionHandler` to avoid precision errors:
 
 <CodeGroup>
 ```typescript TypeScript
-async function executeSwap(pair: string, displayAmount: number) {
-  const validation = await client.validateAmount(displayAmount, pair.split('/')[0]);
-  
-  if (!validation.valid) {
-    throw new Error(`Invalid amount: ${validation.errors.join(', ')}`);
-  }
+import { createPrecisionHandler } from 'kaleidoswap-sdk';
 
-  const quote = await client.getQuoteByPair(pair, validation.rawAmount);
-  // ... execute swap
-}
+const handler = createPrecisionHandler(mappedAssets);
+
+// Convert safely using asset ID
+const raw = handler.toRawAmount(userInput, assetId);
+const display = handler.toDisplayAmount(rawFromApi, assetId);
 ```
 
 ```python Python
-def execute_swap(pair, display_amount):
-    from_ticker = pair.split("/")[0]
-    validation = client.validate_amount(display_amount, from_ticker)
-    
-    if not validation["valid"]:
-        raise ValueError(f"Invalid amount: {validation['errors']}")
-    
-    quote = client.get_quote_by_pair(pair, from_amount=validation["raw_amount"])
-    # ... execute swap
+from kaleidoswap_sdk import create_precision_handler
+
+handler = create_precision_handler(mapped_assets)
+raw = handler.to_raw_amount(user_input, asset_id)
+display = handler.to_display_amount(raw_from_api, asset_id)
 ```
 </CodeGroup>
-
----
 
 ## Node Operations
 
-### Always Check Configuration
+### Check Node Before Using RLN
+
+Always verify the node is configured:
 
 <CodeGroup>
 ```typescript TypeScript
-if (client.hasNode()) {
-  const channels = await client.listChannels();
-} else {
-  console.log('Node not configured');
+if (!client.hasNode()) {
+  throw new Error('Node URL required for this operation');
+}
+
+const balance = await client.rln.getBtcBalance();
+```
+
+```python Python
+if not client.has_node():
+    raise RuntimeError("Node URL required for this operation")
+
+balance = client.rln.get_btc_balance()
+```
+</CodeGroup>
+
+## WebSocket
+
+### Unsubscribe When Done
+
+Always clean up WebSocket subscriptions:
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC', 'USDT', 100000, onQuote
+);
+
+// Clean up when component unmounts or user navigates away
+unsubscribe();
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    "BTC", "USDT", 100000, on_quote
+)
+
+# Clean up when done
+unsubscribe()
+```
+</CodeGroup>
+
+### Handle Reconnection
+
+Listen for reconnection events and update UI accordingly:
+
+<CodeGroup>
+```typescript TypeScript
+const ws = client.maker.enableWebSocket(wsUrl);
+
+ws.on('disconnected', () => {
+  // Show "reconnecting" indicator
+});
+
+ws.on('connected', () => {
+  // Re-request quotes after reconnection
+  ws.requestQuote({ /* ... */ });
+});
+
+ws.on('maxReconnectExceeded', () => {
+  // Show "connection lost" error to user
+});
+```
+
+```python Python
+ws = client.maker.enable_websocket(ws_url)
+
+ws.on("disconnected", lambda: print("Reconnecting..."))
+ws.on("connected", lambda: ws.request_quote({...}))
+ws.on("max_reconnect_exceeded", lambda: print("Connection lost"))
+```
+</CodeGroup>
+
+## Security
+
+### Never Expose API Keys in Client Code
+
+API keys should only be used server-side. For browser applications, proxy API calls through your backend.
+
+### Validate User Input
+
+Always validate amounts and addresses before sending to the API:
+
+<CodeGroup>
+```typescript TypeScript
+// Validate amount is within limits
+const pairs = await client.maker.listPairs();
+const pair = pairs.pairs.find(p =>
+  p.base_asset_ticker === 'BTC' && p.quote_asset_ticker === 'USDT'
+);
+
+if (pair?.routes?.[0]) {
+  const route = pair.routes[0];
+  if (amount < route.min_from_amount || amount > route.max_from_amount) {
+    throw new Error(`Amount must be between ${route.min_from_amount} and ${route.max_from_amount}`);
+  }
 }
 ```
 
 ```python Python
-if client.has_node():
-    channels = client.list_channels()
-else:
-    print("Node not configured")
+pairs = client.maker.list_pairs()
+pair = next(
+    (p for p in pairs.pairs
+     if p.base_asset_ticker == "BTC" and p.quote_asset_ticker == "USDT"),
+    None
+)
+
+if pair and pair.routes:
+    route = pair.routes[0]
+    if amount < route.min_from_amount or amount > route.max_from_amount:
+        raise ValueError(
+            f"Amount must be between {route.min_from_amount} and {route.max_from_amount}"
+        )
 ```
 </CodeGroup>
 
----
-
-## Caching
+## Performance
 
 ### Cache Static Data
 
-Assets and pairs change infrequently:
+Assets and trading pairs change infrequently. Cache them to reduce API calls:
 
 <CodeGroup>
 ```typescript TypeScript
-class MarketCache {
-  private assets: Asset[] | null = null;
-  private lastUpdate = 0;
-  private ttl = 60000;  // 1 minute
+let cachedPairs: ListPairsResponse | null = null;
+let cacheTime = 0;
 
-  async getAssets(client: KaleidoClient): Promise<Asset[]> {
-    if (!this.assets || Date.now() - this.lastUpdate > this.ttl) {
-      this.assets = await client.listAssets();
-      this.lastUpdate = Date.now();
-    }
-    return this.assets;
+async function getPairs() {
+  const now = Date.now();
+  if (!cachedPairs || now - cacheTime > 60000) {  // 60 second cache
+    cachedPairs = await client.maker.listPairs();
+    cacheTime = now;
   }
+  return cachedPairs;
 }
 ```
 
 ```python Python
 import time
 
-class MarketCache:
-    def __init__(self, ttl=60):
-        self.assets = None
-        self.last_update = 0
-        self.ttl = ttl
-    
-    def get_assets(self, client):
-        if self.assets is None or time.time() - self.last_update > self.ttl:
-            self.assets = client.list_assets()
-            self.last_update = time.time()
-        return self.assets
+_cached_pairs = None
+_cache_time = 0
+
+def get_pairs():
+    global _cached_pairs, _cache_time
+    now = time.time()
+    if _cached_pairs is None or now - _cache_time > 60:
+        _cached_pairs = client.maker.list_pairs()
+        _cache_time = now
+    return _cached_pairs
 ```
 </CodeGroup>
-
-### Don't Cache Quotes
-
-Quotes are time-sensitive - always fetch fresh:
-
-```typescript
-// ❌ Don't cache
-const cachedQuote = cache.get('btc-usdt-quote');
-
-// ✅ Always fetch fresh
-const quote = await client.getQuoteByPair('BTC/USDT', amount);
-```
-
----
-
-## WebSocket Best Practices
-
-### Always Close Streams
-
-<CodeGroup>
-```typescript TypeScript
-const stream = await client.createQuoteStream('BTC/USDT');
-try {
-  // Use stream
-} finally {
-  stream.close();  // Always cleanup
-}
-```
-
-```python Python
-with client.subscribe_quotes("BTC/USDT") as stream:
-    # Use stream - automatically closed
-    pass
-```
-</CodeGroup>
-
----
-
-## Security
-
-### Never Log Sensitive Data
-
-<CodeGroup>
-```typescript TypeScript
-// ❌ Don't log full responses
-console.log('Quote:', JSON.stringify(quote));
-
-// ✅ Log only necessary info
-console.log(`Quote ${quote.rfqId}: ${quote.price}`);
-```
-
-```python Python
-# ❌ Don't log full responses
-print(f"Quote: {quote}")
-
-# ✅ Log only necessary info
-print(f"Quote {quote.rfq_id}: {quote.price}")
-```
-</CodeGroup>
-
-### Validate External Input
-
-```typescript
-function validateTicker(ticker: string): boolean {
-  return /^[A-Z0-9]{1,10}$/.test(ticker);
-}
-
-function validateAmount(amount: unknown): number | null {
-  const num = Number(amount);
-  if (isNaN(num) || num <= 0) return null;
-  return num;
-}
-```
-
----
-
-## Performance Tips
-
-<AccordionGroup>
-  <Accordion title="Use raw mode for bulk operations">
-    ```typescript
-    const assetsJson = await client.listAssets({ raw: true });
-    // Parse once instead of per-item
-    ```
-  </Accordion>
-  
-  <Accordion title="Batch related operations">
-    ```typescript
-    // ❌ Multiple sequential calls
-    for (const ticker of tickers) {
-      const asset = await client.getAssetByTicker(ticker);
-    }
-
-    // ✅ Single call, filter locally
-    const assets = await client.listAssets();
-    const filtered = assets.filter(a => tickers.includes(a.ticker));
-    ```
-  </Accordion>
-  
-  <Accordion title="Use parallel requests">
-    ```typescript
-    const [assets, pairs] = await Promise.all([
-      client.listAssets(),
-      client.listPairs(),
-    ]);
-    ```
-  </Accordion>
-</AccordionGroup>

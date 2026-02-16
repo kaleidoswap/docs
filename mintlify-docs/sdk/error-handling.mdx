@@ -1,334 +1,324 @@
 ---
 title: 'Error Handling'
-description: 'Handle errors gracefully in your SDK applications'
+description: 'Exception hierarchy and error management patterns'
 ---
 
-## Exception Hierarchy
+## Error Hierarchy
 
-Both SDKs provide a consistent exception hierarchy:
+Both SDKs share the same error class hierarchy. All errors extend from `KaleidoError`:
 
 ```
 KaleidoError (base)
-├── APIError
-│   ├── ValidationError
-│   ├── AuthenticationError
-│   └── RateLimitError
-├── NetworkError
-├── ResourceNotFoundError
-│   ├── AssetNotFoundError
-│   ├── TradingPairNotFoundError
-│   └── OrderNotFoundError
-├── QuoteExpiredError
-├── InsufficientBalanceError
-├── NodeNotConfiguredError
-└── NodeLockedError
+├── APIError (HTTP 400-599)
+│   └── RateLimitError (HTTP 429)
+├── NetworkError (connectivity issues)
+├── ValidationError (HTTP 400, 422)
+├── TimeoutError (HTTP 408, 504)
+├── WebSocketError (WebSocket issues)
+├── NotFoundError (HTTP 404)
+├── ConfigError (configuration issues)
+├── SwapError (swap operation failures)
+├── NodeNotConfiguredError (node not set up)
+├── QuoteExpiredError (quote expired)
+└── InsufficientBalanceError (not enough funds)
 ```
 
----
+## Base Error: KaleidoError
 
-## Importing Exceptions
+All SDK errors extend `KaleidoError` with these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `code` | `string` | Error code for programmatic handling |
+| `message` | `string` | Human-readable error message |
+| `statusCode` / `status_code` | `number?` | HTTP status code (if applicable) |
+| `details` | `string?` | Additional error details |
+| `isRetryable()` / `is_retryable()` | `boolean` | Whether the error is safe to retry |
 
 <CodeGroup>
 ```typescript TypeScript
-import {
-  KaleidoError,
-  APIError,
-  ValidationError,
-  AuthenticationError,
-  RateLimitError,
-  NetworkError,
-  QuoteExpiredError,
-  InsufficientBalanceError,
-  NodeNotConfiguredError,
-} from '@kaleidoswap/sdk';
-```
-
-```python Python
-from kaleidoswap import (
-    KaleidoError,
-    APIError,
-    ValidationError,
-    AuthenticationError,
-    RateLimitError,
-    NetworkError,
-    AssetNotFoundError,
-    TradingPairNotFoundError,
-    QuoteExpiredError,
-    InsufficientBalanceError,
-    NodeNotConfiguredError,
-    NodeLockedError,
-)
-```
-</CodeGroup>
-
----
-
-## Basic Error Handling
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, KaleidoError } from '@kaleidoswap/sdk';
-
-const client = new KaleidoClient({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
-});
+import { KaleidoError } from 'kaleidoswap-sdk';
 
 try {
-  const assets = await client.listAssets();
-  console.log(`Found ${assets.length} assets`);
+  await client.maker.listPairs();
 } catch (error) {
   if (error instanceof KaleidoError) {
-    console.log(`SDK error: ${error.message}`);
-  } else {
-    throw error;  // Re-throw unexpected errors
+    console.log(`Code: ${error.code}`);
+    console.log(`Message: ${error.message}`);
+    console.log(`Status: ${error.statusCode}`);
+    console.log(`Retryable: ${error.isRetryable()}`);
   }
 }
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig, KaleidoError
-
-config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-client = KaleidoClient(config)
+from kaleidoswap_sdk import KaleidoError
 
 try:
-    assets = client.list_assets()
-    print(f"Found {len(assets)} assets")
+    client.maker.list_pairs()
 except KaleidoError as e:
-    print(f"SDK error: {e}")
+    print(f"Code: {e.code}")
+    print(f"Message: {e}")
+    print(f"Status: {e.status_code}")
+    print(f"Retryable: {e.is_retryable()}")
 ```
 </CodeGroup>
 
----
+## Specific Error Classes
+
+### APIError
+
+Raised for HTTP errors (status 400-599).
+
+<CodeGroup>
+```typescript TypeScript
+import { APIError } from 'kaleidoswap-sdk';
+// Properties: code='API_ERROR', statusCode, message, details
+```
+
+```python Python
+from kaleidoswap_sdk import APIError
+# Properties: code='API_ERROR', status_code, response_body
+```
+</CodeGroup>
+
+### RateLimitError
+
+Raised when rate limit is exceeded (HTTP 429). Extends `APIError`.
+
+<CodeGroup>
+```typescript TypeScript
+import { RateLimitError } from 'kaleidoswap-sdk';
+// Additional property: retryAfter?: number (seconds)
+
+try { /* ... */ } catch (error) {
+  if (error instanceof RateLimitError) {
+    console.log(`Retry after: ${error.retryAfter} seconds`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import RateLimitError
+# Additional property: retry_after: int | None
+
+try:
+    ...
+except RateLimitError as e:
+    print(f"Retry after: {e.retry_after} seconds")
+```
+</CodeGroup>
+
+### NetworkError
+
+Raised for network connectivity issues (DNS failures, connection refused, etc.).
+
+Always retryable (`isRetryable()` returns `true`).
+
+### ValidationError
+
+Raised for validation failures (HTTP 400, 422). Includes FastAPI validation error parsing.
+
+### TimeoutError
+
+Raised when requests time out (HTTP 408, 504).
+
+Always retryable.
+
+### WebSocketError
+
+Raised for WebSocket connection or communication errors.
+
+### NotFoundError
+
+Raised when a resource is not found (HTTP 404).
+
+### ConfigError
+
+Raised for SDK configuration issues (e.g., invalid URLs).
+
+### SwapError
+
+Raised for swap operation failures.
+
+<CodeGroup>
+```typescript TypeScript
+import { SwapError } from 'kaleidoswap-sdk';
+// Additional property: swapId?: string
+
+try { /* ... */ } catch (error) {
+  if (error instanceof SwapError) {
+    console.log(`Swap failed: ${error.swapId}`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import SwapError
+# Additional property: swap_id: str | None
+```
+</CodeGroup>
+
+### NodeNotConfiguredError
+
+Raised when an RLN node operation is attempted without a configured `nodeUrl`.
+
+<CodeGroup>
+```typescript TypeScript
+import { NodeNotConfiguredError } from 'kaleidoswap-sdk';
+
+try {
+  await client.rln.getNodeInfo();
+} catch (error) {
+  if (error instanceof NodeNotConfiguredError) {
+    console.log('Configure nodeUrl to use RLN operations');
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import NodeNotConfiguredError
+
+try:
+    client.rln.get_node_info()
+except NodeNotConfiguredError:
+    print("Configure node_url to use RLN operations")
+```
+</CodeGroup>
+
+### QuoteExpiredError
+
+Raised when attempting to use an expired quote.
+
+### InsufficientBalanceError
+
+Raised when a balance is insufficient for the requested operation.
+
+<CodeGroup>
+```typescript TypeScript
+import { InsufficientBalanceError } from 'kaleidoswap-sdk';
+// Properties: requiredAmount: bigint, availableAmount: bigint, asset?: string
+
+try { /* ... */ } catch (error) {
+  if (error instanceof InsufficientBalanceError) {
+    console.log(`Need: ${error.requiredAmount}, Have: ${error.availableAmount}`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import InsufficientBalanceError
+# Properties: required_amount, available_amount, asset
+
+try:
+    ...
+except InsufficientBalanceError as e:
+    print(f"Need: {e.required_amount}, Have: {e.available_amount}")
+```
+</CodeGroup>
 
 ## Comprehensive Error Handling
 
 <CodeGroup>
 ```typescript TypeScript
 import {
-  KaleidoClient,
   KaleidoError,
   APIError,
   NetworkError,
   ValidationError,
+  TimeoutError,
+  NotFoundError,
   QuoteExpiredError,
+  NodeNotConfiguredError,
   InsufficientBalanceError,
-} from '@kaleidoswap/sdk';
+  RateLimitError,
+} from 'kaleidoswap-sdk';
 
-async function getQuoteSafely(
-  client: KaleidoClient,
-  pair: string,
-  amount: number
-) {
-  try {
-    return await client.getQuoteByPair(pair, amount);
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      console.log(`Invalid parameters: ${error.message}`);
-      return null;
-    }
-
-    if (error instanceof QuoteExpiredError) {
-      console.log('Quote expired');
-      return null;
-    }
-
-    if (error instanceof InsufficientBalanceError) {
-      console.log(`Insufficient balance: ${error.message}`);
-      return null;
-    }
-
-    if (error instanceof NetworkError) {
-      console.log(`Network error: ${error.message}`);
-      return null;
-    }
-
-    if (error instanceof APIError) {
-      console.log(`API error: ${error.message}`);
-      return null;
-    }
-
-    if (error instanceof KaleidoError) {
-      console.log(`SDK error: ${error.message}`);
-      return null;
-    }
-
-    throw error;
+try {
+  const quote = await client.maker.getQuote({ /* ... */ });
+  const order = await client.maker.createSwapOrder({ /* ... */ });
+} catch (error) {
+  if (error instanceof QuoteExpiredError) {
+    // Get a fresh quote and retry
+  } else if (error instanceof InsufficientBalanceError) {
+    console.log(`Need ${error.requiredAmount}, have ${error.availableAmount}`);
+  } else if (error instanceof ValidationError) {
+    console.log(`Invalid request: ${error.message}`);
+  } else if (error instanceof RateLimitError) {
+    // Wait and retry
+    await new Promise(r => setTimeout(r, (error.retryAfter ?? 5) * 1000));
+  } else if (error instanceof NotFoundError) {
+    console.log('Resource not found');
+  } else if (error instanceof TimeoutError) {
+    console.log('Request timed out, retrying...');
+  } else if (error instanceof NetworkError) {
+    console.log('Network issue, check connectivity');
+  } else if (error instanceof NodeNotConfiguredError) {
+    console.log('Node not configured');
+  } else if (error instanceof APIError) {
+    console.log(`API error (${error.statusCode}): ${error.message}`);
+  } else if (error instanceof KaleidoError) {
+    console.log(`SDK error [${error.code}]: ${error.message}`);
   }
 }
 ```
 
 ```python Python
-from kaleidoswap import (
-    KaleidoClient,
-    KaleidoConfig,
+from kaleidoswap_sdk import (
     KaleidoError,
     APIError,
     NetworkError,
     ValidationError,
+    TimeoutError,
+    NotFoundError,
     QuoteExpiredError,
+    NodeNotConfiguredError,
     InsufficientBalanceError,
+    RateLimitError,
 )
+import time
 
-def get_quote_safely(client, pair, amount):
-    try:
-        return client.get_quote_by_pair(pair, from_amount=amount)
-        
-    except ValidationError as e:
-        print(f"Invalid parameters: {e}")
-        return None
-        
-    except QuoteExpiredError:
-        print("Quote expired")
-        return None
-        
-    except InsufficientBalanceError as e:
-        print(f"Insufficient balance: {e}")
-        return None
-        
-    except NetworkError as e:
-        print(f"Network error: {e}")
-        return None
-        
-    except APIError as e:
-        print(f"API error: {e}")
-        return None
-        
-    except KaleidoError as e:
-        print(f"SDK error: {e}")
-        return None
+try:
+    quote = client.maker.get_quote({...})
+    order = client.maker.create_swap_order({...})
+except QuoteExpiredError:
+    # Get a fresh quote and retry
+    pass
+except InsufficientBalanceError as e:
+    print(f"Need {e.required_amount}, have {e.available_amount}")
+except ValidationError as e:
+    print(f"Invalid request: {e}")
+except RateLimitError as e:
+    time.sleep(e.retry_after or 5)
+except NotFoundError:
+    print("Resource not found")
+except TimeoutError:
+    print("Request timed out, retrying...")
+except NetworkError:
+    print("Network issue, check connectivity")
+except NodeNotConfiguredError:
+    print("Node not configured")
+except APIError as e:
+    print(f"API error ({e.status_code}): {e}")
+except KaleidoError as e:
+    print(f"SDK error [{e.code}]: {e}")
 ```
 </CodeGroup>
 
----
+## Retry Patterns
 
-## Retry Pattern
+Use `isRetryable()` to implement automatic retries:
 
 <CodeGroup>
 ```typescript TypeScript
-import { 
-  KaleidoClient, 
-  NetworkError, 
-  APIError, 
-  RateLimitError 
-} from '@kaleidoswap/sdk';
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000
-): Promise<T> {
-  let lastError: Error | undefined;
-
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      if (error instanceof RateLimitError) {
-        const delay = baseDelay * Math.pow(2, attempt + 2);
-        console.log(`Rate limited, waiting ${delay}ms`);
+      if (error instanceof KaleidoError && error.isRetryable() && attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
         await new Promise(r => setTimeout(r, delay));
-        lastError = error;
-        continue;
-      }
-
-      if (error instanceof NetworkError) {
-        const delay = baseDelay * Math.pow(2, attempt);
-        console.log(`Network error, retry in ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-        lastError = error;
-        continue;
-      }
-
-      if (error instanceof APIError && error.message.includes('500')) {
-        const delay = baseDelay * Math.pow(2, attempt);
-        console.log(`Server error, retry in ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-        lastError = error;
-        continue;
-      }
-
-      throw error;  // Don't retry client errors
-    }
-  }
-
-  throw lastError;
-}
-
-// Usage
-const assets = await withRetry(() => client.listAssets());
-```
-
-```python Python
-import time
-from kaleidoswap import NetworkError, APIError, RateLimitError
-
-def with_retry(func, max_retries=3, base_delay=1.0):
-    last_error = None
-    
-    for attempt in range(max_retries):
-        try:
-            return func()
-            
-        except RateLimitError as e:
-            delay = base_delay * (2 ** (attempt + 2))
-            print(f"Rate limited, waiting {delay}s")
-            time.sleep(delay)
-            last_error = e
-            
-        except NetworkError as e:
-            delay = base_delay * (2 ** attempt)
-            print(f"Network error, retry in {delay}s")
-            time.sleep(delay)
-            last_error = e
-            
-        except APIError as e:
-            if "500" in str(e) or "server" in str(e).lower():
-                delay = base_delay * (2 ** attempt)
-                print(f"Server error, retry in {delay}s")
-                time.sleep(delay)
-                last_error = e
-            else:
-                raise  # Don't retry client errors
-    
-    if last_error:
-        raise last_error
-
-# Usage
-assets = with_retry(client.list_assets)
-```
-</CodeGroup>
-
----
-
-## Quote Expiry Handling
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, QuoteExpiredError } from '@kaleidoswap/sdk';
-
-async function executeSwapWithRetry(
-  client: KaleidoClient,
-  pair: string,
-  amount: number,
-  maxRetries: number = 3
-) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      // Get fresh quote
-      const quote = await client.getQuoteByPair(pair, amount);
-      
-      // Execute immediately
-      return await client.initSwap({
-        rfq_id: quote.rfqId,
-        from_asset: quote.fromAsset,
-        from_amount: quote.fromAmount,
-        to_asset: quote.toAsset,
-        to_amount: quote.toAmount,
-      });
-    } catch (error) {
-      if (error instanceof QuoteExpiredError) {
-        console.log(`Attempt ${i + 1}: Quote expired, retrying...`);
         continue;
       }
       throw error;
@@ -336,169 +326,38 @@ async function executeSwapWithRetry(
   }
   throw new Error('Max retries exceeded');
 }
+
+const pairs = await withRetry(() => client.maker.listPairs());
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, QuoteExpiredError
+import time
 
-def execute_swap_with_retry(client, pair, amount, max_retries=3):
-    for i in range(max_retries):
+def with_retry(fn, max_retries=3):
+    for attempt in range(max_retries):
         try:
-            # Get fresh quote
-            quote = client.get_quote_by_pair(pair, from_amount=amount)
-            
-            # Execute immediately
-            return client.init_swap({
-                "rfq_id": quote.rfq_id,
-                "from_asset": quote.from_asset.asset_id,
-                "from_amount": quote.from_asset.amount,
-                "to_asset": quote.to_asset.asset_id,
-                "to_amount": quote.to_asset.amount,
-            })
-        except QuoteExpiredError:
-            print(f"Attempt {i + 1}: Quote expired, retrying...")
-            continue
-    
-    raise RuntimeError("Max retries exceeded")
+            return fn()
+        except KaleidoError as e:
+            if e.is_retryable() and attempt < max_retries - 1:
+                delay = 2 ** attempt
+                time.sleep(delay)
+                continue
+            raise
+
+pairs = with_retry(lambda: client.maker.list_pairs())
 ```
 </CodeGroup>
 
----
+## HTTP Error Mapping
 
-## Node Configuration Errors
+The SDK automatically maps HTTP errors to typed exceptions using `mapHttpError` / `map_http_error`:
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, NodeNotConfiguredError } from '@kaleidoswap/sdk';
-
-async function getNodeInfo(client: KaleidoClient) {
-  // Always check before node operations
-  if (!client.hasNode()) {
-    console.log('Node not configured');
-    return null;
-  }
-
-  try {
-    return await client.getRgbNodeInfo();
-  } catch (error) {
-    if (error instanceof NodeNotConfiguredError) {
-      console.log('Node configuration error');
-      return null;
-    }
-    throw error;
-  }
-}
-```
-
-```python Python
-from kaleidoswap import KaleidoClient, NodeNotConfiguredError
-
-def get_node_info(client):
-    # Always check before node operations
-    if not client.has_node():
-        print("Node not configured")
-        return None
-    
-    try:
-        return client.get_rgb_node_info()
-    except NodeNotConfiguredError:
-        print("Node configuration error")
-        return None
-```
-</CodeGroup>
-
----
-
-## Logging Errors
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, KaleidoError, APIError, NetworkError } from '@kaleidoswap/sdk';
-
-function loggedOperation<T>(
-  name: string,
-  fn: () => Promise<T>
-): Promise<T> {
-  console.log(`Starting: ${name}`);
-  
-  return fn()
-    .then(result => {
-      console.log(`Completed: ${name}`);
-      return result;
-    })
-    .catch(error => {
-      if (error instanceof NetworkError) {
-        console.error(`Network error in ${name}: ${error.message}`);
-      } else if (error instanceof APIError) {
-        console.error(`API error in ${name}: ${error.message}`);
-      } else if (error instanceof KaleidoError) {
-        console.error(`SDK error in ${name}: ${error.message}`);
-      } else {
-        console.error(`Unexpected error in ${name}: ${error}`);
-      }
-      throw error;
-    });
-}
-
-// Usage
-const assets = await loggedOperation('listAssets', () => client.listAssets());
-```
-
-```python Python
-import logging
-from kaleidoswap import KaleidoError, APIError, NetworkError
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("kaleidoswap")
-
-def logged_operation(name, func):
-    logger.info(f"Starting: {name}")
-    
-    try:
-        result = func()
-        logger.info(f"Completed: {name}")
-        return result
-    except NetworkError as e:
-        logger.error(f"Network error in {name}: {e}")
-        raise
-    except APIError as e:
-        logger.error(f"API error in {name}: {e}")
-        raise
-    except KaleidoError as e:
-        logger.error(f"SDK error in {name}: {e}")
-        raise
-
-# Usage
-assets = logged_operation("list_assets", client.list_assets)
-```
-</CodeGroup>
-
----
-
-## Best Practices
-
-<AccordionGroup>
-  <Accordion title="Always catch KaleidoError as fallback">
-    Use specific exceptions first, then fall back to the base `KaleidoError` to catch any unexpected SDK errors.
-  </Accordion>
-  
-  <Accordion title="Check hasNode() before node operations">
-    Always verify that the node URL is configured before calling any node-specific methods.
-  </Accordion>
-  
-  <Accordion title="Handle QuoteExpiredError">
-    Quotes have a limited validity period. Always be prepared to get a fresh quote if the current one expires.
-  </Accordion>
-  
-  <Accordion title="Implement retry logic">
-    For `NetworkError` and server errors (5xx), implement exponential backoff retry logic.
-  </Accordion>
-  
-  <Accordion title="Log errors for debugging">
-    Always log errors before handling them to aid in debugging and monitoring.
-  </Accordion>
-  
-  <Accordion title="Provide user-friendly messages">
-    Map SDK exceptions to user-friendly error messages appropriate for your application.
-  </Accordion>
-</AccordionGroup>
+| HTTP Status | Error Class |
+|------------|-------------|
+| 400, 422 | `ValidationError` |
+| 404 | `NotFoundError` |
+| 408, 504 | `TimeoutError` |
+| 429 | `RateLimitError` |
+| 500, 502, 503 | `APIError` |
+| Other 4xx | `APIError` |
+| Network failure | `NetworkError` |

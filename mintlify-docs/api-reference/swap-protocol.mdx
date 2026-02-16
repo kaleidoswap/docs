@@ -1,0 +1,123 @@
+---
+title: Swap Protocol
+description: Integration guide for developers implementing taker clients in the RGB Lightning Swap Protocol
+---
+
+## Overview
+
+This guide is for developers aiming to integrate new clients as takers in the RGB Lightning Swap Protocol. The protocol facilitates the swap of RGB assets over the Lightning Network, enabling trades between a maker (the RGB Lightning Service Provider or a RLN node) and a taker.
+
+## Protocol Description
+
+The protocol involves several steps to coordinate a trade between a maker and a taker:
+
+1. **Connection**: The taker establishes a WebSocket connection to receive real-time price updates.
+2. **Subscription**: The taker subscribes to specific asset pairs to receive streaming prices.
+3. **Trade Initiation**: The taker initiates a trade by sending a swap request based on the received price updates.
+4. **Trade Execution**: The taker executes the trade after receiving the necessary details from the maker.
+
+## Sequence Diagram
+
+```
+Kaleidoswap Client (Taker)          RGB Lightning Service Provider (Maker)          RGB-Lightning Node (Taker)
+         |                                          |                                          |
+         |  ── Connection and Subscription ──       |                                          |
+         |                                          |                                          |
+         | ──── WebSocket Connection ──────────────>|                                          |
+         | ──── Subscribe to pair (e.g. BTC/USDT) ─>|                                          |
+         |<───── Confirmation ─────────────────────|                                          |
+         |<───── Stream prices with rfq_id ────────|                                          |
+         |                                          |                                          |
+         |  ── Trade Initiation ──                  |                                          |
+         |                                          |                                          |
+         | ──── POST /api/v1/swaps/init ───────────>|                                          |
+         |<───── swapstring, payment_hash ─────────|                                          |
+         |                                          |                                          |
+         |  ── Trade Execution ──                   |                                          |
+         |                                          |                                          |
+         | ──── Whitelist swap ────────────────────────────────────────────────────────────────>|
+         |<───── Swap whitelisted ─────────────────────────────────────────────────────────────|
+         |                                          |                                          |
+         | ──── POST /api/v1/swaps/execute ────────>|                                          |
+         |<───── 200 OK (Swap executed) ───────────|                                          |
+         |                                          |                                          |
+         |  ── Optional: Check Swap Status ──       |                                          |
+         |                                          |                                          |
+         | ──── GET /api/v1/swaps/status ──────────>|                                          |
+         |<───── Swap status ──────────────────────|                                          |
+```
+
+## Taker Client Integration Steps
+
+### Step 1: Establish WebSocket Connection
+
+The taker client establishes a WebSocket connection to receive real-time price updates.
+
+- **Testnet**: `wss://testnet.api.kaleidoswap.com/ws/{client_id}`
+- **Mainnet**: `wss://api.kaleidoswap.com/ws/{client_id}`
+
+Replace `{client_id}` with a unique identifier for your client.
+
+### Step 2: Subscribe to Asset Pair
+
+Send a JSON message over the WebSocket to subscribe to an asset pair:
+
+```json
+{
+  "action": "subscribe",
+  "pair": "BTC/USDT"
+}
+```
+
+### Step 3: Receive Price Stream
+
+The maker streams prices to the taker client along with a request-for-quotation ID (`rfq_id`). The taker uses this ID in subsequent trade initiation requests.
+
+### Step 4: Initiate Swap
+
+Send a POST request to the maker with the `rfq_id` and swap details.
+
+- **Endpoint**: `POST /api/v1/swaps/init`
+- **Parameters**:
+
+| Parameter | Description |
+|-----------|-------------|
+| `rfq_id` | The request-for-quotation ID from the price stream |
+| `from_asset` | The RGB asset ID to swap from |
+| `from_amount` | The amount of the asset to swap from |
+| `to_asset` | The RGB asset ID to swap to |
+| `to_amount` | The amount of the asset to swap to |
+
+### Step 5: Receive Swap Details
+
+Upon successful initiation, the maker responds with:
+- `swapstring` - The swap string for executing the trade
+- `payment_hash` - The payment hash for the swap
+
+### Step 6: Whitelist Trade
+
+Whitelist the trade on your RGB-Lightning node. This step is implementation-specific and depends on your node setup.
+
+### Step 7: Execute Swap
+
+Send a POST request to execute the trade.
+
+- **Endpoint**: `POST /api/v1/swaps/execute`
+- **Parameters**:
+
+| Parameter | Description |
+|-----------|-------------|
+| `swapstring` | The swap string received from the init step |
+| `taker_pubkey` | The public key of the taker |
+| `payment_hash` | The payment hash received from the init step |
+
+### Step 8: Confirm Trade Execution
+
+The maker confirms the trade execution and responds with the trade status.
+
+### Step 9 (Optional): Check Swap Status
+
+Check the status of a swap at any time.
+
+- **Endpoint**: `GET /api/v1/swaps/status`
+- **Query Parameter**: `payment_hash` - The payment hash of the swap

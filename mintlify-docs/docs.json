@@ -64,6 +64,7 @@
             "pages": [
               "desktop-app/channels/opening-channel",
               "desktop-app/channels/order-new-channel",
+              "desktop-app/channels/channel-requests",
               "desktop-app/channels/channel-backups"
             ]
           },
@@ -74,6 +75,14 @@
               "desktop-app/getting-started/node-hosting",
               "desktop-app/support/settings"
             ]
+          },
+          {
+            "group": "Reference",
+            "icon": "life-buoy",
+            "pages": [
+              "desktop-app/support/faq",
+              "desktop-app/support/additional-resources"
+            ]
           }
         ]
       },
@@ -81,41 +90,52 @@
         "tab": "Web App",
         "groups": [
           {
-            "group": "Tutorial: First Steps",
-            "icon": "rocket",
+            "group": "Overview",
+            "icon": "globe",
             "pages": [
-              "web-app/getting-started/introduction",
-              "web-app/getting-started/installation",
-              "web-app/getting-started/verify-binaries",
-              "web-app/wallet/creating-wallet",
-              "web-app/wallet/unlocking-wallet",
-              "web-app/trading/asset-swaps"
+              "web-app/introduction",
+              "web-app/getting-started"
             ]
           },
           {
-            "group": "How-To: Wallet Operations",
+            "group": "Guide",
+            "icon": "chart-mixed",
+            "pages": [
+              "web-app/wallet-connection",
+              "web-app/trading-interface",
+              "web-app/advanced-features"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "life-buoy",
+            "pages": [
+              "web-app/faq"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Extensions",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "puzzle-piece",
+            "pages": [
+              "extensions/introduction"
+            ]
+          },
+          {
+            "group": "Rate Wallet",
             "icon": "wallet",
             "pages": [
-              "web-app/wallet/initializing-mnemonic",
-              "web-app/wallet/deposits",
-              "web-app/wallet/withdrawals"
-            ]
-          },
-          {
-            "group": "How-To: Channel Management",
-            "icon": "git-branch",
-            "pages": [
-              "web-app/channels/opening-channel",
-              "web-app/channels/order-new-channel",
-              "web-app/channels/channel-backups"
-            ]
-          },
-          {
-            "group": "How-To: Configuration",
-            "icon": "sliders",
-            "pages": [
-              "web-app/getting-started/node-hosting",
-              "web-app/support/settings"
+              "extensions/rate/introduction",
+              "extensions/rate/installation",
+              "extensions/rate/getting-started",
+              "extensions/rate/wallet-features",
+              "extensions/rate/swaps",
+              "extensions/rate/dapp-connectivity",
+              "extensions/rate/faq"
             ]
           }
         ]
@@ -163,35 +183,23 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Reference",
-            "icon": "code",
-            "openapi": "openapi.json",
+            "group": "API Guides",
+            "icon": "book",
             "pages": [
-
               "api-reference/introduction",
               "api-reference/getting-started",
               "api-reference/error-handling",
-              "api-reference/rgb-lsps1-apis",
-              "api-reference/market-apis",
-              "api-reference/swap-apis"
+              "api-reference/swap-protocol"
             ]
           },
           {
-            "group": "API Reference",
+            "group": "Endpoints",
             "icon": "code",
             "openapi": "openapi.json",
-            "pages": []
-          }
-        ]
-      },
-      {
-        "tab": "FAQ",
-        "groups": [
-          {
-            "group": "Reference",
-            "icon": "life-buoy",
             "pages": [
-              "desktop-app/support/faq"
+              "api-reference/rgb-lsps1-apis",
+              "api-reference/market-apis",
+              "api-reference/swap-apis"
             ]
           }
         ]

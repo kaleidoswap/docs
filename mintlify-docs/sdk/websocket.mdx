@@ -1,443 +1,319 @@
 ---
 title: 'WebSocket'
-description: 'Real-time quote streaming with WebSocket'
+description: 'Real-time quote streaming via WebSocket'
 ---
 
 ## Overview
 
-The SDK supports real-time quote streaming via WebSocket connections for:
-- Live price monitoring
-- Real-time quote updates
-- Streaming market data
+The SDK provides WebSocket support for real-time quote streaming. The WebSocket client handles connection management, automatic reconnection with exponential backoff, and ping/pong keep-alive.
 
----
+There are two ways to use WebSocket:
 
-## Basic Usage
+1. **High-level**: Use `streamQuotes` / `streamQuotesByTicker` convenience methods on `MakerClient`
+2. **Low-level**: Use `WSClient` directly with event-based message handling
 
-### Creating a Quote Stream
+## Enabling WebSocket
+
+Before streaming quotes, enable the WebSocket connection:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client-id');
+```
 
-const client = new KaleidoClient({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
-});
+```python Python
+ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client-id")
+```
+</CodeGroup>
 
-// Create stream
-const stream = await client.createQuoteStream('BTC/USDT');
+The URL includes a client ID for session tracking. The `enableWebSocket` method returns a `WSClient` instance.
 
-try {
-  for (let i = 0; i < 5; i++) {
-    // Receive with timeout (returns null on timeout)
-    const quoteJson = await stream.recv(10.0);
+## High-Level API
 
-    if (quoteJson === null) {
-      console.log('Timeout - no quote received');
-      break;
-    }
+### `streamQuotesByTicker` / `stream_quotes_by_ticker`
 
-    const quote = JSON.parse(quoteJson);
-    console.log(`Quote ${i + 1}: Price ${quote.price}`);
+The simplest way to stream quotes. Automatically discovers routes and starts streaming.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC',           // fromTicker
+  'USDT',          // toTicker
+  100000,          // amount
+  (quote) => {     // callback
+    console.log(`Price: ${quote.price}, RFQ: ${quote.rfq_id}`);
+  },
+  {                // options (optional)
+    preferredFromLayer: 'BTC_LN',
+    preferredToLayer: 'RGB_LN'
   }
-} finally {
-  // Always close the stream
-  stream.close();
+);
+
+// Stop streaming when done
+unsubscribe();
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda quote: print(f"Price: {quote.price}, RFQ: {quote.rfq_id}"),
+    preferred_from_layer="BTC_LN",
+    preferred_to_layer="RGB_LN"
+)
+
+# Stop streaming when done
+unsubscribe()
+```
+</CodeGroup>
+
+### `streamQuotes` / `stream_quotes`
+
+Stream quotes for a specific route (asset IDs and layers).
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotes(
+  'BTC',           // from_asset ID
+  'USDT',          // to_asset ID
+  100000,          // from_amount (or null)
+  'BTC_LN',        // from_layer (or null)
+  'RGB_LN',        // to_layer (or null)
+  (quote) => {
+    console.log(`${quote.from_amount} -> ${quote.to_amount}`);
+  }
+);
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes(
+    from_asset="BTC",
+    to_asset="USDT",
+    from_amount=100000,
+    from_layer="BTC_LN",
+    to_layer="RGB_LN",
+    on_update=lambda quote: print(f"{quote.from_amount} -> {quote.to_amount}")
+)
+```
+</CodeGroup>
+
+### `streamQuotesForAllRoutes` / `stream_quotes_for_all_routes`
+
+Stream quotes for all available routes between two tickers simultaneously.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribers = await client.maker.streamQuotesForAllRoutes(
+  'BTC', 'USDT', 100000,
+  (route, quote) => {
+    console.log(`Route ${route}: price=${quote.price}`);
+  }
+);
+// Returns: Map<string, () => void>
+// Call each unsubscriber to stop, or iterate and call all
+```
+
+```python Python
+unsubscribers = await client.maker.stream_quotes_for_all_routes(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda route, quote: print(f"Route {route}: price={quote.price}")
+)
+# Returns: dict[str, Callable]
+```
+</CodeGroup>
+
+### `getAvailableRoutes` / `get_available_routes`
+
+Discover available routes for a pair before streaming.
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getAvailableRoutes('BTC', 'USDT');
+// Returns: Array<{ from_layer: string; to_layer: string }>
+for (const route of routes) {
+  console.log(`${route.from_layer} -> ${route.to_layer}`);
 }
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
-
-config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-client = KaleidoClient(config)
-
-# Using context manager (recommended)
-with client.subscribe_quotes("BTC/USDT") as stream:
-    for quote in stream.iter_quotes(timeout=10.0, max_quotes=5):
-        print(f"Price: {quote.price}")
+routes = await client.maker.get_available_routes("BTC", "USDT")
+for route in routes:
+    print(f"{route['from_layer']} -> {route['to_layer']}")
 ```
 </CodeGroup>
 
----
+## Low-Level WSClient API
 
-## Stream API
+For full control, use the `WSClient` directly.
 
-### TypeScript: IQuoteStream
-
-```typescript
-interface IQuoteStream {
-  // Receive the next quote (blocking with timeout)
-  // Returns null on timeout
-  recv(timeoutSecs: number): Promise<string | null>;
-
-  // Check if stream is connected
-  isConnected(): boolean;
-
-  // Close the stream
-  close(): void;
-}
-```
-
-### Python: QuoteStreamContext
-
-```python
-class QuoteStreamContext:
-    # Receive and parse the next quote
-    def recv(self, timeout: float = 5.0) -> Optional[PairQuoteResponse]
-    
-    # Iterate over quotes
-    def iter_quotes(
-        self, 
-        timeout: float = 5.0, 
-        max_quotes: Optional[int] = None
-    ) -> Iterator[PairQuoteResponse]
-    
-    # Check if connected
-    def is_connected(self) -> bool
-```
-
----
-
-## Price Monitoring
+### Connection
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client');
 
-async function monitorPrices() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.regtest.kaleidoswap.com',
-  });
+await ws.connect();
+console.log(`Connected: ${ws.isConnected()}`);
 
-  const prices: Record<string, number> = {};
-
-  const stream = await client.createQuoteStream('BTC/USDT');
-
-  try {
-    for (let i = 0; i < 10; i++) {
-      const quoteJson = await stream.recv(10.0);
-      if (!quoteJson) break;
-
-      const quote = JSON.parse(quoteJson);
-      const oldPrice = prices['BTC/USDT'];
-      const newPrice = parseFloat(quote.price);
-      prices['BTC/USDT'] = newPrice;
-
-      if (oldPrice) {
-        const change = ((newPrice - oldPrice) / oldPrice) * 100;
-        const direction = change > 0 ? '📈' : change < 0 ? '📉' : '➡️';
-        console.log(`${direction} ${newPrice.toFixed(2)} (${change.toFixed(2)}%)`);
-      } else {
-        console.log(`💰 ${newPrice.toFixed(2)}`);
-      }
-    }
-  } finally {
-    stream.close();
-  }
-}
-
-monitorPrices();
+// When done
+ws.disconnect();
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
+ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client")
 
-def monitor_prices():
-    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-    client = KaleidoClient(config)
-    
-    prices = {}
-    
-    with client.subscribe_quotes("BTC/USDT") as stream:
-        for quote in stream.iter_quotes(timeout=10.0, max_quotes=10):
-            old_price = prices.get("BTC/USDT")
-            new_price = float(quote.price)
-            prices["BTC/USDT"] = new_price
-            
-            if old_price:
-                change = ((new_price - old_price) / old_price) * 100
-                direction = "📈" if change > 0 else "📉" if change < 0 else "➡️"
-                print(f"{direction} {new_price:.2f} ({change:+.2f}%)")
-            else:
-                print(f"💰 {new_price:.2f}")
+await ws.connect()
+print(f"Connected: {ws.is_connected()}")
 
-if __name__ == "__main__":
-    monitor_prices()
+# When done
+ws.disconnect()
 ```
 </CodeGroup>
 
----
+### Events
 
-## Trading Signal Generator
+Subscribe to events using `on` / `off`:
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `connected` | -- | Connection established |
+| `disconnected` | -- | Connection closed |
+| `reconnecting` | `attempt: number` | Attempting reconnection |
+| `quoteResponse` / `quote_response` | `QuoteResponse` | New quote received |
+| `connectionEstablished` / `connection_established` | connection data | Server confirmed connection |
+| `pong` | `PongResponse` | Pong received |
+| `error` | `Error` | An error occurred |
+| `maxReconnectExceeded` / `max_reconnect_exceeded` | -- | Max reconnection attempts reached |
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+ws.on('connected', () => console.log('Connected'));
+ws.on('disconnected', () => console.log('Disconnected'));
+ws.on('reconnecting', (attempt) => console.log(`Reconnecting: attempt ${attempt}`));
+ws.on('quoteResponse', (quote) => console.log(`Quote: ${quote.price}`));
+ws.on('error', (error) => console.error(`Error: ${error.message}`));
+ws.on('maxReconnectExceeded', () => console.log('Max reconnects exceeded'));
 
-async function generateSignals() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.regtest.kaleidoswap.com',
-  });
-
-  const priceHistory: number[] = [];
-  const maxHistorySize = 10;
-
-  console.log('Generating signals for BTC/USDT...\n');
-
-  const stream = await client.createQuoteStream('BTC/USDT');
-
-  try {
-    for (let i = 0; i < 20; i++) {
-      const quoteJson = await stream.recv(10.0);
-      if (!quoteJson) break;
-
-      const quote = JSON.parse(quoteJson);
-      const price = parseFloat(quote.price);
-
-      priceHistory.push(price);
-      if (priceHistory.length > maxHistorySize) {
-        priceHistory.shift();
-      }
-
-      if (priceHistory.length < 5) {
-        console.log(`Price: ${price.toFixed(2)} (collecting...)`);
-        continue;
-      }
-
-      // Simple moving average
-      const sma = priceHistory.reduce((a, b) => a + b, 0) / priceHistory.length;
-
-      // Generate signal
-      let signal: string;
-      if (price > sma * 1.02) signal = '🔴 SELL';
-      else if (price < sma * 0.98) signal = '🟢 BUY';
-      else signal = '⚪ HOLD';
-
-      console.log(`Price: ${price.toFixed(2)} | SMA: ${sma.toFixed(2)} | ${signal}`);
-    }
-  } finally {
-    stream.close();
-  }
-}
-
-generateSignals();
+// Unsubscribe
+const handler = (quote) => { /* ... */ };
+ws.on('quoteResponse', handler);
+ws.off('quoteResponse', handler);
 ```
 
 ```python Python
-from collections import deque
-from kaleidoswap import KaleidoClient, KaleidoConfig
+ws.on("connected", lambda: print("Connected"))
+ws.on("disconnected", lambda: print("Disconnected"))
+ws.on("reconnecting", lambda attempt: print(f"Reconnecting: attempt {attempt}"))
+ws.on("quote_response", lambda quote: print(f"Quote: {quote['price']}"))
+ws.on("error", lambda err: print(f"Error: {err}"))
+ws.on("max_reconnect_exceeded", lambda: print("Max reconnects exceeded"))
 
-def generate_signals():
-    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-    client = KaleidoClient(config)
-    
-    price_history = deque(maxlen=10)
-    
-    print("Generating signals for BTC/USDT...\n")
-    
-    with client.subscribe_quotes("BTC/USDT") as stream:
-        for quote in stream.iter_quotes(timeout=10.0, max_quotes=20):
-            price = float(quote.price)
-            price_history.append(price)
-            
-            if len(price_history) < 5:
-                print(f"Price: {price:.2f} (collecting...)")
-                continue
-            
-            # Simple moving average
-            sma = sum(price_history) / len(price_history)
-            
-            # Generate signal
-            if price > sma * 1.02:
-                signal = "🔴 SELL"
-            elif price < sma * 0.98:
-                signal = "🟢 BUY"
-            else:
-                signal = "⚪ HOLD"
-            
-            print(f"Price: {price:.2f} | SMA: {sma:.2f} | {signal}")
-
-if __name__ == "__main__":
-    generate_signals()
+# Unsubscribe
+handler = lambda quote: ...
+ws.on("quote_response", handler)
+ws.off("quote_response", handler)
 ```
 </CodeGroup>
 
----
-
-## Quote Aggregation
+### Requesting Quotes
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
-
-interface QuoteStats {
-  min: number;
-  max: number;
-  avg: number;
-  count: number;
-}
-
-async function aggregateQuotes(): Promise<QuoteStats | null> {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.regtest.kaleidoswap.com',
-  });
-
-  const prices: number[] = [];
-
-  const stream = await client.createQuoteStream('BTC/USDT');
-
-  try {
-    for (let i = 0; i < 10; i++) {
-      const quoteJson = await stream.recv(10.0);
-      if (!quoteJson) break;
-
-      const quote = JSON.parse(quoteJson);
-      prices.push(parseFloat(quote.price));
-    }
-  } finally {
-    stream.close();
-  }
-
-  if (prices.length === 0) return null;
-
-  return {
-    min: Math.min(...prices),
-    max: Math.max(...prices),
-    avg: prices.reduce((a, b) => a + b, 0) / prices.length,
-    count: prices.length,
-  };
-}
-
-aggregateQuotes().then(stats => {
-  if (stats) {
-    console.log(`📊 Stats (${stats.count} quotes)`);
-    console.log(`   Min: ${stats.min.toFixed(2)}`);
-    console.log(`   Max: ${stats.max.toFixed(2)}`);
-    console.log(`   Avg: ${stats.avg.toFixed(2)}`);
-  }
+ws.requestQuote({
+  from_asset: 'BTC',
+  to_asset: 'USDT',
+  from_amount: 100000,
+  from_layer: 'BTC_LN',
+  to_layer: 'RGB_LN'
 });
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
-
-def aggregate_quotes():
-    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-    client = KaleidoClient(config)
-    
-    prices = []
-    
-    with client.subscribe_quotes("BTC/USDT") as stream:
-        for quote in stream.iter_quotes(timeout=10.0, max_quotes=10):
-            prices.append(float(quote.price))
-    
-    if not prices:
-        print("No quotes received")
-        return
-    
-    print(f"📊 Stats ({len(prices)} quotes)")
-    print(f"   Min: {min(prices):.2f}")
-    print(f"   Max: {max(prices):.2f}")
-    print(f"   Avg: {sum(prices) / len(prices):.2f}")
-
-if __name__ == "__main__":
-    aggregate_quotes()
+ws.request_quote({
+    "from_asset": "BTC",
+    "to_asset": "USDT",
+    "from_amount": 100000,
+    "from_layer": "BTC_LN",
+    "to_layer": "RGB_LN"
+})
 ```
 </CodeGroup>
 
----
+### Ping / Keep-Alive
 
-## Error Handling
+The WSClient automatically pings the server at the configured interval. You can also ping manually:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient, KaleidoError } from '@kaleidoswap/sdk';
-
-async function robustStreaming() {
-  const client = new KaleidoClient({
-    baseUrl: 'https://api.regtest.kaleidoswap.com',
-  });
-
-  let stream;
-
-  try {
-    stream = await client.createQuoteStream('BTC/USDT');
-
-    while (true) {
-      if (!stream.isConnected()) {
-        console.log('Stream disconnected');
-        break;
-      }
-
-      const quoteJson = await stream.recv(10.0);
-
-      if (quoteJson === null) {
-        console.log('Timeout');
-        continue;
-      }
-
-      const quote = JSON.parse(quoteJson);
-      console.log(`Quote: ${quote.price}`);
-    }
-  } catch (error) {
-    if (error instanceof KaleidoError) {
-      console.log(`SDK error: ${error.message}`);
-    } else {
-      console.log(`Unexpected error: ${error}`);
-    }
-  } finally {
-    if (stream) stream.close();
-  }
-}
-
-robustStreaming();
+ws.ping();
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig, KaleidoError
-
-def robust_streaming():
-    config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-    client = KaleidoClient(config)
-    
-    try:
-        with client.subscribe_quotes("BTC/USDT") as stream:
-            for quote in stream.iter_quotes(timeout=10.0, max_quotes=10):
-                print(f"Quote: {quote.price}")
-                
-    except KaleidoError as e:
-        print(f"SDK error: {e}")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-
-if __name__ == "__main__":
-    robust_streaming()
+ws.ping()
 ```
 </CodeGroup>
 
----
+## Configuration
+
+The WSClient accepts configuration options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `maxReconnectAttempts` / `max_reconnect_attempts` | `5` | Maximum reconnection attempts |
+| `reconnectDelay` / `reconnect_delay` | `1000ms` / `1.0s` | Base delay between reconnections (exponential backoff) |
+| `pingInterval` / `ping_interval` | `30000ms` / `30.0s` | Interval between keep-alive pings |
+
+Reconnection uses exponential backoff: `delay * 2^attempt`.
+
+## WebSocket Protocol
+
+The WebSocket uses a JSON message protocol:
+
+### Message Types
+
+| Action | Direction | Description |
+|--------|-----------|-------------|
+| `quote_request` | Client -> Server | Request a price quote |
+| `quote_response` | Server -> Client | Quote update |
+| `ping` | Client -> Server | Keep-alive ping |
+| `pong` | Server -> Client | Keep-alive response |
+| `connection_established` | Server -> Client | Connection confirmed |
+| `error` | Server -> Client | Error message |
+
+### QuoteResponse Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from_asset` | string | Source asset ID |
+| `to_asset` | string | Destination asset ID |
+| `from_amount` | number | Source amount |
+| `to_amount` | number | Destination amount |
+| `price` | number | Exchange rate |
+| `rfq_id` | string | Request-for-quote ID (use to create orders) |
+| `price_precision` | number | Price decimal precision |
+| `timestamp` | number | Server timestamp |
+| `expires_at` | number | Quote expiry timestamp |
+| `fee` | Fee | Fee breakdown |
 
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Always close streams">
-    Use try/finally in TypeScript or context managers in Python to ensure streams are properly closed.
+  <Accordion title="Handle disconnections gracefully">
+    Subscribe to `disconnected` and `reconnecting` events. The WSClient automatically reconnects with exponential backoff, but you should handle the case where max attempts are exceeded.
   </Accordion>
-  
-  <Accordion title="Check connection status">
-    Use `isConnected()` / `is_connected()` for long-running streams to detect disconnections.
+
+  <Accordion title="Use the high-level API when possible">
+    `streamQuotesByTicker` handles route discovery, connection management, and quote routing for you. Only use the low-level `WSClient` when you need custom control.
   </Accordion>
-  
-  <Accordion title="Set appropriate timeouts">
-    Choose timeouts based on expected quote frequency to prevent hanging.
+
+  <Accordion title="Unsubscribe when done">
+    Always call the unsubscribe function returned by `streamQuotes` / `streamQuotesByTicker` when you no longer need quotes. This prevents memory leaks and unnecessary network traffic.
   </Accordion>
-  
-  <Accordion title="Handle null returns">
-    `recv()` returns null on timeout - always check before parsing.
-  </Accordion>
-  
-  <Accordion title="Implement reconnection logic">
-    For production use, implement automatic reconnection on stream failures.
+
+  <Accordion title="Use rfq_id from quotes to create orders">
+    The `rfq_id` in each quote response is what you pass to `createSwapOrder`. Use the most recent quote to ensure the rate is still valid.
   </Accordion>
 </AccordionGroup>

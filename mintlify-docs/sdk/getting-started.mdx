@@ -1,25 +1,25 @@
 ---
 title: 'Getting Started'
-description: 'Install and configure the KaleidoSwap SDK for Python or TypeScript'
+description: 'Install and configure the KaleidoSwap SDK for TypeScript or Python'
 ---
 
 ## Installation
 
 <CodeGroup>
 ```bash npm
-npm install @kaleidoswap/sdk
+npm install kaleidoswap-sdk
 ```
 
 ```bash pnpm
-pnpm add @kaleidoswap/sdk
+pnpm add kaleidoswap-sdk
 ```
 
 ```bash yarn
-yarn add @kaleidoswap/sdk
+yarn add kaleidoswap-sdk
 ```
 
 ```bash pip
-pip install kaleidoswap
+pip install kaleidoswap-sdk
 ```
 </CodeGroup>
 
@@ -28,11 +28,11 @@ pip install kaleidoswap
 <Tabs>
   <Tab title="TypeScript">
     - Node.js 18 or higher
-    - No additional dependencies (native bindings bundled)
+    - TypeScript 5.0+ (recommended)
   </Tab>
   <Tab title="Python">
-    - Python 3.9 or higher
-    - No additional dependencies (native bindings bundled)
+    - Python 3.10 or higher
+    - Dependencies installed automatically: `httpx`, `websockets`, `pydantic`
   </Tab>
 </Tabs>
 
@@ -42,82 +42,91 @@ pip install kaleidoswap
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
-const client = await KaleidoClient.create({
+const client = KaleidoClient.create({
   baseUrl: 'https://api.regtest.kaleidoswap.com',
 });
 
 // Make your first API call
-const assets = await client.listAssets();
-console.log(`Found ${assets.length} assets`);
+const assets = await client.maker.listAssets();
+console.log(`Found ${assets.assets.length} assets`);
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
+from kaleidoswap_sdk import KaleidoClient
 
-config = KaleidoConfig(base_url="https://api.regtest.kaleidoswap.com")
-client = KaleidoClient(config)
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
 
 # Make your first API call
-assets = client.list_assets()
-print(f"Found {len(assets)} assets")
+assets = client.maker.list_assets()
+print(f"Found {len(assets.assets)} assets")
 ```
 </CodeGroup>
+
+<Note>
+`KaleidoClient.create()` is **synchronous** in both languages. No `await` is needed for client creation.
+</Note>
 
 ### Full Configuration
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient, KaleidoConfig } from '@kaleidoswap/sdk';
+import { KaleidoClient, KaleidoConfig } from 'kaleidoswap-sdk';
 
 const config: KaleidoConfig = {
   // Required: API base URL
   baseUrl: 'https://api.regtest.kaleidoswap.com',
 
-  // Optional: Your RGB Lightning Node URL (for swap execution)
+  // Optional: Your RGB Lightning Node URL
   nodeUrl: 'http://localhost:3001',
 
   // Optional: API key for authenticated requests
   apiKey: undefined,
 
-  // Optional: Request timeout in seconds (default: 30.0)
-  timeout: 30.0,
+  // Optional: Request timeout in seconds (default: 30)
+  timeout: 30,
 
   // Optional: Maximum retries (default: 3)
   maxRetries: 3,
+
+  // Optional: Cache TTL in seconds (default: 60)
+  cacheTtl: 60,
 };
 
-const client = await KaleidoClient.create(config);
+const client = KaleidoClient.create(config);
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
+from kaleidoswap_sdk import KaleidoClient
 
-config = KaleidoConfig(
+client = KaleidoClient.create(
     # Required: API base URL
     base_url="https://api.regtest.kaleidoswap.com",
 
-    # Optional: Your RGB Lightning Node URL (for swap execution)
+    # Optional: Your RGB Lightning Node URL
     node_url="http://localhost:3001",
 
     # Optional: API key for authenticated requests
     api_key=None,
 
-    # Optional: Request timeout in seconds (default: 30.0)
+    # Optional: Request timeout in seconds (default: 30)
     timeout=30.0,
 
     # Optional: Maximum retries (default: 3)
     max_retries=3,
-)
 
-client = KaleidoClient(config)
+    # Optional: Cache TTL in seconds (default: 60)
+    cache_ttl=60,
+)
 ```
 </CodeGroup>
 
 ### Environment Variables
 
-You can also configure the SDK using environment variables:
+You can configure the SDK using environment variables:
 
 ```bash
 export KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
@@ -127,26 +136,24 @@ export KALEIDO_API_KEY=your_api_key_here
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from '@kaleidoswap/sdk';
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
-const client = await KaleidoClient.create({
+const client = KaleidoClient.create({
   baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
-  nodeUrl: process.env.KALEIDO_NODE_URL || null,
-  apiKey: process.env.KALEIDO_API_KEY || null,
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+  apiKey: process.env.KALEIDO_API_KEY,
 });
 ```
 
 ```python Python
 import os
-from kaleidoswap import KaleidoClient, KaleidoConfig
+from kaleidoswap_sdk import KaleidoClient
 
-config = KaleidoConfig(
+client = KaleidoClient.create(
     base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com"),
     node_url=os.environ.get("KALEIDO_NODE_URL"),
     api_key=os.environ.get("KALEIDO_API_KEY"),
 )
-
-client = KaleidoClient(config)
 ```
 </CodeGroup>
 
@@ -160,78 +167,69 @@ client = KaleidoClient(config)
 
 ## Sub-Client Architecture
 
-The SDK organizes API operations into domain-specific sub-clients:
+The SDK organizes API operations into two sub-clients:
 
 <CodeGroup>
 ```typescript TypeScript
-// Market operations - assets, pairs, quotes
-const assets = await client.listAssets();
-const pairs = await client.listPairs();
-const quote = await client.getQuoteByPair('BTC/USDT', 1_000_000n);
+// Maker operations (market, orders, swaps, LSPS1)
+const assets = await client.maker.listAssets();
+const pairs = await client.maker.listPairs();
+const quote = await client.maker.getQuote({ /* ... */ });
+const order = await client.maker.createSwapOrder({ /* ... */ });
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+const history = await client.maker.getOrderHistory();
+const lspInfo = await client.maker.getLspInfo();
 
-// Order management
-const history = await client.getOrderHistory();
-const status = await client.getSwapOrderStatus('order-id');
-
-// Swap operations
-const result = await client.createSwapOrder(request);
-
-// LSP operations
-const lspInfo = await client.getLspInfo();
-
-// RGB Node operations (requires nodeUrl)
+// RLN operations (wallet, channels, payments -- requires nodeUrl)
 if (client.hasNode()) {
-  const nodeInfo = await client.getNodeInfo();
+  const nodeInfo = await client.rln.getNodeInfo();
+  const balance = await client.rln.getBtcBalance();
+  const channels = await client.rln.listChannels();
+  const invoice = await client.rln.createLNInvoice({ /* ... */ });
 }
 ```
 
 ```python Python
-# Market operations - assets, pairs, quotes
-assets = client.market.list_assets()
-pairs = client.market.list_pairs()
-quote = client.market.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
+# Maker operations (market, orders, swaps, LSPS1)
+assets = client.maker.list_assets()
+pairs = client.maker.list_pairs()
+quote = client.maker.get_quote({...})
+order = client.maker.create_swap_order({...})
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+history = client.maker.get_order_history()
+lsp_info = client.maker.get_lsp_info()
 
-# Order management
-history = client.orders.get_order_history()
-status = client.orders.get_swap_order_status("order-id")
-
-# Swap operations
-result = client.swaps.init_swap(request)
-
-# LSP operations
-lsp_info = client.lsp.get_lsp_info()
-
-# RGB Node operations (requires node_url)
+# RLN operations (wallet, channels, payments -- requires node_url)
 if client.has_node():
-    channels = client.node.list_channels()
-    balance = client.node.get_btc_balance()
+    node_info = client.rln.get_node_info()
+    balance = client.rln.get_btc_balance()
+    channels = client.rln.list_channels()
+    invoice = client.rln.create_ln_invoice({...})
 ```
 </CodeGroup>
 
 ## Checking Node Configuration
 
-Before executing swaps or node operations, verify that your node is configured:
+Before executing node operations, verify that your node is configured:
 
 <CodeGroup>
 ```typescript TypeScript
 if (client.hasNode()) {
-  console.log('✅ Node configured - can execute swaps');
-  
-  const nodeInfo = await client.getRgbNodeInfo();
+  console.log('Node configured - can access RLN operations');
+  const nodeInfo = await client.rln.getNodeInfo();
   console.log(`Node pubkey: ${nodeInfo.pubkey}`);
 } else {
-  console.log('⚠️ Node not configured - limited to market data');
+  console.log('Node not configured - limited to maker operations');
 }
 ```
 
 ```python Python
 if client.has_node():
-    print("✅ Node configured - can execute swaps")
-    
-    node_info = client.get_rgb_node_info()
+    print("Node configured - can access RLN operations")
+    node_info = client.rln.get_node_info()
     print(f"Node pubkey: {node_info.pubkey}")
 else:
-    print("⚠️ Node not configured - limited to market data")
+    print("Node not configured - limited to maker operations")
 ```
 </CodeGroup>
 
@@ -239,24 +237,24 @@ else:
 
 <CodeGroup>
 ```typescript TypeScript
-import { 
-  KaleidoClient, 
+import {
+  KaleidoClient,
   KaleidoError,
   NetworkError,
   ValidationError,
   APIError,
-} from '@kaleidoswap/sdk';
+} from 'kaleidoswap-sdk';
 
 try {
-  const pairs = await client.listPairs();
-  console.log(`Success: ${pairs.length} pairs found`);
+  const pairs = await client.maker.listPairs();
+  console.log(`Found ${pairs.pairs.length} pairs`);
 } catch (error) {
   if (error instanceof NetworkError) {
     console.log(`Network error: ${error.message}`);
   } else if (error instanceof ValidationError) {
     console.log(`Validation error: ${error.message}`);
   } else if (error instanceof APIError) {
-    console.log(`API error: ${error.message}`);
+    console.log(`API error (${error.statusCode}): ${error.message}`);
   } else if (error instanceof KaleidoError) {
     console.log(`SDK error: ${error.message}`);
   }
@@ -264,9 +262,8 @@ try {
 ```
 
 ```python Python
-from kaleidoswap import (
+from kaleidoswap_sdk import (
     KaleidoClient,
-    KaleidoConfig,
     KaleidoError,
     NetworkError,
     ValidationError,
@@ -274,130 +271,16 @@ from kaleidoswap import (
 )
 
 try:
-    pairs = client.list_pairs()
-    print(f"Success: {len(pairs)} pairs found")
+    pairs = client.maker.list_pairs()
+    print(f"Found {len(pairs.pairs)} pairs")
 except NetworkError as e:
     print(f"Network error: {e}")
 except ValidationError as e:
     print(f"Validation error: {e}")
 except APIError as e:
-    print(f"API error: {e}")
+    print(f"API error ({e.status_code}): {e}")
 except KaleidoError as e:
     print(f"SDK error: {e}")
-```
-</CodeGroup>
-
-## Complete Example
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, KaleidoError } from '@kaleidoswap/sdk';
-
-async function getMarketOverview() {
-  const client = await KaleidoClient.create({
-    baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
-  });
-
-  try {
-    // Fetch market data
-    console.log('Fetching market data...\n');
-
-    const [assets, pairs] = await Promise.all([
-      client.listAssets(),
-      client.listPairs(),
-    ]);
-
-    console.log('📊 Market Overview');
-    console.log(`   Assets: ${assets.length}`);
-    console.log(`   Trading Pairs: ${pairs.length}`);
-
-    // Display trading pairs
-    console.log('\n💱 Active Trading Pairs:');
-    pairs.forEach(pair => {
-      // Assuming pair has isActive property, adjust based on actual type
-      console.log(`   ${pair.baseAsset}/${pair.quoteAsset}`);
-    });
-
-    // Get a sample quote
-    if (pairs.length > 0) {
-      const pair = pairs[0];
-      const pairTicker = `${pair.baseAsset}/${pair.quoteAsset}`;
-      // Amounts should be BigInt or number. Using BigInt literal 1_000_000n
-      const amount = 1_000_000n;
-      
-      const quote = await client.getQuoteByPair(pairTicker, amount);
-      
-      console.log(`\n💰 Sample Quote for ${pairTicker}:`);
-      console.log(`   From: ${quote.fromAmount}`);
-      console.log(`   To: ${quote.toAmount}`);
-      console.log(`   Price: ${quote.price}`);
-    }
-
-  } catch (error) {
-    if (error instanceof KaleidoError) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      throw error;
-    }
-  }
-}
-
-getMarketOverview();
-```
-
-```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig, KaleidoError
-import os
-
-def get_market_overview():
-    config = KaleidoConfig(
-        base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com")
-    )
-    client = KaleidoClient(config)
-
-    try:
-        # Fetch market data
-        print("Fetching market data...\n")
-
-        assets = client.list_assets()
-        pairs = client.list_pairs()
-
-        print("📊 Market Overview")
-        print(f"   Assets: {len(assets)}")
-        print(f"   Trading Pairs: {len(pairs)}")
-
-        # Display trading pairs
-        print("\n💱 Active Trading Pairs:")
-        for pair in pairs:
-            if pair.is_active:
-                base = pair.base.ticker if pair.base else "?"
-                quote = pair.quote.ticker if pair.quote else "?"
-                print(f"   {base}/{quote}")
-
-        # Get a sample quote
-        if pairs:
-            pair = pairs[0]
-            base = pair.base.ticker if pair.base else "BTC"
-            quote = pair.quote.ticker if pair.quote else "USDT"
-            pair_ticker = f"{base}/{quote}"
-            
-            # Use minimum amount from routes if available
-            amount = 1_000_000
-            if pair.routes and pair.routes[0].min_from_amount:
-                amount = pair.routes[0].min_from_amount
-            
-            swap_quote = client.get_quote_by_pair(pair_ticker, from_amount=amount)
-            
-            print(f"\n💰 Sample Quote for {pair_ticker}:")
-            print(f"   From: {swap_quote.from_asset.amount}")
-            print(f"   To: {swap_quote.to_asset.amount}")
-            print(f"   Price: {swap_quote.price}")
-
-    except KaleidoError as e:
-        print(f"Error: {e}")
-
-if __name__ == "__main__":
-    get_market_overview()
 ```
 </CodeGroup>
 

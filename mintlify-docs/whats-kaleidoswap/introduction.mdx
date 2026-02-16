@@ -1,15 +1,15 @@
 ---
 title: Welcome to KaleidoSwap
-description: Open-source desktop application for trading RGB assets on the Lightning Network
+description: Open-source platform for trading RGB assets on the Lightning Network
 ---
 
-KaleidoSwap is an open-source desktop application that enables seamless trading of RGB assets on the Lightning Network. It provides a user-friendly interface for managing RGB Lightning nodes, connecting to Lightning Service Providers (LSPs), and executing atomic swaps.
+KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. The **desktop application** provides a full-featured interface for managing RGB Lightning nodes, connecting to Lightning Service Providers (LSPs), and executing atomic swaps. The **web app** offers browser-based trading via order-based swaps, and browser **extensions** like the Rate wallet bring self-custodial Bitcoin Layer 2 wallets directly into your browser.
 
 ## Documentation Structure
 
 This documentation is organized into focused sections to help you find what you need:
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Learn" icon="book-open">
     Understand KaleidoSwap fundamentals, architecture, and key concepts
   </Card>
@@ -18,11 +18,19 @@ This documentation is organized into focused sections to help you find what you 
     Step-by-step guides for installing, configuring, and using the desktop application
   </Card>
 
-  <Card title="SDK" icon="code">
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    Trade RGB assets directly from your browser via order-based swaps
+  </Card>
+
+  <Card title="Extensions" icon="puzzle-piece" href="/extensions/introduction">
+    Browser extensions for wallet management, swaps, and DApp connectivity
+  </Card>
+
+  <Card title="SDK" icon="code" href="/sdk/introduction">
     Integrate KaleidoSwap into your applications with Python or TypeScript SDKs
   </Card>
 
-  <Card title="API Reference" icon="brackets-curly">
+  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
     Complete REST API documentation with interactive playground
   </Card>
 </CardGroup>
@@ -65,12 +73,12 @@ This documentation is organized into focused sections to help you find what you 
     Install and set up the KaleidoSwap desktop application
   </Card>
 
-  <Card title="Python SDK" icon="python" href="/sdk/python/index">
-    Build with our comprehensive Python SDK
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    Start trading from your browser -- no installation required
   </Card>
 
-  <Card title="TypeScript SDK" icon="js" href="/sdk/typescript/index">
-    Integrate using our TypeScript SDK
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
+    Bitcoin Layer 2 wallet with built-in swap support
   </Card>
 </CardGroup>
 
@@ -143,12 +151,12 @@ KaleidoSwap operates on a decentralized architecture combining RGB Protocol capa
     Learn about the RGB Lightning Service Provider specification
   </Card>
 
-  <Card title="Python SDK" icon="python" href="/sdk/python/index">
-    Production-ready Python SDK with 50+ methods
+  <Card title="Python SDK" icon="python" href="/sdk/introduction">
+    Production-ready Python SDK with Pydantic models
   </Card>
 
-  <Card title="TypeScript SDK" icon="js" href="/sdk/typescript/index">
-    Type-safe TypeScript SDK for Node.js applications
+  <Card title="TypeScript SDK" icon="js" href="/sdk/introduction">
+    Type-safe TypeScript SDK with full type inference
   </Card>
 </CardGroup>
 

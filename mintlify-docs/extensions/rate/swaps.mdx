@@ -1,0 +1,114 @@
+---
+title: Swaps
+description: Swap assets directly within the Rate extension
+---
+
+## Overview
+
+Rate integrates with the **Kaleidoswap maker API** to let you swap between BTC and RGB assets without leaving the extension. The swap feature requires a maker API connection (configured in Settings > Networks).
+
+## Prerequisites
+
+Before swapping:
+1. Your node must be **connected**
+2. The **maker API** must be connected (see [Getting Started](/extensions/rate/getting-started#maker-api-connection-optional))
+3. You must have a **sufficient balance** of the asset you want to swap from
+
+## Swap Flow
+
+<Steps>
+  <Step title="Open Swap">
+    Click the **Swap** button on the dashboard action grid.
+  </Step>
+
+  <Step title="Select Assets">
+    Choose the **From** and **To** assets:
+    - **From** - The asset you want to trade (e.g., BTC)
+    - **To** - The asset you want to receive (e.g., USDT)
+  </Step>
+
+  <Step title="Enter Amount">
+    Enter the amount you want to swap. The extension fetches a real-time quote from the maker API showing:
+    - Exchange rate
+    - Output amount
+    - Fees
+  </Step>
+
+  <Step title="Review">
+    The swap preview screen shows:
+    - From asset and amount
+    - To asset and amount
+    - Exchange rate
+    - Fee breakdown
+    - Total cost
+  </Step>
+
+  <Step title="Confirm">
+    Click **Confirm Swap** to execute. The extension creates the swap order via the maker API.
+  </Step>
+
+  <Step title="Track Status">
+    The swap status screen shows real-time progress:
+    - Order creation
+    - Payment processing
+    - Swap execution
+    - Completion
+    
+    Logs are displayed for transparency.
+  </Step>
+</Steps>
+
+## Real-Time Quotes
+
+When you enter an amount, Rate fetches a quote from the maker API:
+
+| Quote Field | Description |
+|------------|-------------|
+| **Rate** | Exchange rate between the two assets |
+| **Output Amount** | How much you will receive |
+| **Fee** | Protocol and network fees |
+| **Expiry** | How long the quote is valid |
+
+Quotes update in real time as you change the amount.
+
+## Swap Status
+
+After confirming, the swap progresses through several stages:
+
+| Status | Description |
+|--------|-------------|
+| **Creating Order** | The swap order is being created |
+| **Processing Payment** | Your payment is being processed |
+| **Executing** | The maker is processing the swap |
+| **Completed** | The swap is done and you have received the asset |
+| **Failed** | Something went wrong -- check the logs for details |
+
+## Maker API Configuration
+
+The maker API endpoint can be configured in **Settings > Networks**:
+
+| Setting | Default |
+|---------|---------|
+| **Maker URL** | `https://api.regtest.kaleidoswap.com` |
+
+You can point this to a different maker API if available.
+
+<Note>
+The maker connection is optional. Without it, all other wallet features (send, receive, balances) work normally. Only the swap feature requires a maker connection.
+</Note>
+
+## Tips
+
+<AccordionGroup>
+  <Accordion title="Check your balance first">
+    Make sure you have enough of the source asset to cover both the swap amount and any fees.
+  </Accordion>
+
+  <Accordion title="Confirm quickly">
+    Quotes expire after a short period. Review and confirm promptly to avoid needing a new quote.
+  </Accordion>
+
+  <Accordion title="Check swap logs">
+    If a swap fails, the status screen shows detailed logs that can help diagnose the issue.
+  </Accordion>
+</AccordionGroup>

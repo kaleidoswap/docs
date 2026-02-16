@@ -1,433 +1,315 @@
 ---
 title: 'Utilities'
-description: 'Helper functions and utilities'
+description: 'Helper functions for amount conversion, precision handling, and asset mapping'
 ---
 
 ## Amount Conversion
 
-The SDK provides utilities for converting between display amounts (e.g., 1.5 BTC) and atomic units (e.g., 150,000,000 satoshis).
+### `toSmallestUnits` / `to_smallest_units`
 
-### toRaw
-
-Convert display amount to atomic units.
+Convert a display amount to the smallest unit (e.g., BTC to satoshis).
 
 <CodeGroup>
 ```typescript TypeScript
-const sats = await client.toRaw(0.01, 'BTC');
-console.log(`0.01 BTC = ${sats} satoshis`);
-// Output: 0.01 BTC = 1000000 satoshis
+import { toSmallestUnits } from 'kaleidoswap-sdk';
+
+const sats = toSmallestUnits(0.001, 8);   // 100000
+const usdt = toSmallestUnits(10.50, 2);   // 1050
 ```
 
 ```python Python
-sats = client.to_raw(0.01, "BTC")
-print(f"0.01 BTC = {sats} satoshis")
-# Output: 0.01 BTC = 1000000 satoshis
+from kaleidoswap_sdk import to_smallest_units
+
+sats = to_smallest_units(0.001, 8)   # 100000
+usdt = to_smallest_units(10.50, 2)   # 1050
 ```
 </CodeGroup>
 
-### toDisplay
+### `toDisplayUnits` / `to_display_units`
 
-Convert atomic units to display amount.
+Convert from smallest units back to display units.
 
 <CodeGroup>
 ```typescript TypeScript
-const btc = await client.toDisplay(1_000_000, 'BTC');
-console.log(`1,000,000 sats = ${btc} BTC`);
-// Output: 1,000,000 sats = 0.01 BTC
+import { toDisplayUnits } from 'kaleidoswap-sdk';
+
+const btc = toDisplayUnits(100000, 8);   // 0.001
+const usd = toDisplayUnits(1050, 2);     // 10.50
 ```
 
 ```python Python
-btc = client.to_display(1_000_000, "BTC")
-print(f"1,000,000 sats = {btc} BTC")
-# Output: 1,000,000 sats = 0.01 BTC
+from kaleidoswap_sdk import to_display_units
+
+btc = to_display_units(100000, 8)   # 0.001
+usd = to_display_units(1050, 2)     # 10.50
 ```
 </CodeGroup>
 
-### convertAmount
+### `toRawAmount` / `to_raw_amount`
 
-Flexible conversion between formats.
+Equivalent to `toSmallestUnits`. Convert display to raw.
 
 <CodeGroup>
 ```typescript TypeScript
-// To raw
-const raw = await client.convertAmount(0.5, 'BTC', 'raw');
-console.log(`0.5 BTC = ${raw} sats`);
+import { toRawAmount } from 'kaleidoswap-sdk';
 
-// To display
-const display = await client.convertAmount(50_000_000, 'BTC', 'display');
-console.log(`50,000,000 sats = ${display} BTC`);
+const raw = toRawAmount(0.5, 8);  // 50000000
 ```
 
 ```python Python
-# To raw
-raw = client.convert_amount(0.5, "BTC", to="raw")
-print(f"0.5 BTC = {raw} sats")
+from kaleidoswap_sdk import to_raw_amount
 
-# To display
-display = client.convert_amount(50_000_000, "BTC", to="display")
-print(f"50,000,000 sats = {display} BTC")
+raw = to_raw_amount(0.5, 8)  # 50000000
 ```
 </CodeGroup>
 
----
+### `toDisplayAmount` / `to_display_amount`
 
-## Global Utility Functions
-
-These functions are available as module-level exports:
+Equivalent to `toDisplayUnits`. Convert raw to display.
 
 <CodeGroup>
 ```typescript TypeScript
-import { toSmallestUnits, toDisplayUnits } from '@kaleidoswap/sdk';
+import { toDisplayAmount } from 'kaleidoswap-sdk';
 
-// Convert 1.5 to smallest units with precision 8
-const raw = toSmallestUnits(1.5, 8);  // 150,000,000
-
-// Convert back to display
-const display = toDisplayUnits(150_000_000, 8);  // 1.5
+const display = toDisplayAmount(50000000, 8);  // 0.5
 ```
 
 ```python Python
-from kaleidoswap import to_smallest_units, to_display_units
+from kaleidoswap_sdk import to_display_amount
 
-# Convert 1.5 to smallest units with precision 8
-raw = to_smallest_units(1.5, 8)  # 150,000,000
-
-# Convert back to display
-display = to_display_units(150_000_000, 8)  # 1.5
+display = to_display_amount(50000000, 8)  # 0.5
 ```
 </CodeGroup>
 
----
+## PrecisionHandler
 
-## Asset Lookup
+The `PrecisionHandler` manages amount conversions for multiple assets, using their metadata to look up precision automatically.
 
-### getAssetByTicker
-
-Get an asset by its ticker symbol.
+### Creating a PrecisionHandler
 
 <CodeGroup>
 ```typescript TypeScript
-const btc = await client.getAssetByTicker('BTC');
-console.log(`BTC precision: ${btc.precision}`);
+import { createPrecisionHandler } from 'kaleidoswap-sdk';
+
+// MappedAsset objects with asset_id and precision
+const assets = [
+  { asset_id: 'btc-asset-id', ticker: 'BTC', precision: 8, /* ... */ },
+  { asset_id: 'usdt-asset-id', ticker: 'USDT', precision: 2, /* ... */ },
+];
+
+const handler = createPrecisionHandler(assets);
 ```
 
 ```python Python
-btc = client.get_asset_by_ticker("BTC")
-print(f"BTC precision: {btc.precision}")
+from kaleidoswap_sdk import create_precision_handler
+
+assets = [
+    {"asset_id": "btc-asset-id", "ticker": "BTC", "precision": 8},
+    {"asset_id": "usdt-asset-id", "ticker": "USDT", "precision": 2},
+]
+
+handler = create_precision_handler(assets)
 ```
 </CodeGroup>
 
-### getPairByTicker
+### Methods
 
-Get a trading pair by its ticker.
+#### `toRawAmount` / `to_raw_amount`
+
+Convert display amount to raw, using the asset's precision.
 
 <CodeGroup>
 ```typescript TypeScript
-const pair = await client.getPairByTicker('BTC/USDT');
-console.log(`Min: ${pair.minBaseOrderSize}`);
+const raw = handler.toRawAmount(0.5, 'btc-asset-id');  // 50000000
 ```
 
 ```python Python
-pair = client.get_pair_by_ticker("BTC/USDT")
-if pair.routes:
-    print(f"Min: {pair.routes[0].min_from_amount}")
+raw = handler.to_raw_amount(0.5, "btc-asset-id")  # 50000000
 ```
 </CodeGroup>
 
----
+#### `toDisplayAmount` / `to_display_amount`
 
-## Validation
-
-### validateAmount
-
-Validate an amount against asset constraints.
+Convert raw amount to display.
 
 <CodeGroup>
 ```typescript TypeScript
-const result = await client.validateAmount(0.001, 'BTC');
-
-if (result.valid) {
-  console.log(`✅ Valid: ${result.rawAmount} sats`);
-} else {
-  console.log(`❌ Invalid: ${result.errors.join(', ')}`);
-}
+const display = handler.toDisplayAmount(50000000, 'btc-asset-id');  // 0.5
 ```
 
 ```python Python
-result = client.validate_amount(0.001, "BTC")
-
-if result["valid"]:
-    print(f"✅ Valid: {result['raw_amount']} sats")
-else:
-    print(f"❌ Invalid: {result['errors']}")
+display = handler.to_display_amount(50000000, "btc-asset-id")  # 0.5
 ```
 </CodeGroup>
 
-**Returns:**
-- `valid`: Whether the amount is valid
-- `rawAmount` / `raw_amount`: Amount in atomic units
-- `displayAmount` / `display_amount`: Amount in display units
-- `errors`: List of validation errors
+#### `getAssetPrecision` / `get_asset_precision`
 
-### canTrade
-
-Check if a trading pair exists and is active.
+Get the precision for a specific asset.
 
 <CodeGroup>
 ```typescript TypeScript
-const canTrade = await client.canTrade('BTC', 'USDT');
-if (canTrade) {
-  console.log('BTC/USDT trading is available');
-}
+const precision = handler.getAssetPrecision('btc-asset-id');  // 8
 ```
 
 ```python Python
-can_trade = client.can_trade("BTC", "USDT")
-if can_trade:
-    print("BTC/USDT trading is available")
+precision = handler.get_asset_precision("btc-asset-id")  # 8
 ```
 </CodeGroup>
 
----
+#### `formatDisplayAmount` / `format_display_amount`
 
-## Active Filtering
-
-### listActiveAssets
-
-List only active assets.
+Format a display amount with the correct number of decimal places.
 
 <CodeGroup>
 ```typescript TypeScript
-const activeAssets = await client.listActiveAssets();
-console.log(`Active assets: ${activeAssets.length}`);
+const formatted = handler.formatDisplayAmount(0.5, 'btc-asset-id');  // "0.50000000"
 ```
 
 ```python Python
-active_assets = client.list_active_assets()
-print(f"Active assets: {len(active_assets)}")
+formatted = handler.format_display_amount(0.5, "btc-asset-id")  # "0.50000000"
 ```
 </CodeGroup>
 
-### listActivePairs
+#### `validateOrderSize` / `validate_order_size`
 
-List only active trading pairs.
+Validate an order amount against min/max limits.
 
 <CodeGroup>
 ```typescript TypeScript
-const activePairs = await client.listActivePairs();
-console.log(`Active pairs: ${activePairs.length}`);
+const result = handler.validateOrderSize(0.001, btcAsset);
+// Returns: { valid: boolean, reason?: string }
 ```
 
 ```python Python
-active_pairs = client.list_active_pairs()
-print(f"Active pairs: {len(active_pairs)}")
+result = handler.validate_order_size(0.001, btc_asset)
+# Returns: ValidationResult { valid, reason }
 ```
 </CodeGroup>
 
----
+#### `getOrderSizeLimits` / `get_order_size_limits`
 
-## Fee Estimation
-
-### estimateSwapFees
-
-Estimate fees for a swap.
+Get the min/max order size for an asset.
 
 <CodeGroup>
 ```typescript TypeScript
-const fee = await client.estimateSwapFees('BTC/USDT', 1_000_000);
-console.log(`Estimated fee: ${fee} sats`);
+const limits = handler.getOrderSizeLimits(btcAsset);
+// Returns: { min: number, max: number }
 ```
 
 ```python Python
-fee = client.estimate_swap_fees("BTC/USDT", 1_000_000)
-print(f"Estimated fee: {fee} sats")
+limits = handler.get_order_size_limits(btc_asset)
+# Returns: OrderSizeLimits { min, max }
 ```
 </CodeGroup>
 
----
+## AssetPairMapper (TypeScript)
 
-## Cache Management
+The `AssetPairMapper` helps look up assets and trading pairs from the `listPairs` response. This utility is available in the TypeScript SDK.
 
-### refreshCache
+### Creating a Mapper
 
-Clear the internal cache to force fresh data.
+```typescript
+import { createAssetPairMapper } from 'kaleidoswap-sdk';
+
+const pairsResponse = await client.maker.listPairs();
+const mapper = createAssetPairMapper(pairsResponse);
+```
+
+### Methods
+
+#### `findByTicker`
+
+Find an asset by its ticker symbol.
+
+```typescript
+const btc = mapper.findByTicker('BTC');
+// Returns: MappedAsset | undefined
+```
+
+#### `findById`
+
+Find an asset by its asset ID.
+
+```typescript
+const asset = mapper.findById('btc-asset-id');
+// Returns: MappedAsset | undefined
+```
+
+#### `getAllAssets`
+
+Get all assets.
+
+```typescript
+const allAssets = mapper.getAllAssets();
+// Returns: MappedAsset[]
+```
+
+#### `canTrade` / `canTradeByTicker`
+
+Check if two assets can be traded.
+
+```typescript
+const canTrade = mapper.canTrade('btc-asset-id', 'usdt-asset-id');  // boolean
+const canTradeByTicker = mapper.canTradeByTicker('BTC', 'USDT');     // boolean
+```
+
+#### `getTradingPartners`
+
+Get all assets that can be traded with a given asset.
+
+```typescript
+const partners = mapper.getTradingPartners('btc-asset-id');
+// Returns: MappedAsset[]
+```
+
+#### `getActivePairs`
+
+Get all active trading pairs.
+
+```typescript
+const activePairs = mapper.getActivePairs();
+// Returns: TradingPair[]
+```
+
+#### `findPairByTickers`
+
+Find a specific pair by base and quote tickers.
+
+```typescript
+const pair = mapper.findPairByTickers('BTC', 'USDT');
+// Returns: TradingPair | undefined
+```
+
+## SDK Info
+
+### `getVersion` / `get_version`
+
+Get the SDK version string.
 
 <CodeGroup>
 ```typescript TypeScript
-client.refreshCache();
-const freshAssets = await client.listAssets();
+import { getVersion } from 'kaleidoswap-sdk';
+console.log(getVersion());  // "0.4.0"
 ```
 
 ```python Python
-client.refresh_cache()
-fresh_assets = client.list_assets()
+from kaleidoswap_sdk import get_version
+print(get_version())  # "0.4.0"
 ```
 </CodeGroup>
 
----
+### `getSdkName` / `get_sdk_name`
 
-## Practical Examples
-
-### Formatting Amounts for Display
+Get the SDK package name.
 
 <CodeGroup>
 ```typescript TypeScript
-async function formatBalance(
-  client: KaleidoClient,
-  ticker: string,
-  rawBalance: number
-): Promise<string> {
-  const asset = await client.getAssetByTicker(ticker);
-  const display = await client.toDisplay(rawBalance, asset);
-  const precision = Math.min(asset.precision, 8);
-  return `${display.toFixed(precision)} ${ticker}`;
-}
-
-// Usage
-const formatted = await formatBalance(client, 'BTC', 150_000_000);
-console.log(formatted);  // "1.50000000 BTC"
+import { getSdkName } from 'kaleidoswap-sdk';
+console.log(getSdkName());  // "kaleidoswap-sdk"
 ```
 
 ```python Python
-def format_balance(client, ticker, raw_balance):
-    asset = client.get_asset_by_ticker(ticker)
-    display = client.to_display(raw_balance, asset)
-    precision = min(asset.precision, 8)
-    return f"{display:.{precision}f} {ticker}"
-
-# Usage
-formatted = format_balance(client, "BTC", 150_000_000)
-print(formatted)  # "1.50000000 BTC"
-```
-</CodeGroup>
-
-### Quote Calculator
-
-<CodeGroup>
-```typescript TypeScript
-async function calculateSwap(
-  client: KaleidoClient,
-  fromTicker: string,
-  toTicker: string,
-  displayAmount: number
-) {
-  // Check if tradeable
-  if (!await client.canTrade(fromTicker, toTicker)) {
-    return { error: `Cannot trade ${fromTicker}/${toTicker}` };
-  }
-
-  // Convert to raw
-  const rawAmount = await client.toRaw(displayAmount, fromTicker);
-
-  // Get quote
-  const pairTicker = `${fromTicker}/${toTicker}`;
-  const quote = await client.getQuoteByPair(pairTicker, rawAmount);
-
-  // Format output
-  const outputDisplay = await client.toDisplay(quote.toAmount, toTicker);
-
-  return {
-    input: `${displayAmount} ${fromTicker}`,
-    output: `${outputDisplay} ${toTicker}`,
-    price: quote.price,
-    fee: quote.fee.finalFee,
-  };
-}
-```
-
-```python Python
-def calculate_swap(client, from_ticker, to_ticker, display_amount):
-    # Check if tradeable
-    if not client.can_trade(from_ticker, to_ticker):
-        return {"error": f"Cannot trade {from_ticker}/{to_ticker}"}
-    
-    # Convert to raw
-    raw_amount = client.to_raw(display_amount, from_ticker)
-    
-    # Get quote
-    pair_ticker = f"{from_ticker}/{to_ticker}"
-    quote = client.get_quote_by_pair(pair_ticker, from_amount=raw_amount)
-    
-    # Format output
-    output_display = client.to_display(quote.to_asset.amount, to_ticker)
-    
-    return {
-        "input": f"{display_amount} {from_ticker}",
-        "output": f"{output_display} {to_ticker}",
-        "price": quote.price,
-        "fee": quote.fee.final_fee,
-    }
-```
-</CodeGroup>
-
-### Trade Validator
-
-<CodeGroup>
-```typescript TypeScript
-async function validateTrade(
-  client: KaleidoClient,
-  fromTicker: string,
-  toTicker: string,
-  amount: number
-) {
-  const errors: string[] = [];
-
-  // Check pair
-  if (!await client.canTrade(fromTicker, toTicker)) {
-    errors.push(`Pair ${fromTicker}/${toTicker} not available`);
-    return { valid: false, errors };
-  }
-
-  // Validate amount
-  const validation = await client.validateAmount(amount, fromTicker);
-  if (!validation.valid) {
-    errors.push(...validation.errors);
-  }
-
-  // Check limits
-  const pair = await client.getPairByTicker(`${fromTicker}/${toTicker}`);
-  if (validation.rawAmount < pair.minBaseOrderSize) {
-    errors.push(`Below minimum: ${pair.minBaseOrderSize}`);
-  }
-  if (validation.rawAmount > pair.maxBaseOrderSize) {
-    errors.push(`Above maximum: ${pair.maxBaseOrderSize}`);
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    rawAmount: validation.rawAmount,
-  };
-}
-```
-
-```python Python
-def validate_trade(client, from_ticker, to_ticker, amount):
-    errors = []
-    
-    # Check pair
-    if not client.can_trade(from_ticker, to_ticker):
-        errors.append(f"Pair {from_ticker}/{to_ticker} not available")
-        return {"valid": False, "errors": errors}
-    
-    # Validate amount
-    validation = client.validate_amount(amount, from_ticker)
-    if not validation["valid"]:
-        errors.extend(validation["errors"])
-    
-    # Check limits
-    pair = client.get_pair_by_ticker(f"{from_ticker}/{to_ticker}")
-    if pair.routes:
-        route = pair.routes[0]
-        if route.min_from_amount and validation["raw_amount"] < route.min_from_amount:
-            errors.append(f"Below minimum: {route.min_from_amount}")
-        if route.max_from_amount and validation["raw_amount"] > route.max_from_amount:
-            errors.append(f"Above maximum: {route.max_from_amount}")
-    
-    return {
-        "valid": len(errors) == 0,
-        "errors": errors,
-        "raw_amount": validation.get("raw_amount"),
-    }
+from kaleidoswap_sdk import get_sdk_name
+print(get_sdk_name())  # "kaleidoswap-sdk"
 ```
 </CodeGroup>

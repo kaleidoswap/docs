@@ -362,22 +362,32 @@ For developers building on KaleidoSwap:
     ```python
     from kaleidoswap_sdk import KaleidoClient
 
-    client = KaleidoClient(...)
-    quote = await client.get_quote("BTC", "USDT", 100000)
+    client = KaleidoClient.create(
+        maker_url="https://api.staging.kaleidoswap.com/api/v1"
+    )
+    assets = await client.maker.list_assets()
+    quote = await client.maker.get_quote(
+        from_asset="BTC", to_asset="USDT", amount=100000
+    )
     ```
 
-    [Explore Python SDK →](/sdk/python/index)
+    [Explore Python SDK →](/sdk/introduction)
   </Tab>
 
   <Tab title="TypeScript SDK">
     ```typescript
-    import { KaleidoClient } from '@kaleidoswap/sdk';
+    import { KaleidoClient } from 'kaleidoswap-sdk';
 
-    const client = new KaleidoClient({...});
-    const quote = await client.quoteRequest({...});
+    const client = KaleidoClient.create({
+      makerUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+    });
+    const assets = await client.maker.listAssets();
+    const quote = await client.maker.getQuote({
+      fromAsset: 'BTC', toAsset: 'USDT', amount: 100000
+    });
     ```
 
-    [Explore TypeScript SDK →](/sdk/typescript/index)
+    [Explore TypeScript SDK →](/sdk/introduction)
   </Tab>
 
   <Tab title="REST API">
@@ -420,30 +430,58 @@ For developers building on KaleidoSwap:
 
 ---
 
+## Web App & Extensions
+
+In addition to the desktop application, KaleidoSwap is also available as:
+
+<CardGroup cols={2}>
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    **Browser-Based Trading**
+
+    Trade RGB assets directly from your browser. The web app currently uses order-based swaps -- you create an order, pay, and the maker fulfills it.
+
+    - No installation required
+    - Multiple wallet support (Alby, Xverse, BitMask, Rate)
+    - Real-time order tracking
+  </Card>
+
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
+    **Bitcoin Layer 2 Wallet**
+
+    Self-custodial Chrome extension wallet for Bitcoin Layer 2 networks.
+
+    - Built-in asset swaps via Kaleidoswap
+    - RGB protocol support (Spark, Arkade, Liquid planned)
+    - WebLN and Nostr DApp connectivity
+  </Card>
+</CardGroup>
+
+---
+
 ## Coming Soon
 
 <Info>
   **Upcoming Features**:
-  - Web application interface
   - Mobile app (iOS & Android)
   - Hardware wallet integration
   - Advanced trading features (limit orders, DCA)
   - Multi-signature wallet support
   - More RGB asset types (RGB21 NFTs, RGB25 UDAs)
+  - Atomic swaps in the web app
 </Info>
 
 ## Get Started
 
 <CardGroup cols={3}>
-  <Card title="Download Desktop App" icon="download" href="/desktop-app/getting-started/installation">
-    Install KaleidoSwap and start trading
+  <Card title="Desktop App" icon="download" href="/desktop-app/getting-started/installation">
+    Install KaleidoSwap and start trading with atomic swaps
   </Card>
 
-  <Card title="Explore Documentation" icon="book" href="/desktop-app/getting-started/introduction">
-    Learn how to use all features
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    Trade from your browser with order-based swaps
   </Card>
 
-  <Card title="Join Community" icon="users" href="https://t.me/kaleidoswap">
-    Get help and connect with users
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/installation">
+    Install the Bitcoin Layer 2 wallet extension
   </Card>
 </CardGroup>

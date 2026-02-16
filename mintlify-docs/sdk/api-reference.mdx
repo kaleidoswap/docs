@@ -1,650 +1,681 @@
 ---
 title: 'API Reference'
-description: 'Complete reference for all SDK methods'
+description: 'Complete method reference for the KaleidoSwap SDK'
 ---
 
 ## Client Initialization
 
-### Creating a Client
-
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient, KaleidoConfig } from '@kaleidoswap/sdk';
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
-const config: KaleidoConfig = {
+const client = KaleidoClient.create({
   baseUrl: 'https://api.regtest.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',  // Optional
-  apiKey: undefined,                  // Optional
-  timeout: 30.0,                      // Optional
-  maxRetries: 3,                      // Optional
-};
+  nodeUrl: 'http://localhost:3001',  // optional
+  apiKey: 'your-api-key',           // optional
+  timeout: 30,                       // optional, seconds
+  maxRetries: 3,                     // optional
+  cacheTtl: 60,                      // optional, seconds
+});
 
-const client = new KaleidoClient(config);
+client.hasNode();  // boolean -- check if nodeUrl is configured
+client.maker;      // MakerClient instance
+client.rln;        // RlnClient instance
 ```
 
 ```python Python
-from kaleidoswap import KaleidoClient, KaleidoConfig
+from kaleidoswap_sdk import KaleidoClient
 
-config = KaleidoConfig(
+client = KaleidoClient.create(
     base_url="https://api.regtest.kaleidoswap.com",
-    node_url="http://localhost:3001",  # Optional
-    api_key=None,                       # Optional
-    timeout=30.0,                       # Optional
-    max_retries=3,                      # Optional
+    node_url="http://localhost:3001",  # optional
+    api_key="your-api-key",            # optional
+    timeout=30.0,                       # optional
+    max_retries=3,                      # optional
+    cache_ttl=60,                       # optional
 )
 
-client = KaleidoClient(config)
+client.has_node()  # bool
+client.maker       # MakerClient instance
+client.rln         # RlnClient instance
 ```
 </CodeGroup>
 
-### Configuration Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `baseUrl` / `base_url` | `string` | Yes | - | API base URL |
-| `nodeUrl` / `node_url` | `string` | No | - | RGB Lightning Node URL |
-| `apiKey` / `api_key` | `string` | No | - | API key for authentication |
-| `timeout` | `number` | No | 30.0 | Request timeout in seconds |
-| `maxRetries` / `max_retries` | `number` | No | 3 | Maximum retry attempts |
-
 ---
 
-## Market Operations
+## MakerClient (`client.maker`)
 
-### listAssets
+All market, order, swap, and LSPS1 operations are accessed via `client.maker`.
+
+### Market Operations
+
+#### `listAssets` / `list_assets`
 
 List all available assets.
 
 <CodeGroup>
 ```typescript TypeScript
-const assets = await client.listAssets();
-assets.forEach(asset => {
-  console.log(`${asset.ticker}: ${asset.name}`);
+const response = await client.maker.listAssets();
+// Returns: MarketListAssetsResponse
+```
+
+```python Python
+response = client.maker.list_assets()
+# Returns: AssetsResponse
+```
+</CodeGroup>
+
+#### `listPairs` / `list_pairs`
+
+List all available trading pairs with min/max limits and supported layers.
+
+<CodeGroup>
+```typescript TypeScript
+const response = await client.maker.listPairs();
+// Returns: ListPairsResponse
+```
+
+```python Python
+response = client.maker.list_pairs()
+# Returns: TradingPairsResponse
+```
+</CodeGroup>
+
+#### `getQuote` / `get_quote`
+
+Get a price quote for a swap.
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
 });
+// Returns: GetQuoteResponse
 ```
 
 ```python Python
-assets = client.list_assets()
-for asset in assets:
-    print(f"{asset.ticker}: {asset.name}")
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+# Returns: PairQuoteResponse
 ```
 </CodeGroup>
 
-**Returns:** Array of `Asset` objects
+#### `getPairRoutes` / `get_pair_routes`
 
----
-
-### listPairs
-
-List all available trading pairs.
+Get available routes for a trading pair.
 
 <CodeGroup>
 ```typescript TypeScript
-const pairs = await client.listPairs();
-pairs.forEach(pair => {
-  console.log(`${pair.baseAsset}/${pair.quoteAsset}`);
+const routes = await client.maker.getPairRoutes({ /* GetPairRoutesRequest */ });
+// Returns: GetPairRoutesResponse
+```
+
+```python Python
+routes = client.maker.get_pair_routes({...})
+# Returns: list[SwapRoute]
+```
+</CodeGroup>
+
+#### `getMarketRoutes` / `get_market_routes`
+
+Discover routes across the market.
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getMarketRoutes({ /* DiscoverRoutesRequest */ });
+// Returns: DiscoverRoutesResponse
+```
+
+```python Python
+routes = client.maker.get_market_routes({...})
+# Returns: RoutesResponse
+```
+</CodeGroup>
+
+---
+
+### Swap Order Operations
+
+#### `createSwapOrder` / `create_swap_order`
+
+Create a new swap order from a quote.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.createSwapOrder({
+  rfq_id: quote.rfq_id,
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: 9500 },
+  receiver_address: 'lnbc1...',
+  min_onchain_conf: 1
 });
+// Returns: CreateSwapOrderResponse (order_id, deposit_address, status)
 ```
 
 ```python Python
-pairs = client.list_pairs()
-for pair in pairs:
-    base = pair.base.ticker if pair.base else "?"
-    quote = pair.quote.ticker if pair.quote else "?"
-    print(f"{base}/{quote}")
-```
-</CodeGroup>
-
-**Returns:** Array of `TradingPair` objects
-
----
-
-### getAssetByTicker
-
-Get a specific asset by its ticker symbol.
-
-<CodeGroup>
-```typescript TypeScript
-const btc = await client.getAssetByTicker('BTC');
-console.log(`BTC precision: ${btc.precision}`);
-```
-
-```python Python
-btc = client.get_asset_by_ticker("BTC")
-print(f"BTC precision: {btc.precision}")
-```
-</CodeGroup>
-
-**Parameters:**
-- `ticker`: Asset ticker (e.g., "BTC", "USDT")
-
-**Returns:** `Asset` object
-
----
-
-### getPairByTicker
-
-Get a trading pair by its ticker.
-
-<CodeGroup>
-```typescript TypeScript
-const pair = await client.getPairByTicker('BTC/USDT');
-console.log(`Min: ${pair.minBaseOrderSize}`);
-```
-
-```python Python
-pair = client.get_pair_by_ticker("BTC/USDT")
-print(f"Min: {pair.routes[0].min_from_amount if pair.routes else 'N/A'}")
-```
-</CodeGroup>
-
-**Parameters:**
-- `ticker`: Pair ticker (e.g., "BTC/USDT")
-
-**Returns:** `TradingPair` object
-
----
-
-### getQuoteByPair
-
-Get a quote for a trading pair.
-
-<CodeGroup>
-```typescript TypeScript
-// Quote with from amount
-const quote = await client.getQuoteByPair('BTC/USDT', 1_000_000);
-console.log(`RFQ ID: ${quote.rfqId}`);
-console.log(`Price: ${quote.price}`);
-console.log(`From: ${quote.fromAmount} -> To: ${quote.toAmount}`);
-```
-
-```python Python
-# Quote with from amount
-quote = client.get_quote_by_pair("BTC/USDT", from_amount=1_000_000)
-print(f"RFQ ID: {quote.rfq_id}")
-print(f"Price: {quote.price}")
-print(f"From: {quote.from_asset.amount} -> To: {quote.to_asset.amount}")
-```
-</CodeGroup>
-
-**Parameters:**
-- `ticker`: Pair ticker (e.g., "BTC/USDT")
-- `fromAmount` / `from_amount`: Amount to swap in atomic units
-- `toAmount` / `to_amount`: Target amount (alternative to fromAmount)
-
-**Returns:** `Quote` / `PairQuoteResponse` object
-
----
-
-## Swap Operations
-
-### initSwap
-
-Initialize a swap (maker side).
-
-<CodeGroup>
-```typescript TypeScript
-const result = await client.initSwap({
-  rfq_id: quote.rfqId,
-  from_asset: quote.fromAsset,
-  from_amount: quote.fromAmount,
-  to_asset: quote.toAsset,
-  to_amount: quote.toAmount,
-});
-const { swapstring, payment_hash } = JSON.parse(result);
-```
-
-```python Python
-result = client.init_swap({
+order = client.maker.create_swap_order({
     "rfq_id": quote.rfq_id,
-    "from_asset": quote.from_asset.asset_id,
-    "from_amount": quote.from_asset.amount,
-    "to_asset": quote.to_asset.asset_id,
-    "to_amount": quote.to_asset.amount,
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": 9500},
+    "receiver_address": "lnbc1...",
+    "min_onchain_conf": 1
 })
-import json
-data = json.loads(result)
-swapstring = data["swapstring"]
-payment_hash = data["payment_hash"]
+# Returns: CreateSwapOrderResponse
 ```
 </CodeGroup>
 
-**Returns:** JSON string with `swapstring` and `payment_hash`
+#### `getSwapOrderStatus` / `get_swap_order_status`
 
----
-
-### whitelistTrade
-
-Whitelist a trade on the taker node.
+Get the current status of a swap order.
 
 <CodeGroup>
 ```typescript TypeScript
-await client.whitelistTrade(swapstring);
-console.log('Trade whitelisted');
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+// Returns: GetSwapOrderStatusResponse
 ```
 
 ```python Python
-client.whitelist_trade(swapstring)
-print("Trade whitelisted")
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+# Returns: SwapOrderStatusResponse
 ```
 </CodeGroup>
 
-**Parameters:**
-- `swapstring`: The swapstring from initSwap
+#### `getOrderHistory` / `get_order_history`
 
----
-
-### executeSwap
-
-Execute a swap after initialization.
+Get order history with optional filters.
 
 <CodeGroup>
 ```typescript TypeScript
-await client.executeSwap({
-  swapstring: swapstring,
-  payment_hash: paymentHash,
-  taker_pubkey: takerPubkey,
+const history = await client.maker.getOrderHistory({
+  status: 'FILLED',
+  limit: 10,
+  skip: 0
 });
+// Returns: GetOrderHistoryResponse
 ```
 
 ```python Python
-client.execute_swap({
-    "swapstring": swapstring,
-    "payment_hash": payment_hash,
-    "taker_pubkey": taker_pubkey,
+history = client.maker.get_order_history(status="FILLED", limit=10, skip=0)
+# Returns: OrderHistoryResponse
+```
+</CodeGroup>
+
+#### `getOrderAnalytics` / `get_order_analytics`
+
+Get order statistics and analytics.
+
+<CodeGroup>
+```typescript TypeScript
+const stats = await client.maker.getOrderAnalytics();
+// Returns: GetOrderStatsResponse
+```
+
+```python Python
+stats = client.maker.get_order_analytics()
+# Returns: OrderStatsResponse
+```
+</CodeGroup>
+
+#### `submitRateDecision` / `submit_rate_decision`
+
+Accept or reject a rate change on a pending order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.submitRateDecision({
+  order_id: 'order-123',
+  accept_new_rate: true
+});
+// Returns: SwapOrderRateDecisionResponse
+```
+
+```python Python
+result = client.maker.submit_rate_decision({
+    "order_id": "order-123",
+    "accept_new_rate": True
 })
+# Returns: SwapOrderRateDecisionResponse
+```
+</CodeGroup>
+
+#### `waitForSwapCompletion` / `wait_for_swap_completion`
+
+Poll an order until it reaches a final state.
+
+<CodeGroup>
+```typescript TypeScript
+const completed = await client.maker.waitForSwapCompletion('order-123', {
+  timeout: 300,        // seconds
+  pollInterval: 10,    // seconds
+  onStatusUpdate: (status) => console.log(`Status: ${status}`)
+});
+// Returns: SwapOrder
+```
+
+```python Python
+completed = client.maker.wait_for_swap_completion("order-123", options={
+    "timeout": 300,
+    "poll_interval": 10,
+    "on_status_update": lambda status: print(f"Status: {status}")
+})
+# Returns: SwapOrder
 ```
 </CodeGroup>
 
 ---
 
-### waitForSwapCompletion
+### Atomic Swap Operations
 
-Wait for a swap to complete with timeout.
+These methods support the lower-level atomic swap protocol for direct node-to-node swaps.
+
+#### `initSwap` / `init_swap`
+
+Initiate an atomic swap.
 
 <CodeGroup>
 ```typescript TypeScript
-const finalStatus = await client.waitForSwapCompletion(
-  paymentHash,
-  180.0,  // timeout in seconds
-  2.0,    // poll interval
+const result = await client.maker.initSwap({ /* InitiateSwapRequest */ });
+```
+
+```python Python
+result = client.maker.init_swap({...})
+```
+</CodeGroup>
+
+#### `executeSwap` / `execute_swap`
+
+Execute/confirm an atomic swap.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.executeSwap({ /* ConfirmSwapRequest */ });
+```
+
+```python Python
+result = client.maker.execute_swap({...})
+```
+</CodeGroup>
+
+#### `getAtomicSwapStatus` / `get_atomic_swap_status`
+
+Get atomic swap status.
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getAtomicSwapStatus({ /* GetSwapStatusRequest */ });
+```
+
+```python Python
+status = client.maker.get_atomic_swap_status({...})
+```
+</CodeGroup>
+
+#### `getSwapNodeInfo` / `get_swap_node_info`
+
+Get node information for swaps.
+
+<CodeGroup>
+```typescript TypeScript
+const info = await client.maker.getSwapNodeInfo();
+```
+
+```python Python
+info = client.maker.get_swap_node_info()
+```
+</CodeGroup>
+
+---
+
+### LSPS1 Operations
+
+#### `getLspInfo` / `get_lsp_info`
+
+Get LSP (Lightning Service Provider) information.
+
+<CodeGroup>
+```typescript TypeScript
+const info = await client.maker.getLspInfo();
+```
+
+```python Python
+info = client.maker.get_lsp_info()
+```
+</CodeGroup>
+
+#### `getLspNetworkInfo` / `get_lsp_network_info`
+
+Get LSP network information.
+
+<CodeGroup>
+```typescript TypeScript
+const networkInfo = await client.maker.getLspNetworkInfo();
+```
+
+```python Python
+network_info = client.maker.get_lsp_network_info()
+```
+</CodeGroup>
+
+#### `createLspOrder` / `create_lsp_order`
+
+Create an LSPS1 channel order.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.createLspOrder({ /* CreateLspOrderRequest */ });
+```
+
+```python Python
+order = client.maker.create_lsp_order({...})
+```
+</CodeGroup>
+
+#### `getLspOrder` / `get_lsp_order`
+
+Get LSPS1 order status.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.getLspOrder({ order_id: 'lsp-order-123' });
+```
+
+```python Python
+order = client.maker.get_lsp_order({"order_id": "lsp-order-123"})
+```
+</CodeGroup>
+
+#### `estimateLspFees` / `estimate_lsp_fees`
+
+Estimate fees for an LSPS1 channel order.
+
+<CodeGroup>
+```typescript TypeScript
+const fees = await client.maker.estimateLspFees({ /* CreateLspOrderRequest */ });
+```
+
+```python Python
+fees = client.maker.estimate_lsp_fees({...})
+```
+</CodeGroup>
+
+#### `submitLspRateDecision` / `submit_lsp_rate_decision`
+
+Accept or reject a rate change on an LSP order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.submitLspRateDecision({ /* LspRateDecisionRequest */ });
+```
+
+```python Python
+result = client.maker.submit_lsp_rate_decision({...})
+```
+</CodeGroup>
+
+#### `retryAssetDelivery` / `retry_asset_delivery`
+
+Retry asset delivery for a failed order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.retryAssetDelivery({ /* RetryDeliveryRequest */ });
+```
+
+```python Python
+result = client.maker.retry_asset_delivery({...})
+```
+</CodeGroup>
+
+---
+
+### WebSocket Operations
+
+#### `enableWebSocket` / `enable_websocket`
+
+Enable WebSocket for real-time quote streaming.
+
+<CodeGroup>
+```typescript TypeScript
+const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client-id');
+// Returns: WSClient
+```
+
+```python Python
+ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client-id")
+# Returns: WSClient
+```
+</CodeGroup>
+
+#### `streamQuotes` / `stream_quotes`
+
+Stream real-time quotes for a specific route.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotes(
+  'BTC',           // from_asset
+  'USDT',          // to_asset
+  100000,          // from_amount
+  'BTC_LN',        // from_layer
+  'RGB_LN',        // to_layer
+  (quote) => {
+    console.log(`Price: ${quote.price}`);
+  }
+);
+// Call unsubscribe() to stop streaming
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes(
+    from_asset="BTC",
+    to_asset="USDT",
+    from_amount=100000,
+    from_layer="BTC_LN",
+    to_layer="RGB_LN",
+    on_update=lambda quote: print(f"Price: {quote.price}")
+)
+# Call unsubscribe() to stop streaming
+```
+</CodeGroup>
+
+#### `streamQuotesByTicker` / `stream_quotes_by_ticker`
+
+Stream quotes by ticker with auto-discovered routes.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC',           // fromTicker
+  'USDT',          // toTicker
+  100000,          // amount
+  (quote) => console.log(`Quote: ${quote.price}`),
+  { preferredFromLayer: 'BTC_LN', preferredToLayer: 'RGB_LN' }
 );
 ```
 
 ```python Python
-final_status = client.wait_for_swap_completion(
-    payment_hash,
-    timeout_secs=180.0,
-    poll_interval_secs=2.0,
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda quote: print(f"Quote: {quote.price}"),
+    preferred_from_layer="BTC_LN",
+    preferred_to_layer="RGB_LN"
 )
 ```
 </CodeGroup>
 
-**Parameters:**
-- `paymentHash` / `payment_hash`: The payment hash to monitor
-- `timeoutSecs` / `timeout_secs`: Maximum wait time in seconds
-- `pollIntervalSecs` / `poll_interval_secs`: Polling interval in seconds
+#### `streamQuotesForAllRoutes` / `stream_quotes_for_all_routes`
 
----
-
-## Order Operations
-
-### getOrderHistory
-
-Get order history with optional filtering.
+Stream quotes for all available routes between two assets.
 
 <CodeGroup>
 ```typescript TypeScript
-const historyJson = await client.getOrderHistory(null, 20, 0);
-const history = JSON.parse(historyJson);
-console.log(`Total orders: ${history.total}`);
+const unsubscribers = await client.maker.streamQuotesForAllRoutes(
+  'BTC', 'USDT', 100000,
+  (route, quote) => console.log(`${route}: ${quote.price}`)
+);
+// Returns: Map<string, () => void>
 ```
 
 ```python Python
-history = client.get_order_history(limit=20)
-print(f"Total orders: {history.total}")
+unsubscribers = await client.maker.stream_quotes_for_all_routes(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda route, quote: print(f"{route}: {quote.price}")
+)
+# Returns: dict[str, Callable]
 ```
 </CodeGroup>
 
-**Parameters:**
-- `status`: Filter by status (optional)
-- `limit`: Number of orders to return
-- `skip`: Offset for pagination
+#### `getAvailableRoutes` / `get_available_routes`
 
----
-
-### getSwapOrderStatus
-
-Get the status of a swap order.
+Get available routes for a trading pair.
 
 <CodeGroup>
 ```typescript TypeScript
-const statusJson = await client.getSwapOrderStatus('order-id');
-const status = JSON.parse(statusJson);
-console.log(`Status: ${status.status}`);
+const routes = await client.maker.getAvailableRoutes('BTC', 'USDT');
+// Returns: Array<{ from_layer: string; to_layer: string }>
 ```
 
 ```python Python
-status = client.get_swap_order_status("order-id")
-print(f"Status: {status.status}")
+routes = await client.maker.get_available_routes("BTC", "USDT")
+# Returns: list[dict]
 ```
 </CodeGroup>
 
 ---
 
-### getOrderAnalytics
+### Convenience Methods
 
-Get order analytics and statistics.
+#### `toRaw` / `to_raw`
+
+Convert a display amount to raw (smallest unit) amount.
 
 <CodeGroup>
 ```typescript TypeScript
-const analyticsJson = await client.getOrderAnalytics();
-const analytics = JSON.parse(analyticsJson);
-console.log(`Total: ${analytics.total_orders}`);
+const raw = client.maker.toRaw(0.001, 8);  // 100000
 ```
 
 ```python Python
-analytics = client.get_order_analytics()
-print(f"Total: {analytics.total_orders}")
+raw = client.maker.to_raw(0.001, 8)  # 100000
+```
+</CodeGroup>
+
+#### `toDisplay` / `to_display`
+
+Convert a raw amount to display amount.
+
+<CodeGroup>
+```typescript TypeScript
+const display = client.maker.toDisplay(100000, 8);  // 0.001
+```
+
+```python Python
+display = client.maker.to_display(100000, 8)  # 0.001
 ```
 </CodeGroup>
 
 ---
 
-## LSP Operations
-
-### getLspInfo
-
-Get Lightning Service Provider information.
-
-<CodeGroup>
-```typescript TypeScript
-const info = await client.getLspInfo();
-console.log(info);
-```
-
-```python Python
-info = client.get_lsp_info()
-print(info)
-```
-</CodeGroup>
-
----
-
-### getLspNetworkInfo
-
-Get network information from the LSP.
-
-<CodeGroup>
-```typescript TypeScript
-const networkInfo = await client.getLspNetworkInfo();
-console.log(`Network: ${networkInfo.network}`);
-```
-
-```python Python
-network_info = client.get_lsp_network_info()
-print(f"Network: {network_info.network}")
-```
-</CodeGroup>
-
----
-
-### estimateLspFees
-
-Estimate fees for an LSP channel.
-
-<CodeGroup>
-```typescript TypeScript
-const fees = await client.estimateLspFees(1_000_000);
-console.log(`Fees: ${fees}`);
-```
-
-```python Python
-fees = client.estimate_lsp_fees(1_000_000)
-print(f"Fees: {fees}")
-```
-</CodeGroup>
-
----
-
-### createLspOrder
-
-Create an LSP channel order.
-
-<CodeGroup>
-```typescript TypeScript
-const order = await client.createLspOrder({
-  client_pubkey: pubkey,
-  lsp_balance_sat: 1_000_000,
-  client_balance_sat: 500_000,
-  required_channel_confirmations: 3,
-  funding_confirms_within_blocks: 144,
-  channel_expiry_blocks: 2016,
-  announce_channel: true,
-});
-```
-
-```python Python
-order = client.create_order({
-    "client_pubkey": pubkey,
-    "lsp_balance_sat": 1_000_000,
-    "client_balance_sat": 500_000,
-    "required_channel_confirmations": 3,
-    "funding_confirms_within_blocks": 144,
-    "channel_expiry_blocks": 2016,
-    "announce_channel": True,
-})
-```
-</CodeGroup>
-
----
-
-## RGB Node Operations
-
-<Note>
-These methods require `nodeUrl` / `node_url` to be configured. Check `client.hasNode()` / `client.has_node()` before use.
-</Note>
-
-### hasNode
-
-Check if node URL is configured.
-
-<CodeGroup>
-```typescript TypeScript
-if (client.hasNode()) {
-  console.log('Node is configured');
-}
-```
-
-```python Python
-if client.has_node():
-    print("Node is configured")
-```
-</CodeGroup>
-
----
-
-### getRgbNodeInfo
-
-Get RGB Lightning Node information.
-
-<CodeGroup>
-```typescript TypeScript
-const nodeInfoJson = await client.getRgbNodeInfo({ raw: true });
-const nodeInfo = JSON.parse(nodeInfoJson);
-console.log(`Pubkey: ${nodeInfo.pubkey}`);
-```
-
-```python Python
-import json
-node_info_json = client.get_rgb_node_info()
-node_info = json.loads(node_info_json)
-print(f"Pubkey: {node_info['pubkey']}")
-```
-</CodeGroup>
-
----
-
-### listChannels
-
-List all Lightning channels.
-
-<CodeGroup>
-```typescript TypeScript
-const channels = await client.listChannels();
-console.log(`Channels: ${channels.length}`);
-```
-
-```python Python
-channels = client.list_channels()
-print(f"Channels: {len(channels)}")
-```
-</CodeGroup>
-
----
-
-### getBtcBalance
-
-Get BTC balance on the node.
-
-<CodeGroup>
-```typescript TypeScript
-const balance = await client.getBtcBalance();
-console.log(`Spendable: ${balance.vanilla.spendable}`);
-```
-
-```python Python
-balance = client.get_btc_balance()
-print(f"Spendable: {balance.vanilla.spendable}")
-```
-</CodeGroup>
-
----
-
-### getOnchainAddress
-
-Get an onchain address for deposits.
-
-<CodeGroup>
-```typescript TypeScript
-const address = await client.getOnchainAddress();
-console.log(`Address: ${address.address}`);
-```
-
-```python Python
-address = client.get_onchain_address()
-print(f"Address: {address.address}")
-```
-</CodeGroup>
-
----
-
-## Utility Methods
-
-### toRaw
-
-Convert display amount to atomic units.
-
-<CodeGroup>
-```typescript TypeScript
-const sats = await client.toRaw(0.01, 'BTC');
-console.log(`0.01 BTC = ${sats} satoshis`);
-```
-
-```python Python
-sats = client.to_raw(0.01, "BTC")
-print(f"0.01 BTC = {sats} satoshis")
-```
-</CodeGroup>
-
----
-
-### toDisplay
-
-Convert atomic units to display amount.
-
-<CodeGroup>
-```typescript TypeScript
-const btc = await client.toDisplay(1_000_000, 'BTC');
-console.log(`1,000,000 sats = ${btc} BTC`);
-```
-
-```python Python
-btc = client.to_display(1_000_000, "BTC")
-print(f"1,000,000 sats = {btc} BTC")
-```
-</CodeGroup>
-
----
-
-### validateAmount
-
-Validate an amount against asset constraints.
-
-<CodeGroup>
-```typescript TypeScript
-const result = await client.validateAmount(0.001, 'BTC');
-if (result.valid) {
-  console.log(`Valid: ${result.rawAmount} sats`);
-} else {
-  console.log(`Invalid: ${result.errors.join(', ')}`);
-}
-```
-
-```python Python
-result = client.validate_amount(0.001, "BTC")
-if result["valid"]:
-    print(f"Valid: {result['raw_amount']} sats")
-else:
-    print(f"Invalid: {result['errors']}")
-```
-</CodeGroup>
-
----
-
-### canTrade
-
-Check if a trading pair exists and is active.
-
-<CodeGroup>
-```typescript TypeScript
-const canTrade = await client.canTrade('BTC', 'USDT');
-console.log(`Can trade BTC/USDT: ${canTrade}`);
-```
-
-```python Python
-can_trade = client.can_trade("BTC", "USDT")
-print(f"Can trade BTC/USDT: {can_trade}")
-```
-</CodeGroup>
-
----
-
-## WebSocket Operations
-
-### createQuoteStream
-
-Create a real-time quote stream.
-
-<CodeGroup>
-```typescript TypeScript
-const stream = await client.createQuoteStream('BTC/USDT');
-try {
-  const quoteJson = await stream.recv(5.0);
-  if (quoteJson) {
-    const quote = JSON.parse(quoteJson);
-    console.log(`Price: ${quote.price}`);
-  }
-} finally {
-  stream.close();
-}
-```
-
-```python Python
-with client.subscribe_quotes("BTC/USDT") as stream:
-    for quote in stream.iter_quotes(timeout=5.0, max_quotes=5):
-        print(f"Price: {quote.price}")
-```
-</CodeGroup>
-
-For more details, see the [WebSocket documentation](/sdk/websocket).
+## RlnClient (`client.rln`)
+
+All RGB Lightning Node operations are accessed via `client.rln`. Requires `nodeUrl` / `node_url` to be configured.
+
+### Wallet Management
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getNodeInfo()` | `get_node_info()` | Get node information (pubkey, alias, etc.) |
+| `getNetworkInfo()` | `get_network_info()` | Get network information |
+| `initWallet(body)` | `init_wallet(body)` | Initialize a new wallet |
+| `unlockWallet(body)` | `unlock_wallet(body)` | Unlock the wallet |
+| `lockWallet()` | `lock_wallet()` | Lock the wallet |
+| `changePassword(body)` | `change_password(body)` | Change wallet password |
+| `backup(body)` | `backup(body)` | Backup node data |
+| `restore(body)` | `restore(body)` | Restore from backup |
+| `shutdown()` | `shutdown()` | Shut down the node |
+
+### BTC Operations
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getAddress()` | `get_address()` | Get a Bitcoin address |
+| `getBtcBalance(skipSync?)` | `get_btc_balance(skip_sync?)` | Get BTC balance |
+| `sendBtc(body)` | `send_btc(body)` | Send BTC on-chain |
+| `listTransactions(request?)` | `list_transactions(request?)` | List transactions |
+| `listUnspents()` | `list_unspents()` | List unspent outputs |
+| `createUtxos(body)` | `create_utxos(body)` | Create UTXOs |
+| `estimateFee(body)` | `estimate_fee(body)` | Estimate transaction fee |
+
+### RGB Asset Operations
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listAssets(filter?)` | `list_assets(filter?)` | List RGB assets |
+| `getAssetBalance(body)` | `get_asset_balance(body)` | Get asset balance |
+| `getAssetMetadata(body)` | `get_asset_metadata(body)` | Get asset metadata |
+| `getAssetMedia(body)` | `get_asset_media(body)` | Get asset media |
+| `issueAssetNIA(body)` | `issue_asset_nia(body)` | Issue NIA asset |
+| `issueAssetCFA(body)` | `issue_asset_cfa(body)` | Issue CFA asset |
+| `issueAssetUDA(body)` | `issue_asset_uda(body)` | Issue UDA asset |
+| `sendAsset(body)` | `send_asset(body)` | Send RGB asset |
+| `listTransfers(body)` | `list_transfers(body)` | List transfers |
+| `refreshTransfers(body?)` | `refresh_transfers(body?)` | Refresh transfer status |
+| `failTransfers(body)` | `fail_transfers(body)` | Fail pending transfers |
+
+### Lightning Channels
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listChannels()` | `list_channels()` | List all channels |
+| `openChannel(body)` | `open_channel(body)` | Open a new channel |
+| `closeChannel(body)` | `close_channel(body)` | Close a channel |
+| `getChannelId(body)` | `get_channel_id(body)` | Get channel ID |
+
+### Lightning Peers
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listPeers()` | `list_peers()` | List connected peers |
+| `connectPeer(body)` | `connect_peer(body)` | Connect to a peer |
+| `disconnectPeer(body)` | `disconnect_peer(body)` | Disconnect a peer |
+
+### Invoices and Payments
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `createLNInvoice(body)` | `create_ln_invoice(body)` | Create Lightning invoice |
+| `createRgbInvoice(body)` | `create_rgb_invoice(body)` | Create RGB invoice |
+| `decodeLNInvoice(body)` | `decode_ln_invoice(body)` | Decode Lightning invoice |
+| `decodeRgbInvoice(body)` | `decode_rgb_invoice(body)` | Decode RGB invoice |
+| `getInvoiceStatus(body)` | `get_invoice_status(body)` | Get invoice status |
+| `sendPayment(body)` | `send_payment(body)` | Send Lightning payment |
+| `keysend(body)` | `keysend(body)` | Send keysend payment |
+| `listPayments()` | `list_payments()` | List payments |
+| `getPayment(body)` | `get_payment(body)` | Get payment details |
+
+### Swap Operations (Node-Level)
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getTakerPubkey()` | `get_taker_pubkey()` | Get taker public key |
+| `whitelistTrade(body)` | `whitelist_swap(body)` | Whitelist a trade |
+| `makerInit(body)` | `maker_init(body)` | Initialize maker swap |
+| `makerExecute(body)` | `maker_execute(body)` | Execute maker swap |
+| `listSwaps()` | `list_swaps()` | List all swaps |
+| `getSwap(body)` | `get_swap(body)` | Get swap details |
+
+### Utility Methods
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `signMessage(body)` | `sign_message(body)` | Sign a message |
+| `sendOnionMessage(body)` | `send_onion_message(body)` | Send an onion message |
+| `checkIndexerUrl(body)` | `check_indexer_url(body)` | Check indexer URL |
+| `checkProxyEndpoint(body)` | `check_proxy_endpoint(body)` | Check proxy endpoint |
+| `revokeToken(body)` | `revoke_token(body)` | Revoke auth token |

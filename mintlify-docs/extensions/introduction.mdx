@@ -1,0 +1,51 @@
+---
+title: Extensions Overview
+description: Browser extensions for the KaleidoSwap ecosystem
+---
+
+## KaleidoSwap Browser Extensions
+
+KaleidoSwap offers browser extensions that bring wallet management, asset swaps, and DApp connectivity directly into your browser. Extensions complement the [Web App](/web-app/introduction) by providing a persistent wallet experience and deeper integration with the KaleidoSwap ecosystem.
+
+<CardGroup cols={2}>
+  <Card title="Rate Wallet" icon="wallet" href="/extensions/rate/introduction">
+    A Chrome extension wallet for Bitcoin Layer 2 networks with built-in RGB support, asset management, and swap functionality.
+  </Card>
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    Use the browser-based trading interface for quick swaps without installing an extension.
+  </Card>
+</CardGroup>
+
+## Why Use an Extension?
+
+| Feature | Web App Only | With Extension |
+|---------|-------------|----------------|
+| **Wallet** | External wallet required | Built-in wallet in the extension |
+| **Payments** | Copy invoices to external wallet | Pay directly from the extension |
+| **Asset Management** | View balances in external wallet | See all balances in the extension popup |
+| **DApp Support** | Limited to connected wallet | WebLN and Nostr integration for any DApp |
+| **Swaps** | Via the web app interface | Swap directly from the extension or the web app |
+
+## Available Extensions
+
+### Rate Wallet
+
+Rate is a Chrome extension wallet purpose-built for Bitcoin Layer 2 networks. It connects to your RGB Lightning Node and provides:
+
+- **Wallet management** - View balances, send, and receive BTC and RGB assets
+- **Built-in swaps** - Swap assets directly within the extension via the Kaleidoswap maker API
+- **DApp connectivity** - WebLN provider and Nostr NIP-07 signer for seamless integration with web apps
+- **Web app integration** - Use the "Pay with Wallet" button on the KaleidoSwap order page to pay deposits without leaving the browser
+
+<Card title="Get Started with Rate" icon="rocket" href="/extensions/rate/getting-started">
+  Set up Rate and start managing your Bitcoin Layer 2 assets
+</Card>
+
+## Extension vs. Web App
+
+The extension and the web app work together:
+
+1. **Connect Rate to the Web App** - Use Rate as your wallet when trading on app.kaleidoswap.com
+2. **Pay deposits directly** - When you create a swap order on the web app, pay the deposit invoice directly from Rate
+3. **Manage assets** - View all your BTC and RGB balances in the Rate popup without visiting the web app
+4. **Swap from anywhere** - Execute swaps directly in the Rate extension, even without opening the web app

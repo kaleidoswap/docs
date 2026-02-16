@@ -1,569 +1,407 @@
 ---
 title: 'Types'
-description: 'Type definitions and data models for the SDK'
+description: 'Type definitions and data models used by the SDK'
 ---
 
 ## Overview
 
-Both SDKs provide strong typing for all API responses:
-- **TypeScript**: Native interfaces with full IDE autocomplete
-- **Python**: Pydantic models with automatic validation
+Both SDKs auto-generate types from the same OpenAPI specifications, ensuring consistency:
 
-All types are auto-generated from OpenAPI specifications to ensure consistency.
+- **TypeScript**: Types generated via `openapi-fetch` with full type inference
+- **Python**: Pydantic models generated from the OpenAPI specs
 
----
+## Configuration
 
-## Core Types
+### KaleidoConfig
+
+<CodeGroup>
+```typescript TypeScript
+interface KaleidoConfig {
+  baseUrl: string;        // Required: API base URL
+  nodeUrl?: string;       // Optional: RGB Lightning Node URL
+  apiKey?: string;        // Optional: API key
+  timeout?: number;       // Optional: timeout in seconds (default: 30)
+  maxRetries?: number;    // Optional: max retries (default: 3)
+  cacheTtl?: number;      // Optional: cache TTL in seconds (default: 60)
+}
+```
+
+```python Python
+# KaleidoClient.create() accepts keyword arguments:
+KaleidoClient.create(
+    base_url: str,               # Required
+    node_url: str | None,        # Optional
+    api_key: str | None,         # Optional
+    timeout: float = 30.0,       # Optional
+    max_retries: int = 3,        # Optional
+    cache_ttl: int = 60,         # Optional
+)
+```
+</CodeGroup>
+
+## Layer Types
+
+The `Layer` type defines all supported network layers for asset transfers.
+
+<CodeGroup>
+```typescript TypeScript
+type Layer =
+  | 'BTC_L1'           // Bitcoin on-chain
+  | 'BTC_LN'           // Bitcoin Lightning
+  | 'BTC_SPARK'        // Bitcoin Spark
+  | 'BTC_ARKADE'       // Bitcoin Arkade
+  | 'BTC_LIQUID'       // Bitcoin Liquid
+  | 'BTC_CASHU'        // Bitcoin Cashu
+  | 'RGB_L1'           // RGB on-chain
+  | 'RGB_LN'           // RGB Lightning
+  | 'TAPASS_L1'        // Taproot Assets on-chain
+  | 'TAPASS_LN'        // Taproot Assets Lightning
+  | 'LIQUID_LIQUID'    // Liquid network
+  | 'ARKADE_ARKADE'    // Arkade network
+  | 'SPARK_SPARK';     // Spark network
+
+// Runtime enum for Layer values
+import { LayerEnum } from 'kaleidoswap-sdk';
+const layer = LayerEnum.BTC_LN;
+```
+
+```python Python
+from kaleidoswap_sdk.generated.api_types import Layer
+
+# Layer is a string enum:
+# "BTC_L1", "BTC_LN", "BTC_SPARK", "BTC_ARKADE",
+# "BTC_LIQUID", "BTC_CASHU", "RGB_L1", "RGB_LN",
+# "TAPASS_L1", "TAPASS_LN", "LIQUID_LIQUID",
+# "ARKADE_ARKADE", "SPARK_SPARK"
+```
+</CodeGroup>
+
+## Receiver Address Formats
+
+The `ReceiverAddressFormat` type defines address formats for each layer.
+
+<CodeGroup>
+```typescript TypeScript
+type ReceiverAddressFormat =
+  | 'BTC_ADDRESS'        // Standard Bitcoin address (bc1q...)
+  | 'BOLT11'             // Lightning BOLT11 invoice
+  | 'BOLT12'             // Lightning BOLT12 offer
+  | 'LN_ADDRESS'         // Lightning Address (user@domain)
+  | 'RGB_INVOICE'        // RGB invoice
+  | 'LIQUID_ADDRESS'     // Liquid address
+  | 'LIQUID_INVOICE'     // Liquid invoice
+  | 'SPARK_ADDRESS'      // Spark address
+  | 'SPARK_INVOICE'      // Spark invoice
+  | 'ARKADE_ADDRESS'     // Arkade address
+  | 'ARKADE_INVOICE'     // Arkade invoice
+  | 'CASHU_TOKEN';       // Cashu token
+
+import { ReceiverAddressFormatEnum } from 'kaleidoswap-sdk';
+const format = ReceiverAddressFormatEnum.BOLT11;
+```
+
+```python Python
+from kaleidoswap_sdk.generated.api_types import ReceiverAddressFormat
+
+# ReceiverAddressFormat is a string enum:
+# "BTC_ADDRESS", "BOLT11", "BOLT12", "LN_ADDRESS",
+# "RGB_INVOICE", "LIQUID_ADDRESS", "LIQUID_INVOICE",
+# "SPARK_ADDRESS", "SPARK_INVOICE", "ARKADE_ADDRESS",
+# "ARKADE_INVOICE", "CASHU_TOKEN"
+```
+</CodeGroup>
+
+## Market Types
 
 ### Asset
 
 Represents a tradeable asset.
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface Asset {
-    assetId: string;        // Unique identifier
-    ticker: string;         // Symbol (e.g., "BTC")
-    name: string;           // Full name
-    precision: number;      // Decimal places
-    issuedSupply: number;   // Total supply
-    isActive?: boolean;     // Trading status
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class Asset(BaseModel):
-      ticker: str               # Symbol (e.g., "BTC")
-      name: str                 # Full name
-      precision: int            # Decimal places
-      is_active: Optional[bool] # Trading status
-      protocol_ids: Optional[Dict[str, str]]
-      endpoints: Optional[List[Any]]
-  ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```typescript TypeScript
+// Auto-generated from OpenAPI
+type Asset = components['schemas']['Asset'];
+// Fields: asset_id, ticker, name, precision, ...
+```
 
----
+```python Python
+# Pydantic model from OpenAPI
+from kaleidoswap_sdk.generated.api_types import Asset
+# Fields: asset_id, ticker, name, precision, ...
+```
+</CodeGroup>
 
 ### TradingPair
 
-Represents a trading pair between two assets.
+Represents a trading pair with routes and limits.
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface TradingPair {
-    id?: string;
-    baseAsset: string;        // Base ticker
-    baseAssetId: string;
-    basePrecision: number;
-    quoteAsset: string;       // Quote ticker
-    quoteAssetId: string;
-    quotePrecision: number;
-    isActive: boolean;
-    minBaseOrderSize: number;
-    maxBaseOrderSize: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class TradingPair(BaseModel):
-      id: Optional[str]
-      base: Optional[TradableAsset]   # Base asset info
-      quote: Optional[TradableAsset]  # Quote asset info
-      price: Optional[str]
-      is_active: Optional[bool]
-      routes: Optional[List[SwapRoute]]
-  ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```typescript TypeScript
+type TradingPair = components['schemas']['TradingPair'];
+// Fields: base_asset_ticker, quote_asset_ticker, routes, ...
+```
 
----
+```python Python
+from kaleidoswap_sdk.generated.api_types import TradingPair
+# Fields: base_asset_ticker, quote_asset_ticker, routes, ...
+```
+</CodeGroup>
 
-### Quote
+### Quote / PairQuoteResponse
 
-Quote information for a swap.
+A price quote for a swap.
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface Quote {
-    rfqId: string;       // Request for Quote ID
-    fromAsset: string;
-    fromAmount: number;
-    toAsset: string;
-    toAmount: number;
-    price: number;
-    fee: Fee;
-    expiresAt: number;   // Unix timestamp
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class PairQuoteResponse(BaseModel):
-      rfq_id: str
-      from_asset: SwapLeg
-      to_asset: SwapLeg
-      price: str
-      fee: Fee
-      expires_at: str
-      created_at: Optional[str]
-  ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```typescript TypeScript
+type Quote = components['schemas']['PairQuoteResponse'];
+// Fields: rfq_id, from_amount, to_amount, price, expires_at, fee, ...
+```
 
----
-
-### SwapLeg
-
-Details of one side of a swap.
-
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface SwapLeg {
-    asset_id: string;
-    name: string;
-    ticker: string;
-    layer: Layer;
-    amount: number;
-    precision: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class SwapLeg(BaseModel):
-      asset_id: str
-      name: str
-      ticker: str
-      layer: Layer
-      amount: int
-      precision: int
-  ```
-  </Tab>
-</Tabs>
-
----
+```python Python
+from kaleidoswap_sdk.generated.api_types import PairQuoteResponse
+# Fields: rfq_id, from_amount, to_amount, price, expires_at, fee, ...
+```
+</CodeGroup>
 
 ### Fee
 
-Fee information.
+Fee structure returned in quotes.
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface Fee {
-    baseFee: number;
-    variableFee: number;
-    feeRate: number;
-    finalFee: number;
-    feeAsset: string;
-    feeAssetPrecision: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class Fee(BaseModel):
-      base_fee: Optional[int]
-      variable_fee: Optional[int]
-      fee_rate: Optional[str]
-      final_fee: int
-      fee_asset: Optional[str]
-      fee_asset_precision: Optional[int]
-  ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```typescript TypeScript
+// From WebSocket types
+interface Fee {
+  fee_asset: string;
+  fee_precision: number;
+  base_fee: number;
+  variable_fee: number;
+  fee_rate: number;
+  final_fee: number;
+}
+```
 
----
-
-## Layer Enum
-
-Protocol layers for swaps.
-
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  type Layer =
-    | 'BTC_L1'       // Bitcoin on-chain
-    | 'BTC_LN'       // Bitcoin Lightning
-    | 'BTC_SPARK'
-    | 'BTC_LIQUID'
-    | 'RGB_L1'       // RGB on-chain
-    | 'RGB_LN'       // RGB on Lightning
-    | 'TAPASS_L1'
-    | 'TAPASS_LN';
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class Layer(str, Enum):
-      BTC_L1 = "BTC_L1"       # Bitcoin on-chain
-      BTC_LN = "BTC_LN"       # Bitcoin Lightning
-      BTC_SPARK = "BTC_SPARK"
-      BTC_LIQUID = "BTC_LIQUID"
-      RGB_L1 = "RGB_L1"       # RGB on-chain
-      RGB_LN = "RGB_LN"       # RGB on Lightning
-  ```
-  </Tab>
-</Tabs>
-
----
-
-## Configuration Types
-
-### KaleidoConfig
-
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface KaleidoConfig {
-    baseUrl: string;
-    nodeUrl?: string;
-    apiKey?: string;
-    timeout?: number;
-    maxRetries?: number;
-    cacheTtl?: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class KaleidoConfig:
-      base_url: str
-      node_url: Optional[str] = None
-      api_key: Optional[str] = None
-      timeout: float = 30.0
-      max_retries: int = 3
-      cache_ttl: int = 60
-  ```
-  </Tab>
-</Tabs>
-
----
+```python Python
+# Fee fields in quote responses:
+# fee_asset, fee_precision, base_fee, variable_fee, fee_rate, final_fee
+```
+</CodeGroup>
 
 ## Order Types
 
-### OrderHistoryResponse
+### CreateSwapOrderRequest
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface OrderHistoryResponse {
-    orders: any[];
-    total: number;
-    limit: number;
-    skip: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class OrderHistoryResponse(BaseModel):
-      orders: List[Any]
-      total: int
-      limit: int
-      skip: int
-  ```
-  </Tab>
-</Tabs>
+Request to create a swap order.
 
----
+<CodeGroup>
+```typescript TypeScript
+type CreateSwapOrderRequest = components['schemas']['CreateSwapOrderRequest'];
+// Fields: rfq_id, from_asset, to_asset, receiver_address, min_onchain_conf
+```
 
-### SwapOrderStatusResponse
+```python Python
+from kaleidoswap_sdk.generated.api_types import CreateSwapOrderRequest
+# Fields: rfq_id, from_asset, to_asset, receiver_address, min_onchain_conf
+```
+</CodeGroup>
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface SwapOrderStatusResponse {
-    id: string;
-    status: string;
-    from_asset: SwapLeg;
-    to_asset: SwapLeg;
-    created_at: string;
-    updated_at?: string;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class SwapOrderStatusResponse(BaseModel):
-      id: str
-      status: str
-      from_asset: SwapLeg
-      to_asset: SwapLeg
-      created_at: str
-      updated_at: Optional[str]
-  ```
-  </Tab>
-</Tabs>
+### SwapOrder
 
----
+A swap order with full details.
 
-## Request Types
+<CodeGroup>
+```typescript TypeScript
+type SwapOrder = components['schemas']['SwapOrder'];
+// Fields: order_id, status, from_asset, to_asset, deposit_address, ...
+```
 
-### SwapRequest
+```python Python
+from kaleidoswap_sdk.generated.api_types import SwapOrder
+# Fields: order_id, status, from_asset, to_asset, deposit_address, ...
+```
+</CodeGroup>
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface SwapRequest {
-    rfq_id: string;
-    from_asset: string;
-    from_amount: number;
-    to_asset: string;
-    to_amount: number;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  # Dictionary format
-  {
-      "rfq_id": str,
-      "from_asset": str,
-      "from_amount": int,
-      "to_asset": str,
-      "to_amount": int,
-  }
-  ```
-  </Tab>
-</Tabs>
+### Order State Enums
 
----
+<CodeGroup>
+```typescript TypeScript
+type OrderState = components['schemas']['OrderState'];
+// Values: CREATED, PENDING_PAYMENT, PAID, EXECUTING,
+//         FILLED, EXPIRED, CANCELLED, FAILED, PENDING_RATE_DECISION
 
-### ConfirmSwapRequest
+type PaymentState = components['schemas']['PaymentState'];
+// Values: NOT_PAID, PAID, OVERPAID, UNDERPAID
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface ConfirmSwapRequest {
-    swapstring: string;
-    taker_pubkey: string;
-    payment_hash: string;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  # Dictionary format
-  {
-      "swapstring": str,
-      "taker_pubkey": str,
-      "payment_hash": str,
-  }
-  ```
-  </Tab>
-</Tabs>
+type PaymentStatus = components['schemas']['PaymentStatus'];
+// Payment processing status
+```
 
----
+```python Python
+from kaleidoswap_sdk.generated.api_types import OrderState, PaymentState, PaymentStatus
+# Same enum values as TypeScript
+```
+</CodeGroup>
 
-### CreateOrderRequest (LSP)
+## Node Types (RLN)
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface CreateOrderRequest {
-    client_pubkey: string;
-    lsp_balance_sat: number;
-    client_balance_sat: number;
-    required_channel_confirmations: number;
-    funding_confirms_within_blocks: number;
-    channel_expiry_blocks: number;
-    announce_channel?: boolean;
-    asset_id?: string;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  # Dictionary format
-  {
-      "client_pubkey": str,
-      "lsp_balance_sat": int,
-      "client_balance_sat": int,
-      "required_channel_confirmations": int,
-      "funding_confirms_within_blocks": int,
-      "channel_expiry_blocks": int,
-      "announce_channel": Optional[bool],
-      "asset_id": Optional[str],
-  }
-  ```
-  </Tab>
-</Tabs>
+These types are used with `client.rln` operations. They are auto-generated from the RLN node OpenAPI spec.
 
----
+### NodeInfoResponse
 
-## RGB Node Types
+<CodeGroup>
+```typescript TypeScript
+type NodeInfoResponse = nodeComponents['schemas']['NodeInfoResponse'];
+// Fields: pubkey, alias, color, num_channels, ...
+```
+
+```python Python
+from kaleidoswap_sdk.generated.node_types import NodeInfoResponse
+# Fields: pubkey, alias, color, num_channels, ...
+```
+</CodeGroup>
 
 ### BtcBalanceResponse
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface BtcBalanceResponse {
-    vanilla: {
-      settled: number;
-      future: number;
-      spendable: number;
-      offchainOutbound: number;
-      offchainInbound: number;
-    };
-    colored?: Record<string, any>;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class BtcBalanceResponse(BaseModel):
-      vanilla: BtcBalance
-      colored: Optional[Dict]
+<CodeGroup>
+```typescript TypeScript
+type BtcBalanceResponse = nodeComponents['schemas']['BtcBalanceResponse'];
+// Fields: vanilla { settled, future, spendable }, colored { settled, future, spendable }
+```
 
-  class BtcBalance(BaseModel):
-      settled: int
-      future: int
-      spendable: int
-      offchain_outbound: int
-      offchain_inbound: int
-  ```
-  </Tab>
-</Tabs>
-
----
+```python Python
+from kaleidoswap_sdk.generated.node_types import BtcBalanceResponse
+# Fields: vanilla.settled, vanilla.future, vanilla.spendable, colored.settled, ...
+```
+</CodeGroup>
 
 ### Channel
 
-<Tabs>
-  <Tab title="TypeScript">
-  ```typescript
-  interface Channel {
-    channel_id: string;
-    peer_pubkey: string;
-    capacity_sat: number;
-    local_balance_sat: number;
-    remote_balance_sat: number;
-    is_usable: boolean;
-    is_public: boolean;
-  }
-  ```
-  </Tab>
-  <Tab title="Python">
-  ```python
-  class Channel(BaseModel):
-      channel_id: str
-      peer_pubkey: str
-      capacity_sat: int
-      local_balance_sat: int
-      remote_balance_sat: int
-      is_usable: bool
-      is_public: bool
-  ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```typescript TypeScript
+type Channel = nodeComponents['schemas']['Channel'];
+// Fields: channel_id, peer_pubkey, capacity, local_balance, status, ...
+```
 
----
+```python Python
+from kaleidoswap_sdk.generated.node_types import Channel
+# Fields: channel_id, peer_pubkey, capacity, local_balance, status, ...
+```
+</CodeGroup>
+
+### Invoice Types
+
+<CodeGroup>
+```typescript TypeScript
+type LNInvoiceResponse = nodeComponents['schemas']['LNInvoiceResponse'];
+type RgbInvoiceResponse = nodeComponents['schemas']['RgbInvoiceResponse'];
+type DecodeLNInvoiceResponse = nodeComponents['schemas']['DecodeLNInvoiceResponse'];
+```
+
+```python Python
+from kaleidoswap_sdk.generated.node_types import (
+    LNInvoiceResponse,
+    RgbInvoiceResponse,
+    DecodeLNInvoiceResponse,
+)
+```
+</CodeGroup>
+
+### Asset Types
+
+<CodeGroup>
+```typescript TypeScript
+type AssetNIA = nodeComponents['schemas']['AssetNIA'];
+type ListAssetsResponse = nodeComponents['schemas']['ListAssetsResponse'];
+type AssetBalanceResponse = nodeComponents['schemas']['AssetBalanceResponse'];
+```
+
+```python Python
+from kaleidoswap_sdk.generated.node_types import (
+    AssetNIA,
+    ListAssetsResponse,
+    AssetBalanceResponse,
+)
+```
+</CodeGroup>
+
+## WebSocket Types
+
+<CodeGroup>
+```typescript TypeScript
+import type { QuoteResponse, QuoteRequest, PongResponse, Fee } from 'kaleidoswap-sdk';
+
+interface QuoteRequest {
+  from_asset: string;
+  to_asset: string;
+  from_amount?: number | null;
+  to_amount?: number | null;
+  from_layer?: string | null;
+  to_layer?: string | null;
+}
+
+interface QuoteResponse {
+  action: 'quote_response';
+  from_asset: string;
+  to_asset: string;
+  from_amount: number;
+  to_amount: number;
+  price: number;
+  rfq_id: string;
+  price_precision: number;
+  timestamp: number;
+  expires_at: number;
+  fee: Fee;
+}
+```
+
+```python Python
+# WebSocket messages are dictionaries in Python
+# QuoteRequest: from_asset, to_asset, from_amount, to_amount, from_layer, to_layer
+# QuoteResponse: action, from_asset, to_asset, from_amount, to_amount, price,
+#                rfq_id, price_precision, timestamp, expires_at, fee
+```
+</CodeGroup>
 
 ## Importing Types
 
 <CodeGroup>
 ```typescript TypeScript
-import {
-  // Configuration
+// Import specific types
+import type {
   KaleidoConfig,
-  
-  // Core types
   Asset,
   TradingPair,
   Quote,
-  Fee,
-  SwapLeg,
-  
-  // Enums
+  CreateSwapOrderRequest,
+  SwapOrder,
   Layer,
-  
-  // Request types
-  SwapRequest,
-  ConfirmSwapRequest,
-  CreateOrderRequest,
-  
-  // Response types
-  OrderHistoryResponse,
-  SwapOrderStatusResponse,
-} from '@kaleidoswap/sdk';
+  ReceiverAddressFormat,
+  BtcBalanceResponse,
+  Channel,
+} from 'kaleidoswap-sdk';
+
+// Import runtime enums
+import { LayerEnum, ReceiverAddressFormatEnum } from 'kaleidoswap-sdk';
+
+// Import raw OpenAPI components for advanced usage
+import type { components, paths } from 'kaleidoswap-sdk';
 ```
 
 ```python Python
-from kaleidoswap import (
-    # Configuration
-    KaleidoConfig,
-    
-    # Core types
+# Import from generated types
+from kaleidoswap_sdk.generated.api_types import (
     Asset,
     TradingPair,
     PairQuoteResponse,
-    Fee,
-    SwapLeg,
+    CreateSwapOrderRequest,
+    SwapOrder,
     Layer,
-    
-    # Order types
-    OrderHistoryResponse,
-    SwapOrderStatusResponse,
-    
-    # RGB Node types
+    ReceiverAddressFormat,
+)
+
+from kaleidoswap_sdk.generated.node_types import (
     BtcBalanceResponse,
-    AddressResponse,
-    RgbChannel,
-    RgbPeer,
+    Channel,
+    NodeInfoResponse,
 )
 ```
 </CodeGroup>
-
----
-
-## Model Serialization (Python)
-
-Pydantic models can be easily serialized:
-
-```python
-# To dictionary
-asset_dict = asset.model_dump()
-
-# To JSON string
-asset_json = asset.model_dump_json()
-
-# From dictionary
-asset = Asset.model_validate(asset_dict)
-
-# From JSON string
-import json
-asset = Asset.model_validate(json.loads(asset_json))
-```
-
----
-
-## Type Guards (TypeScript)
-
-Create type guards for runtime type checking:
-
-```typescript
-import { Asset, TradingPair } from '@kaleidoswap/sdk';
-
-function isAsset(obj: unknown): obj is Asset {
-  return typeof obj === 'object' && 
-         obj !== null && 
-         'ticker' in obj && 
-         'precision' in obj;
-}
-
-function isTradingPair(obj: unknown): obj is TradingPair {
-  return typeof obj === 'object' && 
-         obj !== null && 
-         'baseAsset' in obj && 
-         'quoteAsset' in obj;
-}
-```

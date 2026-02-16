@@ -1,14 +1,5 @@
 # Dependencies
 /node_modules
-.pnpm-store/
-.pnpm-debug.log
-
-# Production
-/build
-
-# Generated files
-.docusaurus
-.cache-loader
 
 # Misc
 .DS_Store
@@ -16,5 +7,3 @@
 .env.development.local
 .env.test.local
 .env.production.local
-
-pnpm-debug.log*

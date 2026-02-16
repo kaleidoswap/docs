@@ -5,41 +5,15 @@ description: Complete guide to creating and managing swap orders
 
 ## Interface Overview
 
-The KaleidoSwap trading interface is designed for simplicity and efficiency:
+![KaleidoSwap Trading Interface](/assets/images/web-app-trading.png)
 
-```
-┌─────────────────────────────────────────────┐
-│  Header: Logo | Wallet Button | Settings    │
-├─────────────────────────────────────────────┤
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │  From Card                          │    │
-│  │  [Asset Selector]  [Network Badge]  │    │
-│  │  [Amount Input]                     │    │
-│  │  ≈ $XX.XX                           │    │
-│  │  Min: XXX | Max: XXX                │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-│              ↕ Swap Arrow                   │
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │  To Card                            │    │
-│  │  [Asset Selector]  [Network Badge]  │    │
-│  │  [Amount Display]                   │    │
-│  │  ≈ $XX.XX                           │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-│  [Recipient Address Input]                  │
-│                                             │
-│  [Rate: X BTC = X USDT]                    │
-│  [Fee: X sats]                             │
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │          [SWAP BUTTON]              │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-└─────────────────────────────────────────────┘
-```
+The KaleidoSwap trading interface is designed for simplicity and efficiency. The main elements are:
+
+- **From Card** — select the asset and amount you're swapping from
+- **To Card** — select the asset you want to receive
+- **Recipient Address** — enter the address where the swapped asset will be sent
+- **Quote Display** — real-time exchange rate and fees
+- **Swap Button** — create the order and proceed to the order page
 
 ## Swap Cards
 
@@ -213,8 +187,8 @@ The network badge shows which protocol is active.
 
 Not all assets can be traded with each other. Invalid pairs are automatically filtered out. Common pairs include:
 
-- BTC <> USDT
-- BTC <> XAUT
+- BTC / USDT
+- BTC / XAUT
 
 ## Amount Handling
 

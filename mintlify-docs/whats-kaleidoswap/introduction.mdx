@@ -1,164 +1,247 @@
 ---
 title: Welcome to KaleidoSwap
-description: Open-source platform for trading RGB assets on the Lightning Network
+description: Trade RGB assets on the Lightning Network — desktop, browser, and beyond
 ---
 
-KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. The **desktop application** provides a full-featured interface for managing RGB Lightning nodes, connecting to Lightning Service Providers (LSPs), and executing atomic swaps. The **web app** offers browser-based trading via order-based swaps, and browser **extensions** like the Rate wallet bring self-custodial Bitcoin Layer 2 wallets directly into your browser.
+![KaleidoSwap — Trade RGB assets on Lightning](/assets/images/hero-banner.png)
 
-## Documentation Structure
-
-This documentation is organized into focused sections to help you find what you need:
-
-<CardGroup cols={3}>
-  <Card title="Learn" icon="book-open">
-    Understand KaleidoSwap fundamentals, architecture, and key concepts
-  </Card>
-
-  <Card title="Desktop App" icon="desktop">
-    Step-by-step guides for installing, configuring, and using the desktop application
-  </Card>
-
-  <Card title="Web App" icon="globe" href="/web-app/introduction">
-    Trade RGB assets directly from your browser via order-based swaps
-  </Card>
-
-  <Card title="Extensions" icon="puzzle-piece" href="/extensions/introduction">
-    Browser extensions for wallet management, swaps, and DApp connectivity
-  </Card>
-
-  <Card title="SDK" icon="code" href="/sdk/introduction">
-    Integrate KaleidoSwap into your applications with Python or TypeScript SDKs
-  </Card>
-
-  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
-    Complete REST API documentation with interactive playground
-  </Card>
-</CardGroup>
-
-## Key Features
-
-<CardGroup cols={2}>
-  <Card title="RGB Lightning Node Management" icon="server">
-    - Run your own RGB Lightning node or connect to existing ones
-    - Manage channels and liquidity with ease
-    - Built-in security features for safe asset transfers
-  </Card>
-
-  <Card title="RGB Asset Trading" icon="coins">
-    - Trade RGB20 assets on the Lightning Network
-    - Connect to RGB LSPs for instant liquidity
-    - Real-time price updates and market data
-    - Atomic swap execution with built-in security
-  </Card>
-
-  <Card title="Lightning Network Integration" icon="bolt">
-    - Fast and low-cost transactions
-    - Secure channel management
-    - Automated channel backups
-    - Support for both public and private channels
-  </Card>
-
-  <Card title="Security First" icon="shield-check">
-    - Non-custodial architecture
-    - Secure key management
-    - Encrypted channel backups
-    - Trustless trading protocol
-  </Card>
-</CardGroup>
-
-## Quick Navigation
+KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. Whether you prefer the full power of the **desktop application** with atomic swaps, the convenience of **browser-based trading** through the web app, or a **self-custodial wallet extension** like Rate — KaleidoSwap gives you the tools to trade Bitcoin and RGB assets your way.
 
 <CardGroup cols={3}>
   <Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/installation">
-    Install and set up the KaleidoSwap desktop application
+    Full-featured trading with atomic swaps, node management, and channel control
   </Card>
 
   <Card title="Web App" icon="globe" href="/web-app/introduction">
-    Start trading from your browser -- no installation required
+    Trade from any browser — create orders, pay, and track in real time
   </Card>
 
   <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
-    Bitcoin Layer 2 wallet with built-in swap support
+    Bitcoin Layer 2 wallet in your browser with built-in swaps
   </Card>
 </CardGroup>
 
-## Getting Started
+---
 
-Follow these steps to start trading with KaleidoSwap:
+## Why KaleidoSwap?
 
-<Steps>
-  <Step title="Install KaleidoSwap">
-    Download and install the desktop application for your platform
+<CardGroup cols={2}>
+  <Card title="RGB on Lightning" icon="bolt">
+    Trade RGB20 assets (USDT, XAUT, and more) with instant settlement on the Lightning Network — powered by atomic swaps on the desktop app
+  </Card>
 
-    [Installation Guide →](/desktop-app/getting-started/installation)
-  </Step>
+  <Card title="Non-Custodial" icon="shield-check">
+    Your keys, your coins. No accounts, no intermediaries — just connect your wallet or run your own node
+  </Card>
 
-  <Step title="Create or Import a Wallet">
-    Set up your wallet to securely manage your assets
+  <Card title="Open Source" icon="code-branch">
+    Fully open-source with MIT license. Inspect the code, contribute, or build your own integration
+  </Card>
 
-    [Wallet Setup →](/desktop-app/wallet/creating-wallet)
-  </Step>
+  <Card title="Multi-Platform" icon="layer-group">
+    Desktop app for power users, web app for quick trades, browser extension for everyday use
+  </Card>
+</CardGroup>
 
-  <Step title="Fund Your Wallet">
-    Deposit Bitcoin and RGB assets to start trading
+---
 
-    [Deposit Guide →](/desktop-app/wallet/deposits)
-  </Step>
+## Platform Overview
 
-  <Step title="Open Lightning Channels">
-    Establish channels for fast, low-cost transactions
+![KaleidoSwap Platform — Desktop, Web, Extension](/assets/images/platform-overview.png)
 
-    [Channel Guide →](/desktop-app/channels/opening-channel)
-  </Step>
+| | Desktop App | Web App | Rate Extension |
+|--|-------------|---------|----------------|
+| **Swap Model** | Atomic swaps | Order-based | Maker API swaps |
+| **Node** | Self-hosted or remote | Remote | Remote |
+| **Wallet** | Built-in | External (Alby, Xverse, BitMask, Rate) | Built-in |
+| **Best For** | Power users, node operators | Quick browser-based trades | Everyday wallet + swap use |
+| **Install** | [Download](/desktop-app/getting-started/installation) | [Open App](https://app.kaleidoswap.com) | [Install Extension](/extensions/rate/installation) |
 
-  <Step title="Start Trading">
-    Execute atomic swaps with RGB assets
+---
 
-    [Trading Guide →](/desktop-app/trading/asset-swaps)
-  </Step>
-</Steps>
+## How It Works
 
-## Architecture Overview
+![KaleidoSwap — RGB assets on Lightning Network](/assets/images/how-it-works.png)
 
-KaleidoSwap operates on a decentralized architecture combining RGB Protocol capabilities with Lightning Network scalability:
+KaleidoSwap combines three technologies to enable fast, private, and scalable asset trading:
 
 <AccordionGroup>
-  <Accordion title="RGB Protocol">
-    Enables the creation and transfer of client-validated smart contracts on Bitcoin, allowing for scalable and private asset issuance
+  <Accordion title="RGB Protocol" icon="layer-group">
+    Client-validated smart contracts on Bitcoin. Assets are issued and transferred off-chain with Bitcoin's security guarantees — no blockchain bloat, full privacy.
   </Accordion>
 
-  <Accordion title="Lightning Network">
-    Provides instant, low-cost transactions and scalability through payment channels
+  <Accordion title="Lightning Network" icon="bolt">
+    Second-layer payment channels for instant, low-cost transactions. Swaps settle in milliseconds with fees measured in satoshis.
   </Accordion>
 
-  <Accordion title="LSP Integration">
-    Lightning Service Providers offer liquidity and channel management services
-  </Accordion>
-
-  <Accordion title="Desktop Client">
-    Provides a secure, user-friendly interface for all operations with full control of your keys
+  <Accordion title="Lightning Service Providers" icon="server">
+    LSPs provide channel liquidity and routing. Connect to an LSP and start trading without managing infrastructure.
   </Accordion>
 </AccordionGroup>
 
-## For Developers
+---
 
-<CardGroup cols={2}>
-  <Card title="API Documentation" icon="code" href="/api-reference/introduction">
-    Explore our REST API endpoints
+## Getting Started
+
+Choose your path:
+
+<Tabs>
+  <Tab title="Desktop App">
+    Run your own node with full control and atomic swaps.
+
+    <Steps>
+      <Step title="Install the app">
+        Download for macOS, Windows, or Linux.
+        [Installation Guide →](/desktop-app/getting-started/installation)
+      </Step>
+
+      <Step title="Create a wallet">
+        Generate a new wallet and save your recovery phrase.
+        [Wallet Setup →](/desktop-app/wallet/creating-wallet)
+      </Step>
+
+      <Step title="Deposit & open channels">
+        Fund your wallet and open Lightning channels.
+        [Deposit Guide →](/desktop-app/wallet/deposits) · [Channel Guide →](/desktop-app/channels/opening-channel)
+      </Step>
+
+      <Step title="Start trading">
+        Execute atomic swaps with RGB assets.
+        [Trading Guide →](/desktop-app/trading/asset-swaps)
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Web App">
+    Trade from your browser with order-based swaps.
+
+    <Steps>
+      <Step title="Open the web app">
+        Navigate to [app.kaleidoswap.com](https://app.kaleidoswap.com) — no installation needed.
+      </Step>
+
+      <Step title="Connect your wallet">
+        Use Alby, Xverse, BitMask, or the Rate extension.
+        [Wallet Guide →](/web-app/wallet-connection)
+      </Step>
+
+      <Step title="Create a swap order">
+        Select assets, enter an amount and recipient address, and confirm.
+        [Trading Guide →](/web-app/trading-interface)
+      </Step>
+
+      <Step title="Pay & track">
+        Pay the deposit on the order page and wait for the maker to fulfill it.
+        [Order Tracking →](/web-app/advanced-features)
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Rate Extension">
+    Self-custodial Bitcoin Layer 2 wallet with built-in swaps.
+
+    <Steps>
+      <Step title="Install">
+        Add Rate to Chrome from the Web Store.
+        [Installation Guide →](/extensions/rate/installation)
+      </Step>
+
+      <Step title="Set up your wallet">
+        Create a password, generate Nostr keys, and connect to a node.
+        [Getting Started →](/extensions/rate/getting-started)
+      </Step>
+
+      <Step title="Swap assets">
+        Use the built-in swap interface powered by the Kaleidoswap maker API.
+        [Swap Guide →](/extensions/rate/swaps)
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+---
+
+## Documentation
+
+<CardGroup cols={3}>
+  <Card title="Learn" icon="book-open" href="/whats-kaleidoswap/architecture">
+    Architecture, key concepts, and how everything fits together
   </Card>
 
-  <Card title="RGB LSPS1 Specification" icon="book" href="/api-reference/rgb-lsps1-apis">
-    Learn about the RGB Lightning Service Provider specification
+  <Card title="SDK" icon="code" href="/sdk/introduction">
+    TypeScript and Python SDKs for building on KaleidoSwap
   </Card>
 
-  <Card title="Python SDK" icon="python" href="/sdk/introduction">
-    Production-ready Python SDK with Pydantic models
+  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
+    REST API docs with interactive playground
   </Card>
 
-  <Card title="TypeScript SDK" icon="js" href="/sdk/introduction">
-    Type-safe TypeScript SDK with full type inference
+  <Card title="Extensions" icon="puzzle-piece" href="/extensions/introduction">
+    Browser extensions for wallets and DApp connectivity
+  </Card>
+
+  <Card title="Desktop Guide" icon="desktop" href="/desktop-app/getting-started/introduction">
+    Full desktop app docs: nodes, wallets, channels, and trading
+  </Card>
+
+  <Card title="Web App Guide" icon="globe" href="/web-app/introduction">
+    Browser-based trading with order management
   </Card>
 </CardGroup>
+
+---
+
+## For Developers
+
+Build on KaleidoSwap with our SDKs and APIs:
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com'
+});
+
+// Get available trading pairs
+const pairs = await client.maker.listPairs();
+
+// Get a quote
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+# Get available trading pairs
+pairs = client.maker.list_pairs()
+
+# Get a quote
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+```
+</CodeGroup>
+
+<CardGroup cols={2}>
+  <Card title="SDK Docs" icon="code" href="/sdk/introduction">
+    Full SDK reference, examples, and best practices
+  </Card>
+
+  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
+    REST endpoints and swap protocol details
+  </Card>
+</CardGroup>
+
+---
 
 ## Community & Support
 
@@ -175,7 +258,5 @@ KaleidoSwap operates on a decentralized architecture combining RGB Protocol capa
     Contribute to the project
   </Card>
 </CardGroup>
-
-## License
 
 KaleidoSwap is open-source software licensed under the [MIT License](https://github.com/kaleidoswap/desktop-app/blob/main/LICENSE).

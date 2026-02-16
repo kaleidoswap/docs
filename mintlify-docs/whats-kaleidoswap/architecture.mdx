@@ -27,25 +27,9 @@ KaleidoSwap operates on a decentralized architecture that combines the power of 
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   KaleidoSwap Desktop App                │
-│                  (User Interface Layer)                  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-┌───────▼──────────┐    ┌────────▼─────────┐
-│  RGB Lightning   │    │  Lightning       │
-│  Node            │◄───┤  Service         │
-│                  │    │  Provider (LSP)  │
-└────────┬─────────┘    └──────────────────┘
-         │
-┌────────▼─────────────────────────┐
-│      Bitcoin Network             │
-│  (Base Layer / Settlement)       │
-└──────────────────────────────────┘
-```
+![KaleidoSwap System Architecture](/assets/images/architecture-overview.png)
+
+The platform consists of three client interfaces (desktop app, web app, and browser extension) that connect to RGB Lightning Nodes and Lightning Service Providers, all anchored to the Bitcoin blockchain for final settlement.
 
 ## RGB Protocol
 
@@ -128,24 +112,11 @@ The Lightning Network provides the scalability layer for instant, low-cost RGB a
 
 ### RGB on Lightning
 
-KaleidoSwap extends Lightning Network to support RGB assets:
+KaleidoSwap extends the Lightning Network to support RGB assets alongside native BTC:
 
-```
-┌────────────────────────────────┐
-│  Traditional Lightning         │
-│  (BTC only)                    │
-└────────┬───────────────────────┘
-         │
-         │ Extended with RGB
-         │
-┌────────▼───────────────────────┐
-│  RGB Lightning                 │
-│  (BTC + RGB Assets)            │
-│  - Transfer USDT instantly     │
-│  - Trade assets atomically     │
-│  - Multi-asset channels        │
-└────────────────────────────────┘
-```
+- **Transfer USDT instantly** through Lightning channels
+- **Trade assets atomically** via HTLC-based atomic swaps
+- **Multi-asset channels** supporting BTC + RGB20 tokens simultaneously
 
 ## Lightning Service Providers (LSPs)
 
@@ -184,21 +155,7 @@ KaleidoSwap implements the RGB Lightning Service Provider Specification (RGB-LSP
 
 ### Non-Custodial Design
 
-```
-┌─────────────────────────────────────┐
-│     User's Device                   │
-│  ┌───────────────────────────┐     │
-│  │  Desktop Application      │     │
-│  └─────────┬─────────────────┘     │
-│            │                        │
-│  ┌─────────▼─────────────────┐     │
-│  │  RGB Lightning Node        │     │
-│  │  - Manages keys locally    │     │
-│  │  - Controls channels       │     │
-│  │  - Validates contracts     │     │
-│  └────────────────────────────┘     │
-└─────────────────────────────────────┘
-```
+Everything runs on your device. The desktop application communicates directly with your RGB Lightning Node, which manages keys locally, controls channels, and validates contracts. No third party ever has access to your funds.
 
 **Security Principles**:
 - 🔐 **Your Keys, Your Coins**: Private keys never leave your device
@@ -217,32 +174,15 @@ KaleidoSwap implements the RGB Lightning Service Provider Specification (RGB-LSP
 
 ### Atomic Swap Process
 
-```
-User A (BTC)                KaleidoSwap                User B (USDT)
-     │                           │                            │
-     │  1. Request Quote         │                            │
-     ├──────────────────────────►│                            │
-     │                           │                            │
-     │  2. Quote Response        │                            │
-     │◄──────────────────────────┤                            │
-     │                           │                            │
-     │  3. Init Swap             │                            │
-     ├──────────────────────────►│  4. Create HTLC           │
-     │                           ├───────────────────────────►│
-     │                           │                            │
-     │                           │  5. Lock USDT             │
-     │  6. Lock BTC              │◄───────────────────────────┤
-     │◄──────────────────────────┤                            │
-     │                           │                            │
-     │  7. Reveal Secret         │                            │
-     ├──────────────────────────►│  8. Claim USDT            │
-     │                           ├───────────────────────────►│
-     │                           │                            │
-     │  9. Claim BTC             │ 10. Reveal Secret         │
-     │◄──────────────────────────┤◄───────────────────────────┤
-     │                           │                            │
-     ✓ Swap Complete             │              ✓ Swap Complete
-```
+![Atomic Swap Flow](/assets/images/atomic-swap-flow.png)
+
+The atomic swap uses Hash Time-Locked Contracts (HTLCs) to ensure trustless execution:
+
+1. **Request Quote** — Taker requests a price for the asset pair
+2. **Init Swap** — Taker initiates the swap, creating an HTLC
+3. **Lock Assets** — Both sides lock their assets (BTC and RGB) in HTLCs
+4. **Reveal & Claim** — The secret is revealed, allowing both parties to claim
+5. **Complete** — Both parties receive their swapped assets atomically
 
 ## Security Model
 
@@ -290,20 +230,28 @@ User A (BTC)                KaleidoSwap                User B (USDT)
 
 ## Next Steps
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Key Features" icon="star" href="/whats-kaleidoswap/key-features">
-    Explore KaleidoSwap's core features and capabilities
+    Explore core features and capabilities
   </Card>
 
   <Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/introduction">
-    Get started with the desktop application
+    Atomic swaps with full node control
   </Card>
 
-  <Card title="For Developers" icon="code" href="/sdk/python/index">
-    Build with our Python or TypeScript SDKs
+  <Card title="Web App" icon="globe" href="/web-app/introduction">
+    Order-based trading from your browser
+  </Card>
+
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
+    Bitcoin Layer 2 wallet extension
+  </Card>
+
+  <Card title="SDK" icon="code" href="/sdk/introduction">
+    Build with our TypeScript or Python SDKs
   </Card>
 
   <Card title="API Reference" icon="book" href="/api-reference/introduction">
-    Integrate with our REST API
+    REST API and swap protocol details
   </Card>
 </CardGroup>

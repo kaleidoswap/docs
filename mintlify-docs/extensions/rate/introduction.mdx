@@ -73,27 +73,13 @@ The extension communicates with your RGB Lightning Node via the **Kaleidoswap SD
 
 ## How It Works
 
-```
-┌──────────────────────────┐
-│      Rate Extension      │
-│  (Chrome Extension UI)   │
-├──────────────────────────┤
-│   Background Service     │
-│   Worker (API Handler)   │
-├───────────┬──────────────┤
-│           │              │
-│  RGB Lightning Node      │
-│  (via Kaleidoswap SDK)   │
-│           │              │
-│  Kaleidoswap Maker API   │
-│  (optional, for swaps)   │
-└───────────┴──────────────┘
-```
+![Rate Extension Architecture](/assets/images/rate-extension.png)
 
-- The **extension UI** runs as a Chrome popup
+- The **extension UI** runs as a Chrome popup with a clean wallet interface
 - The **background service worker** handles all API communication
 - **RGB Lightning Node** connection is required for core wallet features
-- **Maker API** connection is optional and enables swap functionality
+- **Maker API** connection is optional and enables built-in swap functionality
+- **DApp connectivity** via WebLN (`window.rgbwebln`) and Nostr NIP-07 signer
 
 ## Get Started
 

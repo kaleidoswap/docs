@@ -1,23 +1,70 @@
 ---
 title: Asset Swaps
-description: Step-by-step instructions for performing an asset swap in the Kaleidoswap Desktop App
+description: Step-by-step instructions for performing an asset swap in the KaleidoSwap Desktop App
 ---
 
-Asset swaps allow you to exchange one RGB asset for another through the Kaleidoswap platform. Here's how to perform a swap:
+Asset swaps let you exchange one asset for another through the KaleidoSwap platform. The desktop app uses **atomic swaps** — both sides of the trade execute simultaneously, so neither party can cheat.
+
+## Prerequisites
+
+Before you can swap, make sure you have:
+
+1. **A funded wallet** — You need a balance of the asset you want to swap. See [Deposits](/desktop-app/wallet/deposits).
+2. **An open channel** — The channel must have sufficient capacity for the swap amount, and it must include the RGB asset you want to trade. See [Opening Channels](/desktop-app/channels/opening-channel) or [Buy a Channel](/desktop-app/channels/order-new-channel).
 
 ## Performing an Asset Swap
 
-1. **Navigate to "Trade"**: Click on the "Trade" tab in the left sidebar. Select the "Market Maker" option to start. 
-2. **Select Assets**: Choose the asset you have and the asset you want to receive.
-3. **Enter Amounts**: Specify the amount of the asset you wish to swap.
-![swap-menu](/images/desktop-app/swap-menu.png)
-4. **Review Exchange Rate**: Check the current exchange rate and any fees.
-5. **Confirm Swap**: Click "Swap" to execute the transaction.
-6. **Transaction Confirmation**: Wait for the transaction to be confirmed on the network.
-![swap-success](/images/desktop-app/swap-success.png)
+<Steps>
+  <Step title="Navigate to Trade">
+    Click on the **"Trade"** tab in the left sidebar. Select the **"Market Maker"** option to start.
+  </Step>
+
+  <Step title="Select assets">
+    Choose the asset you have (e.g. BTC) and the asset you want to receive (e.g. USDT).
+  </Step>
+
+  <Step title="Enter amount">
+    Specify the amount of the asset you wish to swap. The app will show you the estimated amount you'll receive based on the current exchange rate.
+    ![swap-menu](/images/desktop-app/swap-menu.png)
+  </Step>
+
+  <Step title="Review and confirm">
+    Check the exchange rate and any fees. Click **"Swap"** to execute the transaction.
+  </Step>
+
+  <Step title="Wait for confirmation">
+    The swap executes atomically over the Lightning Network. Once complete, you'll see a success confirmation.
+    ![swap-success](/images/desktop-app/swap-success.png)
+  </Step>
+</Steps>
+
+## Supported Trading Pairs
+
+| Pair | Description |
+|------|------------|
+| **BTC / USDT** | Bitcoin to Tether USD (RGB20) |
+| **BTC / XAUT** | Bitcoin to Tether Gold (RGB20) |
+
+Additional pairs may be available depending on your connected LSP and market maker.
 
 ## Swap History
 
-- **View Past Swaps**: In the "History" tab, you can view your swap history for record-keeping.
+View your past swaps in the **"History"** tab for record-keeping and reconciliation.
+
 ![swap-history](/images/desktop-app/swap-history.png)
 
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Swap fails with insufficient balance">
+    Ensure you have enough balance in the correct channel. On-chain balance alone is not sufficient — the asset must be allocated to a Lightning channel with the trading peer.
+  </Accordion>
+
+  <Accordion title="No trading pairs available">
+    Check that your node is connected to a peer that supports the asset pair. You may need to open a channel with an LSP that provides market-making services.
+  </Accordion>
+
+  <Accordion title="Swap is stuck or pending">
+    Atomic swaps on Lightning should settle in seconds. If a swap appears stuck, check your node's connection status in Settings. Restarting the app may help if the connection was interrupted.
+  </Accordion>
+</AccordionGroup>

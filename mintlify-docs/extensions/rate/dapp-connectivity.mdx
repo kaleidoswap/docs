@@ -1,0 +1,129 @@
+---
+title: DApp Connectivity
+description: WebLN provider and Nostr signer for web apps
+---
+
+## Overview
+
+Rate injects APIs into web pages, allowing DApps to interact with your wallet. This enables seamless integration with Lightning-enabled web apps and Nostr clients.
+
+## WebLN Provider
+
+Rate exposes a **WebLN provider** at `window.rgbwebln` that web apps can use to:
+
+- Request Lightning invoice payments
+- Generate invoices
+- Get node information
+
+### How It Works
+
+1. Rate's **content script** is injected into web pages
+2. The content script loads an **injected script** that adds `window.rgbwebln`
+3. Web apps call methods on `window.rgbwebln`
+4. Requests are routed to the Rate **background service worker**
+5. The extension popup shows a **permission prompt** for the user to approve
+
+### Supported Methods
+
+| Method | Description |
+|--------|-------------|
+| `enable()` | Connect the DApp to Rate |
+| `sendPayment(invoice)` | Pay a BOLT11 invoice |
+| `makeInvoice(args)` | Generate a Lightning invoice |
+| `getInfo()` | Get node information |
+
+### Example Usage (for DApp Developers)
+
+```javascript
+// Check if Rate is available
+if (window.rgbwebln) {
+  // Connect to the wallet
+  await window.rgbwebln.enable();
+
+  // Pay an invoice
+  const result = await window.rgbwebln.sendPayment('lnbc1...');
+
+  // Generate an invoice
+  const invoice = await window.rgbwebln.makeInvoice({
+    amount: 1000, // sats
+    defaultMemo: 'Payment for service'
+  });
+}
+```
+
+### Permission Prompts
+
+When a web app makes a request, Rate shows a popup asking you to approve or deny the action. You must explicitly approve each sensitive operation (e.g., paying an invoice).
+
+<Warning>
+Always review what a DApp is requesting before approving. Only approve payments and actions from sites you trust.
+</Warning>
+
+## Nostr NIP-07 Signer
+
+Rate implements the **NIP-07** standard for Nostr key management, allowing Nostr clients to request event signing.
+
+### How It Works
+
+1. Rate provides `window.nostr` (or a compatible API)
+2. Nostr clients call signing methods
+3. Rate prompts you to approve the signing request
+
+### Supported Operations
+
+| Operation | Description |
+|-----------|-------------|
+| `getPublicKey()` | Returns your Nostr public key (npub) |
+| `signEvent(event)` | Signs a Nostr event with your private key |
+
+### Nostr Key Management
+
+Your Nostr keypair is managed in **Settings > Nostr Account**:
+- View your **public key** (npub)
+- View and export your **private key** (nsec)
+- Generate or import keys during onboarding
+
+## Integration with KaleidoSwap Web App
+
+Rate works as a wallet for the KaleidoSwap Web App:
+
+### Connecting
+
+1. Open [app.kaleidoswap.com](https://app.kaleidoswap.com)
+2. Click **Connect** and select **Rate** from the wallet list
+3. Approve the connection in the Rate popup
+
+### Pay with Wallet
+
+When you create a swap order on the web app, the order page shows a **Pay with Wallet** button if Rate is connected. Clicking it:
+
+1. Sends the deposit invoice to Rate
+2. Rate shows a payment confirmation popup
+3. You approve the payment
+4. The deposit is paid directly from your node -- no need to copy invoices
+
+This provides a seamless experience: create the order in the web app, pay from Rate, and track the order on the same page.
+
+## Security Considerations
+
+### Site Permissions
+
+- Rate prompts for approval on every sensitive action
+- Payment requests show the invoice details and amount
+- You can deny any request
+
+### Best Practices
+
+| Practice | Description |
+|----------|-------------|
+| **Verify the site** | Check the URL before approving wallet connections |
+| **Review payments** | Read invoice details before approving payments |
+| **Lock when done** | Lock Rate when you are finished using DApps |
+| **Limit exposure** | Only connect to trusted sites |
+
+## Supported DApps
+
+Rate's WebLN provider is compatible with any web application that uses the WebLN standard. This includes:
+- **KaleidoSwap Web App** - Direct deposit payments
+- **Lightning-enabled web apps** - Any app using WebLN for payments
+- **Nostr clients** - Any client supporting NIP-07 for key management

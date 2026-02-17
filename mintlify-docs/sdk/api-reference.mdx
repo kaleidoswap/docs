@@ -1,0 +1,681 @@
+---
+title: 'API Reference'
+description: 'Complete method reference for the KaleidoSwap SDK'
+---
+
+## Client Initialization
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',  // optional
+  apiKey: 'your-api-key',           // optional
+  timeout: 30,                       // optional, seconds
+  maxRetries: 3,                     // optional
+  cacheTtl: 60,                      // optional, seconds
+});
+
+client.hasNode();  // boolean -- check if nodeUrl is configured
+client.maker;      // MakerClient instance
+client.rln;        // RlnClient instance
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com",
+    node_url="http://localhost:3001",  # optional
+    api_key="your-api-key",            # optional
+    timeout=30.0,                       # optional
+    max_retries=3,                      # optional
+    cache_ttl=60,                       # optional
+)
+
+client.has_node()  # bool
+client.maker       # MakerClient instance
+client.rln         # RlnClient instance
+```
+</CodeGroup>
+
+---
+
+## MakerClient (`client.maker`)
+
+All market, order, swap, and LSPS1 operations are accessed via `client.maker`.
+
+### Market Operations
+
+#### `listAssets` / `list_assets`
+
+List all available assets.
+
+<CodeGroup>
+```typescript TypeScript
+const response = await client.maker.listAssets();
+// Returns: MarketListAssetsResponse
+```
+
+```python Python
+response = client.maker.list_assets()
+# Returns: AssetsResponse
+```
+</CodeGroup>
+
+#### `listPairs` / `list_pairs`
+
+List all available trading pairs with min/max limits and supported layers.
+
+<CodeGroup>
+```typescript TypeScript
+const response = await client.maker.listPairs();
+// Returns: ListPairsResponse
+```
+
+```python Python
+response = client.maker.list_pairs()
+# Returns: TradingPairsResponse
+```
+</CodeGroup>
+
+#### `getQuote` / `get_quote`
+
+Get a price quote for a swap.
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+// Returns: GetQuoteResponse
+```
+
+```python Python
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+# Returns: PairQuoteResponse
+```
+</CodeGroup>
+
+#### `getPairRoutes` / `get_pair_routes`
+
+Get available routes for a trading pair.
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getPairRoutes({ /* GetPairRoutesRequest */ });
+// Returns: GetPairRoutesResponse
+```
+
+```python Python
+routes = client.maker.get_pair_routes({...})
+# Returns: list[SwapRoute]
+```
+</CodeGroup>
+
+#### `getMarketRoutes` / `get_market_routes`
+
+Discover routes across the market.
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getMarketRoutes({ /* DiscoverRoutesRequest */ });
+// Returns: DiscoverRoutesResponse
+```
+
+```python Python
+routes = client.maker.get_market_routes({...})
+# Returns: RoutesResponse
+```
+</CodeGroup>
+
+---
+
+### Swap Order Operations
+
+#### `createSwapOrder` / `create_swap_order`
+
+Create a new swap order from a quote.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.createSwapOrder({
+  rfq_id: quote.rfq_id,
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: 9500 },
+  receiver_address: 'lnbc1...',
+  min_onchain_conf: 1
+});
+// Returns: CreateSwapOrderResponse (order_id, deposit_address, status)
+```
+
+```python Python
+order = client.maker.create_swap_order({
+    "rfq_id": quote.rfq_id,
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": 9500},
+    "receiver_address": "lnbc1...",
+    "min_onchain_conf": 1
+})
+# Returns: CreateSwapOrderResponse
+```
+</CodeGroup>
+
+#### `getSwapOrderStatus` / `get_swap_order_status`
+
+Get the current status of a swap order.
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+// Returns: GetSwapOrderStatusResponse
+```
+
+```python Python
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+# Returns: SwapOrderStatusResponse
+```
+</CodeGroup>
+
+#### `getOrderHistory` / `get_order_history`
+
+Get order history with optional filters.
+
+<CodeGroup>
+```typescript TypeScript
+const history = await client.maker.getOrderHistory({
+  status: 'FILLED',
+  limit: 10,
+  skip: 0
+});
+// Returns: GetOrderHistoryResponse
+```
+
+```python Python
+history = client.maker.get_order_history(status="FILLED", limit=10, skip=0)
+# Returns: OrderHistoryResponse
+```
+</CodeGroup>
+
+#### `getOrderAnalytics` / `get_order_analytics`
+
+Get order statistics and analytics.
+
+<CodeGroup>
+```typescript TypeScript
+const stats = await client.maker.getOrderAnalytics();
+// Returns: GetOrderStatsResponse
+```
+
+```python Python
+stats = client.maker.get_order_analytics()
+# Returns: OrderStatsResponse
+```
+</CodeGroup>
+
+#### `submitRateDecision` / `submit_rate_decision`
+
+Accept or reject a rate change on a pending order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.submitRateDecision({
+  order_id: 'order-123',
+  accept_new_rate: true
+});
+// Returns: SwapOrderRateDecisionResponse
+```
+
+```python Python
+result = client.maker.submit_rate_decision({
+    "order_id": "order-123",
+    "accept_new_rate": True
+})
+# Returns: SwapOrderRateDecisionResponse
+```
+</CodeGroup>
+
+#### `waitForSwapCompletion` / `wait_for_swap_completion`
+
+Poll an order until it reaches a final state.
+
+<CodeGroup>
+```typescript TypeScript
+const completed = await client.maker.waitForSwapCompletion('order-123', {
+  timeout: 300,        // seconds
+  pollInterval: 10,    // seconds
+  onStatusUpdate: (status) => console.log(`Status: ${status}`)
+});
+// Returns: SwapOrder
+```
+
+```python Python
+completed = client.maker.wait_for_swap_completion("order-123", options={
+    "timeout": 300,
+    "poll_interval": 10,
+    "on_status_update": lambda status: print(f"Status: {status}")
+})
+# Returns: SwapOrder
+```
+</CodeGroup>
+
+---
+
+### Atomic Swap Operations
+
+These methods support the lower-level atomic swap protocol for direct node-to-node swaps.
+
+#### `initSwap` / `init_swap`
+
+Initiate an atomic swap.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.initSwap({ /* InitiateSwapRequest */ });
+```
+
+```python Python
+result = client.maker.init_swap({...})
+```
+</CodeGroup>
+
+#### `executeSwap` / `execute_swap`
+
+Execute/confirm an atomic swap.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.executeSwap({ /* ConfirmSwapRequest */ });
+```
+
+```python Python
+result = client.maker.execute_swap({...})
+```
+</CodeGroup>
+
+#### `getAtomicSwapStatus` / `get_atomic_swap_status`
+
+Get atomic swap status.
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getAtomicSwapStatus({ /* GetSwapStatusRequest */ });
+```
+
+```python Python
+status = client.maker.get_atomic_swap_status({...})
+```
+</CodeGroup>
+
+#### `getSwapNodeInfo` / `get_swap_node_info`
+
+Get node information for swaps.
+
+<CodeGroup>
+```typescript TypeScript
+const info = await client.maker.getSwapNodeInfo();
+```
+
+```python Python
+info = client.maker.get_swap_node_info()
+```
+</CodeGroup>
+
+---
+
+### LSPS1 Operations
+
+#### `getLspInfo` / `get_lsp_info`
+
+Get LSP (Lightning Service Provider) information.
+
+<CodeGroup>
+```typescript TypeScript
+const info = await client.maker.getLspInfo();
+```
+
+```python Python
+info = client.maker.get_lsp_info()
+```
+</CodeGroup>
+
+#### `getLspNetworkInfo` / `get_lsp_network_info`
+
+Get LSP network information.
+
+<CodeGroup>
+```typescript TypeScript
+const networkInfo = await client.maker.getLspNetworkInfo();
+```
+
+```python Python
+network_info = client.maker.get_lsp_network_info()
+```
+</CodeGroup>
+
+#### `createLspOrder` / `create_lsp_order`
+
+Create an LSPS1 channel order.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.createLspOrder({ /* CreateLspOrderRequest */ });
+```
+
+```python Python
+order = client.maker.create_lsp_order({...})
+```
+</CodeGroup>
+
+#### `getLspOrder` / `get_lsp_order`
+
+Get LSPS1 order status.
+
+<CodeGroup>
+```typescript TypeScript
+const order = await client.maker.getLspOrder({ order_id: 'lsp-order-123' });
+```
+
+```python Python
+order = client.maker.get_lsp_order({"order_id": "lsp-order-123"})
+```
+</CodeGroup>
+
+#### `estimateLspFees` / `estimate_lsp_fees`
+
+Estimate fees for an LSPS1 channel order.
+
+<CodeGroup>
+```typescript TypeScript
+const fees = await client.maker.estimateLspFees({ /* CreateLspOrderRequest */ });
+```
+
+```python Python
+fees = client.maker.estimate_lsp_fees({...})
+```
+</CodeGroup>
+
+#### `submitLspRateDecision` / `submit_lsp_rate_decision`
+
+Accept or reject a rate change on an LSP order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.submitLspRateDecision({ /* LspRateDecisionRequest */ });
+```
+
+```python Python
+result = client.maker.submit_lsp_rate_decision({...})
+```
+</CodeGroup>
+
+#### `retryAssetDelivery` / `retry_asset_delivery`
+
+Retry asset delivery for a failed order.
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.maker.retryAssetDelivery({ /* RetryDeliveryRequest */ });
+```
+
+```python Python
+result = client.maker.retry_asset_delivery({...})
+```
+</CodeGroup>
+
+---
+
+### WebSocket Operations
+
+#### `enableWebSocket` / `enable_websocket`
+
+Enable WebSocket for real-time quote streaming.
+
+<CodeGroup>
+```typescript TypeScript
+const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client-id');
+// Returns: WSClient
+```
+
+```python Python
+ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client-id")
+# Returns: WSClient
+```
+</CodeGroup>
+
+#### `streamQuotes` / `stream_quotes`
+
+Stream real-time quotes for a specific route.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotes(
+  'BTC',           // from_asset
+  'USDT',          // to_asset
+  100000,          // from_amount
+  'BTC_LN',        // from_layer
+  'RGB_LN',        // to_layer
+  (quote) => {
+    console.log(`Price: ${quote.price}`);
+  }
+);
+// Call unsubscribe() to stop streaming
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes(
+    from_asset="BTC",
+    to_asset="USDT",
+    from_amount=100000,
+    from_layer="BTC_LN",
+    to_layer="RGB_LN",
+    on_update=lambda quote: print(f"Price: {quote.price}")
+)
+# Call unsubscribe() to stop streaming
+```
+</CodeGroup>
+
+#### `streamQuotesByTicker` / `stream_quotes_by_ticker`
+
+Stream quotes by ticker with auto-discovered routes.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC',           // fromTicker
+  'USDT',          // toTicker
+  100000,          // amount
+  (quote) => console.log(`Quote: ${quote.price}`),
+  { preferredFromLayer: 'BTC_LN', preferredToLayer: 'RGB_LN' }
+);
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda quote: print(f"Quote: {quote.price}"),
+    preferred_from_layer="BTC_LN",
+    preferred_to_layer="RGB_LN"
+)
+```
+</CodeGroup>
+
+#### `streamQuotesForAllRoutes` / `stream_quotes_for_all_routes`
+
+Stream quotes for all available routes between two assets.
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribers = await client.maker.streamQuotesForAllRoutes(
+  'BTC', 'USDT', 100000,
+  (route, quote) => console.log(`${route}: ${quote.price}`)
+);
+// Returns: Map<string, () => void>
+```
+
+```python Python
+unsubscribers = await client.maker.stream_quotes_for_all_routes(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda route, quote: print(f"{route}: {quote.price}")
+)
+# Returns: dict[str, Callable]
+```
+</CodeGroup>
+
+#### `getAvailableRoutes` / `get_available_routes`
+
+Get available routes for a trading pair.
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getAvailableRoutes('BTC', 'USDT');
+// Returns: Array<{ from_layer: string; to_layer: string }>
+```
+
+```python Python
+routes = await client.maker.get_available_routes("BTC", "USDT")
+# Returns: list[dict]
+```
+</CodeGroup>
+
+---
+
+### Convenience Methods
+
+#### `toRaw` / `to_raw`
+
+Convert a display amount to raw (smallest unit) amount.
+
+<CodeGroup>
+```typescript TypeScript
+const raw = client.maker.toRaw(0.001, 8);  // 100000
+```
+
+```python Python
+raw = client.maker.to_raw(0.001, 8)  # 100000
+```
+</CodeGroup>
+
+#### `toDisplay` / `to_display`
+
+Convert a raw amount to display amount.
+
+<CodeGroup>
+```typescript TypeScript
+const display = client.maker.toDisplay(100000, 8);  // 0.001
+```
+
+```python Python
+display = client.maker.to_display(100000, 8)  # 0.001
+```
+</CodeGroup>
+
+---
+
+## RlnClient (`client.rln`)
+
+All RGB Lightning Node operations are accessed via `client.rln`. Requires `nodeUrl` / `node_url` to be configured.
+
+### Wallet Management
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getNodeInfo()` | `get_node_info()` | Get node information (pubkey, alias, etc.) |
+| `getNetworkInfo()` | `get_network_info()` | Get network information |
+| `initWallet(body)` | `init_wallet(body)` | Initialize a new wallet |
+| `unlockWallet(body)` | `unlock_wallet(body)` | Unlock the wallet |
+| `lockWallet()` | `lock_wallet()` | Lock the wallet |
+| `changePassword(body)` | `change_password(body)` | Change wallet password |
+| `backup(body)` | `backup(body)` | Backup node data |
+| `restore(body)` | `restore(body)` | Restore from backup |
+| `shutdown()` | `shutdown()` | Shut down the node |
+
+### BTC Operations
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getAddress()` | `get_address()` | Get a Bitcoin address |
+| `getBtcBalance(skipSync?)` | `get_btc_balance(skip_sync?)` | Get BTC balance |
+| `sendBtc(body)` | `send_btc(body)` | Send BTC on-chain |
+| `listTransactions(request?)` | `list_transactions(request?)` | List transactions |
+| `listUnspents()` | `list_unspents()` | List unspent outputs |
+| `createUtxos(body)` | `create_utxos(body)` | Create UTXOs |
+| `estimateFee(body)` | `estimate_fee(body)` | Estimate transaction fee |
+
+### RGB Asset Operations
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listAssets(filter?)` | `list_assets(filter?)` | List RGB assets |
+| `getAssetBalance(body)` | `get_asset_balance(body)` | Get asset balance |
+| `getAssetMetadata(body)` | `get_asset_metadata(body)` | Get asset metadata |
+| `getAssetMedia(body)` | `get_asset_media(body)` | Get asset media |
+| `issueAssetNIA(body)` | `issue_asset_nia(body)` | Issue NIA asset |
+| `issueAssetCFA(body)` | `issue_asset_cfa(body)` | Issue CFA asset |
+| `issueAssetUDA(body)` | `issue_asset_uda(body)` | Issue UDA asset |
+| `sendAsset(body)` | `send_asset(body)` | Send RGB asset |
+| `listTransfers(body)` | `list_transfers(body)` | List transfers |
+| `refreshTransfers(body?)` | `refresh_transfers(body?)` | Refresh transfer status |
+| `failTransfers(body)` | `fail_transfers(body)` | Fail pending transfers |
+
+### Lightning Channels
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listChannels()` | `list_channels()` | List all channels |
+| `openChannel(body)` | `open_channel(body)` | Open a new channel |
+| `closeChannel(body)` | `close_channel(body)` | Close a channel |
+| `getChannelId(body)` | `get_channel_id(body)` | Get channel ID |
+
+### Lightning Peers
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `listPeers()` | `list_peers()` | List connected peers |
+| `connectPeer(body)` | `connect_peer(body)` | Connect to a peer |
+| `disconnectPeer(body)` | `disconnect_peer(body)` | Disconnect a peer |
+
+### Invoices and Payments
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `createLNInvoice(body)` | `create_ln_invoice(body)` | Create Lightning invoice |
+| `createRgbInvoice(body)` | `create_rgb_invoice(body)` | Create RGB invoice |
+| `decodeLNInvoice(body)` | `decode_ln_invoice(body)` | Decode Lightning invoice |
+| `decodeRgbInvoice(body)` | `decode_rgb_invoice(body)` | Decode RGB invoice |
+| `getInvoiceStatus(body)` | `get_invoice_status(body)` | Get invoice status |
+| `sendPayment(body)` | `send_payment(body)` | Send Lightning payment |
+| `keysend(body)` | `keysend(body)` | Send keysend payment |
+| `listPayments()` | `list_payments()` | List payments |
+| `getPayment(body)` | `get_payment(body)` | Get payment details |
+
+### Swap Operations (Node-Level)
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `getTakerPubkey()` | `get_taker_pubkey()` | Get taker public key |
+| `whitelistTrade(body)` | `whitelist_swap(body)` | Whitelist a trade |
+| `makerInit(body)` | `maker_init(body)` | Initialize maker swap |
+| `makerExecute(body)` | `maker_execute(body)` | Execute maker swap |
+| `listSwaps()` | `list_swaps()` | List all swaps |
+| `getSwap(body)` | `get_swap(body)` | Get swap details |
+
+### Utility Methods
+
+| Method (TS) | Method (Python) | Description |
+|-------------|----------------|-------------|
+| `signMessage(body)` | `sign_message(body)` | Sign a message |
+| `sendOnionMessage(body)` | `send_onion_message(body)` | Send an onion message |
+| `checkIndexerUrl(body)` | `check_indexer_url(body)` | Check indexer URL |
+| `checkProxyEndpoint(body)` | `check_proxy_endpoint(body)` | Check proxy endpoint |
+| `revokeToken(body)` | `revoke_token(body)` | Revoke auth token |

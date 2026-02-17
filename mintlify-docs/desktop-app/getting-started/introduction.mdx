@@ -1,0 +1,64 @@
+---
+title: Desktop App Introduction
+description: Learn about the KaleidoSwap Desktop App for managing Bitcoin and RGB assets on Lightning Network
+---
+
+The KaleidoSwap Desktop App is a full-featured application for trading Bitcoin and RGB assets on the Lightning Network. It gives you complete control over your node, wallet, and channels.
+
+## What You Can Do
+
+<CardGroup cols={2}>
+  <Card title="Run Your Own Node" icon="server">
+    Host an RGB Lightning Node locally or connect to a remote one — full sovereignty over your infrastructure
+  </Card>
+  <Card title="Manage Wallets" icon="wallet">
+    Create wallets, generate recovery phrases, and manage BTC and RGB asset balances
+  </Card>
+  <Card title="Open Channels" icon="code-branch">
+    Open Lightning channels with or without RGB assets, or order channels through an LSP
+  </Card>
+  <Card title="Trade Assets" icon="arrows-rotate">
+    Execute atomic swaps between BTC and RGB assets directly from your node
+  </Card>
+</CardGroup>
+
+## Getting Started
+
+Follow these steps to set up the desktop app:
+
+<Steps>
+  <Step title="Install the app">
+    Download the binary for your platform or build from source.
+    [Installation Guide](/desktop-app/getting-started/installation)
+  </Step>
+  <Step title="Set up your node">
+    Connect to a remote RGB Lightning Node or run one locally.
+    [Node Hosting Guide](/desktop-app/getting-started/node-hosting)
+  </Step>
+  <Step title="Create a wallet">
+    Generate a new wallet and securely save your recovery phrase.
+    [Wallet Setup](/desktop-app/wallet/creating-wallet)
+  </Step>
+  <Step title="Fund and trade">
+    Deposit BTC, open channels, and start swapping assets.
+    [Deposits](/desktop-app/wallet/deposits) | [Trading](/desktop-app/trading/asset-swaps)
+  </Step>
+</Steps>
+
+## Desktop vs. Web App
+
+| Feature | Desktop App | Web App |
+|---------|------------|---------|
+| **Swap Model** | Atomic swaps | Order-based (taker-maker) |
+| **Node** | Self-hosted or remote | Remote |
+| **Wallet** | Built-in | External (Alby, Xverse, BitMask, Rate) |
+| **Channel Management** | Full control | N/A |
+| **Best For** | Power users, node operators | Quick browser-based trades |
+
+## System Requirements
+
+- **macOS** 12+ (Apple Silicon and Intel)
+- **Windows** 10+ (64-bit)
+- **Linux** (Ubuntu 20.04+, Debian 11+, or equivalent)
+
+For building from source, you'll also need Rust, Node.js, and the Tauri prerequisites.

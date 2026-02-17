@@ -1,0 +1,121 @@
+---
+title: Getting Started
+---
+
+Welcome to the Kaleidoswap API! This guide will help you set up and start using the API quickly and effectively.
+
+---
+
+## Base URL
+
+The Kaleidoswap API is accessible via HTTPS for secure communication. Here are the available environments:
+
+### Signet (MutinyNet)
+The testnet environment is used for development and testing purposes. All API requests in this environment should be directed to the following base URL:
+
+- **Base URL:** `https://api.signet.kaleidoswap.com/api/v1`
+
+### Bitcoin Mainnet (Coming Soon)
+The mainnet environment is the production-ready endpoint for live transactions. Stay tuned for updates about its release.
+
+- **Base URL:** `https://api.kaleidoswap.com/api/v1`
+
+---
+
+## Authentication
+
+### Current State
+The Kaleidoswap API currently does not require any authentication to use its endpoints. This makes it easy to start testing and integrating with the API immediately.
+
+### Future Plans
+Authentication mechanisms may be introduced in upcoming versions to enhance security and provide access control for advanced features.
+
+---
+
+## Request Format
+
+### HTTP Methods
+The API supports the following HTTP methods:
+- **GET:** Retrieve data.
+- **POST:** Submit data or perform an action.
+- **PUT:** Create or update a resource on the server.
+- **DELETE:** Delete a resource on the server.
+
+### Headers
+Ensure that your `POST` HTTP requests include the following headers:
+- `Content-Type: application/json` (for requests with JSON payloads)
+
+### Example Request
+Here’s a sample `POST` request to the testnet environment:
+
+```bash
+curl -X 'POST' \
+  'https://api.signet.kaleidoswap.com/api/v1/market/quote' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "pair_id": "string",
+  "from_asset": "string",
+  "from_amount": 0,
+  "to_asset": "string"
+}'
+```
+---
+
+## Response Format
+All responses from the Kaleidoswap API are in JSON format for ease of parsing. A typical response includes:
+
+- A response value structured according to the corresponding **schema**.
+- `detail`: Details about any errors encountered.
+
+## Example Response
+```json
+{
+  "rfq_id": "string",
+  "pair_id": "string",
+  "from_asset": "string",
+  "to_asset": "string",
+  "from_amount": 0,
+  "to_amount": 0,
+  "price": 0,
+  "fee": 0,
+  "fee_rate": 0,
+  "price_precision": 0,
+  "timestamp": 0,
+  "expires_at": 0
+}
+```
+---
+
+## API Versioning
+Kaleidoswap uses versioning to ensure backward compatibility. The current API version is:
+
+**Version**: `v1`
+
+The version number is reflected in the base URL, as in `https://api.testnet.kaleidoswap.com/api/v1`.
+
+---
+
+## Rate Limiting
+To ensure a fair usage policy, the API may enforce rate limits. Currently:
+- **Requests per minute (RPM)**: 60
+- **Burst requests**: Allowed up to 10 in quick succession
+
+Rate limits may vary between the testnet and mainnet environments.
+
+---
+
+## Errors and Debugging
+The API returns standard HTTP status codes to indicate the outcome of a request:
+
+- **200**: Success
+- **400**: Bad Request (e.g., invalid parameters)
+- **404**: Resource Not Found
+- **500**: Internal Server Error
+For more information on error handling, see [Error Handling](/api-reference/error-handling).
+
+---
+
+## Next Steps
+
+Now that you’ve set up your environment and are familiar with the basics, it’s time to explore the endpoints. Proceed to the [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) for more details.

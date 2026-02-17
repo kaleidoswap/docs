@@ -1,40 +1,41 @@
 # KaleidoSwap Documentation
 
-This repository contains the documentation for KaleidoSwap, built using [Docusaurus](https://docusaurus.io/).
-
-## Development
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm
-
-### Setup
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm start
-
-# Build documentation
-pnpm build
-```
+This repository contains the documentation for KaleidoSwap, built using [Mintlify](https://mintlify.com/).
 
 ## Documentation Structure
 
-- `docs/` - Main documentation content
-  - `introduction.md` - Main introduction
-  - `desktop-app/` - Desktop application guides
-  - `api/` - API reference and guides
+All documentation lives in the `mintlify-docs/` directory:
+
+- `whats-kaleidoswap/` - Introduction, architecture, and core concepts
+- `desktop-app/` - Desktop application guides and tutorials
+- `web-app/` - Web application documentation
+- `sdk/` - SDK documentation (Python & TypeScript)
+- `api-reference/` - API reference and integration guides
+- `images/` - Screenshot and diagram assets
+- `assets/` - Logos and favicon
+
+## Configuration
+
+- `docs.json` - Mintlify configuration (navigation, theme, analytics, API settings)
+- `openapi.json` - OpenAPI specification for interactive API playground
+
+## Development
+
+Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview changes locally:
+
+```bash
+npm i -g mintlify
+cd mintlify-docs
+mintlify dev
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch
-3. Make your changes
-4. Submit a pull request
+3. Make your changes in `mintlify-docs/`
+4. Preview locally with `mintlify dev`
+5. Submit a pull request
 
 ## License
 

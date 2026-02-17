@@ -1,0 +1,139 @@
+---
+title: Web App Introduction
+description: Trade RGB assets on Lightning directly from your browser
+---
+
+## What is the KaleidoSwap Web App?
+
+![KaleidoSwap Web App — Order-based RGB asset trading](/assets/images/web-app-trading.png)
+
+The KaleidoSwap Web App provides instant, browser-based access to decentralized RGB asset trading on the Lightning Network. Available at [app.kaleidoswap.com](https://app.kaleidoswap.com), it offers a seamless trading experience without requiring any software installation.
+
+<CardGroup cols={2}>
+  <Card title="Instant Access" icon="bolt">
+    Start trading immediately from any modern browser - no downloads required
+  </Card>
+  <Card title="Wallet Integration" icon="wallet">
+    Connect popular Bitcoin wallets like Alby, Xverse, BitMask, or Rate
+  </Card>
+  <Card title="Real-Time Quotes" icon="chart-line">
+    Live price updates via WebSocket for accurate trading
+  </Card>
+  <Card title="Order-Based Swaps" icon="arrows-rotate">
+    Create swap orders, pay, and receive assets via a taker-maker model
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### Order-Based Trading
+
+KaleidoSwap uses a **taker-maker model** for swaps. You create an order, pay the deposit, and the maker executes the swap by sending the asset to your recipient address. This is not an atomic swap -- you pay first and then wait for the maker to fulfill your order.
+
+<Note>
+In this phase, swaps are **not atomic**. After you pay, the maker processes your order and sends the swapped asset to the recipient address you provided.
+</Note>
+
+### Multi-Wallet Support
+
+Connect your preferred Bitcoin wallet:
+- **Alby** - Lightning-native browser wallet
+- **Xverse** - Bitcoin Web3 wallet
+- **BitMask** - RGB & Lightning wallet
+- **Rate** - Bitcoin Layer 2 extension with built-in RGB support
+
+### Protocol Support
+
+Trade across different protocols and layers:
+- **RGB on Lightning** - Instant RGB asset swaps
+- **RGB On-chain** - On-chain RGB settlements
+- **Bitcoin Lightning** - Native BTC swaps
+
+### Real-Time Market Data
+
+- Live quotes with automatic refresh
+- USD price equivalents
+- Fee estimation before order creation
+- Min/max amount validation
+
+## Interface Overview
+
+The trading interface provides:
+
+1. **From Card** - Select the asset you want to swap from
+2. **To Card** - Select the asset you want to receive
+3. **Recipient Address** - Enter the address where you want to receive the swapped asset
+4. **Network Selection** - Choose the protocol layer
+5. **Quote Display** - Real-time exchange rate and fees
+6. **Swap Button** - Create the swap order
+
+After creating an order, you are redirected to the **Order Page** where you can view deposit instructions, pay via your wallet or manually, and track the order status in real time.
+
+## Comparison with Desktop App
+
+| Feature | Web App | Desktop App |
+|---------|---------|-------------|
+| **Access** | Browser-based | Download required |
+| **Node** | Remote connection | Self-hosted or remote |
+| **Wallet** | External wallets | Built-in wallet |
+| **Advanced Features** | Trading focused | Full node management |
+| **Best For** | Quick trades | Power users |
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Connect Wallet" icon="wallet" href="/web-app/wallet-connection">
+    Set up your wallet to start trading
+  </Card>
+  <Card title="Trading Guide" icon="chart-mixed" href="/web-app/trading-interface">
+    Learn how to create and manage swap orders
+  </Card>
+</CardGroup>
+
+## Supported Assets
+
+Current trading pairs include:
+- **BTC/USDT** - Bitcoin to Tether USD
+- **BTC/XAUT** - Bitcoin to Tether Gold
+- Additional pairs added regularly
+
+## Browser Requirements
+
+| Browser | Minimum Version |
+|---------|----------------|
+| Chrome/Chromium | 90+ |
+| Firefox | 88+ |
+| Safari | 14+ |
+| Edge | 90+ |
+
+<Note>
+For the best experience, ensure you have a supported wallet extension installed before accessing the web app.
+</Note>
+
+## How It Works
+
+<Steps>
+  <Step title="Create an Order">
+    Select assets, enter an amount, provide a recipient address, and confirm the swap.
+  </Step>
+
+  <Step title="Pay the Deposit">
+    You are shown a deposit address or invoice. Pay the exact amount using your wallet or manually.
+  </Step>
+
+  <Step title="Maker Executes the Swap">
+    Once your payment is confirmed, the maker sends the swapped asset to your recipient address.
+  </Step>
+
+  <Step title="Order Complete">
+    You receive the asset at the address you provided. The order page shows the final status.
+  </Step>
+</Steps>
+
+## Security
+
+- **Non-custodial** - You control your keys
+- **Order-based model** - You pay first, then the maker fulfills the order. In this phase, swaps rely on the maker to send the asset after receiving your payment.
+- **No account needed** - Just connect your wallet
+- **SSL encrypted** - All connections are secure
+- **Transparent tracking** - Monitor every order in real time on the order page

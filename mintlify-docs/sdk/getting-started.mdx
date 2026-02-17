@@ -1,0 +1,302 @@
+---
+title: 'Getting Started'
+description: 'Install and configure the KaleidoSwap SDK for TypeScript or Python'
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install kaleidoswap-sdk
+```
+
+```bash pnpm
+pnpm add kaleidoswap-sdk
+```
+
+```bash yarn
+yarn add kaleidoswap-sdk
+```
+
+```bash pip
+pip install kaleidoswap-sdk
+```
+</CodeGroup>
+
+### Requirements
+
+<Tabs>
+  <Tab title="TypeScript">
+    - Node.js 18 or higher
+    - TypeScript 5.0+ (recommended)
+  </Tab>
+  <Tab title="Python">
+    - Python 3.10 or higher
+    - Dependencies installed automatically: `httpx`, `websockets`, `pydantic`
+  </Tab>
+</Tabs>
+
+## Configuration
+
+### Basic Setup
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+// Make your first API call
+const assets = await client.maker.listAssets();
+console.log(`Found ${assets.assets.length} assets`);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+# Make your first API call
+assets = client.maker.list_assets()
+print(f"Found {len(assets.assets)} assets")
+```
+</CodeGroup>
+
+<Note>
+`KaleidoClient.create()` is **synchronous** in both languages. No `await` is needed for client creation.
+</Note>
+
+### Full Configuration
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, KaleidoConfig } from 'kaleidoswap-sdk';
+
+const config: KaleidoConfig = {
+  // Required: API base URL
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+
+  // Optional: Your RGB Lightning Node URL
+  nodeUrl: 'http://localhost:3001',
+
+  // Optional: API key for authenticated requests
+  apiKey: undefined,
+
+  // Optional: Request timeout in seconds (default: 30)
+  timeout: 30,
+
+  // Optional: Maximum retries (default: 3)
+  maxRetries: 3,
+
+  // Optional: Cache TTL in seconds (default: 60)
+  cacheTtl: 60,
+};
+
+const client = KaleidoClient.create(config);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    # Required: API base URL
+    base_url="https://api.regtest.kaleidoswap.com",
+
+    # Optional: Your RGB Lightning Node URL
+    node_url="http://localhost:3001",
+
+    # Optional: API key for authenticated requests
+    api_key=None,
+
+    # Optional: Request timeout in seconds (default: 30)
+    timeout=30.0,
+
+    # Optional: Maximum retries (default: 3)
+    max_retries=3,
+
+    # Optional: Cache TTL in seconds (default: 60)
+    cache_ttl=60,
+)
+```
+</CodeGroup>
+
+### Environment Variables
+
+You can configure the SDK using environment variables:
+
+```bash
+export KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
+export KALEIDO_NODE_URL=http://localhost:3001
+export KALEIDO_API_KEY=your_api_key_here
+```
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+  apiKey: process.env.KALEIDO_API_KEY,
+});
+```
+
+```python Python
+import os
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com"),
+    node_url=os.environ.get("KALEIDO_NODE_URL"),
+    api_key=os.environ.get("KALEIDO_API_KEY"),
+)
+```
+</CodeGroup>
+
+## Available Environments
+
+| Environment | API URL | Description |
+|-------------|---------|-------------|
+| **Regtest** | `https://api.regtest.kaleidoswap.com` | Local development and testing |
+| **Signet** | `https://api.signet.kaleidoswap.com` | Bitcoin Signet testnet |
+| **Mainnet** | `https://api.kaleidoswap.com` | Production environment |
+
+## Sub-Client Architecture
+
+The SDK organizes API operations into two sub-clients:
+
+<CodeGroup>
+```typescript TypeScript
+// Maker operations (market, orders, swaps, LSPS1)
+const assets = await client.maker.listAssets();
+const pairs = await client.maker.listPairs();
+const quote = await client.maker.getQuote({ /* ... */ });
+const order = await client.maker.createSwapOrder({ /* ... */ });
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+const history = await client.maker.getOrderHistory();
+const lspInfo = await client.maker.getLspInfo();
+
+// RLN operations (wallet, channels, payments -- requires nodeUrl)
+if (client.hasNode()) {
+  const nodeInfo = await client.rln.getNodeInfo();
+  const balance = await client.rln.getBtcBalance();
+  const channels = await client.rln.listChannels();
+  const invoice = await client.rln.createLNInvoice({ /* ... */ });
+}
+```
+
+```python Python
+# Maker operations (market, orders, swaps, LSPS1)
+assets = client.maker.list_assets()
+pairs = client.maker.list_pairs()
+quote = client.maker.get_quote({...})
+order = client.maker.create_swap_order({...})
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+history = client.maker.get_order_history()
+lsp_info = client.maker.get_lsp_info()
+
+# RLN operations (wallet, channels, payments -- requires node_url)
+if client.has_node():
+    node_info = client.rln.get_node_info()
+    balance = client.rln.get_btc_balance()
+    channels = client.rln.list_channels()
+    invoice = client.rln.create_ln_invoice({...})
+```
+</CodeGroup>
+
+## Checking Node Configuration
+
+Before executing node operations, verify that your node is configured:
+
+<CodeGroup>
+```typescript TypeScript
+if (client.hasNode()) {
+  console.log('Node configured - can access RLN operations');
+  const nodeInfo = await client.rln.getNodeInfo();
+  console.log(`Node pubkey: ${nodeInfo.pubkey}`);
+} else {
+  console.log('Node not configured - limited to maker operations');
+}
+```
+
+```python Python
+if client.has_node():
+    print("Node configured - can access RLN operations")
+    node_info = client.rln.get_node_info()
+    print(f"Node pubkey: {node_info.pubkey}")
+else:
+    print("Node not configured - limited to maker operations")
+```
+</CodeGroup>
+
+## Basic Error Handling
+
+<CodeGroup>
+```typescript TypeScript
+import {
+  KaleidoClient,
+  KaleidoError,
+  NetworkError,
+  ValidationError,
+  APIError,
+} from 'kaleidoswap-sdk';
+
+try {
+  const pairs = await client.maker.listPairs();
+  console.log(`Found ${pairs.pairs.length} pairs`);
+} catch (error) {
+  if (error instanceof NetworkError) {
+    console.log(`Network error: ${error.message}`);
+  } else if (error instanceof ValidationError) {
+    console.log(`Validation error: ${error.message}`);
+  } else if (error instanceof APIError) {
+    console.log(`API error (${error.statusCode}): ${error.message}`);
+  } else if (error instanceof KaleidoError) {
+    console.log(`SDK error: ${error.message}`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import (
+    KaleidoClient,
+    KaleidoError,
+    NetworkError,
+    ValidationError,
+    APIError,
+)
+
+try:
+    pairs = client.maker.list_pairs()
+    print(f"Found {len(pairs.pairs)} pairs")
+except NetworkError as e:
+    print(f"Network error: {e}")
+except ValidationError as e:
+    print(f"Validation error: {e}")
+except APIError as e:
+    print(f"API error ({e.status_code}): {e}")
+except KaleidoError as e:
+    print(f"SDK error: {e}")
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Examples" icon="code" href="/sdk/examples">
+    See complete code examples for common use cases
+  </Card>
+  <Card title="API Reference" icon="book" href="/sdk/api-reference">
+    Explore all available methods and parameters
+  </Card>
+  <Card title="Types" icon="brackets-curly" href="/sdk/types">
+    Learn about data models and type definitions
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/sdk/error-handling">
+    Handle errors gracefully in your applications
+  </Card>
+</CardGroup>

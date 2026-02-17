@@ -1,0 +1,265 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "KaleidoSwap Documentation",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373"
+  },
+  "favicon": "/assets/favicon.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Learn",
+        "groups": [
+          {
+            "group": "Introduction",
+            "icon": "sparkles",
+            "pages": [
+              "whats-kaleidoswap/introduction",
+              "whats-kaleidoswap/quickstart",
+              "whats-kaleidoswap/key-features"
+            ]
+          },
+          {
+            "group": "Understanding KaleidoSwap",
+            "icon": "hashtag",
+            "pages": [
+              "whats-kaleidoswap/architecture",
+              "whats-kaleidoswap/background",
+              "whats-kaleidoswap/glossary",
+              "whats-kaleidoswap/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Desktop App",
+        "groups": [
+          {
+            "group": "Tutorial: First Steps",
+            "icon": "rocket",
+            "pages": [
+              "desktop-app/getting-started/introduction",
+              "desktop-app/getting-started/installation",
+              "desktop-app/getting-started/verify-binaries",
+              "desktop-app/wallet/creating-wallet",
+              "desktop-app/wallet/unlocking-wallet",
+              "desktop-app/trading/asset-swaps"
+            ]
+          },
+          {
+            "group": "How-To: Wallet Operations",
+            "icon": "wallet",
+            "pages": [
+              "desktop-app/wallet/initializing-mnemonic",
+              "desktop-app/wallet/deposits",
+              "desktop-app/wallet/withdrawals"
+            ]
+          },
+          {
+            "group": "How-To: Channel Management",
+            "icon": "git-branch",
+            "pages": [
+              "desktop-app/channels/opening-channel",
+              "desktop-app/channels/order-new-channel",
+              "desktop-app/channels/channel-requests",
+              "desktop-app/channels/channel-backups"
+            ]
+          },
+          {
+            "group": "How-To: Configuration",
+            "icon": "sliders",
+            "pages": [
+              "desktop-app/getting-started/node-hosting",
+              "desktop-app/support/settings"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "life-buoy",
+            "pages": [
+              "desktop-app/support/faq",
+              "desktop-app/support/additional-resources"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Web App",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "globe",
+            "pages": [
+              "web-app/introduction",
+              "web-app/getting-started"
+            ]
+          },
+          {
+            "group": "Guide",
+            "icon": "chart-mixed",
+            "pages": [
+              "web-app/wallet-connection",
+              "web-app/trading-interface",
+              "web-app/advanced-features"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "life-buoy",
+            "pages": [
+              "web-app/faq"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Extensions",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "puzzle-piece",
+            "pages": [
+              "extensions/introduction"
+            ]
+          },
+          {
+            "group": "Rate Wallet",
+            "icon": "wallet",
+            "pages": [
+              "extensions/rate/introduction",
+              "extensions/rate/installation",
+              "extensions/rate/getting-started",
+              "extensions/rate/wallet-features",
+              "extensions/rate/swaps",
+              "extensions/rate/dapp-connectivity",
+              "extensions/rate/faq"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
+          {
+            "group": "SDK Overview",
+            "icon": "book-open",
+            "pages": [
+              "sdk/introduction"
+            ]
+          },
+          {
+            "group": "Getting Started",
+            "icon": "rocket",
+            "pages": [
+              "sdk/getting-started",
+              "sdk/examples"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "code",
+            "pages": [
+              "sdk/api-reference",
+              "sdk/types",
+              "sdk/websocket",
+              "sdk/utilities"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "icon": "book",
+            "pages": [
+              "sdk/error-handling",
+              "sdk/best-practices",
+              "sdk/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Guides",
+            "icon": "book",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/getting-started",
+              "api-reference/error-handling",
+              "api-reference/swap-protocol"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "icon": "code",
+            "openapi": "openapi.json",
+            "pages": [
+              "api-reference/rgb-lsps1-apis",
+              "api-reference/market-apis",
+              "api-reference/swap-apis"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Download Desktop App",
+          "href": "https://github.com/kaleidoswap/desktop-app/releases",
+          "icon": "download"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/kaleidoswap",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/assets/logo-light.svg",
+    "dark": "/assets/logo-dark.svg"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "mdx": {
+      "server": "https://api.staging.kaleidoswap.com",
+      "auth": {
+        "method": "bearer"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@kaleidoswap.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "App Dashboard",
+      "href": "https://app.staging.kaleidoswap.com"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/kaleidoswap",
+      "github": "https://github.com/kaleidoswap",
+      "telegram": "https://t.me/kaleidoswap"
+    }
+  },
+  "integrations": {
+    "posthog": {
+      "apiKey": "phc_g3NF1o9hsu8tFROxZaRT9JfD1BdBEQYfIIcrkVzTkps",
+      "apiHost": "https://eu.i.posthog.com",
+      "sessionRecording": true
+    }
+  }
+}

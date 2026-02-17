@@ -1,0 +1,567 @@
+---
+title: 'Examples'
+description: 'Real-world code examples for common use cases'
+---
+
+## Market Data Exploration
+
+Fetch and display available assets and trading pairs.
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+// Fetch assets and pairs
+const [assets, pairs] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+]);
+
+console.log(`Assets: ${assets.assets.length}`);
+console.log(`Trading Pairs: ${pairs.pairs.length}`);
+
+// Display each pair
+for (const pair of pairs.pairs) {
+  console.log(`${pair.base_asset_ticker}/${pair.quote_asset_ticker}`);
+  for (const route of pair.routes ?? []) {
+    console.log(`  Route: ${route.from_layer} -> ${route.to_layer}`);
+    console.log(`  Min: ${route.min_from_amount} / Max: ${route.max_from_amount}`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+# Fetch assets and pairs
+assets = client.maker.list_assets()
+pairs = client.maker.list_pairs()
+
+print(f"Assets: {len(assets.assets)}")
+print(f"Trading Pairs: {len(pairs.pairs)}")
+
+# Display each pair
+for pair in pairs.pairs:
+    print(f"{pair.base_asset_ticker}/{pair.quote_asset_ticker}")
+    for route in pair.routes or []:
+        print(f"  Route: {route.from_layer} -> {route.to_layer}")
+        print(f"  Min: {route.min_from_amount} / Max: {route.max_from_amount}")
+```
+</CodeGroup>
+
+## Getting a Quote
+
+Request a price quote before creating a swap order.
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+
+console.log(`RFQ ID: ${quote.rfq_id}`);
+console.log(`From: ${quote.from_amount} sats`);
+console.log(`To: ${quote.to_amount} USDT`);
+console.log(`Price: ${quote.price}`);
+console.log(`Expires: ${new Date(quote.expires_at * 1000).toISOString()}`);
+```
+
+```python Python
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+
+print(f"RFQ ID: {quote.rfq_id}")
+print(f"From: {quote.from_amount} sats")
+print(f"To: {quote.to_amount} USDT")
+print(f"Price: {quote.price}")
+print(f"Expires: {quote.expires_at}")
+```
+</CodeGroup>
+
+## Complete Order-Based Swap
+
+The full swap flow: get a quote, create an order, and track it to completion.
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, KaleidoError } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+async function executeSwap() {
+  // Step 1: Get a quote
+  const quote = await client.maker.getQuote({
+    from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+    to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+  });
+
+  console.log(`Quote received: ${quote.from_amount} -> ${quote.to_amount}`);
+  console.log(`Price: ${quote.price}`);
+
+  // Step 2: Create the swap order
+  const order = await client.maker.createSwapOrder({
+    rfq_id: quote.rfq_id,
+    from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: quote.from_amount },
+    to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: quote.to_amount },
+    receiver_address: 'lnbc1...',  // your destination address/invoice
+  });
+
+  console.log(`Order created: ${order.order_id}`);
+  console.log(`Deposit address: ${order.deposit_address}`);
+  console.log(`Pay this invoice/address to proceed.`);
+
+  // Step 3: Wait for the user to pay, then track to completion
+  const completed = await client.maker.waitForSwapCompletion(order.order_id, {
+    timeout: 600,
+    pollInterval: 10,
+    onStatusUpdate: (status) => console.log(`Status: ${status}`)
+  });
+
+  console.log(`Swap completed! Final status: ${completed.status}`);
+}
+
+executeSwap().catch(console.error);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient, KaleidoError
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+def execute_swap():
+    # Step 1: Get a quote
+    quote = client.maker.get_quote({
+        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+    })
+
+    print(f"Quote received: {quote.from_amount} -> {quote.to_amount}")
+    print(f"Price: {quote.price}")
+
+    # Step 2: Create the swap order
+    order = client.maker.create_swap_order({
+        "rfq_id": quote.rfq_id,
+        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": quote.from_amount},
+        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": quote.to_amount},
+        "receiver_address": "lnbc1...",  # your destination address/invoice
+    })
+
+    print(f"Order created: {order.order_id}")
+    print(f"Deposit address: {order.deposit_address}")
+    print("Pay this invoice/address to proceed.")
+
+    # Step 3: Wait for the user to pay, then track to completion
+    completed = client.maker.wait_for_swap_completion(order.order_id, options={
+        "timeout": 600,
+        "poll_interval": 10,
+        "on_status_update": lambda status: print(f"Status: {status}")
+    })
+
+    print(f"Swap completed! Final status: {completed.status}")
+
+execute_swap()
+```
+</CodeGroup>
+
+## WebSocket Quote Streaming
+
+Stream real-time quotes using WebSocket.
+
+### Using `streamQuotesByTicker`
+
+The simplest way to get live quotes:
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+// Enable WebSocket
+client.maker.enableWebSocket('wss://api.regtest.kaleidoswap.com/ws/my-client');
+
+// Stream quotes
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC',
+  'USDT',
+  100000,
+  (quote) => {
+    console.log(`Price: ${quote.price}`);
+    console.log(`From: ${quote.from_amount} -> To: ${quote.to_amount}`);
+    console.log(`Fee: ${quote.fee.final_fee}`);
+    console.log(`RFQ ID: ${quote.rfq_id}`);
+  },
+  { preferredFromLayer: 'BTC_LN', preferredToLayer: 'RGB_LN' }
+);
+
+// Stop streaming after 60 seconds
+setTimeout(() => unsubscribe(), 60000);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+# Enable WebSocket
+client.maker.enable_websocket("wss://api.regtest.kaleidoswap.com/ws/my-client")
+
+# Stream quotes
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda quote: print(
+        f"Price: {quote.price}, "
+        f"From: {quote.from_amount} -> To: {quote.to_amount}"
+    ),
+    preferred_from_layer="BTC_LN",
+    preferred_to_layer="RGB_LN"
+)
+
+# Call unsubscribe() when done
+```
+</CodeGroup>
+
+### Using WSClient Directly
+
+For more control, use the WSClient event-based API:
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+});
+
+const ws = client.maker.enableWebSocket('wss://api.regtest.kaleidoswap.com/ws/my-client');
+
+ws.on('connected', () => {
+  console.log('WebSocket connected');
+
+  // Request a quote
+  ws.requestQuote({
+    from_asset: 'BTC',
+    to_asset: 'USDT',
+    from_amount: 100000,
+    from_layer: 'BTC_LN',
+    to_layer: 'RGB_LN'
+  });
+});
+
+ws.on('quoteResponse', (quote) => {
+  console.log(`Price: ${quote.price}`);
+  console.log(`RFQ ID: ${quote.rfq_id}`);
+});
+
+ws.on('error', (error) => {
+  console.error('WebSocket error:', error.message);
+});
+
+ws.on('disconnected', () => {
+  console.log('WebSocket disconnected');
+});
+
+await ws.connect();
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+ws = client.maker.enable_websocket("wss://api.regtest.kaleidoswap.com/ws/my-client")
+
+def on_connected():
+    print("WebSocket connected")
+    ws.request_quote({
+        "from_asset": "BTC",
+        "to_asset": "USDT",
+        "from_amount": 100000,
+        "from_layer": "BTC_LN",
+        "to_layer": "RGB_LN"
+    })
+
+def on_quote(quote):
+    print(f"Price: {quote['price']}")
+    print(f"RFQ ID: {quote['rfq_id']}")
+
+ws.on("connected", on_connected)
+ws.on("quote_response", on_quote)
+ws.on("error", lambda err: print(f"Error: {err}"))
+
+await ws.connect()
+```
+</CodeGroup>
+
+## Order Management
+
+Track and manage swap orders.
+
+<CodeGroup>
+```typescript TypeScript
+// Check order status
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+console.log(`Status: ${status.status}`);
+console.log(`Payment: ${status.payment_status}`);
+
+// Get order history
+const history = await client.maker.getOrderHistory({ limit: 20 });
+for (const order of history.orders) {
+  console.log(`${order.order_id}: ${order.status}`);
+}
+
+// Get analytics
+const stats = await client.maker.getOrderAnalytics();
+console.log(`Total orders: ${stats.total_orders}`);
+```
+
+```python Python
+# Check order status
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+print(f"Status: {status.status}")
+print(f"Payment: {status.payment_status}")
+
+# Get order history
+history = client.maker.get_order_history(limit=20)
+for order in history.orders:
+    print(f"{order.order_id}: {order.status}")
+
+# Get analytics
+stats = client.maker.get_order_analytics()
+print(f"Total orders: {stats.total_orders}")
+```
+</CodeGroup>
+
+## Rate Decision Handling
+
+Handle rate changes on pending orders.
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
+
+if (status.status === 'PENDING_RATE_DECISION') {
+  // Accept the new rate
+  const result = await client.maker.submitRateDecision({
+    order_id: 'order-123',
+    accept_new_rate: true
+  });
+  console.log('Rate accepted, swap continues');
+
+  // Or reject and get a refund:
+  // await client.maker.submitRateDecision({
+  //   order_id: 'order-123',
+  //   accept_new_rate: false
+  // });
+}
+```
+
+```python Python
+status = client.maker.get_swap_order_status({"order_id": "order-123"})
+
+if status.status == "PENDING_RATE_DECISION":
+    # Accept the new rate
+    result = client.maker.submit_rate_decision({
+        "order_id": "order-123",
+        "accept_new_rate": True
+    })
+    print("Rate accepted, swap continues")
+
+    # Or reject and get a refund:
+    # client.maker.submit_rate_decision({
+    #     "order_id": "order-123",
+    #     "accept_new_rate": False
+    # })
+```
+</CodeGroup>
+
+## RLN Node Operations
+
+Manage your RGB Lightning Node.
+
+<CodeGroup>
+```typescript TypeScript
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+
+// Get node info
+const nodeInfo = await client.rln.getNodeInfo();
+console.log(`Pubkey: ${nodeInfo.pubkey}`);
+
+// Get balances
+const btcBalance = await client.rln.getBtcBalance();
+console.log(`On-chain: ${btcBalance.vanilla.spendable} sats`);
+
+// List RGB assets
+const rgbAssets = await client.rln.listAssets();
+console.log(`RGB assets: ${rgbAssets.nia.length} NIA assets`);
+
+// List channels
+const channels = await client.rln.listChannels();
+console.log(`Channels: ${channels.channels.length}`);
+
+// Create a Lightning invoice
+const invoice = await client.rln.createLNInvoice({
+  amt_msat: 100000,
+  expiry_sec: 3600,
+  description: 'Payment for service'
+});
+console.log(`Invoice: ${invoice.invoice}`);
+```
+
+```python Python
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com",
+    node_url="http://localhost:3001"
+)
+
+# Get node info
+node_info = client.rln.get_node_info()
+print(f"Pubkey: {node_info.pubkey}")
+
+# Get balances
+btc_balance = client.rln.get_btc_balance()
+print(f"On-chain: {btc_balance.vanilla.spendable} sats")
+
+# List RGB assets
+rgb_assets = client.rln.list_assets()
+print(f"RGB assets: {len(rgb_assets.nia)} NIA assets")
+
+# List channels
+channels = client.rln.list_channels()
+print(f"Channels: {len(channels.channels)}")
+
+# Create a Lightning invoice
+invoice = client.rln.create_ln_invoice({
+    "amt_msat": 100000,
+    "expiry_sec": 3600,
+    "description": "Payment for service"
+})
+print(f"Invoice: {invoice.invoice}")
+```
+</CodeGroup>
+
+## Amount Conversion
+
+Use precision utilities for safe amount conversion.
+
+<CodeGroup>
+```typescript TypeScript
+import { toSmallestUnits, toDisplayUnits, createPrecisionHandler } from 'kaleidoswap-sdk';
+
+// Simple conversion
+const sats = toSmallestUnits(0.001, 8);     // 100000
+const btc = toDisplayUnits(100000, 8);       // 0.001
+
+// Using PrecisionHandler with asset metadata
+const pairs = await client.maker.listPairs();
+// ... create mapped assets from pairs
+// const handler = createPrecisionHandler(mappedAssets);
+// const raw = handler.toRawAmount(0.5, 'BTC_ASSET_ID');
+// const display = handler.toDisplayAmount(50000000, 'BTC_ASSET_ID');
+```
+
+```python Python
+from kaleidoswap_sdk import to_smallest_units, to_display_units, create_precision_handler
+
+# Simple conversion
+sats = to_smallest_units(0.001, 8)     # 100000
+btc = to_display_units(100000, 8)       # 0.001
+
+# Using PrecisionHandler with asset metadata
+pairs = client.maker.list_pairs()
+# ... create mapped assets from pairs
+# handler = create_precision_handler(mapped_assets)
+# raw = handler.to_raw_amount(0.5, "BTC_ASSET_ID")
+# display = handler.to_display_amount(50000000, "BTC_ASSET_ID")
+```
+</CodeGroup>
+
+## Error Handling
+
+Handle specific error types for robust applications.
+
+<CodeGroup>
+```typescript TypeScript
+import {
+  KaleidoClient,
+  KaleidoError,
+  NetworkError,
+  ValidationError,
+  QuoteExpiredError,
+  NodeNotConfiguredError,
+} from 'kaleidoswap-sdk';
+
+try {
+  const quote = await client.maker.getQuote({ /* ... */ });
+  const order = await client.maker.createSwapOrder({ /* ... */ });
+} catch (error) {
+  if (error instanceof QuoteExpiredError) {
+    console.log('Quote expired, fetching a new one...');
+  } else if (error instanceof ValidationError) {
+    console.log(`Invalid input: ${error.message}`);
+  } else if (error instanceof NodeNotConfiguredError) {
+    console.log('Node not configured for this operation');
+  } else if (error instanceof NetworkError) {
+    console.log(`Network issue: ${error.message}`);
+    if (error.isRetryable()) {
+      console.log('Retrying...');
+    }
+  } else if (error instanceof KaleidoError) {
+    console.log(`SDK error [${error.code}]: ${error.message}`);
+  }
+}
+```
+
+```python Python
+from kaleidoswap_sdk import (
+    KaleidoClient,
+    KaleidoError,
+    NetworkError,
+    ValidationError,
+    QuoteExpiredError,
+    NodeNotConfiguredError,
+)
+
+try:
+    quote = client.maker.get_quote({...})
+    order = client.maker.create_swap_order({...})
+except QuoteExpiredError:
+    print("Quote expired, fetching a new one...")
+except ValidationError as e:
+    print(f"Invalid input: {e}")
+except NodeNotConfiguredError:
+    print("Node not configured for this operation")
+except NetworkError as e:
+    print(f"Network issue: {e}")
+    if e.is_retryable():
+        print("Retrying...")
+except KaleidoError as e:
+    print(f"SDK error [{e.code}]: {e}")
+```
+</CodeGroup>

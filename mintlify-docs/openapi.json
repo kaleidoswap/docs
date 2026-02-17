@@ -1,0 +1,3294 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kaleidoswap RGB-LSP API",
+    "description": "API for managing swaps and channels",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/lsps1/get_info": {
+      "get": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Get Info",
+        "operationId": "get_info_api_v1_lsps1_get_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetInfoResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get LSP Information",
+            "description": "Retrieve Lightning Service Provider capabilities and configuration"
+          },
+          "content": "## Overview\n\nThis endpoint provides essential information about the LSP including supported assets, options, and connection details.\n\n<Note>This is typically the first endpoint you should call when integrating with the KaleidoSwap API.</Note>",
+          "mcp": {
+            "enabled": true,
+            "name": "get_lsp_info",
+            "description": "Get Lightning Service Provider information and capabilities"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Get LSP Info",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst lspInfo = await client.getLspInfo();\nconsole.log(`LSP Pubkey: ${lspInfo.pubkey}`);\nconsole.log(`Connection URL: ${lspInfo.lsp_connection_url}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Get LSP Info",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        lsp_info = await client.get_lsp_info()\n        print(f\"LSP Pubkey: {lsp_info.pubkey}\")\n        print(f\"Connection URL: {lsp_info.lsp_connection_url}\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/lsps1/network_info": {
+      "get": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Get Network Info",
+        "description": "Get network information including current blockchain height and network type.",
+        "operationId": "get_network_info_api_v1_lsps1_network_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInfoResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Network Information",
+            "description": "Retrieve blockchain network details including current height"
+          },
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/lsps1/create_order": {
+      "post": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Create Order",
+        "operationId": "create_order_api_v1_lsps1_create_order_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Create Channel Order",
+            "description": "Create a new Lightning channel with optional RGB asset allocation"
+          },
+          "content": "## Prerequisites\n\n- Valid client public key\n- Sufficient balance for channel fees\n- Optional: RFQ ID if purchasing assets\n\n<Warning>Ensure you have a refund address if paying onchain to avoid lost funds in case of errors.</Warning>"
+        }
+      }
+    },
+    "/api/v1/lsps1/estimate_fees": {
+      "post": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Estimate Fees",
+        "description": "Estimate channel fees based on the provided parameters without creating an order.\nFor asset purchases (client_asset_amount > 0), rfq_id must be provided to calculate accurate fees.",
+        "operationId": "estimate_fees_api_v1_lsps1_estimate_fees_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelFees"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Estimate Channel Fees",
+            "description": "Calculate channel opening fees without creating an order"
+          },
+          "content": "## When to Use\n\nUse this endpoint to show users the expected fees before they commit to opening a channel.\n\n<Tip>For asset purchases, always provide an `rfq_id` to get accurate pricing.</Tip>",
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/lsps1/get_order": {
+      "post": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Get Order",
+        "operationId": "get_order_api_v1_lsps1_get_order_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Order Status",
+            "description": "Retrieve the current status and details of a channel order"
+          },
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/lsps1/rate_decision": {
+      "post": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Handle Rate Decision",
+        "description": "Handle user decision on rate change for LSPS1 orders.\nUser can either accept the new market rate or request a refund.",
+        "operationId": "handle_rate_decision_api_v1_lsps1_rate_decision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateDecisionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lsps1/retry_delivery": {
+      "post": {
+        "tags": [
+          "lsps1"
+        ],
+        "summary": "Retry Delivery",
+        "description": "Endpoint for clients to queue their order for immediate retry of asset delivery.\n\nThis allows users to bypass the exponential backoff delay by queueing their order\nfor priority processing. The order will be processed by the background loop within\n60 seconds. Useful when a user comes back online after being offline during\nscheduled retry windows.\n\nArgs:\n    request: Contains the order_id\n\nReturns:\n    RetryDeliveryResponse with status and message",
+        "operationId": "retry_delivery_api_v1_lsps1_retry_delivery_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryDeliveryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryDeliveryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/nodeinfo": {
+      "get": {
+        "tags": [
+          "swaps"
+        ],
+        "summary": "Get Node Info",
+        "operationId": "get_node_info_api_v1_swaps_nodeinfo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeInfoResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Node Information",
+            "description": "Retrieve Lightning node public key and network details"
+          },
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/init": {
+      "post": {
+        "tags": [
+          "swaps"
+        ],
+        "summary": "Initiate Swap",
+        "operationId": "initiate_swap_api_v1_swaps_init_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Initiate Atomic Swap",
+            "description": "Start an atomic swap between RGB assets"
+          },
+          "content": "## Atomic Swap Flow\n\n1. Get a quote using `/api/v1/market/quote`\n2. Initiate the swap with this endpoint\n3. Confirm the swap using `/api/v1/swaps/execute`\n\n<Warning>Swaps must be confirmed within the quote expiration time.</Warning>"
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Initialize Swap",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\n// First get a quote\nconst quote = await client.quoteRequest('BTC', 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', 1000000);\n\n// Initialize the swap\nconst swap = await client.initMakerSwap({\n  rfq_id: quote.rfq_id,\n  from_asset: 'BTC',\n  to_asset: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  from_amount: 1000000,\n  to_amount: quote.to_amount\n});\nconsole.log(`Swap initialized: ${swap.payment_hash}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Initialize Swap",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient, InitMakerSwapRequest\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        # First get a quote\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000\n        )\n        \n        # Initialize the swap\n        swap = await client.init_maker_swap(\n            InitMakerSwapRequest(\n                rfq_id=quote.rfq_id,\n                from_asset=\"BTC\",\n                to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n                from_amount=1000000,\n                to_amount=quote.to_amount\n            )\n        )\n        print(f\"Swap initialized: {swap.payment_hash}\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/swaps/execute": {
+      "post": {
+        "tags": [
+          "swaps"
+        ],
+        "summary": "Confirm Swap",
+        "operationId": "confirm_swap_api_v1_swaps_execute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmSwapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmSwapResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Execute Swap",
+            "description": "Confirm and execute a previously initiated swap"
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/atomic/status": {
+      "post": {
+        "tags": [
+          "swaps"
+        ],
+        "summary": "Get Swap Status",
+        "operationId": "get_swap_status_api_v1_swaps_atomic_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Swap Status",
+            "description": "Check the current status of an atomic swap"
+          },
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/market/assets": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "List Assets",
+        "operationId": "list_assets_api_v1_market_assets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetsResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "List Available Assets",
+            "description": "Get all RGB assets supported by the platform"
+          },
+          "mcp": {
+            "enabled": true,
+            "name": "list_available_assets",
+            "description": "List all available RGB assets for trading"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst assets = await client.listAssets();\nconsole.log(`Found ${assets.assets.length} assets`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        assets = await client.list_assets()\n        print(f\"Found {len(assets.assets)} assets\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/market/pairs": {
+      "get": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Get Pairs",
+        "operationId": "get_pairs_api_v1_market_pairs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Trading Pairs",
+            "description": "Retrieve all available trading pairs and their limits"
+          },
+          "mcp": {
+            "enabled": true,
+            "name": "get_trading_pairs",
+            "description": "Get available trading pairs with min/max order sizes"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst pairs = await client.listPairs();\nconsole.log(`Found ${pairs.pairs.length} trading pairs`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        pairs = await client.list_pairs()\n        print(f\"Found {len(pairs.pairs)} trading pairs\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/market/quote": {
+      "post": {
+        "tags": [
+          "market"
+        ],
+        "summary": "Get Quote",
+        "operationId": "get_quote_api_v1_market_quote_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairQuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Price Quote",
+            "description": "Request a quote for swapping between two assets"
+          },
+          "content": "## Usage\n\nProvide either `from_amount` or `to_amount`, but not both. The API will calculate the other side based on current market rates.\n\n<Note>Quotes are valid for a limited time. Check the `expires_at` field.</Note>",
+          "mcp": {
+            "enabled": true,
+            "name": "get_asset_quote",
+            "description": "Get current exchange rate quote between two assets"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - BTC to USDT",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\nconst quote = await client.quoteRequest(\n  'BTC',\n  'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  1000000 // 0.01 BTC minimum\n);\nconsole.log(`Exchange rate: ${quote.price}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000  # 0.01 BTC minimum\n        )\n        print(f\"Exchange rate: {quote.price}\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/swaps/orders": {
+      "post": {
+        "tags": [
+          "swap-orders"
+        ],
+        "summary": "Create Swap Order",
+        "operationId": "create_swap_order_api_v1_swaps_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSwapOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSwapOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Create Swap Order",
+            "description": "Create a new swap order with on-chain or Lightning settlement"
+          },
+          "content": "## Settlement Types\n\n- **LIGHTNING**: Instant settlement via Lightning Network\n- **ONCHAIN**: Settlement via on-chain Bitcoin transaction\n\n<Tip>Lightning settlement is recommended for faster finality and lower fees.</Tip>"
+        },
+        "x-codeSamples": [
+          {
+            "lang": "javascript",
+            "label": "TypeScript SDK - Create Order",
+            "source": "import { KaleidoClient } from '@kaleidoswap/kaleidoswap-sdk';\n\nconst client = new KaleidoClient({\n  baseUrl: 'https://api.staging.kaleidoswap.com/api/v1'\n});\n\n// First get a quote\nconst quote = await client.quoteRequest('BTC', 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak', 1000000);\n\n// Create order\nconst order = await client.createOrder({\n  rfq_id: quote.rfq_id,\n  from_type: 'ONCHAIN',\n  to_type: 'LIGHTNING',\n  from_asset: 'BTC',\n  to_asset: 'rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak',\n  from_amount: 1000000,\n  to_amount: quote.to_amount\n});\nconsole.log(`Order created: ${order.id}`);"
+          },
+          {
+            "lang": "python",
+            "label": "Python SDK - Create Order",
+            "source": "import asyncio\nfrom kaleidoswap_sdk import KaleidoClient, CreateOrderRequest\n\nasync def main():\n    async with KaleidoClient(\n        api_url=\"https://api.staging.kaleidoswap.com/api/v1\"\n    ) as client:\n        # First get a quote\n        quote = await client.get_quote(\n            from_asset=\"BTC\",\n            to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n            amount=1000000\n        )\n        \n        # Create order\n        order = await client.create_order(\n            CreateOrderRequest(\n                rfq_id=quote.rfq_id,\n                from_type=\"ONCHAIN\",\n                to_type=\"LIGHTNING\",\n                from_asset=\"BTC\",\n                to_asset=\"rgb:im7mWgoS-4QX_1b1-DT23iPq-niObDFM-qGN7R2x-lFLJYak\",\n                from_amount=1000000,\n                to_amount=quote.to_amount\n            )\n        )\n        print(f\"Order created: {order.id}\")\n\nasyncio.run(main())"
+          }
+        ]
+      }
+    },
+    "/api/v1/swaps/orders/status": {
+      "post": {
+        "tags": [
+          "swap-orders"
+        ],
+        "summary": "Get Swap Order Status",
+        "operationId": "get_swap_order_status_api_v1_swaps_orders_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapOrderStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapOrderStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Swap Order Status",
+            "description": "Retrieve detailed status of a swap order"
+          },
+          "mcp": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/orders/history": {
+      "get": {
+        "tags": [
+          "swap-orders"
+        ],
+        "summary": "Get Order History",
+        "description": "Get order history with optional status filtering and pagination",
+        "operationId": "get_order_history_api_v1_swaps_orders_history_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SwapOrderStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Order History",
+            "description": "Retrieve paginated swap order history with optional filtering"
+          },
+          "mcp": {
+            "enabled": true,
+            "name": "get_swap_order_history",
+            "description": "Get historical swap orders with pagination and filtering"
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/orders/analytics": {
+      "get": {
+        "tags": [
+          "swap-orders"
+        ],
+        "summary": "Get Order Stats",
+        "description": "Get order statistics including counts by status and volume information",
+        "operationId": "get_order_stats_api_v1_swaps_orders_analytics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderStatsResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Get Order Analytics",
+            "description": "Retrieve aggregate statistics about swap orders"
+          },
+          "mcp": {
+            "enabled": true,
+            "name": "get_order_analytics",
+            "description": "Get swap order statistics and volume data"
+          }
+        }
+      }
+    },
+    "/api/v1/swaps/orders/rate_decision": {
+      "post": {
+        "tags": [
+          "swap-orders"
+        ],
+        "summary": "Handle Swap Order Rate Decision",
+        "description": "Handle user decision on rate change for swap orders.\nUser can either accept the new market rate or request a refund.",
+        "operationId": "handle_swap_order_rate_decision_api_v1_swaps_orders_rate_decision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapOrderRateDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapOrderRateDecisionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssetBalanceResponse": {
+        "properties": {
+          "settled": {
+            "type": "integer",
+            "title": "Settled",
+            "example": 777
+          },
+          "future": {
+            "type": "integer",
+            "title": "Future",
+            "example": 777
+          },
+          "spendable": {
+            "type": "integer",
+            "title": "Spendable",
+            "example": 777
+          },
+          "offchain_outbound": {
+            "type": "integer",
+            "title": "Offchain Outbound",
+            "example": 444
+          },
+          "offchain_inbound": {
+            "type": "integer",
+            "title": "Offchain Inbound",
+            "example": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "settled",
+          "future",
+          "spendable",
+          "offchain_outbound",
+          "offchain_inbound"
+        ],
+        "title": "AssetBalanceResponse"
+      },
+      "AssetDeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "NOT_REQUIRED",
+          "PENDING",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "FAILED",
+          "RATE_CHANGED"
+        ],
+        "title": "AssetDeliveryStatus",
+        "description": "Status of asset delivery via keysend after channel opening"
+      },
+      "AssetIface": {
+        "type": "string",
+        "enum": [
+          "RGB20",
+          "RGB21",
+          "RGB25"
+        ],
+        "title": "AssetIface"
+      },
+      "AssetsOptions": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "US Dollar Notes"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id",
+            "default": "rgb:$i4cFKwt-2C5LZ3X-l$kOTGN-O6l1AOP-aP9COyn-7IeBkEM"
+          },
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "default": "USDT"
+          },
+          "precision": {
+            "type": "integer",
+            "title": "Precision",
+            "default": 6
+          },
+          "issued_supply": {
+            "type": "integer",
+            "title": "Issued Supply",
+            "default": 0
+          },
+          "min_initial_client_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Initial Client Amount",
+            "default": 0
+          },
+          "max_initial_client_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Initial Client Amount",
+            "default": 0
+          },
+          "min_initial_lsp_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Initial Lsp Amount",
+            "default": 0
+          },
+          "max_initial_lsp_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Initial Lsp Amount",
+            "default": 10000
+          },
+          "min_channel_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Channel Amount",
+            "default": 0
+          },
+          "max_channel_amount": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Channel Amount",
+            "default": 10000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AssetsOptions"
+      },
+      "AssetsResponse": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/ClientAsset"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "network": {
+            "type": "string",
+            "title": "Network",
+            "default": "regtest"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assets"
+        ],
+        "title": "AssetsResponse"
+      },
+      "BitcoinNetwork": {
+        "type": "string",
+        "enum": [
+          "Mainnet",
+          "Testnet",
+          "Signet",
+          "Regtest"
+        ],
+        "title": "BitcoinNetwork"
+      },
+      "ChannelDetails": {
+        "properties": {
+          "channel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Id"
+          },
+          "temporary_channel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporary Channel Id"
+          },
+          "funded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funded At"
+          },
+          "funding_outpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funding Outpoint"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "title": "ChannelDetails"
+      },
+      "ChannelFees": {
+        "properties": {
+          "setup_fee": {
+            "type": "integer",
+            "title": "Setup Fee"
+          },
+          "capacity_fee": {
+            "type": "integer",
+            "title": "Capacity Fee"
+          },
+          "duration_fee": {
+            "type": "integer",
+            "title": "Duration Fee"
+          },
+          "total_fee": {
+            "type": "integer",
+            "title": "Total Fee"
+          },
+          "applied_discount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Discount"
+          },
+          "discount_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "setup_fee",
+          "capacity_fee",
+          "duration_fee",
+          "total_fee"
+        ],
+        "title": "ChannelFees"
+      },
+      "ClientAsset": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "example": "USDT"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "example": "Tether"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details",
+            "example": "asset details"
+          },
+          "precision": {
+            "type": "integer",
+            "title": "Precision",
+            "example": 0
+          },
+          "issued_supply": {
+            "type": "integer",
+            "title": "Issued Supply",
+            "example": 777
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp",
+            "example": 1691160565
+          },
+          "added_at": {
+            "type": "integer",
+            "title": "Added At",
+            "example": 1691161979
+          },
+          "balance": {
+            "$ref": "#/components/schemas/AssetBalanceResponse"
+          },
+          "media": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Media"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_iface": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetIface"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "ticker",
+          "name",
+          "precision",
+          "issued_supply",
+          "timestamp",
+          "added_at",
+          "balance"
+        ],
+        "title": "ClientAsset"
+      },
+      "ConfirmSwapRequest": {
+        "properties": {
+          "swapstring": {
+            "type": "string",
+            "title": "Swapstring",
+            "example": "30/rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd/10/rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc/1715896416/9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2"
+          },
+          "taker_pubkey": {
+            "type": "string",
+            "title": "Taker Pubkey",
+            "example": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706"
+          },
+          "payment_hash": {
+            "type": "string",
+            "title": "Payment Hash",
+            "example": "9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2"
+          }
+        },
+        "type": "object",
+        "required": [
+          "swapstring",
+          "taker_pubkey",
+          "payment_hash"
+        ],
+        "title": "ConfirmSwapRequest"
+      },
+      "ConfirmSwapResponse": {
+        "properties": {
+          "status": {
+            "type": "integer",
+            "title": "Status",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "example": "Swap executed successfully."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "ConfirmSwapResponse"
+      },
+      "CreateOrderRequest": {
+        "properties": {
+          "client_pubkey": {
+            "type": "string",
+            "title": "Client Pubkey"
+          },
+          "lsp_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Lsp Balance Sat"
+          },
+          "client_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Client Balance Sat"
+          },
+          "required_channel_confirmations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Required Channel Confirmations"
+          },
+          "funding_confirms_within_blocks": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Funding Confirms Within Blocks"
+          },
+          "channel_expiry_blocks": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Channel Expiry Blocks"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "refund_onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Onchain Address"
+          },
+          "announce_channel": {
+            "type": "boolean",
+            "title": "Announce Channel",
+            "default": true
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "lsp_asset_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lsp Asset Amount"
+          },
+          "client_asset_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Asset Amount"
+          },
+          "rfq_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfq Id"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "Optional email for notifications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_pubkey",
+          "lsp_balance_sat",
+          "client_balance_sat",
+          "required_channel_confirmations",
+          "funding_confirms_within_blocks",
+          "channel_expiry_blocks"
+        ],
+        "title": "CreateOrderRequest"
+      },
+      "CreateSwapOrderRequest": {
+        "properties": {
+          "rfq_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Rfq Id",
+            "description": "RFQ ID cannot be empty"
+          },
+          "from_type": {
+            "$ref": "#/components/schemas/SwapSettlement",
+            "description": "Input type: ONCHAIN or LIGHTNING"
+          },
+          "to_type": {
+            "$ref": "#/components/schemas/SwapSettlement",
+            "description": "Output type: ONCHAIN or LIGHTNING"
+          },
+          "min_onchain_conf": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Onchain Conf",
+            "default": 1
+          },
+          "dest_bolt11": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Bolt11"
+          },
+          "dest_onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Onchain Address"
+          },
+          "dest_rgb_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Rgb Invoice"
+          },
+          "refund_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Address"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "Optional email for notifications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rfq_id",
+          "from_type",
+          "to_type"
+        ],
+        "title": "CreateSwapOrderRequest"
+      },
+      "CreateSwapOrderResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rfq_id": {
+            "type": "string",
+            "title": "Rfq Id"
+          },
+          "pay_in": {
+            "$ref": "#/components/schemas/SwapSettlement"
+          },
+          "ln_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ln Invoice"
+          },
+          "onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onchain Address"
+          },
+          "rgb_recipient_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rgb Recipient Id"
+          },
+          "rgb_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rgb Invoice"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SwapOrderStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rfq_id",
+          "pay_in",
+          "status"
+        ],
+        "title": "CreateSwapOrderResponse"
+      },
+      "Fee": {
+        "properties": {
+          "base_fee": {
+            "type": "integer",
+            "title": "Base Fee",
+            "example": 1000000
+          },
+          "variable_fee": {
+            "type": "integer",
+            "title": "Variable Fee",
+            "example": 1000000
+          },
+          "fee_rate": {
+            "type": "number",
+            "title": "Fee Rate",
+            "example": 0.0001
+          },
+          "final_fee": {
+            "type": "integer",
+            "title": "Final Fee",
+            "example": 2000000
+          },
+          "fee_asset": {
+            "type": "string",
+            "title": "Fee Asset",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "fee_asset_precision": {
+            "type": "integer",
+            "title": "Fee Asset Precision",
+            "example": 6
+          }
+        },
+        "type": "object",
+        "required": [
+          "base_fee",
+          "variable_fee",
+          "fee_rate",
+          "final_fee",
+          "fee_asset",
+          "fee_asset_precision"
+        ],
+        "title": "Fee"
+      },
+      "GetInfoResponseModel": {
+        "properties": {
+          "lsp_connection_url": {
+            "type": "string",
+            "title": "Lsp Connection Url"
+          },
+          "options": {
+            "$ref": "#/components/schemas/OrderOptions"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/AssetsOptions"
+            },
+            "type": "array",
+            "title": "Assets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lsp_connection_url",
+          "options",
+          "assets"
+        ],
+        "title": "GetInfoResponseModel"
+      },
+      "GetOrderRequest": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "title": "GetOrderRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Media": {
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "title": "File Path",
+            "example": "/path/to/media"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest",
+            "example": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime",
+            "example": "text/plain"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_path",
+          "digest",
+          "mime"
+        ],
+        "title": "Media"
+      },
+      "NetworkInfoResponse": {
+        "properties": {
+          "network": {
+            "$ref": "#/components/schemas/BitcoinNetwork"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height",
+            "example": 805434
+          }
+        },
+        "type": "object",
+        "required": [
+          "network",
+          "height"
+        ],
+        "title": "NetworkInfoResponse"
+      },
+      "NodeInfoResponse": {
+        "properties": {
+          "pubkey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pubkey",
+            "example": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706"
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Network",
+            "example": "Signet"
+          },
+          "block_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Height",
+            "example": 805434
+          }
+        },
+        "type": "object",
+        "required": [
+          "pubkey",
+          "network",
+          "block_height"
+        ],
+        "title": "NodeInfoResponse"
+      },
+      "OrderHistoryResponse": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/SwapOrder"
+            },
+            "type": "array",
+            "title": "Orders",
+            "description": "List of orders"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of orders matching the filter"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether there are more orders available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders",
+          "total_count",
+          "has_more"
+        ],
+        "title": "OrderHistoryResponse"
+      },
+      "OrderOptions": {
+        "properties": {
+          "min_required_channel_confirmations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Required Channel Confirmations",
+            "default": 0
+          },
+          "min_funding_confirms_within_blocks": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Funding Confirms Within Blocks",
+            "default": 0
+          },
+          "min_onchain_payment_confirmations": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Onchain Payment Confirmations"
+          },
+          "supports_zero_channel_reserve": {
+            "type": "boolean",
+            "title": "Supports Zero Channel Reserve",
+            "default": true
+          },
+          "min_onchain_payment_size_sat": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Onchain Payment Size Sat"
+          },
+          "max_channel_expiry_blocks": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Channel Expiry Blocks",
+            "default": 20160
+          },
+          "min_initial_client_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Initial Client Balance Sat",
+            "default": 0
+          },
+          "max_initial_client_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Initial Client Balance Sat",
+            "default": 1000000
+          },
+          "min_initial_lsp_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Initial Lsp Balance Sat",
+            "default": 0
+          },
+          "max_initial_lsp_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Initial Lsp Balance Sat",
+            "default": 16777215
+          },
+          "min_channel_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Min Channel Balance Sat",
+            "default": 50000
+          },
+          "max_channel_balance_sat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Max Channel Balance Sat",
+            "default": 16777215
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "OrderOptions"
+      },
+      "OrderResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "client_pubkey": {
+            "type": "string",
+            "title": "Client Pubkey"
+          },
+          "lsp_balance_sat": {
+            "type": "integer",
+            "title": "Lsp Balance Sat"
+          },
+          "client_balance_sat": {
+            "type": "integer",
+            "title": "Client Balance Sat"
+          },
+          "required_channel_confirmations": {
+            "type": "integer",
+            "title": "Required Channel Confirmations"
+          },
+          "funding_confirms_within_blocks": {
+            "type": "integer",
+            "title": "Funding Confirms Within Blocks"
+          },
+          "channel_expiry_blocks": {
+            "type": "integer",
+            "title": "Channel Expiry Blocks"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token",
+            "default": ""
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "announce_channel": {
+            "type": "boolean",
+            "title": "Announce Channel"
+          },
+          "order_state": {
+            "$ref": "#/components/schemas/OrderState"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PaymentDetails"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChannelDetails"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "lsp_asset_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lsp Asset Amount"
+          },
+          "client_asset_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Asset Amount"
+          },
+          "rfq_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfq Id"
+          },
+          "asset_price_sat": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Price Sat"
+          },
+          "asset_delivery_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetDeliveryStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_delivery_payment_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Delivery Payment Hash"
+          },
+          "asset_delivery_completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Delivery Completed At"
+          },
+          "asset_delivery_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Delivery Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "client_pubkey",
+          "lsp_balance_sat",
+          "client_balance_sat",
+          "required_channel_confirmations",
+          "funding_confirms_within_blocks",
+          "channel_expiry_blocks",
+          "announce_channel",
+          "order_state",
+          "payment"
+        ],
+        "title": "OrderResponse"
+      },
+      "OrderState": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "CHANNEL_OPENING",
+          "COMPLETED",
+          "FAILED",
+          "PENDING_RATE_DECISION"
+        ],
+        "title": "OrderState"
+      },
+      "OrderStatsResponse": {
+        "properties": {
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Status Counts",
+            "description": "Count of orders by status"
+          },
+          "filled_orders_volume": {
+            "type": "integer",
+            "title": "Filled Orders Volume",
+            "description": "Total volume of filled orders"
+          },
+          "filled_orders_count": {
+            "type": "integer",
+            "title": "Filled Orders Count",
+            "description": "Total count of filled orders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status_counts",
+          "filled_orders_volume",
+          "filled_orders_count"
+        ],
+        "title": "OrderStatsResponse"
+      },
+      "Pair": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "base_asset": {
+            "type": "string",
+            "title": "Base Asset"
+          },
+          "base_asset_id": {
+            "type": "string",
+            "title": "Base Asset Id"
+          },
+          "base_precision": {
+            "type": "integer",
+            "title": "Base Precision"
+          },
+          "quote_asset": {
+            "type": "string",
+            "title": "Quote Asset"
+          },
+          "quote_asset_id": {
+            "type": "string",
+            "title": "Quote Asset Id"
+          },
+          "quote_precision": {
+            "type": "integer",
+            "title": "Quote Precision"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "min_base_order_size": {
+            "type": "integer",
+            "title": "Min Base Order Size"
+          },
+          "max_base_order_size": {
+            "type": "integer",
+            "title": "Max Base Order Size"
+          },
+          "min_quote_order_size": {
+            "type": "integer",
+            "title": "Min Quote Order Size"
+          },
+          "max_quote_order_size": {
+            "type": "integer",
+            "title": "Max Quote Order Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "base_asset",
+          "base_asset_id",
+          "base_precision",
+          "quote_asset",
+          "quote_asset_id",
+          "quote_precision",
+          "is_active",
+          "min_base_order_size",
+          "max_base_order_size",
+          "min_quote_order_size",
+          "max_quote_order_size"
+        ],
+        "title": "Pair"
+      },
+      "PairQuoteRequest": {
+        "properties": {
+          "from_asset": {
+            "type": "string",
+            "title": "From Asset",
+            "example": "BTC"
+          },
+          "from_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Amount",
+            "description": "Amount of from_asset to convert. Either from_amount or to_amount must be provided, but not both.",
+            "example": 1000000
+          },
+          "to_asset": {
+            "type": "string",
+            "title": "To Asset",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "to_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Amount",
+            "description": "Desired amount of to_asset to receive. Either from_amount or to_amount must be provided, but not both.",
+            "example": 1000000
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_asset",
+          "to_asset"
+        ],
+        "title": "PairQuoteRequest"
+      },
+      "PairQuoteResponse": {
+        "properties": {
+          "rfq_id": {
+            "type": "string",
+            "title": "Rfq Id",
+            "example": "1234567890"
+          },
+          "from_asset": {
+            "type": "string",
+            "title": "From Asset",
+            "example": "BTC"
+          },
+          "from_amount": {
+            "type": "integer",
+            "title": "From Amount",
+            "description": "Amount of from_asset in its smallest unit (e.g., millisatoshis for BTC if precision is 11)",
+            "example": 100000000000
+          },
+          "to_asset": {
+            "type": "string",
+            "title": "To Asset",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "to_amount": {
+            "type": "integer",
+            "title": "To Amount",
+            "description": "Amount of to_asset in its smallest unit, after applying price and fees.",
+            "example": 49900123
+          },
+          "price": {
+            "type": "integer",
+            "title": "Price",
+            "description": "Price of 1 whole unit of from_asset (e.g., 1 BTC) in terms of the smallest unit of to_asset (e.g., USDT with precision 6). Matches PriceData.price for the given rfq_id.",
+            "example": 50000123456
+          },
+          "fee": {
+            "$ref": "#/components/schemas/Fee"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          },
+          "expires_at": {
+            "type": "integer",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rfq_id",
+          "from_asset",
+          "from_amount",
+          "to_asset",
+          "to_amount",
+          "price",
+          "fee",
+          "timestamp",
+          "expires_at"
+        ],
+        "title": "PairQuoteResponse"
+      },
+      "PairResponse": {
+        "properties": {
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/Pair"
+            },
+            "type": "array",
+            "title": "Pairs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pairs"
+        ],
+        "title": "PairResponse"
+      },
+      "PaymentBolt11": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "fee_total_sat": {
+            "type": "integer",
+            "title": "Fee Total Sat"
+          },
+          "order_total_sat": {
+            "type": "integer",
+            "title": "Order Total Sat"
+          },
+          "invoice": {
+            "type": "string",
+            "title": "Invoice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "expires_at",
+          "fee_total_sat",
+          "order_total_sat",
+          "invoice"
+        ],
+        "title": "PaymentBolt11"
+      },
+      "PaymentDetails": {
+        "properties": {
+          "bolt11": {
+            "$ref": "#/components/schemas/PaymentBolt11"
+          },
+          "onchain": {
+            "$ref": "#/components/schemas/PaymentOnchain"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bolt11",
+          "onchain"
+        ],
+        "title": "PaymentDetails"
+      },
+      "PaymentOnchain": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "fee_total_sat": {
+            "type": "integer",
+            "title": "Fee Total Sat"
+          },
+          "order_total_sat": {
+            "type": "integer",
+            "title": "Order Total Sat"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "min_fee_for_0conf": {
+            "type": "integer",
+            "title": "Min Fee For 0Conf"
+          },
+          "min_onchain_payment_confirmations": {
+            "type": "integer",
+            "title": "Min Onchain Payment Confirmations"
+          },
+          "refund_onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Onchain Address"
+          },
+          "payment_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Status"
+          },
+          "payment_difference": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Difference",
+            "description": "Payment difference in satoshis. Positive for overpayment, negative for underpayment, zero for exact payment"
+          },
+          "last_payment_check": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Payment Check"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "expires_at",
+          "fee_total_sat",
+          "order_total_sat",
+          "address",
+          "min_fee_for_0conf",
+          "min_onchain_payment_confirmations",
+          "refund_onchain_address"
+        ],
+        "title": "PaymentOnchain"
+      },
+      "PaymentState": {
+        "type": "string",
+        "enum": [
+          "EXPECT_PAYMENT",
+          "HOLD",
+          "PAID",
+          "REFUNDED",
+          "TO_REFUND"
+        ],
+        "title": "PaymentState"
+      },
+      "PaymentStatus": {
+        "type": "string",
+        "enum": [
+          "NOT_PAID",
+          "UNDERPAID",
+          "PAID",
+          "OVERPAID"
+        ],
+        "title": "PaymentStatus",
+        "description": "Payment status for onchain payments with support for partial payments."
+      },
+      "RateDecisionRequest": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "accept_new_rate": {
+            "type": "boolean",
+            "title": "Accept New Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "accept_new_rate"
+        ],
+        "title": "RateDecisionRequest",
+        "description": "Request for user to accept new rate or request refund"
+      },
+      "RateDecisionResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "decision_accepted": {
+            "type": "boolean",
+            "title": "Decision Accepted"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "refund_txid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Txid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "decision_accepted",
+          "message"
+        ],
+        "title": "RateDecisionResponse",
+        "description": "Response after user makes rate decision"
+      },
+      "RetryDeliveryRequest": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id",
+            "description": "Order ID to retry asset delivery for"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "title": "RetryDeliveryRequest",
+        "description": "Request model for /retry_delivery endpoint to trigger immediate keysend retry"
+      },
+      "RetryDeliveryResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RetryDeliveryStatus",
+            "description": "Status of the request"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable message about the result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "RetryDeliveryResponse",
+        "description": "Response model for /retry_delivery endpoint"
+      },
+      "RetryDeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "processing",
+          "not_found",
+          "no_pending_delivery",
+          "error"
+        ],
+        "title": "RetryDeliveryStatus",
+        "description": "Status codes for /retry_delivery endpoint responses"
+      },
+      "Swap": {
+        "properties": {
+          "qty_from": {
+            "type": "integer",
+            "title": "Qty From",
+            "example": 30
+          },
+          "qty_to": {
+            "type": "integer",
+            "title": "Qty To",
+            "example": 10
+          },
+          "from_asset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Asset",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "to_asset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Asset",
+            "example": "rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc"
+          },
+          "payment_hash": {
+            "type": "string",
+            "title": "Payment Hash",
+            "example": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SwapStatus"
+          },
+          "requested_at": {
+            "type": "integer",
+            "title": "Requested At",
+            "example": 1691160765
+          },
+          "initiated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initiated At",
+            "example": 1691168512
+          },
+          "expires_at": {
+            "type": "integer",
+            "title": "Expires At",
+            "example": 1691172703
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "example": 1691171075
+          }
+        },
+        "type": "object",
+        "required": [
+          "qty_from",
+          "qty_to",
+          "payment_hash",
+          "status",
+          "requested_at",
+          "expires_at"
+        ],
+        "title": "Swap"
+      },
+      "SwapOrder": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Order ID"
+          },
+          "rfq_id": {
+            "type": "string",
+            "title": "Rfq Id",
+            "description": "RFQ that produced the quote"
+          },
+          "maker_pubkey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maker Pubkey"
+          },
+          "side": {
+            "$ref": "#/components/schemas/SwapOrderSide"
+          },
+          "from_type": {
+            "$ref": "#/components/schemas/SwapSettlement",
+            "description": "Input settlement type: ONCHAIN or LIGHTNING"
+          },
+          "from_asset": {
+            "type": "string",
+            "title": "From Asset"
+          },
+          "from_amount": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "From Amount",
+            "description": "Amount of the asset to swap from. Must be greater than zero.",
+            "example": 100000
+          },
+          "to_type": {
+            "$ref": "#/components/schemas/SwapSettlement",
+            "description": "Output settlement type: ONCHAIN or LIGHTNING"
+          },
+          "to_asset": {
+            "type": "string",
+            "title": "To Asset"
+          },
+          "to_amount": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "To Amount",
+            "description": "Amount of the asset to swap to. Must be greater than zero.",
+            "example": 100000
+          },
+          "price": {
+            "type": "integer",
+            "title": "Price"
+          },
+          "pay_in": {
+            "$ref": "#/components/schemas/SwapSettlement"
+          },
+          "pay_out": {
+            "$ref": "#/components/schemas/SwapSettlement"
+          },
+          "ln_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ln Invoice"
+          },
+          "onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onchain Address"
+          },
+          "min_onchain_conf": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Onchain Conf"
+          },
+          "rgb_recipient_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rgb Recipient Id"
+          },
+          "rgb_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rgb Invoice"
+          },
+          "dest_bolt11": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Bolt11"
+          },
+          "dest_onchain_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Onchain Address"
+          },
+          "dest_rgb_invoice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dest Rgb Invoice"
+          },
+          "refund_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Address"
+          },
+          "payment_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Hash"
+          },
+          "payment_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Secret"
+          },
+          "swapstring": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Swapstring"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SwapOrderStatus",
+            "default": "OPEN"
+          },
+          "created_at": {
+            "type": "integer",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "filled_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filled At"
+          },
+          "refund_txid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Txid"
+          },
+          "requires_manual_refund": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requires Manual Refund",
+            "default": false
+          },
+          "payment_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payment_difference": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Difference",
+            "description": "Payment difference in satoshis. Positive for overpayment, negative for underpayment, zero for exact payment"
+          },
+          "last_payment_check": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Payment Check"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rfq_id",
+          "side",
+          "from_type",
+          "from_asset",
+          "from_amount",
+          "to_type",
+          "to_asset",
+          "to_amount",
+          "price",
+          "pay_in",
+          "pay_out"
+        ],
+        "title": "SwapOrder"
+      },
+      "SwapOrderRateDecisionRequest": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id",
+            "description": "Swap order ID"
+          },
+          "accept_new_rate": {
+            "type": "boolean",
+            "title": "Accept New Rate",
+            "description": "True to accept new rate, False to request refund"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "accept_new_rate"
+        ],
+        "title": "SwapOrderRateDecisionRequest",
+        "description": "Request for user to accept new rate or request refund for a swap order"
+      },
+      "SwapOrderRateDecisionResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "decision_accepted": {
+            "type": "boolean",
+            "title": "Decision Accepted"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "refund_txid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Txid",
+            "description": "Present if refund was requested and processed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "decision_accepted",
+          "message"
+        ],
+        "title": "SwapOrderRateDecisionResponse",
+        "description": "Response after user makes rate decision for a swap order"
+      },
+      "SwapOrderSide": {
+        "type": "string",
+        "enum": [
+          "BUY",
+          "SELL"
+        ],
+        "title": "SwapOrderSide"
+      },
+      "SwapOrderStatus": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "PENDING_PAYMENT",
+          "PAID",
+          "EXECUTING",
+          "FILLED",
+          "CANCELLED",
+          "EXPIRED",
+          "FAILED",
+          "PENDING_RATE_DECISION"
+        ],
+        "title": "SwapOrderStatus"
+      },
+      "SwapOrderStatusRequest": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "title": "SwapOrderStatusRequest"
+      },
+      "SwapOrderStatusResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SwapOrderStatus"
+          },
+          "order": {
+            "$ref": "#/components/schemas/SwapOrder"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "status",
+          "order"
+        ],
+        "title": "SwapOrderStatusResponse"
+      },
+      "SwapRequest": {
+        "properties": {
+          "rfq_id": {
+            "type": "string",
+            "title": "Rfq Id",
+            "example": "1234567890"
+          },
+          "from_asset": {
+            "type": "string",
+            "title": "From Asset",
+            "example": "BTC"
+          },
+          "from_amount": {
+            "type": "integer",
+            "title": "From Amount",
+            "example": 1000000
+          },
+          "to_asset": {
+            "type": "string",
+            "title": "To Asset",
+            "example": "rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd"
+          },
+          "to_amount": {
+            "type": "integer",
+            "title": "To Amount",
+            "example": 1000000
+          }
+        },
+        "type": "object",
+        "required": [
+          "rfq_id",
+          "from_asset",
+          "from_amount",
+          "to_asset",
+          "to_amount"
+        ],
+        "title": "SwapRequest"
+      },
+      "SwapResponse": {
+        "properties": {
+          "swapstring": {
+            "type": "string",
+            "title": "Swapstring",
+            "example": "30/rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd/10/rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc/1715896416/9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2"
+          },
+          "payment_hash": {
+            "type": "string",
+            "title": "Payment Hash",
+            "example": "9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2"
+          }
+        },
+        "type": "object",
+        "required": [
+          "swapstring",
+          "payment_hash"
+        ],
+        "title": "SwapResponse"
+      },
+      "SwapSettlement": {
+        "type": "string",
+        "enum": [
+          "LIGHTNING",
+          "ONCHAIN"
+        ],
+        "title": "SwapSettlement"
+      },
+      "SwapStatus": {
+        "type": "string",
+        "enum": [
+          "Waiting",
+          "Pending",
+          "Succeeded",
+          "Expired",
+          "Failed"
+        ],
+        "title": "SwapStatus"
+      },
+      "SwapStatusRequest": {
+        "properties": {
+          "payment_hash": {
+            "type": "string",
+            "title": "Payment Hash",
+            "example": "9d342c6ba006e24abee84a2e034a22d5e30c1f2599fb9c3574d46d3cde3d65a2"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_hash"
+        ],
+        "title": "SwapStatusRequest"
+      },
+      "SwapStatusResponse": {
+        "properties": {
+          "swap": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Swap"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SwapStatusResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "x-mcp": {
+    "enabled": false
+  }
+}

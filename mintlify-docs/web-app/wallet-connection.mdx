@@ -1,0 +1,245 @@
+---
+title: Wallet Connection
+description: Connect your Bitcoin wallet to start trading
+---
+
+## Supported Wallets
+
+The KaleidoSwap Web App supports multiple Bitcoin wallet extensions:
+
+<CardGroup cols={2}>
+  <Card title="Alby" icon="bolt">
+    Lightning-native browser wallet with WebLN support
+    
+    [Install Alby](https://getalby.com)
+  </Card>
+  <Card title="Xverse" icon="wallet">
+    Full-featured Bitcoin Web3 wallet
+    
+    [Install Xverse](https://xverse.app)
+  </Card>
+  <Card title="BitMask" icon="palette">
+    RGB & Lightning wallet with asset support
+    
+    [Install BitMask](https://bitmask.app)
+  </Card>
+  <Card title="Rate" icon="puzzle-piece">
+    Bitcoin Layer 2 extension with built-in RGB, swap, and DApp support
+    
+    [Install Rate](/extensions/rate/installation)
+  </Card>
+</CardGroup>
+
+## Connecting Your Wallet
+
+<Steps>
+  <Step title="Open the Web App">
+    Navigate to [app.kaleidoswap.com](https://app.kaleidoswap.com)
+  </Step>
+
+  <Step title="Click Connect">
+    Click the **Connect** button in the top right corner of the page.
+  </Step>
+
+  <Step title="Select Your Wallet">
+    Choose your installed wallet from the list. Wallets that are not installed will show "Click to Install".
+  </Step>
+
+  <Step title="Approve the Connection">
+    Your wallet extension will open a popup asking you to approve the connection. Click **Connect** or **Approve** to authorize.
+  </Step>
+
+  <Step title="Start Trading">
+    Once connected, your address will appear in the header. You're ready to trade!
+  </Step>
+</Steps>
+
+## Wallet Details
+
+### Alby
+
+<Note>
+**Best for:** Lightning Network enthusiasts and WebLN users
+</Note>
+
+Alby is a popular Lightning wallet that integrates seamlessly with web applications:
+
+- **WebLN Support** - Standard Lightning web interface
+- **Lightning Address** - Human-readable payment addresses
+- **Browser Extension** - Available for Chrome, Firefox, and Edge
+- **Nostr Integration** - NIP-07 support for Nostr
+
+**Connection Flow:**
+1. Alby popup appears requesting permission
+2. Review the permissions requested
+3. Click **Connect** to authorize
+4. The app now has access to sign transactions
+
+### Xverse
+
+<Note>
+**Best for:** Users who want a full-featured Bitcoin wallet
+</Note>
+
+Xverse provides a comprehensive Bitcoin experience:
+
+- **Ordinals Support** - View and manage Bitcoin NFTs
+- **Stacks Integration** - Access DeFi on Bitcoin
+- **Multi-Account** - Manage multiple wallets
+- **Mobile + Extension** - Use on any device
+
+**Connection Flow:**
+1. Select Xverse from the wallet list
+2. Xverse extension opens
+3. Approve the connection request
+4. Your Bitcoin address is now linked
+
+### BitMask
+
+<Note>
+**Best for:** RGB asset traders and power users
+</Note>
+
+BitMask specializes in RGB assets and Lightning:
+
+- **RGB Native** - Full RGB asset support
+- **Lightning Integration** - Fast transactions
+- **Asset Management** - View all RGB holdings
+- **Developer Friendly** - Advanced features
+
+**Connection Flow:**
+1. Select BitMask from the wallet list
+2. Extension popup appears
+3. Authorize the connection
+4. Access to RGB capabilities enabled
+
+### Rate
+
+<Note>
+**Best for:** Users who want a self-contained Bitcoin Layer 2 wallet with built-in swap support
+</Note>
+
+Rate is a Chrome extension wallet purpose-built for Bitcoin Layer 2 networks:
+
+- **Multi-Protocol** - Supports RGB, with Spark, Arkade, and Liquid planned
+- **Built-in Swaps** - Swap assets directly within the extension via the Kaleidoswap maker API
+- **WebLN Provider** - Exposes `window.rgbwebln` for seamless DApp integration
+- **Nostr Signer** - NIP-07 support for Nostr-based apps
+- **Pay with Wallet** - On the order page, pay deposit invoices directly from Rate without leaving the browser
+
+**Connection Flow:**
+1. Select Rate from the wallet list
+2. Rate popup appears requesting permission
+3. Approve the connection
+4. Your node address is linked and you can pay invoices directly from the order page
+
+<Tip>
+With Rate connected, you can use the **Pay with Wallet** button on the order page to pay your deposit invoice without switching apps.
+</Tip>
+
+## Managing Your Connection
+
+### Viewing Wallet Details
+
+Click on your connected wallet address to:
+- View your full address
+- Copy address to clipboard
+- See which wallet is connected
+- Disconnect when needed
+
+### Disconnecting
+
+To disconnect your wallet:
+1. Click on your address in the header
+2. Click **Disconnect**
+3. Your session ends immediately
+
+<Tip>
+Disconnecting is recommended when using a shared computer.
+</Tip>
+
+## Security Considerations
+
+<Warning>
+**Never share your seed phrase or private keys.** KaleidoSwap will never ask for these.
+</Warning>
+
+### Best Practices
+
+| Practice | Description |
+|----------|-------------|
+| **Verify URL** | Always check you're on app.kaleidoswap.com |
+| **Review Transactions** | Read what you're signing in your wallet |
+| **Use Hardware Wallet** | Consider linking to hardware for large amounts |
+| **Disconnect When Done** | Remove connection on shared devices |
+
+### What We Access
+
+When you connect, KaleidoSwap can:
+- See your public address
+- Request transaction signatures
+- Request invoice payments (with your approval)
+
+KaleidoSwap **cannot**:
+- Access your private keys
+- Move funds without your approval
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Wallet not detected">
+    **Possible causes:**
+    - Extension not installed
+    - Extension disabled for this site
+    - Browser needs refresh
+
+    **Solutions:**
+    1. Install the wallet extension
+    2. Enable the extension for app.kaleidoswap.com
+    3. Refresh the page (Ctrl+R / Cmd+R)
+    4. Restart your browser if needed
+  </Accordion>
+
+  <Accordion title="Connection rejected">
+    **Possible causes:**
+    - You declined the connection request
+    - Wallet is locked
+    - Network issues
+
+    **Solutions:**
+    1. Unlock your wallet first
+    2. Try connecting again
+    3. Check your wallet's connection settings
+  </Accordion>
+
+  <Accordion title="Wrong address showing">
+    **Possible causes:**
+    - Multiple accounts in wallet
+    - Wrong network selected
+
+    **Solutions:**
+    1. Check which account is active in your wallet
+    2. Switch to the correct account
+    3. Reconnect to refresh
+  </Accordion>
+
+  <Accordion title="Transactions failing">
+    **Possible causes:**
+    - Insufficient balance
+    - Network congestion
+    - Wallet locked
+
+    **Solutions:**
+    1. Check your balance
+    2. Unlock your wallet
+    3. Wait and retry during lower congestion
+  </Accordion>
+</AccordionGroup>
+
+## Multiple Wallets
+
+You can only connect one wallet at a time. To switch wallets:
+1. Disconnect current wallet
+2. Connect new wallet
+
+Your previous session data is not shared between wallets.

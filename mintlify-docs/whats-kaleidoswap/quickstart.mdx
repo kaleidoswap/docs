@@ -1,0 +1,306 @@
+---
+title: Quickstart
+description: Get started with KaleidoSwap in minutes
+---
+
+<CardGroup cols={3}>
+  <Card title="Desktop App" icon="desktop" href="#desktop-app-quickstart">
+    Atomic swaps via the desktop application
+  </Card>
+
+  <Card title="Web App" icon="globe" href="#web-app-quickstart">
+    Order-based swaps from your browser
+  </Card>
+
+  <Card title="Developer" icon="code" href="#developer-quickstart">
+    Integrate KaleidoSwap into your application
+  </Card>
+</CardGroup>
+
+---
+
+## Desktop App Quickstart
+
+<Steps>
+  <Step title="Download & Install">
+    Download the latest release for your platform:
+
+    - [macOS (Apple Silicon)](https://github.com/kaleidoswap/desktop-app/releases)
+    - [macOS (Intel)](https://github.com/kaleidoswap/desktop-app/releases)
+    - [Windows](https://github.com/kaleidoswap/desktop-app/releases)
+    - [Linux (AppImage)](https://github.com/kaleidoswap/desktop-app/releases)
+
+    <Tip>
+      Always verify the binary signatures before installing. [Learn how →](/desktop-app/verify-binaries)
+    </Tip>
+  </Step>
+
+  <Step title="Create Wallet">
+    Launch KaleidoSwap and create a new wallet:
+
+    1. Click "Create New Wallet"
+    2. **Save your 12-word recovery phrase securely**
+    3. Set a strong password
+    4. Confirm your seed phrase
+
+    <Warning>
+      **Never share your recovery phrase!** Anyone with access to it can steal your funds.
+    </Warning>
+  </Step>
+
+  <Step title="Deposit Funds">
+    Get your Bitcoin address and deposit funds:
+
+    1. Navigate to "Wallet" → "Receive"
+    2. Copy your Bitcoin address
+    3. Send BTC to this address from your exchange or wallet
+    4. Wait for confirmations (usually 10-60 minutes)
+  </Step>
+
+  <Step title="Open a Channel">
+    Connect to a Lightning Service Provider:
+
+    1. Go to "Channels" → "Open Channel"
+    2. Select an LSP or use the default
+    3. Choose channel capacity (recommended: 1M sats minimum)
+    4. Select RGB assets to allocate (e.g., USDT)
+    5. Confirm and wait for channel to open
+  </Step>
+
+  <Step title="Make Your First Swap">
+    Execute an atomic swap:
+
+    1. Go to "Swap" tab
+    2. Select assets: BTC → USDT (or vice versa)
+    3. Enter amount to swap
+    4. Review the quote
+    5. Confirm swap
+    6. Wait for completion (usually less than 30 seconds)
+  </Step>
+</Steps>
+
+<Check>
+  **Congratulations!** You've completed your first atomic RGB asset swap on Lightning Network.
+</Check>
+
+---
+
+## Web App Quickstart
+
+<Note>
+  The web app currently uses **order-based swaps** -- you create an order, pay, and wait for the maker to fulfill it. This is different from the desktop app's atomic swaps.
+</Note>
+
+<Steps>
+  <Step title="Open the Web App">
+    Navigate to the KaleidoSwap web app in your browser -- no installation needed.
+  </Step>
+
+  <Step title="Connect Your Wallet">
+    Connect a supported wallet:
+
+    | Wallet | Best For |
+    |--------|----------|
+    | **Alby** | Lightning payments |
+    | **Xverse** | Bitcoin & Ordinals |
+    | **BitMask** | RGB asset management |
+    | **Rate** | Bitcoin Layer 2 with built-in swaps |
+
+    <Tip>
+      Don't have a wallet? [Install the Rate extension](/extensions/rate/installation) for a complete Bitcoin Layer 2 experience.
+    </Tip>
+  </Step>
+
+  <Step title="Select Assets & Amount">
+    Choose the asset pair (e.g., BTC → USDT), enter the amount, and provide your **recipient address** where you want to receive the swapped asset.
+  </Step>
+
+  <Step title="Create Order & Pay">
+    Review the quote, confirm the order, and pay the deposit invoice shown on the order page.
+  </Step>
+
+  <Step title="Wait for Execution">
+    After payment is detected, the maker will execute your swap. Track progress on the order page.
+  </Step>
+</Steps>
+
+<Card title="Web App Guide" icon="globe" href="/web-app/introduction">
+  Full web app documentation with detailed trading guides →
+</Card>
+
+---
+
+## Developer Quickstart
+
+### Python SDK
+
+<CodeGroup>
+
+```bash Installation
+pip install kaleidoswap-sdk
+```
+
+```python Basic Usage
+import asyncio
+from kaleidoswap_sdk import KaleidoClient
+
+async def main():
+    # Initialize client
+    client = KaleidoClient.create(
+        maker_url="https://api.staging.kaleidoswap.com/api/v1",
+        rln_url="<Your RGB Lightning Node URL>"
+    )
+
+    # Get available assets
+    assets = await client.maker.list_assets()
+    print(f"Available assets: {len(assets)}")
+
+    # Get a quote for BTC to USDT
+    quote = await client.maker.get_quote(
+        from_asset="BTC",
+        to_asset="USDT",
+        amount=100000
+    )
+    print(f"Quote received: {quote}")
+
+asyncio.run(main())
+```
+
+</CodeGroup>
+
+<Card title="Python SDK Documentation" icon="python" href="/sdk/introduction">
+  Explore the complete SDK documentation →
+</Card>
+
+### TypeScript SDK
+
+<CodeGroup>
+
+```bash npm
+npm install kaleidoswap-sdk
+```
+
+```bash yarn
+yarn add kaleidoswap-sdk
+```
+
+```typescript Basic Usage
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+async function main() {
+  // Initialize client
+  const client = KaleidoClient.create({
+    makerUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+  });
+
+  // Get available assets
+  const assets = await client.maker.listAssets();
+  console.log(`Available assets: ${assets.length}`);
+
+  // Get a quote for BTC to USDT
+  const quote = await client.maker.getQuote({
+    fromAsset: 'BTC',
+    toAsset: 'USDT',
+    amount: 100000
+  });
+  console.log(`Quote received:`, quote);
+}
+
+main().catch(console.error);
+```
+
+</CodeGroup>
+
+<Card title="TypeScript SDK Documentation" icon="js" href="/sdk/introduction">
+  Explore the complete SDK documentation →
+</Card>
+
+### API Quick Reference
+
+<CodeGroup>
+
+```bash Get Trading Pairs
+curl https://api.staging.kaleidoswap.com/api/v1/pairs
+```
+
+```bash Get Asset List
+curl https://api.staging.kaleidoswap.com/api/v1/assets
+```
+
+```bash Request Quote
+curl -X POST https://api.staging.kaleidoswap.com/api/v1/quotes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_asset": "BTC",
+    "to_asset": "USDT",
+    "from_amount": 100000
+  }'
+```
+
+</CodeGroup>
+
+<Card title="API Reference" icon="book" href="/api-reference/introduction">
+  View complete API documentation →
+</Card>
+
+---
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Desktop App Guide" icon="book-open" href="/desktop-app/getting-started/introduction">
+    Advanced features: channels, backups, and more
+  </Card>
+
+  <Card title="Web App Guide" icon="globe" href="/web-app/introduction">
+    Full web app trading guide
+  </Card>
+
+  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
+    Bitcoin Layer 2 wallet extension
+  </Card>
+
+  <Card title="SDK Examples" icon="code" href="/sdk/examples">
+    Real-world code examples for common workflows
+  </Card>
+
+  <Card title="API Documentation" icon="brackets-curly" href="/api-reference/introduction">
+    Deep dive into REST API endpoints
+  </Card>
+
+  <Card title="Join Community" icon="users" href="https://t.me/kaleidoswap">
+    Get help and connect with other users
+  </Card>
+</CardGroup>
+
+## Available Networks
+
+<Tabs>
+  <Tab title="Staging">
+    **API URL**: `https://api.staging.kaleidoswap.com/api/v1`
+
+    - Test environment for development
+    - Free testnet BTC available
+    - Latest features
+  </Tab>
+
+  <Tab title="Regtest">
+    **API URL**: `https://api.regtest.kaleidoswap.com/api/v1`
+
+    - Local development network
+    - Instant block generation
+    - Complete control
+  </Tab>
+
+  <Tab title="Signet">
+    **API URL**: `https://api.signet.kaleidoswap.com/api/v1`
+
+    - Bitcoin Signet network
+    - More realistic than regtest
+    - Public testnet
+  </Tab>
+</Tabs>
+
+<Note>
+  For production use, contact the KaleidoSwap team for access to mainnet endpoints.
+</Note>

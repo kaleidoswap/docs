@@ -1,0 +1,180 @@
+---
+title: 'SDK Overview'
+description: 'Build applications on KaleidoSwap with our Python and TypeScript SDKs'
+---
+
+## Official SDKs
+
+KaleidoSwap provides official SDKs for both TypeScript and Python. Both are standalone implementations that auto-generate types from the same OpenAPI specifications, ensuring full type safety and consistent API design.
+
+<CardGroup cols={2}>
+  <Card
+    title="TypeScript SDK"
+    icon="js"
+    href="/sdk/getting-started"
+  >
+    Pure TypeScript using openapi-fetch with full type inference
+  </Card>
+  <Card
+    title="Python SDK"
+    icon="python"
+    href="/sdk/getting-started"
+  >
+    Pure Python using httpx with Pydantic models for type-safe development
+  </Card>
+</CardGroup>
+
+## Architecture
+
+Both SDKs share the same API design and are built independently:
+
+![KaleidoSwap SDK Architecture](/assets/images/sdk-architecture.png)
+
+Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, orders, swaps) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
+
+### Key Benefits
+
+- **Type Safety**: Auto-generated types from OpenAPI specs in both languages
+- **Consistent API**: Identical structure across TypeScript and Python
+- **Sub-client Design**: Organized access via `client.maker` and `client.rln`
+- **WebSocket Support**: Real-time quote streaming with automatic reconnection
+
+## What is KaleidoSwap?
+
+KaleidoSwap is a decentralized exchange protocol for Bitcoin and RGB assets. It enables trading of digital assets through order-based swaps on the Lightning Network and on-chain Bitcoin transactions.
+
+### SDK Dual Purpose
+
+Our SDK serves two primary functions:
+
+**Maker API Integration** (`client.maker`)
+
+Connect to KaleidoSwap's maker APIs for:
+- Getting quotes for asset pairs
+- Creating and managing swap orders
+- Streaming real-time quotes via WebSocket
+- LSPS1 channel ordering
+
+**RLN (RGB Lightning Node) Operations** (`client.rln`)
+
+Direct interaction with RGB Lightning Nodes for:
+- Wallet management and RGB asset operations
+- Lightning channel management
+- Invoice creation and payment
+- Node-to-node swap coordination
+
+## Key Features
+
+- **Sub-client Architecture**: Organized API access via `client.maker` and `client.rln`
+- **Type Safety**: Full TypeScript types and Python Pydantic models
+- **WebSocket Support**: Real-time quote streaming with automatic reconnection
+- **Error Handling**: Comprehensive exception hierarchy across both SDKs
+- **Dual API Support**: Seamlessly work with both Maker APIs and RLN node operations
+- **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
+- **Order-Based Swaps**: Create swap orders, pay deposits, and track execution
+
+## Quick Start
+
+<CodeGroup>
+```bash npm
+npm install kaleidoswap-sdk
+```
+
+```bash pip
+pip install kaleidoswap-sdk
+```
+</CodeGroup>
+
+### Maker API Trading
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com'
+});
+
+// Get available trading pairs
+const pairs = await client.maker.listPairs();
+console.log(`Found ${pairs.pairs.length} trading pairs`);
+
+// Get a quote
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+console.log(`Price: ${quote.price}`);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+
+# Get available trading pairs
+pairs = client.maker.list_pairs()
+print(f"Found {len(pairs.pairs)} trading pairs")
+
+# Get a quote
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+print(f"Price: {quote.price}")
+```
+</CodeGroup>
+
+### RLN Node Operations
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001'
+});
+
+if (client.hasNode()) {
+  const nodeInfo = await client.rln.getNodeInfo();
+  const balance = await client.rln.getBtcBalance();
+  console.log(`BTC Balance: ${balance.vanilla.spendable} sats`);
+}
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com",
+    node_url="http://localhost:3001"
+)
+
+if client.has_node():
+    node_info = client.rln.get_node_info()
+    balance = client.rln.get_btc_balance()
+    print(f"BTC Balance: {balance.vanilla.spendable} sats")
+```
+</CodeGroup>
+
+## Documentation Structure
+
+- **[Getting Started](/sdk/getting-started)** - Installation and quick start guide
+- **[Examples](/sdk/examples)** - Real-world code examples
+- **[API Reference](/sdk/api-reference)** - Complete method documentation
+- **[Types](/sdk/types)** - Type definitions and data models
+- **[WebSocket](/sdk/websocket)** - Real-time data streaming
+- **[Error Handling](/sdk/error-handling)** - Exception management patterns
+- **[Utilities](/sdk/utilities)** - Helper functions and utilities
+- **[Best Practices](/sdk/best-practices)** - Development guidelines
+- **[Troubleshooting](/sdk/troubleshooting)** - Common issues and solutions
+
+## Support
+
+Need help? Check out our:
+- [GitHub Issues](https://github.com/kaleidoswap/kaleido-sdk/issues)
+- [Community Telegram](https://t.me/kaleidoswap)
+- [Support Email](mailto:support@kaleidoswap.com)

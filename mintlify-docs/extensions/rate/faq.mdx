@@ -1,0 +1,200 @@
+---
+title: FAQ & Troubleshooting
+description: Common questions and solutions for the Rate extension
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What browsers does Rate support?">
+    Rate is a Chrome extension and works on all Chromium-based browsers:
+    - Google Chrome
+    - Brave
+    - Microsoft Edge
+    - Opera
+    
+    Firefox and Safari are not yet supported.
+  </Accordion>
+
+  <Accordion title="Do I need my own node?">
+    **Yes.** Rate connects to an RGB Lightning Node (RLN) for core wallet functionality. Without a node connection, you cannot view balances, send, or receive assets.
+    
+    You can connect to:
+    - A **local node** running on your machine
+    - A **remote node** accessible via URL
+  </Accordion>
+
+  <Accordion title="Is Rate custodial?">
+    **No.** Rate connects to **your** RGB Lightning Node. Your keys and funds are managed by your node, not by Rate or KaleidoSwap. Rate is a user interface for your node.
+  </Accordion>
+
+  <Accordion title="Do I need the maker API for basic wallet features?">
+    **No.** The maker API connection is optional. Without it:
+    - Send, receive, and balance features work normally
+    - Only the **swap** feature is disabled
+  </Accordion>
+
+  <Accordion title="What assets does Rate support?">
+    Rate supports:
+    - **BTC** - Bitcoin (on-chain and Lightning)
+    - **RGB-20 tokens** - Any RGB-20 asset on your node (e.g., USDT, XAUT)
+    
+    Additional protocol support (Spark, Arkade, Liquid) is planned.
+  </Accordion>
+
+  <Accordion title="How do I back up my wallet?">
+    Go to **Settings > Backup Wallet** to export your wallet data. You should also separately back up:
+    - Your **Nostr private key** (nsec) from Settings > Nostr Account
+    - Your **node seed phrase** (managed by your node, not Rate)
+  </Accordion>
+
+  <Accordion title="What happens if I forget my password?">
+    Rate cannot recover your password. If you forget it, you will need to:
+    1. Uninstall and reinstall the extension
+    2. Set up a new password
+    3. Reconnect to your node
+    
+    Your funds are safe on your node -- only the local extension data is lost.
+  </Accordion>
+
+  <Accordion title="Can I connect to multiple nodes?">
+    Rate connects to one node at a time. You can switch between nodes in **Settings > Networks** using the connection history (last 10 connections are saved).
+  </Accordion>
+
+  <Accordion title="How does auto-lock work?">
+    Rate automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
+  </Accordion>
+
+  <Accordion title="Can I use Rate with the KaleidoSwap Web App?">
+    **Yes.** Rate works as a wallet for the web app:
+    1. Connect Rate on app.kaleidoswap.com
+    2. Create swap orders in the web app
+    3. Pay deposit invoices directly from Rate using the "Pay with Wallet" button
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to node">
+    **Symptoms:** Connection fails or shows "Disconnected"
+    
+    **Solutions:**
+    1. Verify the **node URL** is correct
+    2. Check that the node is **running and accessible**
+    3. If using a local node, ensure it is running on the expected port
+    4. If using a remote node, check network/firewall settings
+    5. If using JWT auth, verify the **token is valid**
+    6. Try disconnecting and reconnecting in Settings > Networks
+  </Accordion>
+
+  <Accordion title="Maker API not connecting">
+    **Symptoms:** Swap feature is disabled or shows connection error
+    
+    **Solutions:**
+    1. Check the **maker URL** in Settings > Networks
+    2. Verify the maker API is accessible
+    3. The maker connection is non-blocking -- the extension still works without it
+    4. Try refreshing the connection
+  </Accordion>
+
+  <Accordion title="WebLN not detected by web apps">
+    **Symptoms:** Web apps don't detect Rate as a wallet
+    
+    **Solutions:**
+    1. Ensure Rate is **installed and unlocked**
+    2. Refresh the web page
+    3. Check that the extension is **enabled** for the site
+    4. Some apps look for `window.webln` -- Rate provides `window.rgbwebln`
+    5. The KaleidoSwap Web App specifically supports Rate
+  </Accordion>
+</AccordionGroup>
+
+### Payment Issues
+
+<AccordionGroup>
+  <Accordion title="Payment failed">
+    **Symptoms:** Send payment shows error
+    
+    **Solutions:**
+    1. Check your **balance** is sufficient
+    2. Verify the **destination** is correct
+    3. For Lightning, ensure there is a **route** to the destination
+    4. Check that your node is **online and synced**
+    5. Try again after a few moments
+  </Accordion>
+
+  <Accordion title="Invoice generation failed">
+    **Symptoms:** Cannot generate receive invoice
+    
+    **Solutions:**
+    1. Check your **node connection**
+    2. Ensure the node has **inbound liquidity** (for Lightning)
+    3. Try generating a different type (on-chain instead of Lightning)
+    4. Restart the extension and try again
+  </Accordion>
+</AccordionGroup>
+
+### Extension Issues
+
+<AccordionGroup>
+  <Accordion title="Extension not loading">
+    **Symptoms:** Clicking the icon does nothing or shows blank popup
+    
+    **Solutions:**
+    1. Go to `chrome://extensions` and check Rate is **enabled**
+    2. Try **disabling and re-enabling** the extension
+    3. Clear browser cache
+    4. Restart the browser
+    5. For manual installs, try **reloading** the extension
+  </Accordion>
+
+  <Accordion title="Locked out / forgot password">
+    **Symptoms:** Cannot unlock the extension
+    
+    **Solutions:**
+    1. Rate cannot recover passwords
+    2. **Uninstall** the extension and **reinstall**
+    3. Set up a new password and reconnect to your node
+    4. Your funds are safe on the node -- only local extension data is lost
+  </Accordion>
+
+  <Accordion title="Balances not updating">
+    **Symptoms:** Stale balances shown
+    
+    **Solutions:**
+    1. Check your **node connection** status
+    2. Pull down to **refresh** on the dashboard
+    3. Close and reopen the extension popup
+    4. Verify the node is **synced**
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Join our community for quick help
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report bugs or request features
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues
+  </Card>
+  <Card title="Documentation" icon="book" href="/extensions/rate/introduction">
+    Browse Rate documentation
+  </Card>
+</CardGroup>
+
+## Reporting Issues
+
+When reporting problems, include:
+1. Browser name and version
+2. Rate extension version (Settings > About)
+3. Node type and version
+4. Steps to reproduce
+5. Error messages or screenshots
+6. Console logs (right-click extension popup > Inspect > Console)

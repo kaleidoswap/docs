@@ -1,0 +1,57 @@
+---
+title: How It Works
+description: Understanding the technologies powering KaleidoSwap — Bitcoin, Lightning Network, and RGB Protocol
+---
+
+KaleidoSwap builds on three foundational technologies to enable fast, private, and scalable asset trading on Bitcoin.
+
+## Bitcoin Network
+
+Bitcoin provides the base settlement layer. All KaleidoSwap wallets are Bitcoin wallets at their core — they hold UTXOs, sign transactions, and broadcast to the Bitcoin network. On-chain transactions are used for:
+
+- **Wallet funding** — Depositing BTC to your KaleidoSwap wallet
+- **Channel opens/closes** — Anchoring Lightning channels to the blockchain
+- **RGB commitments** — Embedding asset state transitions into Bitcoin transactions
+
+<Note>
+KaleidoSwap currently supports **Signet (MutinyNet)** for testing. Bitcoin mainnet support is coming soon.
+</Note>
+
+## Lightning Network
+
+The Lightning Network is a second-layer protocol that enables instant, low-cost payments through a network of payment channels. KaleidoSwap uses Lightning for:
+
+- **Instant settlement** — Swaps settle in milliseconds, not blocks
+- **Low fees** — Transaction costs measured in satoshis
+- **RGB asset transfers** — RGB assets can ride on Lightning channels, enabling off-chain asset swaps
+- **Channel-based liquidity** — Users open channels to allocate capacity for trading
+
+Payment channels are opened between your node and a peer (or an LSP). Once open, you can send and receive BTC and RGB assets through the channel without waiting for on-chain confirmations.
+
+## RGB Protocol
+
+RGB is a client-validated smart contract system built on top of Bitcoin. Unlike Ethereum-style smart contracts, RGB keeps contract logic and state **off-chain** while using Bitcoin transactions as cryptographic commitments. This means:
+
+- **Privacy** — Asset balances and transfers are not visible on the blockchain
+- **Scalability** — No blockchain bloat from token transfers
+- **Bitcoin security** — Asset state is anchored to Bitcoin's proof-of-work
+- **Programmability** — RGB20 fungible tokens (like USDT, XAUT) and future asset standards
+
+In KaleidoSwap, RGB assets are issued, transferred, and swapped using this protocol — both on-chain and over Lightning channels.
+
+## Lightning Service Providers (LSPs)
+
+LSPs are nodes that provide channel liquidity and routing services. Instead of manually finding peers and managing channel capacity, you can connect to an LSP that:
+
+- **Opens channels on demand** — Request inbound liquidity when you need it
+- **Routes payments** — Ensures your transactions reach their destination
+- **Supports LSPS1** — KaleidoSwap implements the Lightning Service Provider Specification for standardized channel ordering
+
+<CardGroup cols={2}>
+  <Card title="Architecture Deep Dive" icon="sitemap" href="/whats-kaleidoswap/architecture">
+    See how these technologies fit together in KaleidoSwap's architecture
+  </Card>
+  <Card title="Glossary" icon="book" href="/whats-kaleidoswap/glossary">
+    Look up terms related to Bitcoin, Lightning, RGB, and trading
+  </Card>
+</CardGroup>

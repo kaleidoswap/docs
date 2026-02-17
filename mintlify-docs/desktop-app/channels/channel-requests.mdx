@@ -1,0 +1,57 @@
+---
+title: Channel Requests
+description: How to request inbound channels from a Lightning Service Provider (LSP) in the Kaleidoswap Desktop App
+---
+
+In addition to [opening channels](./opening-channel) with other nodes, you can request inbound channels from an LSP in exchange for a percentage of the liquidity held by your node. This is useful when you need inbound capacity to receive payments.
+
+## Requesting an Inbound Channel
+
+<Steps>
+
+### Go to Channels
+
+Click on the **"Channels"** tab in the left vertical menu.
+
+### Request New Channel
+
+Click **"Order New Channel"** to start the request process.
+
+![Order New Channel](/images/desktop-app/30_request_channel_step_0.png)
+
+### Enter Peer Information
+
+Enter the URL of the LSP you want to request the channel from.
+
+![Input LSP info](/images/desktop-app/31_request_channel_step_1.png)
+
+### Allocate Funds
+
+Specify the required channel parameters:
+- **Channel capacity** - Total size of the channel
+- **Liquidity allocation** - How much liquidity you want on your side
+- **Duration** - How long the channel should remain open
+- **RGB assets** (optional) - Any RGB assets to include in the channel
+
+![Channel settings](/images/desktop-app/32_request_channel_step_2.png)
+
+### Review Details and Pay
+
+Make sure all information is correct and proceed with the payment required by the LSP. You can pay via Lightning Network or on-chain.
+
+![LN payment](/images/desktop-app/33_request_channel_step_3_pay_LN.png)
+
+![Onchain payment](/images/desktop-app/34_request_channel_step_3_pay_onchain.png)
+
+</Steps>
+
+## Important Notes
+
+- The LSP determines the fees for providing inbound liquidity
+- Channel capacity and duration affect the total cost
+- Keep your node online during the channel opening process
+- After payment confirmation, wait for the required blockchain confirmations (typically 3 blocks)
+
+---
+
+*Next: [Channel Backups](./channel-backups)*

@@ -18,11 +18,11 @@ Before streaming quotes, enable the WebSocket connection:
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client-id');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client-id")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
 ```
 </CodeGroup>
 
@@ -153,7 +153,7 @@ For full control, use the `WSClient` directly.
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
 
 await ws.connect();
 console.log(`Connected: ${ws.isConnected()}`);
@@ -163,7 +163,7 @@ ws.disconnect();
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
 
 await ws.connect()
 print(f"Connected: {ws.is_connected()}")
@@ -317,3 +317,20 @@ The WebSocket uses a JSON message protocol:
     The `rfq_id` in each quote response is what you pass to `createSwapOrder`. Use the most recent quote to ensure the rate is still valid.
   </Accordion>
 </AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Examples" icon="file-code" href="/sdk/examples">
+    See WebSocket streaming in complete end-to-end examples
+  </Card>
+  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
+    Full reference for all streaming methods on MakerClient
+  </Card>
+  <Card title="Types" icon="brackets-curly" href="/sdk/types">
+    QuoteResponse, QuoteRequest, and other WebSocket type definitions
+  </Card>
+  <Card title="Best Practices" icon="star" href="/sdk/best-practices">
+    Reconnection strategies and production patterns
+  </Card>
+</CardGroup>

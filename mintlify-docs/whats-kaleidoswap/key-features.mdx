@@ -363,12 +363,13 @@ For developers building on KaleidoSwap:
     from kaleidoswap_sdk import KaleidoClient
 
     client = KaleidoClient.create(
-        maker_url="https://api.staging.kaleidoswap.com/api/v1"
+        base_url="https://api.signet.kaleidoswap.com"
     )
-    assets = await client.maker.list_assets()
-    quote = await client.maker.get_quote(
-        from_asset="BTC", to_asset="USDT", amount=100000
-    )
+    pairs = client.maker.list_pairs()
+    quote = client.maker.get_quote({
+        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+    })
     ```
 
     [Explore Python SDK →](/sdk/introduction)
@@ -379,11 +380,12 @@ For developers building on KaleidoSwap:
     import { KaleidoClient } from 'kaleidoswap-sdk';
 
     const client = KaleidoClient.create({
-      makerUrl: 'https://api.staging.kaleidoswap.com/api/v1'
+      baseUrl: 'https://api.signet.kaleidoswap.com'
     });
-    const assets = await client.maker.listAssets();
+    const pairs = await client.maker.listPairs();
     const quote = await client.maker.getQuote({
-      fromAsset: 'BTC', toAsset: 'USDT', amount: 100000
+      from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+      to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
     });
     ```
 
@@ -392,8 +394,7 @@ For developers building on KaleidoSwap:
 
   <Tab title="REST API">
     ```bash
-    curl -X POST https://api.kaleidoswap.com/api/v1/quotes \
-      -d '{"from_asset": "BTC", "to_asset": "USDT"}'
+    curl https://api.signet.kaleidoswap.com/api/v1/market/pairs
     ```
 
     [Explore API Reference →](/api-reference/introduction)

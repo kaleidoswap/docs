@@ -1,6 +1,22 @@
-# Market APIs
+---
+title: Market APIs
+description: Fetch assets, trading pairs, quotes, and fee estimates from the KaleidoSwap maker
+---
 
-The Market APIs provide endpoints to access information about available assets and trading pairs. These APIs are essential for users who want to explore the market data or set up trading operations.
+## Overview
+
+The Market APIs are the starting point for any swap integration. They give you the information you need before creating a swap order:
+
+- **List assets** — discover all RGB assets supported by the maker (asset IDs, tickers, precision).
+- **List trading pairs** — find which pairs are active and their min/max order sizes.
+- **Request a quote** — get a locked price for a specific amount; the returned `rfq_id` is used to create an order.
+- **Estimate Bitcoin fees** — get current on-chain fee estimates for funding transactions.
+
+All Market API endpoints are public and require no authentication.
+
+**Base URL:** `https://api.signet.kaleidoswap.com/api/v1` (Signet) or `https://api.regtest.kaleidoswap.com/api/v1` (Regtest)
+
+---
 
 ---
 

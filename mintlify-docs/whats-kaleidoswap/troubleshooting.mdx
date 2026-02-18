@@ -80,7 +80,7 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
        - Try accessing other websites to verify connectivity
 
     2. **Verify LSP URL**
-       - Default: `https://api.staging.kaleidoswap.com`
+       - Default: `https://api.signet.kaleidoswap.com`
        - Check Settings → LSP Configuration
 
     3. **Firewall/VPN issues**
@@ -305,8 +305,9 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
     2. **Token expiration**: Tokens may expire - obtain a new one
 
     3. **Incorrect endpoint**: Verify you're using the correct API base URL
-       - Staging: `https://api.staging.kaleidoswap.com/api/v1`
-       - Production: `https://api.kaleidoswap.com/api/v1`
+       - Signet (live): `https://api.signet.kaleidoswap.com/api/v1`
+       - Regtest (live): `https://api.regtest.kaleidoswap.com/api/v1`
+       - Mainnet: `https://api.kaleidoswap.com/api/v1` *(coming soon)*
   </Accordion>
 
   <Accordion title="422 Validation errors" icon="circle-exclamation">
@@ -388,7 +389,7 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
 
 ### Python SDK
 
-See the [Python SDK Error Handling](/sdk/python/error-handling) guide for Python-specific troubleshooting.
+See the [SDK Error Handling](/sdk/error-handling) guide for language-specific troubleshooting.
 
 **Quick tips**:
 - Always use error handling with try/except blocks
@@ -398,7 +399,7 @@ See the [Python SDK Error Handling](/sdk/python/error-handling) guide for Python
 
 ### TypeScript SDK
 
-See the [TypeScript SDK Troubleshooting](/sdk/typescript/troubleshooting) guide for comprehensive TypeScript-specific solutions.
+See the [SDK Troubleshooting](/sdk/troubleshooting) guide for comprehensive SDK-specific solutions.
 
 **Quick tips**:
 - Check TypeScript version compatibility (4.5+)

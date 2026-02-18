@@ -1,6 +1,6 @@
 ---
-title: 'API Reference'
-description: 'Complete method reference for the KaleidoSwap SDK'
+title: 'Client Reference'
+description: 'Complete method reference for the KaleidoSwap SDK — MakerClient and RlnClient'
 ---
 
 ## Client Initialization
@@ -439,12 +439,12 @@ Enable WebSocket for real-time quote streaming.
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.kaleidoswap.com/ws/my-client-id');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
 // Returns: WSClient
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.kaleidoswap.com/ws/my-client-id")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
 # Returns: WSClient
 ```
 </CodeGroup>

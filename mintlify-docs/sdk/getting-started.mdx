@@ -3,6 +3,17 @@ title: 'Getting Started'
 description: 'Install and configure the KaleidoSwap SDK for TypeScript or Python'
 ---
 
+## Version Compatibility
+
+| SDK Version | API Version | Supported Environments |
+|-------------|-------------|------------------------|
+| `0.4.x` | `v1` | Regtest, Signet, Staging |
+| `0.3.x` | `v1` | Regtest, Signet |
+
+<Note>
+  Mainnet support is coming soon. Pin your SDK version in `package.json` / `requirements.txt` to avoid unexpected breaking changes between minor releases.
+</Note>
+
 ## Installation
 
 <CodeGroup>
@@ -126,13 +137,21 @@ client = KaleidoClient.create(
 
 ### Environment Variables
 
-You can configure the SDK using environment variables:
+You can configure the SDK using environment variables. Copy this template to a `.env` file in your project root:
 
-```bash
-export KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
-export KALEIDO_NODE_URL=http://localhost:3001
-export KALEIDO_API_KEY=your_api_key_here
+```bash .env.example
+# Required: KaleidoSwap API base URL
+# Options: https://api.regtest.kaleidoswap.com | https://api.signet.kaleidoswap.com
+KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
+
+# Optional: URL of your RGB Lightning Node (required for wallet/channel operations)
+KALEIDO_NODE_URL=http://localhost:3001
+
+# Optional: API key for authenticated endpoints (not currently required)
+KALEIDO_API_KEY=
 ```
+
+Then load variables from your environment:
 
 <CodeGroup>
 ```typescript TypeScript
@@ -163,7 +182,7 @@ client = KaleidoClient.create(
 |-------------|---------|-------------|
 | **Regtest** | `https://api.regtest.kaleidoswap.com` | Local development and testing |
 | **Signet** | `https://api.signet.kaleidoswap.com` | Bitcoin Signet testnet |
-| **Mainnet** | `https://api.kaleidoswap.com` | Production environment |
+| **Mainnet** | `https://api.kaleidoswap.com` | Production environment *(Coming Soon)* |
 
 ## Sub-Client Architecture
 

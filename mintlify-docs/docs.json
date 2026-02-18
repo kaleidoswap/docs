@@ -11,7 +11,7 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Learn",
+        "tab": "Overview",
         "groups": [
           {
             "group": "Introduction",
@@ -23,11 +23,17 @@
             ]
           },
           {
-            "group": "Understanding KaleidoSwap",
+            "group": "Architecture & Background",
             "icon": "hashtag",
             "pages": [
               "whats-kaleidoswap/architecture",
-              "whats-kaleidoswap/background",
+              "whats-kaleidoswap/background"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "book",
+            "pages": [
               "whats-kaleidoswap/glossary",
               "whats-kaleidoswap/troubleshooting"
             ]
@@ -69,11 +75,17 @@
             ]
           },
           {
-            "group": "How-To: Configuration",
+            "group": "How-To: Settings",
             "icon": "sliders",
             "pages": [
-              "desktop-app/getting-started/node-hosting",
               "desktop-app/support/settings"
+            ]
+          },
+          {
+            "group": "Advanced Setup",
+            "icon": "server",
+            "pages": [
+              "desktop-app/getting-started/node-hosting"
             ]
           },
           {
@@ -144,37 +156,38 @@
         "tab": "SDK",
         "groups": [
           {
-            "group": "SDK Overview",
-            "icon": "book-open",
-            "pages": [
-              "sdk/introduction"
-            ]
-          },
-          {
             "group": "Getting Started",
             "icon": "rocket",
             "pages": [
+              "sdk/introduction",
               "sdk/getting-started",
-              "sdk/examples"
+              "sdk/changelog"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Core Reference",
             "icon": "code",
             "pages": [
               "sdk/api-reference",
               "sdk/types",
-              "sdk/websocket",
-              "sdk/utilities"
+              "sdk/websocket"
             ]
           },
           {
-            "group": "Advanced",
-            "icon": "book",
+            "group": "Guides",
+            "icon": "book-open",
             "pages": [
-              "sdk/error-handling",
+              "sdk/examples",
               "sdk/best-practices",
-              "sdk/troubleshooting"
+              "sdk/error-handling"
+            ]
+          },
+          {
+            "group": "Troubleshooting & Utilities",
+            "icon": "wrench",
+            "pages": [
+              "sdk/troubleshooting",
+              "sdk/utilities"
             ]
           }
         ]
@@ -187,9 +200,9 @@
             "icon": "book",
             "pages": [
               "api-reference/introduction",
+              "api-reference/swap-protocol",
               "api-reference/getting-started",
-              "api-reference/error-handling",
-              "api-reference/swap-protocol"
+              "api-reference/error-handling"
             ]
           },
           {
@@ -229,7 +242,7 @@
       "display": "interactive"
     },
     "mdx": {
-      "server": "https://api.staging.kaleidoswap.com",
+      "server": "https://api.signet.kaleidoswap.com",
       "auth": {
         "method": "bearer"
       }
@@ -245,7 +258,7 @@
     "primary": {
       "type": "button",
       "label": "App Dashboard",
-      "href": "https://app.staging.kaleidoswap.com"
+      "href": "https://app.kaleidoswap.com"
     }
   },
   "footer": {

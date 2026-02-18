@@ -1,6 +1,21 @@
-# Swap APIs
+---
+title: Swap APIs
+description: Atomic HTLC swap initiation, execution, and status — used by the desktop app and direct node integrations
+---
 
-The Swap APIs allow users to perform swaps between supported assets using the Kaleidoswap taker-maker model. This section details the endpoints for retrieving node information, subscribing to price updates, initiating swaps, and executing them.
+## Overview
+
+The Swap APIs implement the **atomic swap protocol** used by the KaleidoSwap Desktop App. Swaps execute via Hash Time-Locked Contracts (HTLCs) on the Lightning Network — both sides lock assets simultaneously, so either the full exchange completes or funds are returned. There is no counterparty risk.
+
+To use these endpoints you need:
+- A running **RGB Lightning Node (RLN)** to whitelist and route the HTLC.
+- A **WebSocket connection** to the maker for live price streaming and `rfq_id` generation.
+
+If you are building a web integration without a full node, use the [order-based swap flow](/api-reference/market-apis) via Market APIs instead, and refer to the [Swap Protocol](/api-reference/swap-protocol) for a comparison of both models.
+
+**Base URL:** `https://api.signet.kaleidoswap.com/api/v1` (Signet) or `https://api.regtest.kaleidoswap.com/api/v1` (Regtest)
+
+---
 
 ---
 
@@ -38,8 +53,11 @@ Retrieve information about the RGB Lightning Node, such as its identifier, alias
 ## Real-time Price Updates
 ### WebSocket Endpoint
 
-Testnet WebSocket (not-active): `wss://testnet.api.kaleidoswap.com/ws/{client_id}`
-Mainnet WebSocket (not-active): `wss://api.kaleidoswap.com/ws/{client_id}`
+| Environment | URL |
+|-------------|-----|
+| **Regtest** | `wss://api.regtest.kaleidoswap.com/ws/{client_id}` |
+| **Signet** | `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
+| **Mainnet** | `wss://api.kaleidoswap.com/ws/{client_id}` *(coming soon)* |
 
 ### Description
 Establish a WebSocket connection to subscribe to real-time price updates for specific trading pairs.

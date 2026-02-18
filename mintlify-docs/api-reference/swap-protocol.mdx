@@ -1,123 +1,269 @@
 ---
 title: Swap Protocol
-description: Integration guide for developers implementing taker clients in the RGB Lightning Swap Protocol
+description: How KaleidoSwap swap models work — atomic HTLC swaps and order-based swaps
 ---
 
-## Overview
+KaleidoSwap currently supports two swap models depending on the client:
 
-This guide is for developers aiming to integrate new clients as takers in the RGB Lightning Swap Protocol. The protocol facilitates the swap of RGB assets over the Lightning Network, enabling trades between a maker (the RGB Lightning Service Provider or a RLN node) and a taker.
+| Model | Used by | Trust required | Settlement |
+|-------|---------|----------------|------------|
+| **Atomic swap** | Desktop app | None — cryptographic guarantee | HTLC on Lightning Network |
+| **Order-based swap** | Web app / API | Maker fulfillment during execution window | Maker sends asset after payment |
 
-## Protocol Description
+<Note>
+  **Roadmap:** Order-based swaps will become atomic in a future release, bringing the same trustless guarantees to web and API integrations.
+</Note>
 
-The protocol involves several steps to coordinate a trade between a maker and a taker:
+---
 
-1. **Connection**: The taker establishes a WebSocket connection to receive real-time price updates.
-2. **Subscription**: The taker subscribes to specific asset pairs to receive streaming prices.
-3. **Trade Initiation**: The taker initiates a trade by sending a swap request based on the received price updates.
-4. **Trade Execution**: The taker executes the trade after receiving the necessary details from the maker.
+## Atomic Swaps (Desktop App)
 
-## Sequence Diagram
+The desktop app uses **Hash Time-Locked Contracts (HTLCs)** to execute swaps atomically over the Lightning Network. Both sides lock their assets simultaneously — either the full swap completes or both sides get their funds back. There is no counterparty risk.
+
+### How It Works
+
+1. The taker streams a live price from the maker over WebSocket (receives an `rfq_id` with each quote).
+2. The taker calls `POST /api/v1/swaps/init` — the maker locks the exchange rate and returns a `swapstring` and `payment_hash`.
+3. The taker's RGB Lightning Node whitelists the `swapstring` (authorising it to route through the node).
+4. The taker calls `POST /api/v1/swaps/execute` — the maker initiates the HTLC.
+5. The Lightning Network routes the HTLC: the maker reveals the preimage to claim BTC, which simultaneously releases the RGB asset to the taker.
+6. If either party fails to complete within the HTLC timeout, both sides' funds are returned automatically.
+
+### Sequence Diagram
 
 ```
-Kaleidoswap Client (Taker)          RGB Lightning Service Provider (Maker)          RGB-Lightning Node (Taker)
-         |                                          |                                          |
-         |  ── Connection and Subscription ──       |                                          |
-         |                                          |                                          |
-         | ──── WebSocket Connection ──────────────>|                                          |
-         | ──── Subscribe to pair (e.g. BTC/USDT) ─>|                                          |
-         |<───── Confirmation ─────────────────────|                                          |
-         |<───── Stream prices with rfq_id ────────|                                          |
-         |                                          |                                          |
-         |  ── Trade Initiation ──                  |                                          |
-         |                                          |                                          |
-         | ──── POST /api/v1/swaps/init ───────────>|                                          |
-         |<───── swapstring, payment_hash ─────────|                                          |
-         |                                          |                                          |
-         |  ── Trade Execution ──                   |                                          |
-         |                                          |                                          |
-         | ──── Whitelist swap ────────────────────────────────────────────────────────────────>|
-         |<───── Swap whitelisted ─────────────────────────────────────────────────────────────|
-         |                                          |                                          |
-         | ──── POST /api/v1/swaps/execute ────────>|                                          |
-         |<───── 200 OK (Swap executed) ───────────|                                          |
-         |                                          |                                          |
-         |  ── Optional: Check Swap Status ──       |                                          |
-         |                                          |                                          |
-         | ──── GET /api/v1/swaps/status ──────────>|                                          |
-         |<───── Swap status ──────────────────────|                                          |
+Taker Client                         Maker (RGB-LSP)                   Taker RLN Node
+     |                                      |                                 |
+     |──── WebSocket connect ──────────────>|                                 |
+     |──── quote_request (BTC/USDT) ───────>|                                 |
+     |<─── quote_response (price, rfq_id) ──|                                 |
+     |                                      |                                 |
+     |──── POST /api/v1/swaps/init ────────>|                                 |
+     |       (rfq_id, from, to, amounts)    |                                 |
+     |<─── { swapstring, payment_hash } ────|                                 |
+     |                                      |                                 |
+     |──── whitelist_swap(swapstring) ──────────────────────────────────────>|
+     |<─── swap whitelisted ───────────────────────────────────────────────  |
+     |                                      |                                 |
+     |──── POST /api/v1/swaps/execute ─────>|                                 |
+     |       (swapstring, taker_pubkey,     |                                 |
+     |        payment_hash)                 |                                 |
+     |<─── 200 OK ──────────────────────── |                                 |
+     |          ← HTLC resolves atomically on Lightning Network →             |
+     |                                      |                                 |
+     |──── GET /api/v1/swaps/status ───────>|                                 |
+     |<─── { status: "Succeeded" } ─────── |                                 |
 ```
 
-## Taker Client Integration Steps
+### Endpoints Used
 
-### Step 1: Establish WebSocket Connection
+| Step | Endpoint |
+|------|----------|
+| Stream prices | WebSocket `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
+| Lock rate | `POST /api/v1/swaps/init` |
+| Execute swap | `POST /api/v1/swaps/execute` |
+| Check status | `GET /api/v1/swaps/status` |
 
-The taker client establishes a WebSocket connection to receive real-time price updates.
+### WebSocket Environments
 
-- **Testnet**: `wss://testnet.api.kaleidoswap.com/ws/{client_id}`
-- **Mainnet**: `wss://api.kaleidoswap.com/ws/{client_id}`
+| Environment | URL |
+|-------------|-----|
+| **Regtest** | `wss://api.regtest.kaleidoswap.com/ws/{client_id}` |
+| **Signet** | `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
+| **Mainnet** | `wss://api.kaleidoswap.com/ws/{client_id}` *(coming soon)* |
 
-Replace `{client_id}` with a unique identifier for your client.
+Replace `{client_id}` with a unique identifier for your session.
 
-### Step 2: Subscribe to Asset Pair
+### SDK Integration
 
-Send a JSON message over the WebSocket to subscribe to an asset pair:
+The SDK handles the WebSocket, init, and execute steps for you:
 
-```json
-{
-  "action": "subscribe",
-  "pair": "BTC/USDT"
-}
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',  // required for atomic swaps
+});
+
+// Stream a live quote
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC', 'USDT', 100000,
+  async (quote) => {
+    // Use the rfq_id from the latest quote to init + execute
+    const result = await client.maker.initSwap({
+      rfq_id: quote.rfq_id,
+      from_asset: 'BTC',
+      from_amount: quote.from_amount,
+      to_asset: 'USDT',
+      to_amount: quote.to_amount,
+    });
+    // Whitelist on your node, then execute...
+  }
+);
 ```
 
-### Step 3: Receive Price Stream
+```python Python
+from kaleidoswap_sdk import KaleidoClient
 
-The maker streams prices to the taker client along with a request-for-quotation ID (`rfq_id`). The taker uses this ID in subsequent trade initiation requests.
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",  # required for atomic swaps
+)
 
-### Step 4: Initiate Swap
+# Stream a live quote and initiate a swap
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+# See sdk/examples for full atomic swap flow
+```
+</CodeGroup>
 
-Send a POST request to the maker with the `rfq_id` and swap details.
+---
 
-- **Endpoint**: `POST /api/v1/swaps/init`
-- **Parameters**:
+## Order-Based Swaps (Web App / API)
 
-| Parameter | Description |
-|-----------|-------------|
-| `rfq_id` | The request-for-quotation ID from the price stream |
-| `from_asset` | The RGB asset ID to swap from |
-| `from_amount` | The amount of the asset to swap from |
-| `to_asset` | The RGB asset ID to swap to |
-| `to_amount` | The amount of the asset to swap to |
+The web app and direct API integrations use an **order-based model**. The taker creates a swap order, pays a deposit, and the maker sends the swapped asset to the recipient address after confirming payment.
 
-### Step 5: Receive Swap Details
+This model has a **trust component during the execution window** — you pay first, then wait for the maker to fulfil. If the maker fails to deliver, you can contact support for a refund.
 
-Upon successful initiation, the maker responds with:
-- `swapstring` - The swap string for executing the trade
-- `payment_hash` - The payment hash for the swap
+### How It Works
 
-### Step 6: Whitelist Trade
+1. The taker requests a price quote (`POST /api/v1/market/quote`) and receives an `rfq_id`.
+2. The taker creates a swap order, providing the `rfq_id` and a recipient address.
+3. The taker is shown a deposit address or Lightning invoice.
+4. The taker pays the deposit.
+5. The maker detects the payment, executes the swap, and sends the asset to the recipient address.
+6. The taker polls order status until `FILLED`.
 
-Whitelist the trade on your RGB-Lightning node. This step is implementation-specific and depends on your node setup.
+### Sequence Diagram
 
-### Step 7: Execute Swap
+```
+Web Client / API User                Maker (RGB-LSP)
+        |                                  |
+        |──── POST /api/v1/market/quote ──>|
+        |       (from_asset, to_asset,     |
+        |        from_amount)              |
+        |<─── { rfq_id, price,  ──────────|
+        |        to_amount, expires_at }   |
+        |                                  |
+        |──── POST /api/v1/swap-orders ───>|
+        |       (rfq_id, receiver_address) |
+        |<─── { order_id, status: ────────|
+        |        AWAITING_DEPOSIT,         |
+        |        deposit_address }         |
+        |                                  |
+        |──── Pay deposit ─────────────────────> Bitcoin / Lightning Network
+        |                                  |
+        |                    Maker detects payment
+        |                    Maker sends asset to receiver_address
+        |                                  |
+        |──── GET /api/v1/swap-orders ────>|
+        |       /{order_id}                |
+        |<─── { status: FILLED } ─────────|
+```
 
-Send a POST request to execute the trade.
+### Order States
 
-- **Endpoint**: `POST /api/v1/swaps/execute`
-- **Parameters**:
+| State | Description |
+|-------|-------------|
+| `AWAITING_DEPOSIT` | Order created, waiting for payment |
+| `PAYMENT_CONFIRMED` | Payment received, maker processing |
+| `EXECUTING` | Maker sending the swapped asset |
+| `FILLED` | Swap complete |
+| `EXPIRED` | Deposit window elapsed without payment |
+| `FAILED` | Execution error — contact support |
+| `PENDING_RATE_DECISION` | Rate changed, taker must accept or reject |
 
-| Parameter | Description |
-|-----------|-------------|
-| `swapstring` | The swap string received from the init step |
-| `taker_pubkey` | The public key of the taker |
-| `payment_hash` | The payment hash received from the init step |
+### SDK Integration
 
-### Step 8: Confirm Trade Execution
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
 
-The maker confirms the trade execution and responds with the trade status.
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
 
-### Step 9 (Optional): Check Swap Status
+// 1. Get a quote
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' },
+});
 
-Check the status of a swap at any time.
+// 2. Create swap order
+const order = await client.maker.createSwapOrder({
+  rfq_id: quote.rfq_id,
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: quote.from_amount },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: quote.to_amount },
+  receiver_address: 'lnbc1...',  // recipient Lightning invoice
+});
 
-- **Endpoint**: `GET /api/v1/swaps/status`
-- **Query Parameter**: `payment_hash` - The payment hash of the swap
+console.log(`Pay: ${order.deposit_address}`);
+
+// 3. Poll for completion
+const completed = await client.maker.waitForSwapCompletion(order.order_id, {
+  timeout: 600,
+  onStatusUpdate: (s) => console.log(`Status: ${s}`)
+});
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+# 1. Get a quote
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+
+# 2. Create swap order
+order = client.maker.create_swap_order({
+    "rfq_id": quote.rfq_id,
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": quote.from_amount},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": quote.to_amount},
+    "receiver_address": "lnbc1..."
+})
+
+print(f"Pay: {order.deposit_address}")
+
+# 3. Poll for completion
+completed = client.maker.wait_for_swap_completion(order.order_id, options={
+    "timeout": 600,
+    "on_status_update": lambda s: print(f"Status: {s}")
+})
+```
+</CodeGroup>
+
+---
+
+## Comparing the Two Models
+
+| | Atomic Swap | Order-Based Swap |
+|--|-------------|-----------------|
+| **Trust** | None — HTLC guarantee | Maker must fulfil after payment |
+| **Speed** | Milliseconds (Lightning) | Seconds to minutes |
+| **Required** | RGB Lightning Node (RLN) | Any wallet or API client |
+| **Rate stability** | Locked at init | May change (rate decision flow) |
+| **Available on** | Desktop app | Web app, API |
+| **Roadmap** | Live | Will become atomic |
+
+<CardGroup cols={2}>
+  <Card title="Swap APIs" icon="code" href="/api-reference/swap-apis">
+    Endpoints for atomic swap init and execute
+  </Card>
+  <Card title="Market APIs" icon="chart-line" href="/api-reference/market-apis">
+    Endpoints for quotes and order-based swaps
+  </Card>
+  <Card title="SDK Examples" icon="file-code" href="/sdk/examples">
+    End-to-end code examples for both swap models
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api-reference/error-handling">
+    Handle swap failures and rate decisions
+  </Card>
+</CardGroup>

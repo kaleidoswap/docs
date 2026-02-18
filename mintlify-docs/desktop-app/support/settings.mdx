@@ -1,22 +1,46 @@
 ---
 title: Settings
-description: Step-by-step instructions for configuring the settings in the Kaleidoswap Desktop App
+description: Configuring the KaleidoSwap Desktop App settings
 ---
 
-The Settings section, which can be reached from the drop-down menu that appears by clicking on the button in the upper right corner, allows you to customize various aspects of the KaleidoSwap Desktop application. ![wallet settings](/images/desktop-app/9_settings.png) ![wallet settings modal](/images/desktop-app/10_settings_details.png)
+The Settings panel is accessible from the drop-down menu in the upper right corner of the app. It lets you customize how the app connects to your node and how amounts are displayed.
 
-## Configuring the LSP URL
+## LSP URL
 
-An LSP (Lightning Service Provider) helps facilitate Lightning Network transactions.
+**What it does:** Sets the URL of the Lightning Service Provider your node connects to for channel liquidity and swap routing.
 
-1. **Navigate to "Settings"**: Click on the "Settings" icon in the app.
-2. **Locate LSP Settings**: Find the section labeled "Default LSP URL".
-3. **Enter LSP URL**: Input the URL provided by your LSP.
-4. **Save Settings**: Click "Save" to apply the changes.
+**When to change it:** The default LSP is pre-configured and works for most users. You may want to change this if:
+- You are running your own LSP
+- Your preferred LSP has a different URL
+- The default LSP is unreachable
 
-## Other Settings
+To update:
+1. Open **Settings**
+2. Locate the **Default LSP URL** field
+3. Enter the new URL provided by your LSP
+4. Click **Save**
 
-- **Select Bitcoin Unit**: Switch between BTCs and SATs.
-- **Node Connection String**: Configure the RGB node to connect to.
-- **Backup**: See the [backup](/desktop-app/channels/channel-backups) section.
+## Bitcoin Unit
 
+**What it does:** Controls how Bitcoin amounts are displayed throughout the app.
+
+- **BTC** — displays amounts as decimal Bitcoin (e.g., 0.001 BTC)
+- **Sats** — displays amounts as satoshis, the smallest unit (e.g., 100,000 sats)
+
+**When to change it:** If you find decimal amounts hard to read for small transactions, switching to sats can reduce confusion and eliminate leading zeros.
+
+## Node Connection String
+
+**What it does:** Specifies the RGB Lightning Node (RLN) that the app connects to for all wallet, channel, and payment operations.
+
+**When to change it:** By default the app manages a built-in node. Change this setting if:
+- You are connecting to a remote or self-hosted RGB Lightning Node
+- You want to switch between different node instances
+
+<Note>
+  Changing the node connection string will reconnect the app to a different node. Make sure the target node is running and accessible before saving.
+</Note>
+
+## Backup
+
+Create an encrypted backup of your channel state. See the [Channel Backups](/desktop-app/channels/channel-backups) page for full instructions.

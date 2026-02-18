@@ -73,104 +73,22 @@ Direct interaction with RGB Lightning Nodes for:
 - **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
 - **Order-Based Swaps**: Create swap orders, pay deposits, and track execution
 
-## Quick Start
+## Get Started
 
-<CodeGroup>
-```bash npm
-npm install kaleidoswap-sdk
-```
-
-```bash pip
-pip install kaleidoswap-sdk
-```
-</CodeGroup>
-
-### Maker API Trading
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com'
-});
-
-// Get available trading pairs
-const pairs = await client.maker.listPairs();
-console.log(`Found ${pairs.pairs.length} trading pairs`);
-
-// Get a quote
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-});
-console.log(`Price: ${quote.price}`);
-```
-
-```python Python
-from kaleidoswap_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com"
-)
-
-# Get available trading pairs
-pairs = client.maker.list_pairs()
-print(f"Found {len(pairs.pairs)} trading pairs")
-
-# Get a quote
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
-print(f"Price: {quote.price}")
-```
-</CodeGroup>
-
-### RLN Node Operations
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001'
-});
-
-if (client.hasNode()) {
-  const nodeInfo = await client.rln.getNodeInfo();
-  const balance = await client.rln.getBtcBalance();
-  console.log(`BTC Balance: ${balance.vanilla.spendable} sats`);
-}
-```
-
-```python Python
-from kaleidoswap_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com",
-    node_url="http://localhost:3001"
-)
-
-if client.has_node():
-    node_info = client.rln.get_node_info()
-    balance = client.rln.get_btc_balance()
-    print(f"BTC Balance: {balance.vanilla.spendable} sats")
-```
-</CodeGroup>
-
-## Documentation Structure
-
-- **[Getting Started](/sdk/getting-started)** - Installation and quick start guide
-- **[Examples](/sdk/examples)** - Real-world code examples
-- **[API Reference](/sdk/api-reference)** - Complete method documentation
-- **[Types](/sdk/types)** - Type definitions and data models
-- **[WebSocket](/sdk/websocket)** - Real-time data streaming
-- **[Error Handling](/sdk/error-handling)** - Exception management patterns
-- **[Utilities](/sdk/utilities)** - Helper functions and utilities
-- **[Best Practices](/sdk/best-practices)** - Development guidelines
-- **[Troubleshooting](/sdk/troubleshooting)** - Common issues and solutions
+<CardGroup cols={2}>
+  <Card title="Getting Started" icon="rocket" href="/sdk/getting-started">
+    Install the SDK, configure your client, and make your first API call
+  </Card>
+  <Card title="Examples" icon="file-code" href="/sdk/examples">
+    End-to-end code for market data, swaps, WebSocket streaming, and node ops
+  </Card>
+  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
+    Full method reference for MakerClient and RlnClient
+  </Card>
+  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
+    Understand atomic vs. order-based swap models before integrating
+  </Card>
+</CardGroup>
 
 ## Support
 

@@ -3,8 +3,47 @@ title: Initializing with Mnemonic Backup
 description: Step-by-step instructions for initializing a new wallet with a mnemonic backup in the Kaleidoswap Desktop App
 ---
 
-Backing up your wallet is crucial. The app will generate a mnemonic phrase (a series of words) that acts as a backup.
+## What Is a Mnemonic Phrase?
 
-1. **Generate Mnemonic**: The app will display a 12-word mnemonic phrase.
-2. **Save the Mnemonic**: Write down the phrase on paper or a secure medium. Do not store it digitally if possible.
-3. **Confirm Mnemonic**: The app will prompt you to confirm the words to verify you've saved it correctly.
+A **mnemonic phrase** (also called a seed phrase or recovery phrase) is a sequence of 12 words that encodes your wallet's private key. It is the single most important piece of information associated with your wallet — anyone who has it can fully reconstruct your wallet and access all your funds.
+
+KaleidoSwap generates a mnemonic when you create a new wallet. You must back it up before proceeding. If you lose access to your device or forget your password, the mnemonic is the **only** way to recover your funds.
+
+<Warning>
+  **Back up your mnemonic phrase immediately.** Write it down on paper and store it somewhere safe and offline. If you lose your mnemonic and cannot access your device, your funds are permanently unrecoverable. KaleidoSwap has no way to retrieve it for you.
+</Warning>
+
+## Generating and Saving Your Mnemonic
+
+<Steps>
+  <Step title="Generate Mnemonic">
+    During wallet creation, the app displays your **12-word mnemonic phrase**. This is generated locally on your device — it is never sent to any server.
+  </Step>
+
+  <Step title="Write It Down">
+    Write each word in order on paper. Double-check spelling carefully — a single incorrect word will prevent recovery.
+
+    **Best practices:**
+    - Use paper and pen, not a digital document or screenshot
+    - Store the written copy somewhere physically secure (e.g., a safe)
+    - Consider making a second copy stored in a different location
+    - Never store it in cloud storage, email, or messaging apps
+  </Step>
+
+  <Step title="Confirm Your Mnemonic">
+    The app will ask you to confirm the phrase by entering selected words. This step verifies that you have correctly recorded your mnemonic before proceeding.
+  </Step>
+</Steps>
+
+## What Happens If You Lose Your Mnemonic?
+
+If you lose your mnemonic **and** can no longer access the device where the wallet is installed:
+
+- Your on-chain Bitcoin funds are permanently unrecoverable
+- Your Lightning channel funds may also be lost unless you have a [channel backup](/desktop-app/channels/channel-backups)
+
+If you still have access to your device and remember your password, the app will continue to work normally. The mnemonic is only needed when restoring to a new device or after reinstallation.
+
+## Importing an Existing Mnemonic
+
+If you already have a 12-word mnemonic from a previous wallet, you can import it during the wallet setup flow by choosing **Import Existing Wallet** instead of creating a new one.

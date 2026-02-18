@@ -93,7 +93,7 @@ description: Get started with KaleidoSwap in minutes
 
 <Steps>
   <Step title="Open the Web App">
-    Navigate to the KaleidoSwap web app in your browser -- no installation needed.
+    Navigate to [app.kaleidoswap.com](https://app.kaleidoswap.com) in your browser -- no installation needed.
   </Step>
 
   <Step title="Connect Your Wallet">
@@ -141,29 +141,24 @@ pip install kaleidoswap-sdk
 ```
 
 ```python Basic Usage
-import asyncio
 from kaleidoswap_sdk import KaleidoClient
 
-async def main():
-    # Initialize client
-    client = KaleidoClient.create(
-        maker_url="https://api.staging.kaleidoswap.com/api/v1",
-        rln_url="<Your RGB Lightning Node URL>"
-    )
+# Initialize client
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="<Your RGB Lightning Node URL>"
+)
 
-    # Get available assets
-    assets = await client.maker.list_assets()
-    print(f"Available assets: {len(assets)}")
+# Get available trading pairs
+pairs = client.maker.list_pairs()
+print(f"Available pairs: {len(pairs)}")
 
-    # Get a quote for BTC to USDT
-    quote = await client.maker.get_quote(
-        from_asset="BTC",
-        to_asset="USDT",
-        amount=100000
-    )
-    print(f"Quote received: {quote}")
-
-asyncio.run(main())
+# Get a quote for BTC to USDT
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+print(f"Quote received: {quote}")
 ```
 
 </CodeGroup>
@@ -187,26 +182,21 @@ yarn add kaleidoswap-sdk
 ```typescript Basic Usage
 import { KaleidoClient } from 'kaleidoswap-sdk';
 
-async function main() {
-  // Initialize client
-  const client = KaleidoClient.create({
-    makerUrl: 'https://api.staging.kaleidoswap.com/api/v1'
-  });
+// Initialize client
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com'
+});
 
-  // Get available assets
-  const assets = await client.maker.listAssets();
-  console.log(`Available assets: ${assets.length}`);
+// Get available trading pairs
+const pairs = await client.maker.listPairs();
+console.log(`Available pairs: ${pairs.length}`);
 
-  // Get a quote for BTC to USDT
-  const quote = await client.maker.getQuote({
-    fromAsset: 'BTC',
-    toAsset: 'USDT',
-    amount: 100000
-  });
-  console.log(`Quote received:`, quote);
-}
-
-main().catch(console.error);
+// Get a quote for BTC to USDT
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+console.log(`Quote received:`, quote);
 ```
 
 </CodeGroup>
@@ -220,15 +210,15 @@ main().catch(console.error);
 <CodeGroup>
 
 ```bash Get Trading Pairs
-curl https://api.staging.kaleidoswap.com/api/v1/pairs
+curl https://api.signet.kaleidoswap.com/api/v1/pairs
 ```
 
 ```bash Get Asset List
-curl https://api.staging.kaleidoswap.com/api/v1/assets
+curl https://api.signet.kaleidoswap.com/api/v1/assets
 ```
 
 ```bash Request Quote
-curl -X POST https://api.staging.kaleidoswap.com/api/v1/quotes \
+curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
   -H "Content-Type: application/json" \
   -d '{
     "from_asset": "BTC",
@@ -242,6 +232,39 @@ curl -X POST https://api.staging.kaleidoswap.com/api/v1/quotes \
 <Card title="API Reference" icon="book" href="/api-reference/introduction">
   View complete API documentation →
 </Card>
+
+---
+
+## Available Networks
+
+<Tabs>
+  <Tab title="Signet">
+    **API URL**: `https://api.signet.kaleidoswap.com/api/v1`
+
+    **WebSocket**: `wss://api.signet.kaleidoswap.com/ws/{client_id}`
+
+    - Bitcoin Signet (MutinyNet) — public testnet with realistic conditions
+    - Recommended for integration testing before mainnet
+    - **Currently live**
+  </Tab>
+
+  <Tab title="Regtest">
+    **API URL**: `https://api.regtest.kaleidoswap.com/api/v1`
+
+    **WebSocket**: `wss://api.regtest.kaleidoswap.com/ws/{client_id}`
+
+    - Local regtest network — instant block generation, full control
+    - Best for rapid development and unit testing
+    - **Currently live**
+  </Tab>
+
+  <Tab title="Mainnet">
+    **API URL**: `https://api.kaleidoswap.com/api/v1`
+
+    - Bitcoin Mainnet — production environment
+    - **Coming soon**
+  </Tab>
+</Tabs>
 
 ---
 
@@ -272,35 +295,3 @@ curl -X POST https://api.staging.kaleidoswap.com/api/v1/quotes \
     Get help and connect with other users
   </Card>
 </CardGroup>
-
-## Available Networks
-
-<Tabs>
-  <Tab title="Staging">
-    **API URL**: `https://api.staging.kaleidoswap.com/api/v1`
-
-    - Test environment for development
-    - Free testnet BTC available
-    - Latest features
-  </Tab>
-
-  <Tab title="Regtest">
-    **API URL**: `https://api.regtest.kaleidoswap.com/api/v1`
-
-    - Local development network
-    - Instant block generation
-    - Complete control
-  </Tab>
-
-  <Tab title="Signet">
-    **API URL**: `https://api.signet.kaleidoswap.com/api/v1`
-
-    - Bitcoin Signet network
-    - More realistic than regtest
-    - Public testnet
-  </Tab>
-</Tabs>
-
-<Note>
-  For production use, contact the KaleidoSwap team for access to mainnet endpoints.
-</Note>

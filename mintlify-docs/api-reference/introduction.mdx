@@ -15,7 +15,76 @@ Proceed to [Getting Started](/api-reference/getting-started) to begin.
 
 ---
 
-### Using the SDK
+## Two Sub-APIs
+
+The KaleidoSwap API is split into two distinct services:
+
+| Sub-API | Base Path | Purpose |
+|---------|-----------|---------|
+| **Maker API** | `/api/v1/` | Market data, quotes, swap orders, and LSPS1 channel operations |
+| **RLN API** | `/rln/v1/` | RGB Lightning Node operations — wallet, channels, and payments |
+
+The **Maker API** is publicly accessible and handles all trading and liquidity operations. The **RLN API** connects to your own RGB Lightning Node and requires a running node instance.
+
+### Which API do I need?
+
+| Goal | API | Endpoint group |
+|------|-----|----------------|
+| Get available assets or trading pairs | Maker API | [Market APIs](/api-reference/market-apis) |
+| Get a price quote for a swap | Maker API | [Market APIs](/api-reference/market-apis) |
+| Create or track a swap order | Maker API | [Swap APIs](/api-reference/swap-apis) |
+| Order a Lightning channel from an LSP | Maker API | [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) |
+| Stream real-time prices | Maker API (WebSocket) | [Swap Protocol](/api-reference/swap-protocol) |
+| Check wallet balance or node info | RLN API | Requires your own node |
+| Send/receive BTC or RGB assets | RLN API | Requires your own node |
+| Open or close Lightning channels | RLN API | Requires your own node |
+
+<Note>
+  The **interactive API playground** below runs against the **Signet environment** (`https://api.signet.kaleidoswap.com`). Use it for exploration and testing. For production, use the mainnet URL once available.
+</Note>
+
+---
+
+## Authentication
+
+**Current state**: No authentication is required for most Maker API endpoints. Public market data (assets, pairs, quotes) and swap creation are open.
+
+**Planned**: Bearer token authentication (`Authorization: Bearer <token>`) will be introduced for rate-limited or permissioned endpoints in a future release. The API playground is pre-configured with bearer auth for when it is required.
+
+---
+
+## Base Response Format
+
+All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Error responses use the following format:
+
+```json
+{
+  "error": "error_code",
+  "message": "Human-readable description of the error"
+}
+```
+
+HTTP status codes follow standard conventions:
+
+| Status | Meaning |
+|--------|---------|
+| `200` | Success |
+| `400` | Bad request — invalid parameters |
+| `404` | Resource not found |
+| `422` | Unprocessable entity — validation error |
+| `500` | Internal server error |
+
+See [Error Handling](/api-reference/error-handling) for a complete list of error codes.
+
+---
+
+## Rate Limits
+
+Rate limits apply to all API endpoints. Requests that exceed the limit receive a `429 Too Many Requests` response. Specific limits vary by endpoint and environment. When building integrations, implement exponential backoff for retries and cache static data (assets, pairs) locally where possible.
+
+---
+
+## Using the SDK
 
 Instead of calling the REST API directly, you can use the official KaleidoSwap SDKs that wrap these endpoints with type safety and convenience methods:
 
@@ -25,6 +94,6 @@ Instead of calling the REST API directly, you can use the official KaleidoSwap S
   </Card>
 
   <Card title="Python SDK" icon="python" href="/sdk/introduction">
-    Async Python client with Pydantic models, using the same sub-client architecture
+    Synchronous Python client with Pydantic models, using the same sub-client architecture
   </Card>
 </CardGroup>

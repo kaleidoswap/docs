@@ -178,6 +178,107 @@ execute_swap()
 ```
 </CodeGroup>
 
+## Atomic Swap (Desktop / Node Integration)
+
+The full atomic swap flow used by the desktop app. Requires a running RGB Lightning Node.
+
+<Note>
+  Atomic swaps settle trustlessly via HTLC on the Lightning Network. Both sides lock assets simultaneously — either the full exchange completes or funds are returned. See [Swap Protocol](/api-reference/swap-protocol) for a full explanation.
+</Note>
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleidoswap-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',  // your RLN node
+});
+
+async function executeAtomicSwap() {
+  // Step 1: Get your node's taker pubkey
+  const takerPubkey = await client.rln.getTakerPubkey();
+
+  // Step 2: Enable WebSocket and get an rfq_id
+  client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+
+  const rfqId = await new Promise<string>((resolve) => {
+    client.maker.streamQuotesByTicker('BTC', 'USDT', 100000, (quote) => {
+      resolve(quote.rfq_id);
+    });
+  });
+
+  // Step 3: Initiate the swap — locks the price
+  const { swapstring, payment_hash } = await client.maker.initSwap({
+    rfq_id: rfqId,
+    from_asset: 'btc',
+    from_amount: 100000,       // millisats
+    to_asset: 'rgb:...',       // USDT asset ID
+    to_amount: 9500,
+  });
+
+  // Step 4: Whitelist the swap on your RGB Lightning Node
+  await client.rln.whitelistTrade({ swapstring });
+
+  // Step 5: Execute — both sides lock and settle atomically
+  await client.maker.executeSwap({
+    swapstring,
+    taker_pubkey: takerPubkey.pubkey,
+    payment_hash,
+  });
+
+  console.log('Atomic swap complete!');
+}
+
+executeAtomicSwap().catch(console.error);
+```
+
+```python Python
+from kaleidoswap_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",  # your RLN node
+)
+
+def execute_atomic_swap():
+    # Step 1: Get your node's taker pubkey
+    taker_info = client.rln.get_taker_pubkey()
+
+    # Step 2: Enable WebSocket and get an rfq_id via a quote
+    client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+
+    quote = client.maker.get_quote({
+        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+    })
+    rfq_id = quote.rfq_id
+
+    # Step 3: Initiate the swap — locks the price
+    swap = client.maker.init_swap({
+        "rfq_id": rfq_id,
+        "from_asset": "btc",
+        "from_amount": 100000,       # millisats
+        "to_asset": "rgb:...",       # USDT asset ID
+        "to_amount": quote.to_amount,
+    })
+
+    # Step 4: Whitelist the swap on your RGB Lightning Node
+    client.rln.whitelist_swap({"swapstring": swap.swapstring})
+
+    # Step 5: Execute — both sides lock and settle atomically
+    client.maker.execute_swap({
+        "swapstring": swap.swapstring,
+        "taker_pubkey": taker_info.pubkey,
+        "payment_hash": swap.payment_hash,
+    })
+
+    print("Atomic swap complete!")
+
+execute_atomic_swap()
+```
+</CodeGroup>
+
 ## WebSocket Quote Streaming
 
 Stream real-time quotes using WebSocket.

@@ -1,17 +1,69 @@
 ---
 title: Channel Backups
-description: Step-by-step instructions for creating a channel backup in the Kaleidoswap Desktop App
+description: How to create and restore Lightning channel backups in the KaleidoSwap Desktop App
 ---
 
-Backing up your channels is essential to prevent loss of funds in case of device failure.
+Backing up your channels is essential to prevent loss of funds if your device fails or the app needs to be reinstalled.
+
+<Warning>
+  Without a current channel backup, you risk losing funds locked in open Lightning channels. Always create a new backup after opening or closing a channel.
+</Warning>
+
+## What a Channel Backup Contains
+
+A channel backup is an encrypted file that records the current state of your open Lightning channels. It includes the information your node needs to initiate a force-close of each channel and recover the on-chain funds if your node data is lost.
+
+Channel backups do **not** replace your mnemonic phrase. You need both to fully recover your wallet:
+
+- **Mnemonic phrase** — recovers your on-chain Bitcoin and wallet keys
+- **Channel backup** — recovers funds locked in Lightning channels
 
 ## Creating a Channel Backup
 
-1. **Navigate to "Settings"**: Click the button in the upper right corner to bring up the drop-down menu. ![Settings](/images/desktop-app/9_settings.png)
-2. **Backup Option**: Click on "Backup Wallet". ![Backup Wallet](/images/desktop-app/10_settings_details.png)
-3. **Save Backup File**: Choose a secure location and input the node password. ![Create Backup](/images/desktop-app/11_channels_backup.png)
-4. **Create Backup**: Create encrypted backup files with the node password in the selected destination clicking on "Create Backup".
+<Steps>
+  <Step title="Open Settings">
+    Click the button in the upper right corner of the app to open the drop-down menu, then select **Settings**.
+  </Step>
 
----
+  <Step title="Click Backup Wallet">
+    In the Settings panel, click on **Backup Wallet**.
+  </Step>
 
-*Next: [Channel Requests](/desktop-app/channels/channel-requests)*
+  <Step title="Choose a Destination">
+    Select a secure location to save the backup file. Choose somewhere you can access later — ideally an external drive or encrypted cloud storage.
+  </Step>
+
+  <Step title="Enter Your Node Password">
+    Input your node password. The backup file is encrypted with this password.
+  </Step>
+
+  <Step title="Create the Backup">
+    Click **Create Backup**. The encrypted backup file is saved to your chosen destination.
+  </Step>
+</Steps>
+
+## When to Create a New Backup
+
+Create a fresh backup after any of the following events:
+
+- Opening a new channel
+- Closing a channel
+- After restoring from a previous backup
+- On a regular schedule (e.g., weekly)
+
+Each backup reflects the channel state at the time it was created. An outdated backup may not include your newest channels.
+
+## Restoring from a Backup
+
+If you need to restore your wallet on a new device:
+
+1. Reinstall the KaleidoSwap Desktop App
+2. Choose **Restore Wallet** during the setup flow
+3. Enter your 12-word mnemonic phrase to recover your keys
+4. Once the wallet is set up, use the backup file to restore your channel state
+5. Decrypt the backup using the node password you set when creating it
+6. Allow the node to sync and initiate force-closes on any channels listed in the backup
+
+<Note>
+  Force-closing channels from a backup has a timelock before funds are returned on-chain. This is a standard Lightning Network safety mechanism.
+</Note>

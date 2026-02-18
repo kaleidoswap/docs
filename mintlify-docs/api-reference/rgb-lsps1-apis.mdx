@@ -1,6 +1,21 @@
-# RGB LSPS1 APIs
+---
+title: RGB LSPS1 APIs
+description: Channel ordering and liquidity management via the RGB Lightning Service Provider Specification
+---
 
-The RGB LSPS1 APIs enable management of channels and liquidity services following the Lightning Service Provider Specification (LSPS1). This section provides details on available endpoints and their usage.
+## Overview
+
+The RGB LSPS1 APIs let clients order Lightning channels with RGB asset allocation from a Lightning Service Provider (LSP). Use these endpoints when you need to:
+
+- **Open a channel with RGB assets pre-allocated** — the LSP opens the channel and pre-funds it with the requested asset amount on the LSP side.
+- **Query LSP capabilities** — check supported assets, min/max channel sizes, and fee structures before creating an order.
+- **Track channel order status** — poll an order until the channel is confirmed and open.
+
+These endpoints are used by the KaleidoSwap Desktop App when you open a channel through the default LSP. SDK users can call them directly via `client.maker.createLspOrder()`.
+
+**Base URL:** `https://api.signet.kaleidoswap.com/api/v1` (Signet) or `https://api.regtest.kaleidoswap.com/api/v1` (Regtest)
+
+---
 
 ---
 

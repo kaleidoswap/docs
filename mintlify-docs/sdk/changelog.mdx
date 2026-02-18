@@ -1,0 +1,62 @@
+---
+title: Changelog
+description: SDK and API version history for KaleidoSwap
+---
+
+<Note>
+  This changelog covers the KaleidoSwap SDK (`kaleidoswap-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
+</Note>
+
+## SDK v0.4.x — Current
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**API Version:** `v1`
+
+### What's included
+
+- `KaleidoClient.create()` — synchronous factory for both TypeScript and Python
+- **MakerClient** (`client.maker`) — market data, quotes, swap orders, atomic swap protocol, LSPS1 channel ordering, WebSocket streaming
+- **RlnClient** (`client.rln`) — full RGB Lightning Node operations: wallet, BTC, RGB assets, channels, invoices, payments
+- `waitForSwapCompletion` — built-in polling helper with configurable timeout and status callback
+- `streamQuotesByTicker` / `streamQuotesForAllRoutes` — high-level WebSocket quote streaming with automatic route discovery
+- `PrecisionHandler` and `AssetPairMapper` utilities for amount conversion and pair lookups
+- Full error hierarchy: `KaleidoError`, `NetworkError`, `ValidationError`, `APIError`, `QuoteExpiredError`, `NodeNotConfiguredError`
+- Auto-generated types from OpenAPI specs (TypeScript: `openapi-fetch`; Python: Pydantic models)
+
+---
+
+## API v1 — Current
+
+**Status:** Stable. No breaking changes planned for v1.
+
+### Maker API endpoints
+
+| Endpoint group | Base path | Description |
+|----------------|-----------|-------------|
+| Market | `/api/v1/market/` | Assets, pairs, quotes, fee estimates |
+| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by desktop app |
+| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by web app |
+| LSPS1 | `/api/v1/lsps1/` | Channel ordering and liquidity |
+
+### RLN API endpoints
+
+Provided by the RGB Lightning Node directly at `nodeUrl`. Includes wallet, BTC, RGB assets, channels, invoices, payments, and swap coordination.
+
+---
+
+## Live Environments
+
+| Environment | API URL | WebSocket URL | Status |
+|-------------|---------|---------------|--------|
+| **Regtest** | `https://api.regtest.kaleidoswap.com` | `wss://api.regtest.kaleidoswap.com/ws/{id}` | Live |
+| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/ws/{id}` | Live |
+| **Mainnet** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/ws/{id}` | Coming soon |
+
+---
+
+## Roadmap
+
+- **Atomic order-based swaps** — order-based swaps (currently used by the web app) will be upgraded to use the same HTLC atomic model as the desktop app, removing the trust requirement for web users.
+- **Mainnet launch** — production environment for real BTC and RGB assets.
+- **Additional Layer support** — Spark, Arkade, and Liquid protocol adapters in the Rate extension.

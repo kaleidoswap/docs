@@ -1,95 +1,158 @@
 ---
 title: Verify Binary Downloads
-description: How to verify the authenticity and integrity of KaleidoSwap Desktop App downloads using SHA256 checksums
+description: How to verify the authenticity of KaleidoSwap Desktop App binaries using GPG detached signatures
 ---
 
-Security is crucial when installing applications that handle your assets. This guide explains how to verify the authenticity of the Kaleidoswap Desktop App binaries you download.
+Security is critical when installing software that handles your Bitcoin. Every KaleidoSwap release binary is individually GPG-signed by the developer using a hardware security key (YubiKey). The private key never leaves the hardware token.
+
+macOS builds additionally carry an **Apple Developer ID signature and Apple notarization**, so they install without any security warnings.
 
 ## Why Verify Downloads?
 
-Verifying downloaded binaries is an essential security practice to ensure:
-- The file hasn't been tampered with or corrupted during download
-- You're installing software created by the actual Kaleidoswap developers
-- No malicious code has been injected into the application
+Verifying a binary before installing ensures:
+
+- The file was produced and signed by the KaleidoSwap developers
+- The file was not tampered with or corrupted in transit
+- No malicious code was injected after the build
+
+## How It Works
+
+After each release the CI publishes the binaries to the GitHub Releases page. The developer then runs `scripts/sign-release.sh` locally (with a YubiKey inserted), which:
+
+1. Downloads every release asset from GitHub
+2. Creates a detached GPG signature (`<binary>.asc`) for each one
+3. Verifies all signatures locally
+4. Uploads the `.asc` files back to the same release
+
+You can find both the binaries and their `.asc` signatures on the [Releases page](https://github.com/kaleidoswap/desktop-app/releases).
 
 ## Prerequisites
 
-Before you begin verification, you'll need:
 - **GPG** (GNU Privacy Guard) installed on your system
-- **curl** or a web browser to download files
-- The Kaleidoswap binary you want to verify
+- The KaleidoSwap binary you want to verify
+- The corresponding `.asc` signature file from the same release
 
-## Verification Process
+<CodeGroup>
+```sh macOS (Homebrew)
+brew install gnupg
+```
+
+```sh Debian / Ubuntu
+sudo apt install gnupg
+```
+
+```sh Windows (Gpg4win)
+# Download from https://gpg4win.org
+```
+</CodeGroup>
+
+## Verification Steps
 
 ### 1. Import the Developer's Public Key
 
-First, you need to import the Kaleidoswap developer's public GPG key:
+This is a one-time step. Import the KaleidoSwap developer's public GPG key directly from GitHub:
 
 ```sh
-# Option 1: Import directly from GitHub
 curl -s https://github.com/bitwalt.gpg | gpg --import
-
 ```
 
-### 2. Download the Manifest and Signature
-
-From the [Releases](https://github.com/kaleidoswap/desktop-app/releases) page, download:
-- Your desired application binary
-- `manifest.txt` - A file containing checksums of all release files
-- `manifest.txt.sig` - The GPG signature for the manifest file
-
-### 3. Verify the Manifest Signature
-
-Verify that the manifest was created by the Kaleidoswap developers:
+You can verify the key fingerprint after importing:
 
 ```sh
-gpg --verify manifest.txt.sig manifest.txt
+gpg --fingerprint walter@kaleidoswap.com
 ```
 
-You should see output similar to:
+The key ID you will see in signature output is `9EE396C0452755F0`.
+
+### 2. Download the Binary and Its Signature
+
+From the [Releases page](https://github.com/kaleidoswap/desktop-app/releases), download your platform binary **and** the matching `.asc` file — both must be in the same directory.
+
+| Platform | Binary | Signature |
+|---|---|---|
+| macOS Apple Silicon | `KaleidoSwap_<version>_aarch64.dmg` | `KaleidoSwap_<version>_aarch64.dmg.asc` |
+| macOS Intel | `KaleidoSwap_<version>_x64.dmg` | `KaleidoSwap_<version>_x64.dmg.asc` |
+| Linux (AppImage) | `KaleidoSwap_<version>_amd64.AppImage` | `KaleidoSwap_<version>_amd64.AppImage.asc` |
+| Linux (DEB) | `KaleidoSwap_<version>_amd64.deb` | `KaleidoSwap_<version>_amd64.deb.asc` |
+| Windows | `KaleidoSwap_<version>_x64-setup.msi` | `KaleidoSwap_<version>_x64-setup.msi.asc` |
+
+### 3. Verify the Signature
+
+Run `gpg --verify` with the signature file first, then the binary:
+
+<CodeGroup>
+```sh macOS (Apple Silicon)
+gpg --verify KaleidoSwap_0.3.2_aarch64.dmg.asc \
+             KaleidoSwap_0.3.2_aarch64.dmg
 ```
-gpg: Signature made Wed 13 Mar 2024 03:11:45 PM CET
-gpg: using RSA key 8F8FDBB8B397E731381A42B8F8D2XXXXXXXXXXXXX
-gpg: Good signature from "Walter (Kaleidoswap Developer) <walter@kaleidoswap.com>" [ultimate]
+
+```sh macOS (Intel)
+gpg --verify KaleidoSwap_0.3.2_x64.dmg.asc \
+             KaleidoSwap_0.3.2_x64.dmg
 ```
 
-Make sure it says "Good signature" and check that the key ID matches the expected key.
+```sh Linux
+gpg --verify KaleidoSwap_0.3.2_amd64.AppImage.asc \
+             KaleidoSwap_0.3.2_amd64.AppImage
+```
 
-### 4. Verify Your Binary's Checksum
+```sh Windows
+gpg --verify KaleidoSwap_0.3.2_x64-setup.msi.asc `
+             KaleidoSwap_0.3.2_x64-setup.msi
+```
+</CodeGroup>
 
-Verify that your downloaded binary's checksum matches the one in the manifest:
+### 4. Read the Output
+
+A **good** verification looks like this:
+
+```
+gpg: Signature made Mon 10 Nov 2025 21:30:00 UTC
+gpg:                using RSA key 9EE396C0452755F0
+gpg: Good signature from "Walter (Kaleidoswap Developer) <walter@kaleidoswap.com>"
+```
+
+<Warning>
+If you see **"BAD signature"** or **"No public key"**, do not install the file. Download a fresh copy from the official [GitHub Releases](https://github.com/kaleidoswap/desktop-app/releases) page and try again. If the problem persists, open a [GitHub Issue](https://github.com/kaleidoswap/desktop-app/issues) or reach out on [Telegram](https://t.me/kaleidoswap).
+</Warning>
+
+The `gpg` warning *"This key is not certified with a trusted signature!"* is expected unless you have explicitly set the trust level for this key. The `Good signature` line is what matters.
+
+## macOS: Additional Platform Verification
+
+macOS builds are also code-signed with an Apple Developer ID certificate and notarized by Apple. You can verify this independently after installation:
 
 ```sh
-# On macOS/Linux
-shasum -a 256 Kaleido-Swap_[version]_[platform].dmg
+# Check Gatekeeper assessment
+spctl --assess --verbose=4 --type install /Applications/KaleidoSwap.app
 
-# On Windows (PowerShell)
-Get-FileHash -Algorithm SHA256 Kaleido-Swap_[version]_[platform].exe
+# Inspect the code signature
+codesign --verify --verbose=2 /Applications/KaleidoSwap.app
 ```
 
-Compare the output hash with the corresponding hash in the `manifest.txt` file. They should match exactly.
+A correctly signed and notarized app will show `accepted` from `spctl` and no errors from `codesign`.
+
+## Optional: SHA256 Checksum
+
+For a quick integrity check without GPG, you can compare checksums. The SHA256 hash for each artifact is listed in the `manifest.txt` file available as a build artifact on each CI run.
+
+```sh
+# macOS / Linux
+shasum -a 256 KaleidoSwap_0.3.2_aarch64.dmg
+```
+
+```powershell
+# Windows (PowerShell)
+Get-FileHash -Algorithm SHA256 KaleidoSwap_0.3.2_x64-setup.msi
+```
 
 ## Troubleshooting
 
-If verification fails, there are several potential issues:
+| Error | Cause | Fix |
+|---|---|---|
+| `No public key` | Developer key not imported | Run the `curl … \| gpg --import` command |
+| `BAD signature` | File was modified or corrupted | Re-download from GitHub Releases |
+| `Can't check signature: No public key` | Key mismatch | Confirm you imported from `github.com/bitwalt.gpg` |
+| Checksum mismatch | Partial download or corruption | Delete and re-download the binary |
 
-1. **"No public key" error**: You haven't imported the correct public key.
-2. **"BAD signature" error**: The manifest file has been tampered with or corrupted.
-3. **Checksum mismatch**: The binary file is corrupted or has been modified.
-
-In any of these cases, **DO NOT INSTALL THE APPLICATION**. Instead:
-- Try downloading the files again from the official source
-- Contact the Kaleidoswap team via [GitHub Issues](https://github.com/kaleidoswap/desktop-app/issues) or [Discord](https://discord.gg/kaleidoswap)
-
-## Example Manifest File
-
-A `manifest.txt` file typically looks like this:
-
-```
-# Kaleidoswap Desktop App v0.0.1 Release
-# Generated: 2024-03-13
-
-8a7d3e2f1b5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d  Kaleido-Swap_0.0.1_x64.dmg
-2f1b5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d0e4f2c  Kaleido-Swap_0.0.1_x64-setup.exe
-5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d0e4f2c7b8a9d3e2f1b5c9a6d0e4f2c7b8a  kaleido-swap_0.0.1_amd64.AppImage
-```
+If none of the above resolves the issue, contact the team via [GitHub Issues](https://github.com/kaleidoswap/desktop-app/issues) or [Telegram](https://t.me/kaleidoswap).

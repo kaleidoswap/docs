@@ -29,14 +29,17 @@ description: Core capabilities and features of KaleidoSwap
 
 ### Full Node Control
 
+KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a remote one.
+
 <Tabs>
   <Tab title="Run Your Own Node">
     **Self-Hosted RGB Lightning Node**
-
-    - Full control over your node
-    - Complete privacy for your transactions
-    - Customizable configuration
+    
+    Take full control of your infrastructure with a locally running node.
+    
+    - Maximum privacy
     - Direct P2P connections
+    - No reliance on third parties
 
     ```bash
     # Start your RGB Lightning node
@@ -46,16 +49,12 @@ description: Core capabilities and features of KaleidoSwap
 
   <Tab title="Connect to Existing Node">
     **Remote Node Connection**
-
-    - Connect to any RGB Lightning node
+    
+    Connect to a professionally hosted node or your own remote server.
+    
     - Access from multiple devices
-    - Professional node hosting
-    - Managed infrastructure
-
-    Supported connection methods:
-    - REST API
-    - gRPC
-    - Websocket
+    - Managed infrastructure options
+    - Connect via REST, gRPC, or WebSocket
   </Tab>
 </Tabs>
 
@@ -104,32 +103,17 @@ Execute trustless, instant asset swaps without intermediaries.
 <CardGroup cols={3}>
   <Card title="Lightning to Lightning" icon="bolt">
     **Instant RGB Asset Swaps**
-
-    Swap RGB assets directly through Lightning channels
-
-    - USDT ↔ BTC
-    - XAUT ↔ BTC
-    - Any RGB20 asset pairs
+    Swap RGB assets (like USDT) directly for BTC through Lightning channels.
   </Card>
 
   <Card title="On-Chain to Lightning" icon="arrow-right-arrow-left">
-    **Move Assets to Lightning**
-
-    Transfer on-chain assets to Lightning channels
-
-    - Instant liquidity
-    - Lower future transaction costs
-    - Enable fast trading
+    **Liquidity Management**
+    Open channels with your on-chain funds for instant trading.
   </Card>
 
   <Card title="Lightning to On-Chain" icon="bitcoin">
-    **Settle to Base Layer**
-
-    Move assets from Lightning back to Bitcoin blockchain
-
-    - Final settlement
-    - Cold storage transfer
-    - Long-term holding
+    **Settlement**
+    Move assets from Lightning channels back to the Bitcoin blockchain for cold storage.
   </Card>
 </CardGroup>
 
@@ -153,15 +137,7 @@ Execute trustless, instant asset swaps without intermediaries.
   </Step>
 </Steps>
 
-### Supported Assets
 
-| Asset | Ticker | Type | Precision |
-|-------|--------|------|-----------|
-| Tether USD | USDT | RGB20 | 6 decimals |
-| Tether Gold | XAUT | RGB20 | 9 decimals |
-| Tether Silver | XAG | RGB20 | 9 decimals |
-| Bitcoin | BTC | Native | 8 decimals |
-| *More assets coming soon* | | | |
 
 <Note>
   Asset availability depends on connected LSP. Different LSPs may support different asset sets.
@@ -173,37 +149,23 @@ Execute trustless, instant asset swaps without intermediaries.
 
 ### Fast & Low-Cost Transactions
 
+Leverage the Lightning Network for high-performance trading.
+
 <CardGroup cols={2}>
   <Card title="Instant Settlement" icon="bolt-lightning">
-    **Millisecond Finality**
-
-    - Transactions complete in less than 1 second
-    - No blockchain confirmation wait
-    - Immediate balance updates
+    Transactions complete in milliseconds with immediate balance updates.
   </Card>
 
   <Card title="Minimal Fees" icon="coins">
-    **Low Transaction Costs**
-
-    - Fees measured in satoshis
-    - Fraction of on-chain costs
-    - Economical for small amounts
+    Pay a fraction of on-chain costs, making micro-transactions viable.
   </Card>
 
   <Card title="High Throughput" icon="gauge-high">
-    **Unlimited Scalability**
-
-    - Millions of TPS possible
-    - No blockchain bottleneck
-    - Instant multi-hop routing
+    Execute millions of transactions per second without blockchain bottlenecks.
   </Card>
 
   <Card title="Privacy Enhanced" icon="user-shield">
-    **Increased Privacy**
-
-    - Off-chain transactions
-    - Onion routing
-    - Minimal blockchain footprint
+    Off-chain transactions with onion routing for maximum privacy.
   </Card>
 </CardGroup>
 
@@ -211,15 +173,11 @@ Execute trustless, instant asset swaps without intermediaries.
 
 #### Opening Channels
 
-```
-┌─────────────────────────────────────────────┐
-│  1. Select LSP or Peer                      │
-│  2. Choose Channel Capacity                 │
-│  3. Allocate RGB Assets (optional)          │
-│  4. Set Channel Parameters                  │
-│  5. Confirm and Open                        │
-└─────────────────────────────────────────────┘
-```
+1. **Select LSP or Peer**
+2. **Choose Channel Capacity**
+3. **Allocate RGB Assets** (optional)
+4. **Set Channel Parameters**
+5. **Confirm and Open**
 
 **Channel Options**:
 - **Public Channels**: Participate in routing, earn fees
@@ -264,39 +222,32 @@ Execute trustless, instant asset swaps without intermediaries.
 
 ### Non-Custodial Architecture
 
-**Your Keys, Your Control**:
+KaleidoSwap is built on the principle of "Your Keys, Your Coins".
 
 <Check>
-  ✓ Private keys never leave your device
+  ✓ **Private keys never leave your device**
 </Check>
 <Check>
-  ✓ No third-party access to funds
+  ✓ **No third-party access to funds**
 </Check>
 <Check>
-  ✓ Complete control over transactions
+  ✓ **Complete control over transactions**
 </Check>
 <Check>
-  ✓ Trustless trading protocol
+  ✓ **Trustless trading protocol via atomic swaps**
 </Check>
 
 ### Secure Key Management
 
-```
-┌─────────────────────────────────────────┐
-│  Encryption Layer                       │
-│  ┌───────────────────────────────────┐  │
-│  │  Hardware Wallet Support (Soon)   │  │
-│  │  - Ledger                         │  │
-│  │  - Trezor                         │  │
-│  └───────────────────────────────────┘  │
-│  ┌───────────────────────────────────┐  │
-│  │  Software Wallet                  │  │
-│  │  - AES-256 Encryption            │  │
-│  │  - Password Protection            │  │
-│  │  - Mnemonic Backup               │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
+**Encryption Layer**:
+
+- **Software Wallet**
+    - AES-256 Encryption
+    - Password Protection
+    - Mnemonic Backup
+- **Hardware Wallet Support (Soon)**
+    - Ledger
+    - Trezor
 
 ### Channel Backups
 

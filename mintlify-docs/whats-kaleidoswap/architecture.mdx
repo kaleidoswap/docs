@@ -33,11 +33,11 @@ The platform consists of three client interfaces (desktop app, web app, and brow
 
 ## RGB Protocol
 
-### What is RGB?
+### RGB Protocol Overview
 
-RGB is a scalable and confidential smart contract system for Bitcoin. It uses client-side validation and single-use seals to enable complex smart contract functionality while maintaining Bitcoin's security guarantees.
+RGB enables scalable and confidential smart contracts on Bitcoin using client-side validation. For a detailed explanation of how RGB works, see the [Concepts Guide](/whats-kaleidoswap/background#rgb-protocol).
 
-**Key Features**:
+**Key Architectural Features**:
 - **Client-Side Validation**: Contract state is validated by the recipient, not globally
 - **Scalability**: No blockchain bloat - contracts are off-chain
 - **Privacy**: Transaction details are only known to involved parties
@@ -101,11 +101,11 @@ RGB is a scalable and confidential smart contract system for Bitcoin. It uses cl
 
 ## Lightning Network Integration
 
-### Why Lightning?
+### Lightning Network Integration
 
-The Lightning Network provides the scalability layer for instant, low-cost RGB asset transfers.
+The Lightning Network provides the scalability layer for instant, low-cost RGB asset transfers. See [Concepts: Lightning Network](/whats-kaleidoswap/background#lightning-network) for more details.
 
-**Benefits**:
+**Integration Benefits**:
 - **Instant Settlement**: Transactions complete in milliseconds
 - **Low Fees**: Fraction of on-chain costs
 - **Security**: Backed by Bitcoin's security model
@@ -128,27 +128,14 @@ KaleidoSwap extends the Lightning Network to support RGB assets alongside native
 
 ## Lightning Service Providers (LSPs)
 
-### What are LSPs?
+### LSP Integration
 
-LSPs provide essential services to Lightning Network users:
+Lightning Service Providers (LSPs) are critical for onboarding users to the Lightning Network without requiring them to manage complex channel operations manually.
 
-<AccordionGroup>
-  <Accordion title="Channel Liquidity">
-    LSPs open channels with users, providing inbound liquidity for receiving payments
-  </Accordion>
-
-  <Accordion title="Channel Management">
-    Automatic channel rebalancing, backup services, and monitoring
-  </Accordion>
-
-  <Accordion title="Routing Services">
-    Optimal payment routing through the Lightning Network
-  </Accordion>
-
-  <Accordion title="RGB Asset Support">
-    Specialized support for RGB asset transfers and atomic swaps
-  </Accordion>
-</AccordionGroup>
+**LSP Functions in Architecture**:
+- **Liquidity Provision**: Opening channels with users to provide inbound capacity
+- **Routing**: Finding optimal paths for payments
+- **Swap Facilitation**: Enabling atomic swaps between assets
 
 ### RGB LSPS1 Specification
 

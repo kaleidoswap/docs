@@ -114,7 +114,7 @@
             "icon": "chart-mixed",
             "pages": [
               "web-app/wallet-connection",
-              "web-app/trading-interface",
+              "web-app/how-to-trade",
               "web-app/advanced-features"
             ]
           },

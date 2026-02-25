@@ -177,6 +177,7 @@
             "group": "Guides",
             "icon": "book-open",
             "pages": [
+              "sdk/how-to-swap",
               "sdk/examples",
               "sdk/best-practices",
               "sdk/error-handling"

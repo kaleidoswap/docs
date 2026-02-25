@@ -55,7 +55,7 @@ try {
 from kaleidoswap_sdk import KaleidoError
 
 try:
-    client.maker.list_pairs()
+    await client.maker.list_pairs()
 except KaleidoError as e:
     print(f"Code: {e.code}")
     print(f"Message: {e}")
@@ -180,7 +180,7 @@ try {
 from kaleidoswap_sdk import NodeNotConfiguredError
 
 try:
-    client.rln.get_node_info()
+    await client.rln.get_node_info()
 except NodeNotConfiguredError:
     print("Configure node_url to use RLN operations")
 ```
@@ -275,12 +275,14 @@ from kaleidoswap_sdk import (
     NodeNotConfiguredError,
     InsufficientBalanceError,
     RateLimitError,
+    PairQuoteRequest,
+    CreateSwapOrderRequest,
 )
 import time
 
 try:
-    quote = client.maker.get_quote({...})
-    order = client.maker.create_swap_order({...})
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+    order = await client.maker.create_swap_order(CreateSwapOrderRequest(...))
 except QuoteExpiredError:
     # Get a fresh quote and retry
     pass

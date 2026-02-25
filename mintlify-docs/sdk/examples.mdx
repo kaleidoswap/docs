@@ -42,8 +42,8 @@ client = KaleidoClient.create(
 )
 
 # Fetch assets and pairs
-assets = client.maker.list_assets()
-pairs = client.maker.list_pairs()
+assets = await client.maker.list_assets()
+pairs = await client.maker.list_pairs()
 
 print(f"Assets: {len(assets.assets)}")
 print(f"Trading Pairs: {len(pairs.pairs)}")
@@ -76,10 +76,10 @@ console.log(`Expires: ${new Date(quote.expires_at * 1000).toISOString()}`);
 ```
 
 ```python Python
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+quote = await client.maker.get_quote(PairQuoteRequest(
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=100000),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+))
 
 print(f"RFQ ID: {quote.rfq_id}")
 print(f"From: {quote.from_amount} sats")
@@ -111,11 +111,11 @@ async function executeSwap() {
   console.log(`Quote received: ${quote.from_amount} -> ${quote.to_amount}`);
   console.log(`Price: ${quote.price}`);
 
-  // Step 2: Create the swap order
+  // Step 2: Create the swap order (use the quote's from_asset/to_asset — they are SwapLeg with amounts)
   const order = await client.maker.createSwapOrder({
     rfq_id: quote.rfq_id,
-    from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: quote.from_amount },
-    to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: quote.to_amount },
+    from_asset: quote.from_asset,
+    to_asset: quote.to_asset,
     receiver_address: 'lnbc1...',  // your destination address/invoice
   });
 
@@ -137,36 +137,42 @@ executeSwap().catch(console.error);
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient, KaleidoError
-
+from kaleidoswap_sdk import (
+    CreateSwapOrderRequest,
+    KaleidoClient,
+    KaleidoError,
+    Layer,
+    PairQuoteRequest,
+    SwapLegInput,
+)
 client = KaleidoClient.create(
     base_url="https://api.regtest.kaleidoswap.com"
 )
 
 def execute_swap():
     # Step 1: Get a quote
-    quote = client.maker.get_quote({
-        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-    })
+    quote = await client.maker.get_quote(PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+    ))
 
     print(f"Quote received: {quote.from_amount} -> {quote.to_amount}")
     print(f"Price: {quote.price}")
 
-    # Step 2: Create the swap order
-    order = client.maker.create_swap_order({
-        "rfq_id": quote.rfq_id,
-        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": quote.from_amount},
-        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": quote.to_amount},
-        "receiver_address": "lnbc1...",  # your destination address/invoice
-    })
+    # Step 2: Create the swap order (use the quote's from_asset/to_asset — they are SwapLeg with amounts)
+    order = await client.maker.create_swap_order(CreateSwapOrderRequest(
+        rfq_id=quote.rfq_id,
+        from_asset=quote.from_asset,
+        to_asset=quote.to_asset,
+        receiver_address="lnbc1...",  # your destination address/invoice
+    ))
 
     print(f"Order created: {order.order_id}")
     print(f"Deposit address: {order.deposit_address}")
     print("Pay this invoice/address to proceed.")
 
     # Step 3: Wait for the user to pay, then track to completion
-    completed = client.maker.wait_for_swap_completion(order.order_id, options={
+    completed = await client.maker.wait_for_swap_completion(order.order_id, options={
         "timeout": 600,
         "poll_interval": 10,
         "on_status_update": lambda status: print(f"Status: {status}")
@@ -234,7 +240,15 @@ executeAtomicSwap().catch(console.error);
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk import (
+    ConfirmSwapRequest,
+    KaleidoClient,
+    Layer,
+    PairQuoteRequest,
+    SwapLegInput,
+    SwapRequest,
+)
+from kaleidoswap_sdk.rln import TakerRequest
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com",
@@ -243,35 +257,35 @@ client = KaleidoClient.create(
 
 def execute_atomic_swap():
     # Step 1: Get your node's taker pubkey
-    taker_info = client.rln.get_taker_pubkey()
+    taker_info = await client.rln.get_taker_pubkey()
 
     # Step 2: Enable WebSocket and get an rfq_id via a quote
     client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
 
-    quote = client.maker.get_quote({
-        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-    })
+    quote = await client.maker.get_quote(PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+    ))
     rfq_id = quote.rfq_id
 
     # Step 3: Initiate the swap — locks the price
-    swap = client.maker.init_swap({
-        "rfq_id": rfq_id,
-        "from_asset": "btc",
-        "from_amount": 100000,       # millisats
-        "to_asset": "rgb:...",       # USDT asset ID
-        "to_amount": quote.to_amount,
-    })
+    swap = await client.maker.init_swap(SwapRequest(
+        rfq_id=rfq_id,
+        from_asset="btc",
+        from_amount=100000,       # millisats
+        to_asset="rgb:...",       # USDT asset ID
+        to_amount=quote.to_amount,
+    ))
 
     # Step 4: Whitelist the swap on your RGB Lightning Node
-    client.rln.whitelist_swap({"swapstring": swap.swapstring})
+    await client.rln.whitelist_swap(TakerRequest(swapstring=swap.swapstring))
 
     # Step 5: Execute — both sides lock and settle atomically
-    client.maker.execute_swap({
-        "swapstring": swap.swapstring,
-        "taker_pubkey": taker_info.pubkey,
-        "payment_hash": swap.payment_hash,
-    })
+    await client.maker.execute_swap(ConfirmSwapRequest(
+        swapstring=swap.swapstring,
+        taker_pubkey=taker_info.pubkey,
+        payment_hash=swap.payment_hash,
+    ))
 
     print("Atomic swap complete!")
 
@@ -317,7 +331,7 @@ setTimeout(() => unsubscribe(), 60000);
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk import KaleidoClient, Layer
 
 client = KaleidoClient.create(
     base_url="https://api.regtest.kaleidoswap.com"
@@ -335,8 +349,8 @@ unsubscribe = await client.maker.stream_quotes_by_ticker(
         f"Price: {quote.price}, "
         f"From: {quote.from_amount} -> To: {quote.to_amount}"
     ),
-    preferred_from_layer="BTC_LN",
-    preferred_to_layer="RGB_LN"
+    preferred_from_layer=Layer.btc_ln,
+    preferred_to_layer=Layer.rgb_ln
 )
 
 # Call unsubscribe() when done
@@ -440,18 +454,20 @@ console.log(`Total orders: ${stats.total_orders}`);
 ```
 
 ```python Python
+from kaleidoswap_sdk import SwapOrderStatusRequest
+
 # Check order status
-status = client.maker.get_swap_order_status({"order_id": "order-123"})
+status = await client.maker.get_swap_order_status(SwapOrderStatusRequest(order_id="order-123"))
 print(f"Status: {status.status}")
 print(f"Payment: {status.payment_status}")
 
 # Get order history
-history = client.maker.get_order_history(limit=20)
+history = await client.maker.get_order_history(limit=20)
 for order in history.orders:
     print(f"{order.order_id}: {order.status}")
 
 # Get analytics
-stats = client.maker.get_order_analytics()
+stats = await client.maker.get_order_analytics()
 print(f"Total orders: {stats.total_orders}")
 ```
 </CodeGroup>
@@ -481,21 +497,23 @@ if (status.status === 'PENDING_RATE_DECISION') {
 ```
 
 ```python Python
-status = client.maker.get_swap_order_status({"order_id": "order-123"})
+from kaleidoswap_sdk import RateDecisionRequest, SwapOrderStatusRequest
+
+status = await client.maker.get_swap_order_status(SwapOrderStatusRequest(order_id="order-123"))
 
 if status.status == "PENDING_RATE_DECISION":
     # Accept the new rate
-    result = client.maker.submit_rate_decision({
-        "order_id": "order-123",
-        "accept_new_rate": True
-    })
+    result = await client.maker.submit_rate_decision(RateDecisionRequest(
+        order_id="order-123",
+        accept_new_rate=True
+    ))
     print("Rate accepted, swap continues")
 
     # Or reject and get a refund:
-    # client.maker.submit_rate_decision({
-    #     "order_id": "order-123",
-    #     "accept_new_rate": False
-    # })
+    # client.maker.submit_rate_decision(RateDecisionRequest(
+    #     order_id="order-123",
+    #     accept_new_rate=False
+    # ))
 ```
 </CodeGroup>
 
@@ -536,33 +554,36 @@ console.log(`Invoice: ${invoice.invoice}`);
 ```
 
 ```python Python
+from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.rln import LNInvoiceRequest
+
 client = KaleidoClient.create(
     base_url="https://api.regtest.kaleidoswap.com",
     node_url="http://localhost:3001"
 )
 
 # Get node info
-node_info = client.rln.get_node_info()
+node_info = await client.rln.get_node_info()
 print(f"Pubkey: {node_info.pubkey}")
 
 # Get balances
-btc_balance = client.rln.get_btc_balance()
+btc_balance = await client.rln.get_btc_balance()
 print(f"On-chain: {btc_balance.vanilla.spendable} sats")
 
 # List RGB assets
-rgb_assets = client.rln.list_assets()
+rgb_assets = await client.rln.list_assets()
 print(f"RGB assets: {len(rgb_assets.nia)} NIA assets")
 
 # List channels
-channels = client.rln.list_channels()
+channels = await client.rln.list_channels()
 print(f"Channels: {len(channels.channels)}")
 
 # Create a Lightning invoice
-invoice = client.rln.create_ln_invoice({
-    "amt_msat": 100000,
-    "expiry_sec": 3600,
-    "description": "Payment for service"
-})
+invoice = await client.rln.create_ln_invoice(LNInvoiceRequest(
+    amt_msat=100000,
+    expiry_sec=3600,
+    description="Payment for service"
+))
 print(f"Invoice: {invoice.invoice}")
 ```
 </CodeGroup>
@@ -595,7 +616,7 @@ sats = to_smallest_units(0.001, 8)     # 100000
 btc = to_display_units(100000, 8)       # 0.001
 
 # Using PrecisionHandler with asset metadata
-pairs = client.maker.list_pairs()
+pairs = await client.maker.list_pairs()
 # ... create mapped assets from pairs
 # handler = create_precision_handler(mapped_assets)
 # raw = handler.to_raw_amount(0.5, "BTC_ASSET_ID")
@@ -650,8 +671,8 @@ from kaleidoswap_sdk import (
 )
 
 try:
-    quote = client.maker.get_quote({...})
-    order = client.maker.create_swap_order({...})
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+    order = await client.maker.create_swap_order(CreateSwapOrderRequest(...))
 except QuoteExpiredError:
     print("Quote expired, fetching a new one...")
 except ValidationError as e:

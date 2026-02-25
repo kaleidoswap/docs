@@ -305,14 +305,14 @@ client = KaleidoClient.create(
 print(f"Has node: {client.has_node()}")
 
 try:
-    assets = client.maker.list_assets()
+    assets = await client.maker.list_assets()
     print(f"API connected: {len(assets.assets)} assets")
 except Exception as e:
     print(f"API connection failed: {e}")
 
 if client.has_node():
     try:
-        node_info = client.rln.get_node_info()
+        node_info = await client.rln.get_node_info()
         print(f"Node connected: {node_info.pubkey}")
     except Exception as e:
         print(f"Node connection failed: {e}")

@@ -72,7 +72,7 @@ client = KaleidoClient.create(
 )
 
 # Make your first API call
-assets = client.maker.list_assets()
+assets = await client.maker.list_assets()
 print(f"Found {len(assets.assets)} assets")
 ```
 </CodeGroup>
@@ -137,21 +137,15 @@ client = KaleidoClient.create(
 
 ### Environment Variables
 
-You can configure the SDK using environment variables. Copy this template to a `.env` file in your project root:
+You can pass the same options via environment variables. Supported names:
 
-```bash .env.example
-# Required: KaleidoSwap API base URL
-# Options: https://api.regtest.kaleidoswap.com | https://api.signet.kaleidoswap.com
-KALEIDO_API_URL=https://api.regtest.kaleidoswap.com
+| Variable | Maps to | Required |
+|----------|---------|----------|
+| `KALEIDO_API_URL` | `baseUrl` | Yes (or use default in code) |
+| `KALEIDO_NODE_URL` | `nodeUrl` | No (needed for wallet/channel operations) |
+| `KALEIDO_API_KEY` | `apiKey` | No |
 
-# Optional: URL of your RGB Lightning Node (required for wallet/channel operations)
-KALEIDO_NODE_URL=http://localhost:3001
-
-# Optional: API key for authenticated endpoints (not currently required)
-KALEIDO_API_KEY=
-```
-
-Then load variables from your environment:
+Example: read them in code and pass to `KaleidoClient.create()` (if you use a `.env` file, load it first with your usual tool, e.g. `dotenv` in Node).
 
 <CodeGroup>
 ```typescript TypeScript
@@ -209,12 +203,19 @@ if (client.hasNode()) {
 ```
 
 ```python Python
+from kaleidoswap_sdk import (
+    PairQuoteRequest,
+    CreateSwapOrderRequest,
+    SwapOrderStatusRequest,
+    LNInvoiceRequest
+)
+
 # Maker operations (market, orders, swaps, LSPS1)
 assets = client.maker.list_assets()
 pairs = client.maker.list_pairs()
-quote = client.maker.get_quote({...})
-order = client.maker.create_swap_order({...})
-status = client.maker.get_swap_order_status({"order_id": "order-123"})
+quote = client.maker.get_quote(PairQuoteRequest(...))
+order = client.maker.create_swap_order(CreateSwapOrderRequest(...))
+status = client.maker.get_swap_order_status(SwapOrderStatusRequest(order_id="order-123"))
 history = client.maker.get_order_history()
 lsp_info = client.maker.get_lsp_info()
 
@@ -223,7 +224,7 @@ if client.has_node():
     node_info = client.rln.get_node_info()
     balance = client.rln.get_btc_balance()
     channels = client.rln.list_channels()
-    invoice = client.rln.create_ln_invoice({...})
+    invoice = client.rln.create_ln_invoice(LNInvoiceRequest(...))
 ```
 </CodeGroup>
 

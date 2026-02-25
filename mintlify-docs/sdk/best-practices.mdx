@@ -94,10 +94,10 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError
+from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
 
 try:
-    quote = client.maker.get_quote({...})
+    quote = client.maker.get_quote(PairQuoteRequest(...))
 except QuoteExpiredError:
     # Retry with a fresh quote
     pass
@@ -195,16 +195,16 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_smallest_units
+from kaleidoswap_sdk import to_smallest_units, PairQuoteRequest, AssetInput
 
 # User enters 0.001 BTC
 user_input = 0.001
 raw_amount = to_smallest_units(user_input, 8)  # 100000
 
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": raw_amount},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+quote = client.maker.get_quote(PairQuoteRequest(
+    from_asset=AssetInput(asset_id="BTC", layer="BTC_LN", amount=raw_amount),
+    to_asset=AssetInput(asset_id="USDT", layer="RGB_LN")
+))
 ```
 </CodeGroup>
 

@@ -95,10 +95,10 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+quote = client.maker.get_quote(PairQuoteRequest(
+    from_asset=AssetInput(asset_id="BTC", layer="BTC_LN", amount=100000),
+    to_asset=AssetInput(asset_id="USDT", layer="RGB_LN")
+))
 # Returns: PairQuoteResponse
 ```
 </CodeGroup>
@@ -114,7 +114,7 @@ const routes = await client.maker.getPairRoutes({ /* GetPairRoutesRequest */ });
 ```
 
 ```python Python
-routes = client.maker.get_pair_routes({...})
+routes = client.maker.get_pair_routes(GetPairRoutesRequest(...))
 # Returns: list[SwapRoute]
 ```
 </CodeGroup>
@@ -130,7 +130,7 @@ const routes = await client.maker.getMarketRoutes({ /* DiscoverRoutesRequest */ 
 ```
 
 ```python Python
-routes = client.maker.get_market_routes({...})
+routes = client.maker.get_market_routes(DiscoverRoutesRequest(...))
 # Returns: RoutesResponse
 ```
 </CodeGroup>
@@ -156,13 +156,13 @@ const order = await client.maker.createSwapOrder({
 ```
 
 ```python Python
-order = client.maker.create_swap_order({
-    "rfq_id": quote.rfq_id,
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": 9500},
-    "receiver_address": "lnbc1...",
-    "min_onchain_conf": 1
-})
+order = client.maker.create_swap_order(CreateSwapOrderRequest(
+    rfq_id=quote.rfq_id,
+    from_asset=AssetInput(asset_id="BTC", layer="BTC_LN", amount=100000),
+    to_asset=AssetInput(asset_id="USDT", layer="RGB_LN", amount=9500),
+    receiver_address="lnbc1...",
+    min_onchain_conf=1
+))
 # Returns: CreateSwapOrderResponse
 ```
 </CodeGroup>
@@ -178,7 +178,7 @@ const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
 ```
 
 ```python Python
-status = client.maker.get_swap_order_status({"order_id": "order-123"})
+status = client.maker.get_swap_order_status(SwapOrderStatusRequest(order_id="order-123"))
 # Returns: SwapOrderStatusResponse
 ```
 </CodeGroup>
@@ -233,10 +233,10 @@ const result = await client.maker.submitRateDecision({
 ```
 
 ```python Python
-result = client.maker.submit_rate_decision({
-    "order_id": "order-123",
-    "accept_new_rate": True
-})
+result = client.maker.submit_rate_decision(RateDecisionRequest(
+    order_id="order-123",
+    accept_new_rate=True
+))
 # Returns: SwapOrderRateDecisionResponse
 ```
 </CodeGroup>
@@ -281,7 +281,7 @@ const result = await client.maker.initSwap({ /* InitiateSwapRequest */ });
 ```
 
 ```python Python
-result = client.maker.init_swap({...})
+result = client.maker.init_swap(InitiateSwapRequest(...))
 ```
 </CodeGroup>
 
@@ -295,7 +295,7 @@ const result = await client.maker.executeSwap({ /* ConfirmSwapRequest */ });
 ```
 
 ```python Python
-result = client.maker.execute_swap({...})
+result = client.maker.execute_swap(ConfirmSwapRequest(...))
 ```
 </CodeGroup>
 
@@ -309,7 +309,7 @@ const status = await client.maker.getAtomicSwapStatus({ /* GetSwapStatusRequest 
 ```
 
 ```python Python
-status = client.maker.get_atomic_swap_status({...})
+status = client.maker.get_atomic_swap_status(GetSwapStatusRequest(...))
 ```
 </CodeGroup>
 
@@ -369,7 +369,7 @@ const order = await client.maker.createLspOrder({ /* CreateLspOrderRequest */ })
 ```
 
 ```python Python
-order = client.maker.create_lsp_order({...})
+order = client.maker.create_lsp_order(CreateOrderRequest(...))
 ```
 </CodeGroup>
 
@@ -383,7 +383,7 @@ const order = await client.maker.getLspOrder({ order_id: 'lsp-order-123' });
 ```
 
 ```python Python
-order = client.maker.get_lsp_order({"order_id": "lsp-order-123"})
+order = client.maker.get_lsp_order(GetOrderRequest(order_id="lsp-order-123"))
 ```
 </CodeGroup>
 
@@ -397,7 +397,7 @@ const fees = await client.maker.estimateLspFees({ /* CreateLspOrderRequest */ })
 ```
 
 ```python Python
-fees = client.maker.estimate_lsp_fees({...})
+fees = client.maker.estimate_lsp_fees(CreateOrderRequest(...))
 ```
 </CodeGroup>
 
@@ -411,7 +411,7 @@ const result = await client.maker.submitLspRateDecision({ /* LspRateDecisionRequ
 ```
 
 ```python Python
-result = client.maker.submit_lsp_rate_decision({...})
+result = client.maker.submit_lsp_rate_decision(RateDecisionRequest(...))
 ```
 </CodeGroup>
 
@@ -425,7 +425,7 @@ const result = await client.maker.retryAssetDelivery({ /* RetryDeliveryRequest *
 ```
 
 ```python Python
-result = client.maker.retry_asset_delivery({...})
+result = client.maker.retry_asset_delivery(RetryDeliveryRequest(...))
 ```
 </CodeGroup>
 
@@ -623,7 +623,7 @@ All RGB Lightning Node operations are accessed via `client.rln`. Requires `nodeU
 | `issueAssetNIA(body)` | `issue_asset_nia(body)` | Issue NIA asset |
 | `issueAssetCFA(body)` | `issue_asset_cfa(body)` | Issue CFA asset |
 | `issueAssetUDA(body)` | `issue_asset_uda(body)` | Issue UDA asset |
-| `sendAsset(body)` | `send_asset(body)` | Send RGB asset |
+| `sendAsset(body)` | `send_rgb(body)` | Send RGB asset |
 | `listTransfers(body)` | `list_transfers(body)` | List transfers |
 | `refreshTransfers(body?)` | `refresh_transfers(body?)` | Refresh transfer status |
 | `failTransfers(body)` | `fail_transfers(body)` | Fail pending transfers |

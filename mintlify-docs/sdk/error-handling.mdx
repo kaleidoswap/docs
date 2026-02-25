@@ -275,12 +275,14 @@ from kaleidoswap_sdk import (
     NodeNotConfiguredError,
     InsufficientBalanceError,
     RateLimitError,
+    PairQuoteRequest,
+    CreateSwapOrderRequest,
 )
 import time
 
 try:
-    quote = client.maker.get_quote({...})
-    order = client.maker.create_swap_order({...})
+    quote = client.maker.get_quote(PairQuoteRequest(...))
+    order = client.maker.create_swap_order(CreateSwapOrderRequest(...))
 except QuoteExpiredError:
     # Get a fresh quote and retry
     pass

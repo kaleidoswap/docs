@@ -1,0 +1,187 @@
+---
+title: "How to Create Swaps"
+description: "Step-by-step guide for creating and executing swap orders and atomic swaps."
+---
+
+# Creating Swaps
+
+This guide provides a detailed walkthrough on how to execute both Order-Based Swaps (custodial/invoicing) and Atomic Swaps (direct node-to-node) using the Kaleido Python SDK.
+
+These examples leverage the Pydantic models from `kaleidoswap_sdk` to ensure type safety and precise API interactions.
+
+---
+
+## 1. Creating a Swap Order
+
+Swap orders involve locking in a rate via a quote and receiving a deposit address (or invoice) to fund the swap.
+
+### Prerequisites & Imports
+
+```python Python
+from kaleidoswap_sdk import (
+    KaleidoClient,
+    Layer,
+    AssetInput,
+    PairQuoteRequest,
+    CreateSwapOrderRequest,
+    SwapLeg,
+    ReceiverAddress,
+    ReceiverAddressFormat,
+)
+
+client = KaleidoClient.create(
+    base_url="https://api.regtest.kaleidoswap.com"
+)
+```
+
+### Step-by-Step Flow
+
+#### Step 1: Find the Desired Asset ID
+Before requesting a quote, you often need the exact RGB Asset ID. You can discover this via the market API.
+
+```python Python
+# List all available assets
+assets_response = client.maker.list_assets()
+
+# Find the specific asset (e.g., USDT)
+usdt_asset = next((a for a in assets_response.assets if a.ticker == "USDT"), None)
+if not usdt_asset:
+    raise ValueError("USDT asset not found")
+
+# Extract the RGB Protocol ID
+asset_id = usdt_asset.protocol_ids.get("RGB")
+```
+
+#### Step 2: Request a Quote
+Request a price quote for trading BTC for the RGB asset. 
+
+```python Python
+quote = client.maker.get_quote(PairQuoteRequest(
+    from_asset=AssetInput(
+        asset_id="BTC", 
+        layer=Layer.btc_ln, 
+        amount=100000  # 100,000 sats
+    ),
+    to_asset=AssetInput(
+        asset_id=asset_id, 
+        layer=Layer.rgb_ln
+    )
+))
+
+print(f"RFQ ID: {quote.rfq_id}")
+print(f"From: {quote.from_asset.amount} sats")
+print(f"To: {quote.to_asset.amount} USDT")
+```
+
+#### Step 3: Create the Swap Order
+With the quote in hand, validate the legs into `SwapLeg` models and create the swap order.
+
+```python Python
+# Re-validate the quote's assets into fully formed SwapLegs
+from_leg = SwapLeg.model_validate(quote.from_asset.to_dict())
+to_leg = SwapLeg.model_validate(quote.to_asset.to_dict())
+
+request = CreateSwapOrderRequest(
+    rfq_id=quote.rfq_id,
+    from_asset=from_leg,
+    to_asset=to_leg,
+    receiver_address=ReceiverAddress(
+        address="lnbc1...", # Your destination invoice
+        format=ReceiverAddressFormat.bolt11,
+    ),
+    min_onchain_conf=1,
+)
+
+order = client.maker.create_swap_order(request)
+
+print(f"Order created! Deposit funds to: {order.deposit_address.address}")
+```
+
+---
+
+## 2. Executing an Atomic Swap
+
+Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning Nodes. You must run an RLN node alongside this client.
+
+### Prerequisites & Imports
+
+```python Python
+from kaleidoswap_sdk import (
+    KaleidoClient,
+    Layer,
+    AssetInput,
+    PairQuoteRequest,
+    SwapRequest,
+    ConfirmSwapRequest
+)
+from kaleidoswap_sdk.generated.node_types import TakerRequest
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001"
+)
+```
+
+### Step-by-Step Flow
+
+#### Step 1: Get a Quote
+Obtain a quote for the asset pair you wish to swap.
+
+```python Python
+quote = client.maker.get_quote(PairQuoteRequest(
+    from_asset=AssetInput(
+        asset_id="BTC", 
+        layer=Layer.btc_ln, 
+        amount=1000000
+    ),
+    to_asset=AssetInput(
+        asset_id="rgb:...:...", # Your RGB asset ID
+        layer=Layer.rgb_ln
+    )
+))
+```
+
+#### Step 2: Initialize the Swap
+Initialize the swap lock with the Maker based on the RFQ.
+
+```python Python
+swap_request = SwapRequest(
+    rfq_id=quote.rfq_id,
+    from_asset=quote.from_asset.asset_id,
+    from_amount=quote.from_asset.amount,
+    to_asset=quote.to_asset.asset_id,
+    to_amount=quote.to_asset.amount,
+)
+
+swap = client.maker.init_swap(swap_request)
+# Returns `swapstring` and `payment_hash`
+```
+
+#### Step 3: Whitelist on your Taker Node
+Your RLN node needs to be aware of the `swapstring` to process the incoming swap correctly.
+
+```python Python
+# Get your own node's pubkey
+taker_node_info = client.rln.get_node_info()
+taker_pubkey = taker_node_info.pubkey
+
+# Authorize the swap string internally
+client.rln.whitelist_swap(TakerRequest(
+    swapstring=swap.swapstring
+))
+```
+
+#### Step 4: Execute the Swap
+Finalize the execution with the Maker by providing your node's details.
+
+```python Python
+confirm_request = ConfirmSwapRequest(
+    swapstring=swap.swapstring,
+    payment_hash=swap.payment_hash,
+    taker_pubkey=taker_pubkey,
+)
+
+execution_response = client.maker.execute_swap(confirm_request)
+
+print(f"Swap Executed! Status: {execution_response.status}")
+```

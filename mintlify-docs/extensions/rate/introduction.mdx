@@ -5,11 +5,11 @@ description: Bitcoin Layer 2 browser wallet with RGB support and built-in swaps
 
 ## What is Rate?
 
-Rate is a Chrome extension wallet designed for Bitcoin Layer 2 networks. It connects to your RGB Lightning Node (RLN) and provides a complete wallet experience -- asset management, payments, swaps, and DApp connectivity -- all from your browser toolbar.
+Rate is a browser extension wallet designed for Bitcoin Layer 2 networks. It connects to your RGB Lightning Node (RLN) and provides a complete wallet experience: asset management, payments, swaps, and DApp connectivity.
 
 <CardGroup cols={2}>
   <Card title="Multi-Protocol" icon="layer-group">
-    Supports RGB with Spark, Arkade, and Liquid planned
+    Supports RGB, Spark, Arkade (planned), and Liquid (planned)
   </Card>
   <Card title="Built-in Swaps" icon="arrows-rotate">
     Swap assets directly in the extension via the Kaleidoswap maker API
@@ -28,6 +28,7 @@ Rate is a Chrome extension wallet designed for Bitcoin Layer 2 networks. It conn
 
 - View **BTC balances** (on-chain and Lightning)
 - View **RGB-20 token balances** with asset details
+- View **Spark token balances** with asset details
 - Balance breakdown by layer (on-chain vs. Lightning)
 - Real-time balance updates
 
@@ -65,7 +66,7 @@ Rate uses a multi-protocol adapter architecture:
 | Protocol | Status | Description |
 |----------|--------|-------------|
 | **RGB** | Implemented | Full RGB asset support via RGB Lightning Node |
-| **Spark** | Planned | Spark protocol adapter |
+| **Spark** | In Progress | Spark protocol adapter |
 | **Arkade** | Planned | Arkade protocol adapter |
 | **Liquid** | Planned | Liquid protocol adapter |
 
@@ -75,7 +76,7 @@ The extension communicates with your RGB Lightning Node via the **Kaleidoswap SD
 
 ![Rate Extension Architecture](/assets/images/rate-extension.png)
 
-- The **extension UI** runs as a Chrome popup with a clean wallet interface
+- The **extension UI** runs as a popup with a clean wallet interface
 - The **background service worker** handles all API communication
 - **RGB Lightning Node** connection is required for core wallet features
 - **Maker API** connection is optional and enables built-in swap functionality

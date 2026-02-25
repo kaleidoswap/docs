@@ -5,7 +5,7 @@ description: Install the Rate browser extension
 
 ## Browser Requirements
 
-Rate is a Chrome extension compatible with Chromium-based browsers:
+Rate is a web extension compatible with browsers:
 
 | Browser | Supported |
 |---------|-----------|
@@ -13,7 +13,7 @@ Rate is a Chrome extension compatible with Chromium-based browsers:
 | **Brave** | Yes |
 | **Edge** | Yes |
 | **Opera** | Yes |
-| **Firefox** | Not yet |
+| **Firefox** | Yes |
 | **Safari** | Not yet |
 
 ## Installation
@@ -54,6 +54,10 @@ If you are building from source or testing a pre-release version:
     Navigate to `chrome://extensions` in your browser.
   </Step>
 
+  <Step title="Build the Extension">
+    Go to the repository and build the extension using `pnpm run build`.
+  </Step>
+  
   <Step title="Enable Developer Mode">
     Toggle **Developer mode** in the top-right corner.
   </Step>
@@ -77,7 +81,7 @@ After installation, clicking the Rate icon in your toolbar opens the extension p
 4. **Node connection** - Connect to your RGB Lightning Node
 5. **Ready** - Your wallet is set up and ready to use
 
-See [Getting Started](/extensions/rate/getting-started) for a detailed walkthrough.
+See [Getting Started](/extensions/rate/getting-started) for more information.
 
 ## Permissions
 
@@ -95,14 +99,11 @@ Rate stores all data locally in your browser using `chrome.storage.local`. No da
 
 ## Updating
 
-Rate updates automatically through the Chrome Web Store. For manual installations, pull the latest code, rebuild, and reload the extension on `chrome://extensions`.
+Rate updates automatically through the Chrome Web Store. For manual installations, pull the latest code, rebuild, and reload the extension on your browser.
 
 ## Uninstalling
 
-To remove Rate:
-1. Right-click the Rate icon in your toolbar
-2. Select **Remove from Chrome**
-3. Confirm the removal
+To remove the Rate extension proceed with the instructions provided by your browser.
 
 <Warning>
 Uninstalling the extension removes all locally stored wallet data. Make sure you have backed up your Nostr keys and any important data before uninstalling.

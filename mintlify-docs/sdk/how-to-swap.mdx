@@ -111,7 +111,7 @@ from kaleidoswap_sdk import (
     Layer,
     AssetInput,
     PairQuoteRequest,
-    SwapRequest,
+    InitiateSwapRequest,
     ConfirmSwapRequest
 )
 from kaleidoswap_sdk.generated.node_types import TakerRequest
@@ -145,7 +145,7 @@ quote = client.maker.get_quote(PairQuoteRequest(
 Initialize the swap lock with the Maker based on the RFQ.
 
 ```python Python
-swap_request = SwapRequest(
+swap_request = InitiateSwapRequest(
     rfq_id=quote.rfq_id,
     from_asset=quote.from_asset.asset_id,
     from_amount=quote.from_asset.amount,

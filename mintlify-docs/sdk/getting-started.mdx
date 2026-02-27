@@ -72,7 +72,7 @@ client = KaleidoClient.create(
 )
 
 # Make your first API call
-assets = await client.maker.list_assets()
+assets = client.maker.list_assets()
 print(f"Found {len(assets.assets)} assets")
 ```
 </CodeGroup>

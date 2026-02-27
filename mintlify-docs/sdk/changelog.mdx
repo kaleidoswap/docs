@@ -7,40 +7,42 @@ description: SDK and API version history for KaleidoSwap
   This changelog covers the KaleidoSwap SDK (`kaleidoswap-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
-## SDK v0.4.x — Current
+## SDK v0.5.x — Current
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 
-**API Version:** `v1`
+**Compatible APIs:** Latest Maker API and Latest RLN API
 
 ### What's included
 
+#### Maker API Client (`client.maker`)
+
+Market data, quotes, swap orders, atomic swap protocol, LSPS1 channel ordering, and WebSocket streaming:
+
+- Market operations: asset and pair listing with caching
+- Quote endpoints: single and bulk quote requests with real-time streaming
+- Swap order management: create, list, and monitor order-based swaps
+- Atomic swap protocol: HTLC-based swaps for desktop and direct node interactions
+- LSPS1 channel ordering: liquidity and channel provisioning
+- WebSocket streaming: `streamQuotesByTicker` / `streamQuotesForAllRoutes` with automatic route discovery and reconnection
+
+#### RLN API Client (`client.rln`)
+
+Full RGB Lightning Node operations for wallet management, Lightning channels, and asset operations:
+
+- Wallet management: BTC and RGB asset operations with balance tracking
+- Channel management: open, monitor, and close Lightning channels
+- Invoice operations: create, list, and monitor Lightning invoices
+- Payment execution: pay invoices and coordinate node-to-node swaps
+- Node info and health: retrieve node configuration and pubkey information
+
+#### SDK Features
+
 - `KaleidoClient.create()` — synchronous factory for both TypeScript and Python
-- **MakerClient** (`client.maker`) — market data, quotes, swap orders, atomic swap protocol, LSPS1 channel ordering, WebSocket streaming - **RlnClient** (`client.rln`) — full RGB Lightning Node operations: wallet, BTC, RGB assets, channels, invoices, payments
 - `waitForSwapCompletion` — built-in polling helper with configurable timeout and status callback
-- `streamQuotesByTicker` / `streamQuotesForAllRoutes` — high-level WebSocket quote streaming with automatic route discovery
 - `PrecisionHandler` and `AssetPairMapper` utilities for amount conversion and pair lookups
 - Full error hierarchy: `KaleidoError`, `NetworkError`, `ValidationError`, `APIError`, `QuoteExpiredError`, `NodeNotConfiguredError`
 - Auto-generated types from OpenAPI specs (TypeScript: `openapi-fetch`; Python: Pydantic models)
-
----
-
-## API v1 — Current
-
-**Status:** Stable. No breaking changes planned for v1.
-
-### Maker API endpoints
-
-| Endpoint group | Base path | Description |
-|----------------|-----------|-------------|
-| Market | `/api/v1/market/` | Assets, pairs, quotes, fee estimates |
-| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by desktop app |
-| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by web app |
-| LSPS1 | `/api/v1/lsps1/` | Channel ordering and liquidity |
-
-### RLN API endpoints
-
-Provided by the RGB Lightning Node directly at `nodeUrl`. Includes wallet, BTC, RGB assets, channels, invoices, payments, and swap coordination.
 
 ---
 

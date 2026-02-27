@@ -165,6 +165,14 @@
             ]
           },
           {
+            "group": "Version & Compatibility",
+            "icon": "check-double",
+            "pages": [
+              "sdk/maker-api-compatibility",
+              "sdk/rln-api-compatibility"
+            ]
+          },
+          {
             "group": "Core Reference",
             "icon": "code",
             "pages": [

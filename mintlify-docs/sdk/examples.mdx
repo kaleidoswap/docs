@@ -235,6 +235,12 @@ executeAtomicSwap().catch(console.error);
 
 ```python Python
 from kaleidoswap_sdk import KaleidoClient
+from kaleidoswap_sdk.models import (
+    PairQuoteRequest,
+    AssetInput,
+    InitiateSwapRequest,
+    ConfirmSwapRequest,
+)
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com",

@@ -46,6 +46,25 @@ Full RGB Lightning Node operations for wallet management, Lightning channels, an
 
 ---
 
+## API v1 — Current
+
+**Status:** Stable. No breaking changes planned for v1.
+
+### Maker API endpoints
+
+| Endpoint group | Base path | Description |
+|----------------|-----------|-------------|
+| Market | `/api/v1/market/` | Assets, pairs, quotes, fee estimates |
+| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by desktop app |
+| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by web app |
+| LSPS1 | `/api/v1/lsps1/` | Channel ordering and liquidity |
+
+### RLN API endpoints
+
+Provided by the RGB Lightning Node directly at `nodeUrl`. Includes wallet, BTC, RGB assets, channels, invoices, payments, and swap coordination.
+
+---
+
 ## Live Environments
 
 | Environment | API URL | WebSocket URL | Status |

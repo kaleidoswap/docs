@@ -94,10 +94,10 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError
+from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
 
 try:
-    quote = client.maker.get_quote({...})
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
 except QuoteExpiredError:
     # Retry with a fresh quote
     pass
@@ -195,16 +195,16 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_smallest_units
+from kaleidoswap_sdk import Layer, PairQuoteRequest, SwapLegInput, to_smallest_units
 
 # User enters 0.001 BTC
 user_input = 0.001
 raw_amount = to_smallest_units(user_input, 8)  # 100000
 
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": raw_amount},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+quote = await client.maker.get_quote(PairQuoteRequest(
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=raw_amount),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+))
 ```
 </CodeGroup>
 
@@ -251,7 +251,7 @@ const balance = await client.rln.getBtcBalance();
 if not client.has_node():
     raise RuntimeError("Node URL required for this operation")
 
-balance = client.rln.get_btc_balance()
+balance = await client.rln.get_btc_balance()
 ```
 </CodeGroup>
 
@@ -339,7 +339,7 @@ if (pair?.routes?.[0]) {
 ```
 
 ```python Python
-pairs = client.maker.list_pairs()
+pairs = await client.maker.list_pairs()
 pair = next(
     (p for p in pairs.pairs
      if p.base_asset_ticker == "BTC" and p.quote_asset_ticker == "USDT"),
@@ -386,7 +386,7 @@ def get_pairs():
     global _cached_pairs, _cache_time
     now = time.time()
     if _cached_pairs is None or now - _cache_time > 60:
-        _cached_pairs = client.maker.list_pairs()
+        _cached_pairs = await client.maker.list_pairs()
         _cache_time = now
     return _cached_pairs
 ```

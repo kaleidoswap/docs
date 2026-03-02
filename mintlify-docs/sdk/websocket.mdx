@@ -54,13 +54,15 @@ unsubscribe();
 ```
 
 ```python Python
+from kaleidoswap_sdk import Layer
+
 unsubscribe = await client.maker.stream_quotes_by_ticker(
     from_ticker="BTC",
     to_ticker="USDT",
     amount=100000,
     on_update=lambda quote: print(f"Price: {quote.price}, RFQ: {quote.rfq_id}"),
-    preferred_from_layer="BTC_LN",
-    preferred_to_layer="RGB_LN"
+    preferred_from_layer=Layer.btc_ln,
+    preferred_to_layer=Layer.rgb_ln
 )
 
 # Stop streaming when done
@@ -91,8 +93,8 @@ unsubscribe = await client.maker.stream_quotes(
     from_asset="BTC",
     to_asset="USDT",
     from_amount=100000,
-    from_layer="BTC_LN",
-    to_layer="RGB_LN",
+    from_layer=Layer.btc_ln,
+    to_layer=Layer.rgb_ln,
     on_update=lambda quote: print(f"{quote.from_amount} -> {quote.to_amount}")
 )
 ```

@@ -60,7 +60,7 @@ const response = await client.maker.listAssets();
 ```
 
 ```python Python
-response = client.maker.list_assets()
+response = await client.maker.list_assets()
 # Returns: AssetsResponse
 ```
 </CodeGroup>
@@ -76,7 +76,7 @@ const response = await client.maker.listPairs();
 ```
 
 ```python Python
-response = client.maker.list_pairs()
+response = await client.maker.list_pairs()
 # Returns: TradingPairsResponse
 ```
 </CodeGroup>
@@ -95,10 +95,12 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+from kaleidoswap_sdk import Layer, PairQuoteRequest, SwapLegInput
+
+quote = await client.maker.get_quote(PairQuoteRequest(
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=100000),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+))
 # Returns: PairQuoteResponse
 ```
 </CodeGroup>
@@ -114,7 +116,9 @@ const routes = await client.maker.getPairRoutes({ /* GetPairRoutesRequest */ });
 ```
 
 ```python Python
-routes = client.maker.get_pair_routes({...})
+from kaleidoswap_sdk import GetPairRoutesRequest
+
+routes = await client.maker.get_pair_routes(GetPairRoutesRequest(...))
 # Returns: list[SwapRoute]
 ```
 </CodeGroup>
@@ -125,12 +129,14 @@ Discover routes across the market.
 
 <CodeGroup>
 ```typescript TypeScript
-const routes = await client.maker.getMarketRoutes({ /* DiscoverRoutesRequest */ });
-// Returns: DiscoverRoutesResponse
+const routes = await client.maker.getMarketRoutes({ /* RoutesRequest */ });
+// Returns: RoutesResponse
 ```
 
 ```python Python
-routes = client.maker.get_market_routes({...})
+from kaleidoswap_sdk import RoutesRequest
+
+routes = await client.maker.get_market_routes(RoutesRequest(...))
 # Returns: RoutesResponse
 ```
 </CodeGroup>
@@ -145,10 +151,11 @@ Create a new swap order from a quote.
 
 <CodeGroup>
 ```typescript TypeScript
+// Use the quote's from_asset and to_asset (SwapLeg) — they already have amounts from the quote
 const order = await client.maker.createSwapOrder({
   rfq_id: quote.rfq_id,
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN', amount: 9500 },
+  from_asset: quote.from_asset,
+  to_asset: quote.to_asset,
   receiver_address: 'lnbc1...',
   min_onchain_conf: 1
 });
@@ -156,13 +163,16 @@ const order = await client.maker.createSwapOrder({
 ```
 
 ```python Python
-order = client.maker.create_swap_order({
-    "rfq_id": quote.rfq_id,
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN", "amount": 9500},
-    "receiver_address": "lnbc1...",
-    "min_onchain_conf": 1
-})
+from kaleidoswap_sdk import CreateSwapOrderRequest
+
+# Use the quote's from_asset and to_asset (SwapLeg) — they already have amounts from the quote
+order = await client.maker.create_swap_order(CreateSwapOrderRequest(
+    rfq_id=quote.rfq_id,
+    from_asset=quote.from_asset,
+    to_asset=quote.to_asset,
+    receiver_address="lnbc1...",
+    min_onchain_conf=1
+))
 # Returns: CreateSwapOrderResponse
 ```
 </CodeGroup>
@@ -178,7 +188,9 @@ const status = await client.maker.getSwapOrderStatus({ order_id: 'order-123' });
 ```
 
 ```python Python
-status = client.maker.get_swap_order_status({"order_id": "order-123"})
+from kaleidoswap_sdk import SwapOrderStatusRequest
+
+status = await client.maker.get_swap_order_status(SwapOrderStatusRequest(order_id="order-123"))
 # Returns: SwapOrderStatusResponse
 ```
 </CodeGroup>
@@ -198,7 +210,7 @@ const history = await client.maker.getOrderHistory({
 ```
 
 ```python Python
-history = client.maker.get_order_history(status="FILLED", limit=10, skip=0)
+history = await client.maker.get_order_history(status="FILLED", limit=10, skip=0)
 # Returns: OrderHistoryResponse
 ```
 </CodeGroup>
@@ -214,7 +226,7 @@ const stats = await client.maker.getOrderAnalytics();
 ```
 
 ```python Python
-stats = client.maker.get_order_analytics()
+stats = await client.maker.get_order_analytics()
 # Returns: OrderStatsResponse
 ```
 </CodeGroup>
@@ -233,10 +245,12 @@ const result = await client.maker.submitRateDecision({
 ```
 
 ```python Python
-result = client.maker.submit_rate_decision({
-    "order_id": "order-123",
-    "accept_new_rate": True
-})
+from kaleidoswap_sdk import RateDecisionRequest
+
+result = await client.maker.submit_rate_decision(RateDecisionRequest(
+    order_id="order-123",
+    accept_new_rate=True
+))
 # Returns: SwapOrderRateDecisionResponse
 ```
 </CodeGroup>
@@ -256,7 +270,7 @@ const completed = await client.maker.waitForSwapCompletion('order-123', {
 ```
 
 ```python Python
-completed = client.maker.wait_for_swap_completion("order-123", options={
+completed = await client.maker.wait_for_swap_completion("order-123", options={
     "timeout": 300,
     "poll_interval": 10,
     "on_status_update": lambda status: print(f"Status: {status}")
@@ -281,7 +295,9 @@ const result = await client.maker.initSwap({ /* InitiateSwapRequest */ });
 ```
 
 ```python Python
-result = client.maker.init_swap({...})
+from kaleidoswap_sdk import SwapRequest
+
+result = await client.maker.init_swap(SwapRequest(...))
 ```
 </CodeGroup>
 
@@ -295,7 +311,9 @@ const result = await client.maker.executeSwap({ /* ConfirmSwapRequest */ });
 ```
 
 ```python Python
-result = client.maker.execute_swap({...})
+from kaleidoswap_sdk import ConfirmSwapRequest
+
+result = await client.maker.execute_swap(ConfirmSwapRequest(...))
 ```
 </CodeGroup>
 
@@ -309,7 +327,9 @@ const status = await client.maker.getAtomicSwapStatus({ /* GetSwapStatusRequest 
 ```
 
 ```python Python
-status = client.maker.get_atomic_swap_status({...})
+from kaleidoswap_sdk import SwapStatusRequest
+
+status = await client.maker.get_atomic_swap_status(SwapStatusRequest(...))
 ```
 </CodeGroup>
 
@@ -323,7 +343,7 @@ const info = await client.maker.getSwapNodeInfo();
 ```
 
 ```python Python
-info = client.maker.get_swap_node_info()
+info = await client.maker.get_swap_node_info()
 ```
 </CodeGroup>
 
@@ -341,7 +361,7 @@ const info = await client.maker.getLspInfo();
 ```
 
 ```python Python
-info = client.maker.get_lsp_info()
+info = await client.maker.get_lsp_info()
 ```
 </CodeGroup>
 
@@ -355,7 +375,7 @@ const networkInfo = await client.maker.getLspNetworkInfo();
 ```
 
 ```python Python
-network_info = client.maker.get_lsp_network_info()
+network_info = await client.maker.get_lsp_network_info()
 ```
 </CodeGroup>
 
@@ -369,7 +389,9 @@ const order = await client.maker.createLspOrder({ /* CreateLspOrderRequest */ })
 ```
 
 ```python Python
-order = client.maker.create_lsp_order({...})
+from kaleidoswap_sdk import CreateOrderRequest
+
+order = await client.maker.create_lsp_order(CreateOrderRequest(...))
 ```
 </CodeGroup>
 
@@ -383,7 +405,9 @@ const order = await client.maker.getLspOrder({ order_id: 'lsp-order-123' });
 ```
 
 ```python Python
-order = client.maker.get_lsp_order({"order_id": "lsp-order-123"})
+from kaleidoswap_sdk import GetOrderRequest
+
+order = await client.maker.get_lsp_order(GetOrderRequest(order_id="lsp-order-123"))
 ```
 </CodeGroup>
 
@@ -397,7 +421,9 @@ const fees = await client.maker.estimateLspFees({ /* CreateLspOrderRequest */ })
 ```
 
 ```python Python
-fees = client.maker.estimate_lsp_fees({...})
+from kaleidoswap_sdk import CreateOrderRequest
+
+fees = await client.maker.estimate_lsp_fees(CreateOrderRequest(...))
 ```
 </CodeGroup>
 
@@ -411,7 +437,9 @@ const result = await client.maker.submitLspRateDecision({ /* LspRateDecisionRequ
 ```
 
 ```python Python
-result = client.maker.submit_lsp_rate_decision({...})
+from kaleidoswap_sdk import RateDecisionRequest
+
+result = await client.maker.submit_lsp_rate_decision(RateDecisionRequest(...))
 ```
 </CodeGroup>
 
@@ -425,7 +453,9 @@ const result = await client.maker.retryAssetDelivery({ /* RetryDeliveryRequest *
 ```
 
 ```python Python
-result = client.maker.retry_asset_delivery({...})
+from kaleidoswap_sdk import RetryDeliveryRequest
+
+result = await client.maker.retry_asset_delivery(RetryDeliveryRequest(...))
 ```
 </CodeGroup>
 
@@ -469,12 +499,14 @@ const unsubscribe = await client.maker.streamQuotes(
 ```
 
 ```python Python
+from kaleidoswap_sdk import Layer
+
 unsubscribe = await client.maker.stream_quotes(
     from_asset="BTC",
     to_asset="USDT",
     from_amount=100000,
-    from_layer="BTC_LN",
-    to_layer="RGB_LN",
+    from_layer=Layer.btc_ln,
+    to_layer=Layer.rgb_ln,
     on_update=lambda quote: print(f"Price: {quote.price}")
 )
 # Call unsubscribe() to stop streaming
@@ -497,13 +529,15 @@ const unsubscribe = await client.maker.streamQuotesByTicker(
 ```
 
 ```python Python
+from kaleidoswap_sdk import Layer
+
 unsubscribe = await client.maker.stream_quotes_by_ticker(
     from_ticker="BTC",
     to_ticker="USDT",
     amount=100000,
     on_update=lambda quote: print(f"Quote: {quote.price}"),
-    preferred_from_layer="BTC_LN",
-    preferred_to_layer="RGB_LN"
+    preferred_from_layer=Layer.btc_ln,
+    preferred_to_layer=Layer.rgb_ln
 )
 ```
 </CodeGroup>
@@ -623,7 +657,7 @@ All RGB Lightning Node operations are accessed via `client.rln`. Requires `nodeU
 | `issueAssetNIA(body)` | `issue_asset_nia(body)` | Issue NIA asset |
 | `issueAssetCFA(body)` | `issue_asset_cfa(body)` | Issue CFA asset |
 | `issueAssetUDA(body)` | `issue_asset_uda(body)` | Issue UDA asset |
-| `sendAsset(body)` | `send_asset(body)` | Send RGB asset |
+| `sendAsset(body)` | `send_rgb(body)` | Send RGB asset |
 | `listTransfers(body)` | `list_transfers(body)` | List transfers |
 | `refreshTransfers(body?)` | `refresh_transfers(body?)` | Refresh transfer status |
 | `failTransfers(body)` | `fail_transfers(body)` | Fail pending transfers |

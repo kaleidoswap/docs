@@ -52,20 +52,27 @@ if (client.hasNode()) {
 ```
 
 ```python Python
+import asyncio
 from kaleidoswap_sdk import KaleidoClient
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001"  # Required for RLN operations
-)
 
-# Check if node is configured
-if client.has_node():
-    # Access RLN API through client.rln
-    node_info = client.rln.get_node_info()
-    balance = client.rln.get_btc_balance()
-    channels = client.rln.list_channels()
-else:
-    print("Node not configured - RLN operations unavailable")
+async def main():
+    client = KaleidoClient.create(
+        base_url="https://api.signet.kaleidoswap.com",
+        node_url="http://localhost:3001"  # Required for RLN operations
+    )
+
+    # Check if node is configured
+    if client.has_node():
+        # Access RLN API through client.rln
+        node_info = await client.rln.get_node_info()
+        balance = await client.rln.get_btc_balance()
+        channels = await client.rln.list_channels()
+    else:
+        print("Node not configured - RLN operations unavailable")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 </CodeGroup>

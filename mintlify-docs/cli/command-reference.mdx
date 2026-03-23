@@ -1,0 +1,216 @@
+---
+title: 'Command Reference'
+description: 'Full command map for the Kaleido CLI, including nested command groups and the most important flags'
+---
+
+## Root Command
+
+```bash
+kaleido [global options] <command> [subcommand] [args]
+```
+
+### Global options
+
+| Option | Meaning |
+|-------|---------|
+| `--json` | Emit raw JSON |
+| `--agent` | Disable prompts for non-interactive use |
+| `--node-url` | Override the configured node URL |
+| `--api-url` | Override the configured API URL |
+| `--install-completion` | Install shell completion |
+| `--show-completion` | Print shell completion |
+
+## Top-Level Commands
+
+| Command | Summary |
+|--------|---------|
+| `setup` | First-run configuration and optional local node creation |
+| `node` | Docker-backed RLN environment lifecycle and wallet access |
+| `wallet` | BTC wallet operations |
+| `asset` | RGB asset management and issuance |
+| `channel` | Channel management and LSP order flows |
+| `peer` | Peer connectivity |
+| `payment` | Lightning and RGB+LN payments |
+| `market` | Market discovery, quotes, and analytics |
+| `swap` | Order, atomic, and local node swap flows |
+| `config` | Stored CLI configuration |
+
+## `setup`
+
+| Command | Notes |
+|--------|-------|
+| `kaleido setup` | Interactive first-run flow |
+| `kaleido setup --mode market --defaults` | Market-only setup |
+| `kaleido setup --mode local --create-node --defaults` | Local node setup |
+
+Key flags: `--mode`, `--defaults`, `--api-url`, `--network`, `--node-url`, `--create-node`, `--spawn-dir`, `--env-name`, `--node-count`, `--start`
+
+## `node`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido node create [name]` | Create a named environment |
+| `kaleido node list` | List environments and node URLs |
+| `kaleido node use <name> [--node N]` | Select the active node |
+| `kaleido node up <name>` | Start containers |
+| `kaleido node stop <name>` | Stop containers |
+| `kaleido node down <name>` | Remove containers and networks |
+| `kaleido node ps <name>` | Show container status |
+| `kaleido node logs <name>` | Stream logs |
+| `kaleido node clean <name>` | Delete volumes |
+| `kaleido node info` | Show node details |
+| `kaleido node init` | Initialize the wallet |
+| `kaleido node unlock` | Unlock the wallet |
+| `kaleido node lock` | Lock the wallet |
+
+### `node taker`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido node taker pubkey` | Print the taker public key |
+| `kaleido node taker whitelist <swapstring>` | Accept a swap on the taker side |
+
+## `wallet`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido wallet address` | New BTC deposit address |
+| `kaleido wallet balance` | BTC balance |
+| `kaleido wallet send <amount> <address>` | Send BTC |
+| `kaleido wallet utxos` | List UTXOs |
+| `kaleido wallet create-utxos` | Create UTXOs for RGB usage |
+| `kaleido wallet transactions` | Transaction history |
+| `kaleido wallet backup <path>` | Backup wallet data |
+| `kaleido wallet restore <path>` | Restore wallet data |
+| `kaleido wallet change-password` | Change wallet password |
+| `kaleido wallet estimate-fee` | Estimate fee rate |
+| `kaleido wallet shutdown` | Gracefully shut down the node |
+
+## `asset`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido asset list` | List assets |
+| `kaleido asset balance <asset-id>` | Asset balance |
+| `kaleido asset metadata <asset-id>` | Asset metadata |
+| `kaleido asset invoice <asset-id>` | Create an RGB invoice |
+| `kaleido asset send <asset-id> <amount> <invoice>` | Send RGB assets |
+| `kaleido asset send-batch` | Send to many recipients |
+| `kaleido asset transfers <asset-id>` | Transfer history |
+| `kaleido asset refresh` | Refresh pending transfers |
+| `kaleido asset sync` | Sync RGB wallet |
+| `kaleido asset fail-transfers` | Mark pending transfers as failed |
+| `kaleido asset media` | Fetch asset media |
+
+### `asset issue`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido asset issue nia` | Issue a fixed-supply fungible asset |
+| `kaleido asset issue cfa` | Issue a collectible fungible asset |
+| `kaleido asset issue uda` | Issue a unique digital asset |
+
+## `channel`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido channel list` | List channels |
+| `kaleido channel open <peer>` | Open a channel |
+| `kaleido channel close <channel-id>` | Close a channel |
+
+### `channel order`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido channel order create <client-pubkey>` | Create an LSP channel order |
+| `kaleido channel order get <order-id>` | Fetch order status |
+| `kaleido channel order decide <order-id>` | Submit a rate decision |
+| `kaleido channel order estimate-fees` | Estimate channel-order fees |
+
+### `channel lsp`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido channel lsp info` | LSP metadata and options |
+| `kaleido channel lsp network-info` | LSP network information |
+
+## `peer`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido peer list` | List peers |
+| `kaleido peer connect <peer>` | Connect to a peer |
+| `kaleido peer disconnect <pubkey>` | Disconnect from a peer |
+
+## `payment`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido payment invoice` | Create a BOLT11 or RGB+LN invoice |
+| `kaleido payment send <invoice>` | Pay an invoice |
+| `kaleido payment list` | List payments |
+| `kaleido payment status <payment-hash>` | Payment status |
+| `kaleido payment decode <invoice>` | Decode an invoice |
+| `kaleido payment invoice-status <invoice>` | Invoice status |
+| `kaleido payment keysend` | Spontaneous Lightning payment |
+
+## `market`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido market assets` | List assets |
+| `kaleido market pairs` | List pairs |
+| `kaleido market quote <pair>` | Request a quote |
+| `kaleido market info` | Maker node information |
+| `kaleido market routes <pair>` | Available routes |
+| `kaleido market analytics` | Order analytics |
+
+## `swap`
+
+### `swap order`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido swap order create <pair>` | Create a maker swap order |
+| `kaleido swap order decide <order-id>` | Submit a pending rate decision |
+| `kaleido swap order status <order-id>` | Order status |
+| `kaleido swap order history` | Order history |
+
+### `swap atomic`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido swap atomic init <pair>` | Initialize an atomic swap |
+| `kaleido swap atomic execute` | Execute the swap |
+| `kaleido swap atomic status <payment-hash>` | Atomic swap status |
+| `kaleido swap atomic run <pair>` | Run the full atomic flow |
+
+### `swap node`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido swap node init` | Start a low-level node swap |
+| `kaleido swap node whitelist` | Whitelist a taker-side swap |
+| `kaleido swap node execute` | Execute the swap |
+| `kaleido swap node status <payment-hash>` | Node swap status |
+| `kaleido swap node list` | List local swaps |
+
+## `config`
+
+| Command | Summary |
+|--------|---------|
+| `kaleido config show` | Print current config |
+| `kaleido config set <key> <value>` | Update one config key |
+| `kaleido config reset` | Reset config to defaults |
+| `kaleido config path` | Print config file path |
+
+Valid config keys: `node-url`, `api-url`, `network`, `spawn-dir`
+
+## Machine-Readable Mode
+
+Every command group can be combined with `--json`:
+
+```bash
+kaleido --json wallet balance
+kaleido --json market quote BTC/USDT --from-amount 100000
+```

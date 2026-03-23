@@ -202,6 +202,42 @@
         ]
       },
       {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "terminal",
+            "pages": [
+              "cli/introduction",
+              "cli/getting-started"
+            ]
+          },
+          {
+            "group": "Local Node Operations",
+            "icon": "server",
+            "pages": [
+              "cli/node-environments",
+              "cli/wallet-assets-payments"
+            ]
+          },
+          {
+            "group": "Trading & Channels",
+            "icon": "arrows-rotate",
+            "pages": [
+              "cli/channels-lsp",
+              "cli/market-and-swaps"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "book",
+            "pages": [
+              "cli/command-reference"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {

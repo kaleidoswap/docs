@@ -1,0 +1,142 @@
+---
+title: 'Getting Started'
+description: 'Install the Kaleido CLI, run first-time setup, and configure your default API and node endpoints'
+---
+
+## Requirements
+
+- Python 3.10 or newer
+- [`uv`](https://docs.astral.sh/uv/) recommended, or `pip`
+- Docker and Docker Compose for `node` commands and any local RLN workflow
+
+## Installation
+
+### Install globally with `uv`
+
+```bash
+uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+```
+
+This installs the `kaleido` executable without cloning the repository first.
+
+### Install from a local checkout
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-cli
+cd kaleido-cli
+make install
+```
+
+### Bootstrap from a checkout
+
+```bash
+python install.py
+```
+
+## First-Run Setup
+
+For new users, start with:
+
+```bash
+kaleido setup
+```
+
+The setup flow supports two profiles:
+
+- `market`: save API settings for market data and server-side swap flows
+- `local`: configure API settings and optionally create a local Docker node environment
+
+### Non-interactive examples
+
+```bash
+# Market-only setup with saved defaults
+kaleido setup --mode market --defaults
+
+# Create and start a local node environment with defaults
+kaleido setup --mode local --create-node --defaults
+```
+
+### Setup flags
+
+| Flag | Purpose |
+|------|---------|
+| `--mode market|local` | Choose the setup profile |
+| `--defaults` | Use saved or default values instead of prompting |
+| `--api-url` | Save the KaleidoSwap API base URL |
+| `--network` | Save the Bitcoin network |
+| `--node-url` | Save a node URL directly |
+| `--create-node` | Create a Docker node environment during setup |
+| `--spawn-dir` | Set the base directory for named environments |
+| `--env-name` | Name the environment created during setup |
+| `--node-count` | Number of nodes to create |
+| `--start` | Start the environment after it is created |
+
+## Configuration
+
+The CLI stores configuration in:
+
+```text
+~/.kaleido/config.json
+```
+
+Supported keys:
+
+- `api-url`
+- `node-url`
+- `network`
+- `spawn-dir`
+
+Example commands:
+
+```bash
+kaleido config show
+kaleido config set api-url https://api.kaleidoswap.com
+kaleido config set network signet
+kaleido config set spawn-dir ~/.kaleido/spawn
+kaleido config path
+```
+
+## Quick Start
+
+### Market-only
+
+```bash
+kaleido setup --mode market --defaults
+kaleido market pairs
+kaleido market quote BTC/USDT --from-amount 100000
+```
+
+### Local node
+
+```bash
+kaleido setup --mode local --create-node --defaults
+kaleido node init
+kaleido node unlock
+kaleido node info
+kaleido wallet address
+```
+
+## Shell Completion
+
+Install completion for your current shell with:
+
+```bash
+kaleido --install-completion
+```
+
+Or print the completion script for manual installation:
+
+```bash
+kaleido --show-completion
+```
+
+## When To Override Config
+
+Stored config is useful for your default environment. Override it per command when needed:
+
+```bash
+kaleido --api-url https://api.signet.kaleidoswap.com market pairs
+kaleido --node-url http://localhost:3002 wallet balance
+```
+
+Continue to [Node Environments](/cli/node-environments) if you need to manage multiple local RLN stacks.

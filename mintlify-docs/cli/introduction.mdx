@@ -1,0 +1,93 @@
+---
+title: 'CLI Overview'
+description: 'Use the Kaleido CLI to manage local RGB Lightning nodes and interact with KaleidoSwap from the terminal'
+---
+
+## What The CLI Covers
+
+`kaleido` is the command-line interface for two distinct workflows:
+
+- **Local RGB Lightning Node operations**: create Docker-backed node environments, initialize and unlock wallets, manage BTC, RGB assets, channels, peers, and Lightning payments.
+- **KaleidoSwap market and swap flows**: inspect market data, request quotes, create maker swap orders, run atomic swaps, and drive low-level local node swap steps.
+
+The same binary supports both interactive terminal use and scripted automation.
+
+## Why Use It
+
+<CardGroup cols={2}>
+  <Card title="Guided Setup" icon="rocket" href="/cli/getting-started">
+    Start in market-only mode or provision a local node environment from one setup flow.
+  </Card>
+  <Card title="Named Environments" icon="server" href="/cli/node-environments">
+    Keep multiple local node stacks isolated and switch the active node with one command.
+  </Card>
+  <Card title="Wallet And RGB Ops" icon="wallet" href="/cli/wallet-assets-payments">
+    Work with BTC, RGB assets, invoices, transfers, backups, and Lightning payments.
+  </Card>
+  <Card title="Trading And Swaps" icon="arrows-rotate" href="/cli/market-and-swaps">
+    Query pairs and quotes, place maker orders, and run atomic or local swap flows.
+  </Card>
+</CardGroup>
+
+## Global Flags
+
+All command groups inherit the same root flags:
+
+| Flag | Purpose |
+|------|---------|
+| `--json` | Return raw JSON instead of rich terminal output |
+| `--agent` | Disable interactive prompts for scripted or agent-driven use |
+| `--node-url` | Override the configured RGB Lightning Node URL for one command |
+| `--api-url` | Override the configured KaleidoSwap API URL for one command |
+| `--install-completion` | Install shell completion for the current shell |
+| `--show-completion` | Print shell completion for manual setup |
+
+Example:
+
+```bash
+kaleido --json market pairs
+kaleido --node-url http://localhost:3001 wallet balance
+kaleido --agent channel open 03ab...@host:9735 --capacity 100000
+```
+
+## Environment Variables
+
+The CLI also reads these environment variables:
+
+| Variable | Use |
+|----------|-----|
+| `KALEIDO_NODE_URL` | Default RLN node URL |
+| `KALEIDO_API_URL` | Default KaleidoSwap API URL |
+
+Command-line flags take precedence over environment variables and stored config.
+
+## Command Groups
+
+| Group | Purpose |
+|------|---------|
+| `setup` | First-run setup for market-only or local-node use |
+| `node` | Environment lifecycle, wallet initialization, unlock, and taker operations |
+| `wallet` | BTC balance, addresses, sends, UTXOs, fees, backup, and restore |
+| `asset` | RGB assets, issuance, invoices, sends, transfer history, and sync |
+| `channel` | Lightning channels plus LSP-backed channel ordering |
+| `peer` | Peer discovery and connectivity |
+| `payment` | Lightning invoices, sends, keysend, decode, and status |
+| `market` | Assets, pairs, routes, quotes, maker info, and analytics |
+| `swap` | Maker order flow, maker atomic flow, and local node swap flow |
+| `config` | Stored CLI configuration in `~/.kaleido/config.json` |
+
+## Output Modes
+
+By default, `kaleido` renders human-readable tables and summaries. For pipelines and automation, prefer `--json`:
+
+```bash
+kaleido --json market quote BTC/USDT --from-amount 100000
+```
+
+Use `--agent` when the command must fail instead of prompting for missing input.
+
+## Next Steps
+
+- Start with [Getting Started](/cli/getting-started) if you are installing the CLI for the first time.
+- See [Node Environments](/cli/node-environments) if you need a local RLN stack.
+- Use [Command Reference](/cli/command-reference) for the full command map.

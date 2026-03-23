@@ -1,0 +1,110 @@
+---
+title: 'Channels And LSP Flows'
+description: 'Open Lightning channels directly or use KaleidoSwap LSP channel-order workflows from the Kaleido CLI'
+---
+
+## Channel Operations
+
+The `channel` group covers direct Lightning channel management against your local node.
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido channel list` | List current channels |
+| `kaleido channel open <peer>` | Open a channel to a peer |
+| `kaleido channel close <channel-id>` | Close a channel |
+
+Peer arguments use `pubkey@host:port` format.
+
+## Open A Channel
+
+```bash
+kaleido channel open 03abc...@peer.host:9735 --capacity 100000
+```
+
+Notable options:
+
+- `--capacity`
+- `--push-msat`
+- `--asset-id`
+- `--asset-amount`
+- `--push-asset-amount`
+- `--public` or `--private`
+- `--with-anchors`
+- `--fee-base-msat`
+- `--fee-proportional-millionths`
+
+Example colored channel:
+
+```bash
+kaleido channel open 03abc...@peer.host:9735 \
+  --capacity 100000 \
+  --asset-id rgb:abc... \
+  --asset-amount 5000
+```
+
+## LSP Channel Orders
+
+Use `channel order` when you want KaleidoSwap's LSP flow instead of manually opening a peer channel.
+
+### Subcommands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido channel order create <client-pubkey>` | Create a channel order |
+| `kaleido channel order get <order-id>` | Fetch status and details |
+| `kaleido channel order decide <order-id>` | Submit a rate decision |
+| `kaleido channel order estimate-fees` | Estimate opening fees |
+
+### Create an order
+
+```bash
+kaleido channel order create 03abc... \
+  --lsp-balance 1000000 \
+  --client-balance 500000
+```
+
+Useful options:
+
+- `--confirmations`
+- `--funding-within`
+- `--expiry-blocks`
+- `--refund-address`
+- `--announce` or `--private`
+- `--asset-id`
+- `--lsp-asset-amount`
+- `--client-asset-amount`
+- `--rfq-id`
+- `--email`
+
+Example colored channel order:
+
+```bash
+kaleido channel order create 03abc... \
+  --lsp-balance 1000000 \
+  --client-balance 500000 \
+  --asset-id rgb:xyz... \
+  --lsp-asset-amount 5000 \
+  --client-asset-amount 2000
+```
+
+## LSP Metadata
+
+The `lsp` subgroup exposes server metadata and network details:
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido channel lsp info` | Show LSP information and available options |
+| `kaleido channel lsp network-info` | Show network metadata for the LSP |
+
+These commands are useful before creating orders or when wiring client defaults.
+
+## Practical Sequence
+
+```bash
+kaleido channel lsp info
+kaleido node taker pubkey
+kaleido channel order estimate-fees --lsp-balance 1000000 --client-balance 500000
+kaleido channel order create 03abc... --lsp-balance 1000000 --client-balance 500000
+```
+
+See [Market And Swaps](/cli/market-and-swaps) for server-side trading flows that often run alongside channels and liquidity management.

@@ -1,0 +1,134 @@
+---
+title: 'Market And Swaps'
+description: 'Browse KaleidoSwap markets, request quotes, and run order, atomic, or local node swap flows from the CLI'
+---
+
+## Market Data
+
+The `market` group is the read-only entry point for pairs, quotes, routes, and maker metadata.
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido market assets` | List tradeable assets |
+| `kaleido market pairs` | List trading pairs |
+| `kaleido market quote <pair>` | Request a quote |
+| `kaleido market info` | Show maker node information |
+| `kaleido market routes <pair>` | List route options |
+| `kaleido market analytics` | Show maker-side order analytics |
+
+### Quote examples
+
+```bash
+kaleido market quote BTC/USDT --from-amount 100000
+kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB_LN
+```
+
+Important quote options:
+
+- `--from-amount` or `--to-amount`
+- `--from-layer`
+- `--to-layer`
+
+Supported layer values include `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN` for market quotes.
+
+## Three Swap Scopes
+
+The `swap` group is split by execution model:
+
+| Scope | Use case |
+|------|----------|
+| `swap order` | Create and track maker swap orders through the KaleidoSwap server |
+| `swap atomic` | Run maker-backed atomic swaps using your local node as taker |
+| `swap node` | Drive low-level local RLN swap steps directly |
+
+## Maker Order Flow
+
+Use this flow when you want server-managed swap orders.
+
+### Subcommands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido swap order create <pair>` | Create an order from a live quote |
+| `kaleido swap order decide <order-id>` | Submit a pending rate decision |
+| `kaleido swap order status <order-id>` | Check order status |
+| `kaleido swap order history` | List historical orders |
+
+### Example
+
+```bash
+kaleido swap order create BTC/USDT \
+  --to-amount 5000000 \
+  --receiver-address lnbcrt... \
+  --receiver-format BOLT11
+```
+
+Useful options:
+
+- `--from-amount` or `--to-amount`
+- `--from-layer`
+- `--to-layer`
+- `--receiver-address`
+- `--receiver-format`
+- `--min-onchain-conf`
+- `--refund-address`
+- `--email`
+
+## Atomic Swap Flow
+
+Use `swap atomic` when the maker side is remote but execution uses your local node as taker.
+
+### Subcommands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido swap atomic init <pair>` | Initialize the atomic swap |
+| `kaleido swap atomic execute` | Execute the initialized swap |
+| `kaleido swap atomic status <payment-hash>` | Track atomic swap status |
+| `kaleido swap atomic run <pair>` | Run init, whitelist, and execute in one command |
+
+### Example
+
+```bash
+kaleido swap atomic run BTC/USDT --to-amount 5000000
+```
+
+You can also provide:
+
+- `--taker-pubkey`
+- `--yes`
+- explicit `--from-layer` and `--to-layer`
+
+## Local Node Swap Flow
+
+Use `swap node` for low-level RLN swap steps:
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido swap node init` | Start a local maker-init swap flow |
+| `kaleido swap node whitelist` | Whitelist the swap on the taker side |
+| `kaleido swap node execute` | Execute after whitelisting |
+| `kaleido swap node status <payment-hash>` | Inspect status |
+| `kaleido swap node list` | List swaps known to the node |
+
+This path is useful for debugging, demos, and lower-level protocol operations where you want each step exposed separately.
+
+## Recommended Trade Flow
+
+### Market-only
+
+```bash
+kaleido market pairs
+kaleido market quote BTC/USDT --from-amount 100000
+kaleido swap order create BTC/USDT --to-amount 5000000 --receiver-address lnbcrt... --receiver-format BOLT11
+```
+
+### With a local node
+
+```bash
+kaleido node unlock
+kaleido node taker pubkey
+kaleido swap atomic run BTC/USDT --from-amount 100000 --from-layer BTC_LN --to-layer RGB_LN
+```
+
+Use [Command Reference](/cli/command-reference) for the complete command map.

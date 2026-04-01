@@ -1,0 +1,138 @@
+---
+title: 'Node Environments'
+description: 'Create, run, switch, and maintain named local RGB Lightning Node environments with the Kaleido CLI'
+---
+
+## Named Environment Model
+
+`kaleido node` manages **named Docker Compose environments** stored under a base directory, which defaults to:
+
+```text
+~/.kaleido/spawn/
+```
+
+Each environment gets its own compose file and volumes, which makes it practical to keep separate local stacks for development, testing, or demos.
+
+Example layout:
+
+```text
+~/.kaleido/spawn/
+├── default/
+│   ├── docker-compose.yml
+│   └── volumes/
+└── staging/
+    ├── docker-compose.yml
+    └── volumes/
+```
+
+## Create An Environment
+
+```bash
+kaleido node create
+kaleido node create staging
+```
+
+The wizard prompts for:
+
+1. Base directory
+2. Environment name
+3. Node count
+4. Bitcoin network
+5. Base daemon and peer ports
+6. Whether to start the environment immediately
+
+## Lifecycle Commands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido node list` | Show all environments and their node URLs |
+| `kaleido node use <name> [--node N]` | Point the active `node-url` at one node in an environment |
+| `kaleido node up <name>` | Start containers |
+| `kaleido node stop <name>` | Stop containers without deleting data |
+| `kaleido node down <name>` | Stop and remove containers and networks |
+| `kaleido node ps <name>` | Show container status |
+| `kaleido node logs <name>` | Stream logs |
+| `kaleido node clean <name>` | Delete environment data volumes |
+
+When exactly one environment exists, commands like `up`, `stop`, `logs`, and `clean` can auto-detect it.
+
+## Switch The Active Node
+
+Use `kaleido node use` to update the configured node URL:
+
+```bash
+kaleido node use default
+kaleido node use staging --node 2
+```
+
+This is the bridge between Docker-managed environments and all node-dependent commands such as `wallet`, `asset`, `channel`, and `payment`.
+
+## Initialize And Unlock
+
+After a fresh environment starts, initialize the wallet once:
+
+```bash
+kaleido node init
+```
+
+Key options:
+
+- `--password` to pass the wallet password directly
+- `--mnemonic` to restore from an existing mnemonic during initialization
+
+After every restart, unlock the wallet:
+
+```bash
+kaleido node unlock
+```
+
+Notable unlock options:
+
+- `--password`
+- `--bitcoind-user`
+- `--bitcoind-pass`
+- `--bitcoind-host`
+- `--bitcoind-port`
+- `--indexer-url`
+- `--proxy-endpoint`
+- `--announce-alias`
+- `--announce-address`
+
+By default, the command uses the rgbtools regtest services exposed by the CLI.
+
+## Inspect And Lock
+
+```bash
+kaleido node info
+kaleido node lock
+```
+
+Use `info` to confirm the node is reachable and correctly configured before running wallet, channel, or swap flows.
+
+## Taker Operations
+
+The nested `taker` group supports atomic and low-level swap acceptance on the node side:
+
+```bash
+kaleido node taker pubkey
+kaleido node taker whitelist '30/rgb:abc.../10/rgb:def.../...'
+```
+
+## Recommended Local Flow
+
+```bash
+kaleido node create devnet
+kaleido node up devnet
+kaleido node use devnet
+kaleido node init
+kaleido node unlock
+kaleido node info
+```
+
+## Operational Notes
+
+- `clean` is irreversible because it removes the underlying data volumes.
+- `down` removes containers and networks, but preserves volumes.
+- `logs` accepts `--service` to limit output to one container.
+
+Continue to [Wallet, Assets, And Payments](/cli/wallet-assets-payments) for the commands you run against an unlocked node.

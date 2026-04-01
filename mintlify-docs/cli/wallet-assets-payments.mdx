@@ -1,0 +1,138 @@
+---
+title: 'Wallet, Assets, And Payments'
+description: 'Manage BTC, RGB assets, Lightning invoices, and node backups through the Kaleido CLI'
+---
+
+## Before You Start
+
+These command groups require an active and unlocked node:
+
+```bash
+kaleido node use default
+kaleido node unlock
+```
+
+## BTC Wallet
+
+### Common wallet commands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido wallet address` | Generate a new on-chain BTC deposit address |
+| `kaleido wallet balance` | Show BTC balance |
+| `kaleido wallet send <amount> <address>` | Send on-chain BTC |
+| `kaleido wallet utxos` | List UTXOs |
+| `kaleido wallet create-utxos` | Create colored UTXOs for RGB operations |
+| `kaleido wallet transactions` | List on-chain transactions |
+| `kaleido wallet estimate-fee` | Estimate the on-chain fee rate |
+| `kaleido wallet backup <path>` | Create an encrypted wallet backup |
+| `kaleido wallet restore <path>` | Restore from a backup archive |
+| `kaleido wallet change-password` | Rotate the wallet password |
+| `kaleido wallet shutdown` | Gracefully shut down the node |
+
+### Examples
+
+```bash
+kaleido wallet address
+kaleido wallet balance
+kaleido wallet send 50000 bc1q...
+kaleido wallet create-utxos --num 10 --size 3000
+```
+
+### Backup and restore
+
+```bash
+kaleido wallet backup ~/kaleido-backup.zip
+kaleido wallet restore ~/kaleido-backup.zip
+```
+
+Both commands accept `--password`. Restore overwrites the current node data, so use it deliberately.
+
+## RGB Assets
+
+### Core asset commands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido asset list` | List assets held by the node |
+| `kaleido asset balance <asset-id>` | Show balance for one asset |
+| `kaleido asset metadata <asset-id>` | Show asset metadata |
+| `kaleido asset invoice <asset-id>` | Create an RGB invoice |
+| `kaleido asset send <asset-id> <amount> <invoice>` | Send RGB assets |
+| `kaleido asset send-batch` | Send to multiple RGB recipients in one transaction |
+| `kaleido asset transfers <asset-id>` | Inspect transfer history |
+| `kaleido asset refresh` | Refresh pending transfers |
+| `kaleido asset sync` | Synchronize the RGB wallet |
+| `kaleido asset fail-transfers` | Mark pending transfers as failed |
+| `kaleido asset media` | Fetch asset media bytes by file digest |
+
+### Issue new assets
+
+The `issue` subgroup supports the three supported schemas:
+
+```bash
+kaleido asset issue nia --name "MyToken" --ticker MTK --supply 21000000
+kaleido asset issue cfa --name "Art Piece" --supply 100 --file ./art.png
+kaleido asset issue uda --name "Ticket #1" --file ./ticket.png
+```
+
+Use:
+
+- `nia` for fixed-supply fungible assets
+- `cfa` for collectible fungible assets
+- `uda` for unique digital assets
+
+### Asset invoice and send examples
+
+```bash
+kaleido asset invoice rgb:abc123... --amount 500 --duration 3600
+kaleido asset send rgb:abc123... 100 rgb:invoice...
+```
+
+Notable `asset send` options:
+
+- `--fee-rate`
+- `--min-confirmations`
+- `--donation`
+- `--transport-endpoint`
+- `--skip-sync`
+
+## Lightning And RGB+LN Payments
+
+### Payment commands
+
+| Command | Purpose |
+|--------|---------|
+| `kaleido payment invoice` | Create a BOLT11 invoice |
+| `kaleido payment send <invoice>` | Pay a Lightning invoice |
+| `kaleido payment list` | List payments |
+| `kaleido payment status <payment-hash>` | Inspect payment state |
+| `kaleido payment decode <invoice>` | Decode a Lightning or RGB invoice |
+| `kaleido payment invoice-status <invoice>` | Check invoice state |
+| `kaleido payment keysend` | Send a spontaneous Lightning payment |
+
+### Examples
+
+```bash
+# BTC invoice
+kaleido payment invoice --amount-msat 10000
+
+# RGB+LN invoice
+kaleido payment invoice --asset-id rgb:abc... --asset-amount 500
+
+# Pay an invoice
+kaleido payment send lnbc...
+
+# Decode a received invoice
+kaleido payment decode rgb:...
+```
+
+When paying zero-amount invoices, provide `--amount-msat`. For RGB+LN payments, supply `--asset-id` and `--asset-amount`.
+
+## Working Style
+
+- Use `--json` when you need machine-readable responses.
+- Use `--skip-sync` only when stale wallet or transfer state is acceptable.
+- Create extra UTXOs before heavy RGB activity to avoid running out of usable colored outputs.
+
+See [Channels And LSP Flows](/cli/channels-lsp) next if you are managing channels or ordering inbound liquidity.

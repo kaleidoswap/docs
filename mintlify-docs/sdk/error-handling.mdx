@@ -37,7 +37,7 @@ All SDK errors extend `KaleidoError` with these properties:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoError } from 'kaleidoswap-sdk';
+import { KaleidoError } from 'kaleido-sdk';
 
 try {
   await client.maker.listPairs();
@@ -52,7 +52,7 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoError
+from kaleido_sdk import KaleidoError
 
 try:
     await client.maker.list_pairs()
@@ -72,12 +72,12 @@ Raised for HTTP errors (status 400-599).
 
 <CodeGroup>
 ```typescript TypeScript
-import { APIError } from 'kaleidoswap-sdk';
+import { APIError } from 'kaleido-sdk';
 // Properties: code='API_ERROR', statusCode, message, details
 ```
 
 ```python Python
-from kaleidoswap_sdk import APIError
+from kaleido_sdk import APIError
 # Properties: code='API_ERROR', status_code, response_body
 ```
 </CodeGroup>
@@ -88,7 +88,7 @@ Raised when rate limit is exceeded (HTTP 429). Extends `APIError`.
 
 <CodeGroup>
 ```typescript TypeScript
-import { RateLimitError } from 'kaleidoswap-sdk';
+import { RateLimitError } from 'kaleido-sdk';
 // Additional property: retryAfter?: number (seconds)
 
 try { /* ... */ } catch (error) {
@@ -99,7 +99,7 @@ try { /* ... */ } catch (error) {
 ```
 
 ```python Python
-from kaleidoswap_sdk import RateLimitError
+from kaleido_sdk import RateLimitError
 # Additional property: retry_after: int | None
 
 try:
@@ -143,7 +143,7 @@ Raised for swap operation failures.
 
 <CodeGroup>
 ```typescript TypeScript
-import { SwapError } from 'kaleidoswap-sdk';
+import { SwapError } from 'kaleido-sdk';
 // Additional property: swapId?: string
 
 try { /* ... */ } catch (error) {
@@ -154,7 +154,7 @@ try { /* ... */ } catch (error) {
 ```
 
 ```python Python
-from kaleidoswap_sdk import SwapError
+from kaleido_sdk import SwapError
 # Additional property: swap_id: str | None
 ```
 </CodeGroup>
@@ -165,7 +165,7 @@ Raised when an RLN node operation is attempted without a configured `nodeUrl`.
 
 <CodeGroup>
 ```typescript TypeScript
-import { NodeNotConfiguredError } from 'kaleidoswap-sdk';
+import { NodeNotConfiguredError } from 'kaleido-sdk';
 
 try {
   await client.rln.getNodeInfo();
@@ -177,7 +177,7 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import NodeNotConfiguredError
+from kaleido_sdk import NodeNotConfiguredError
 
 try:
     await client.rln.get_node_info()
@@ -196,7 +196,7 @@ Raised when a balance is insufficient for the requested operation.
 
 <CodeGroup>
 ```typescript TypeScript
-import { InsufficientBalanceError } from 'kaleidoswap-sdk';
+import { InsufficientBalanceError } from 'kaleido-sdk';
 // Properties: requiredAmount: bigint, availableAmount: bigint, asset?: string
 
 try { /* ... */ } catch (error) {
@@ -207,7 +207,7 @@ try { /* ... */ } catch (error) {
 ```
 
 ```python Python
-from kaleidoswap_sdk import InsufficientBalanceError
+from kaleido_sdk import InsufficientBalanceError
 # Properties: required_amount, available_amount, asset
 
 try:
@@ -232,7 +232,7 @@ import {
   NodeNotConfiguredError,
   InsufficientBalanceError,
   RateLimitError,
-} from 'kaleidoswap-sdk';
+} from 'kaleido-sdk';
 
 try {
   const quote = await client.maker.getQuote({ /* ... */ });
@@ -264,7 +264,7 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import (
+from kaleido_sdk import (
     KaleidoError,
     APIError,
     NetworkError,

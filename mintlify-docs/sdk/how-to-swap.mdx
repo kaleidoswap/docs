@@ -7,7 +7,7 @@ description: "Step-by-step guide for creating and executing swap orders and atom
 
 This guide provides a detailed walkthrough on how to execute both Order-Based Swaps (custodial/invoicing) and Atomic Swaps (direct node-to-node) using the Kaleido Python SDK.
 
-These examples leverage the Pydantic models from `kaleidoswap_sdk` to ensure type safety and precise API interactions.
+These examples leverage the Pydantic models from `kaleido_sdk` to ensure type safety and precise API interactions.
 
 ---
 
@@ -18,7 +18,7 @@ Swap orders involve locking in a rate via a quote and receiving a deposit addres
 ### Prerequisites & Imports
 
 ```python Python
-from kaleidoswap_sdk import (
+from kaleido_sdk import (
     CreateSwapOrderRequest,
     KaleidoClient,
     Layer,
@@ -101,7 +101,7 @@ Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning N
 ### Prerequisites & Imports
 
 ```python Python
-from kaleidoswap_sdk import (
+from kaleido_sdk import (
     ConfirmSwapRequest,
     InitiateSwapRequest,
     KaleidoClient,
@@ -109,7 +109,7 @@ from kaleidoswap_sdk import (
     PairQuoteRequest,
     SwapLegInput,
 )
-from kaleidoswap_sdk.rln import TakerRequest
+from kaleido_sdk.rln import TakerRequest
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com",

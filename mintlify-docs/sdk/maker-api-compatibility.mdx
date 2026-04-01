@@ -30,7 +30,7 @@ To use Maker API features with the SDK:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
   baseUrl: 'https://api.regtest.kaleidoswap.com',
@@ -44,7 +44,7 @@ const quote = await client.maker.getQuote({ asset_id: '...', network: 'BTC' });
 
 ```python Python
 import asyncio
-from kaleidoswap_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient
 
 async def main():
     client = KaleidoClient.create(

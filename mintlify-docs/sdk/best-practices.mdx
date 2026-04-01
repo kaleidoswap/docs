@@ -11,7 +11,7 @@ Keep configuration out of source code:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
   baseUrl: process.env.KALEIDO_API_URL!,
@@ -22,7 +22,7 @@ const client = KaleidoClient.create({
 
 ```python Python
 import os
-from kaleidoswap_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
     base_url=os.environ["KALEIDO_API_URL"],
@@ -39,7 +39,7 @@ Create one client instance and reuse it throughout your application:
 <CodeGroup>
 ```typescript TypeScript
 // lib/kaleido.ts
-import { KaleidoClient } from 'kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleido-sdk';
 
 let client: KaleidoClient | null = null;
 
@@ -55,7 +55,7 @@ export function getClient(): KaleidoClient {
 
 ```python Python
 # lib/kaleido.py
-from kaleidoswap_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient
 
 _client = None
 
@@ -77,7 +77,7 @@ Wrap SDK calls in try/catch blocks and handle specific error types:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoError, NetworkError, QuoteExpiredError } from 'kaleidoswap-sdk';
+import { KaleidoError, NetworkError, QuoteExpiredError } from 'kaleido-sdk';
 
 try {
   const quote = await client.maker.getQuote({ /* ... */ });
@@ -94,7 +94,7 @@ try {
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
+from kaleido_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
 
 try:
     quote = await client.maker.get_quote(PairQuoteRequest(...))
@@ -182,7 +182,7 @@ The API works with raw (smallest unit) amounts. Convert display amounts before s
 
 <CodeGroup>
 ```typescript TypeScript
-import { toSmallestUnits } from 'kaleidoswap-sdk';
+import { toSmallestUnits } from 'kaleido-sdk';
 
 // User enters 0.001 BTC
 const userInput = 0.001;
@@ -195,7 +195,7 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-from kaleidoswap_sdk import Layer, PairQuoteRequest, SwapLegInput, to_smallest_units
+from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, to_smallest_units
 
 # User enters 0.001 BTC
 user_input = 0.001
@@ -214,7 +214,7 @@ When working with multiple assets, use `PrecisionHandler` to avoid precision err
 
 <CodeGroup>
 ```typescript TypeScript
-import { createPrecisionHandler } from 'kaleidoswap-sdk';
+import { createPrecisionHandler } from 'kaleido-sdk';
 
 const handler = createPrecisionHandler(mappedAssets);
 
@@ -224,7 +224,7 @@ const display = handler.toDisplayAmount(rawFromApi, assetId);
 ```
 
 ```python Python
-from kaleidoswap_sdk import create_precision_handler
+from kaleido_sdk import create_precision_handler
 
 handler = create_precision_handler(mapped_assets)
 raw = handler.to_raw_amount(user_input, asset_id)

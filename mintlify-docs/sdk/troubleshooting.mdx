@@ -7,32 +7,32 @@ description: 'Common issues and solutions'
 
 <AccordionGroup>
   <Accordion title="npm install fails (TypeScript)">
-    **Symptoms:** `npm install kaleidoswap-sdk` fails with errors
+    **Symptoms:** `npm install kaleido-sdk` fails with errors
 
     **Solutions:**
     1. Ensure Node.js 18+ is installed: `node --version`
     2. Clear npm cache: `npm cache clean --force`
     3. Delete `node_modules` and `package-lock.json`, then reinstall
-    4. Try with a different package manager: `pnpm add kaleidoswap-sdk`
+    4. Try with a different package manager: `pnpm add kaleido-sdk`
   </Accordion>
 
   <Accordion title="pip install fails (Python)">
-    **Symptoms:** `pip install kaleidoswap-sdk` fails
+    **Symptoms:** `pip install kaleido-sdk` fails
 
     **Solutions:**
     1. Ensure Python 3.10+ is installed: `python --version`
     2. Use a virtual environment: `python -m venv .venv && source .venv/bin/activate`
     3. Upgrade pip: `pip install --upgrade pip`
-    4. Try: `pip install kaleidoswap-sdk --no-cache-dir`
+    4. Try: `pip install kaleido-sdk --no-cache-dir`
   </Accordion>
 
   <Accordion title="Module not found after installation">
-    **Symptoms:** `Cannot find module 'kaleidoswap-sdk'` or `ModuleNotFoundError`
+    **Symptoms:** `Cannot find module 'kaleido-sdk'` or `ModuleNotFoundError`
 
     **Solutions:**
     - **TypeScript:** Check your `tsconfig.json` has `"moduleResolution": "node"` or `"bundler"`
     - **Python:** Verify you are in the correct virtual environment
-    - Verify the package is installed: `npm list kaleidoswap-sdk` or `pip show kaleidoswap-sdk`
+    - Verify the package is installed: `npm list kaleido-sdk` or `pip show kaleido-sdk`
   </Accordion>
 </AccordionGroup>
 
@@ -106,14 +106,14 @@ description: 'Common issues and solutions'
 
     <CodeGroup>
     ```typescript TypeScript
-    import { toSmallestUnits } from 'kaleidoswap-sdk';
+    import { toSmallestUnits } from 'kaleido-sdk';
 
     // Convert 0.001 BTC to satoshis (100000)
     const amount = toSmallestUnits(0.001, 8);
     ```
 
     ```python Python
-    from kaleidoswap_sdk import to_smallest_units
+    from kaleido_sdk import to_smallest_units
 
     # Convert 0.001 BTC to satoshis (100000)
     amount = to_smallest_units(0.001, 8)
@@ -205,9 +205,9 @@ description: 'Common issues and solutions'
     **Symptoms:** TypeScript compiler errors about incompatible types
 
     **Solutions:**
-    1. Ensure you are importing types from `kaleidoswap-sdk`:
+    1. Ensure you are importing types from `kaleido-sdk`:
        ```typescript
-       import type { Asset, TradingPair } from 'kaleidoswap-sdk';
+       import type { Asset, TradingPair } from 'kaleido-sdk';
        ```
     2. Check your TypeScript version is 5.0+
     3. If using strict mode, you may need to handle `undefined` explicitly
@@ -220,7 +220,7 @@ description: 'Common issues and solutions'
     1. The SDK is ESM-only. Ensure your project uses ESM:
        - `"type": "module"` in `package.json`
        - Or use `.mts` file extension
-    2. If you must use CommonJS, use dynamic import: `const sdk = await import('kaleidoswap-sdk')`
+    2. If you must use CommonJS, use dynamic import: `const sdk = await import('kaleido-sdk')`
   </Accordion>
 </AccordionGroup>
 
@@ -233,7 +233,7 @@ description: 'Common issues and solutions'
     **Solutions:**
     1. Ensure `pydantic>=2.0` is installed
     2. Check that you are using the correct request format
-    3. The API may have been updated -- try updating the SDK: `pip install --upgrade kaleidoswap-sdk`
+    3. The API may have been updated -- try updating the SDK: `pip install --upgrade kaleido-sdk`
   </Accordion>
 
   <Accordion title="httpx connection errors">

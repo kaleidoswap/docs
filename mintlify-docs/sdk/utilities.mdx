@@ -11,14 +11,14 @@ Convert a display amount to the smallest unit (e.g., BTC to satoshis).
 
 <CodeGroup>
 ```typescript TypeScript
-import { toSmallestUnits } from 'kaleidoswap-sdk';
+import { toSmallestUnits } from 'kaleido-sdk';
 
 const sats = toSmallestUnits(0.001, 8);   // 100000
 const usdt = toSmallestUnits(10.50, 2);   // 1050
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_smallest_units
+from kaleido_sdk import to_smallest_units
 
 sats = to_smallest_units(0.001, 8)   # 100000
 usdt = to_smallest_units(10.50, 2)   # 1050
@@ -31,14 +31,14 @@ Convert from smallest units back to display units.
 
 <CodeGroup>
 ```typescript TypeScript
-import { toDisplayUnits } from 'kaleidoswap-sdk';
+import { toDisplayUnits } from 'kaleido-sdk';
 
 const btc = toDisplayUnits(100000, 8);   // 0.001
 const usd = toDisplayUnits(1050, 2);     // 10.50
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_display_units
+from kaleido_sdk import to_display_units
 
 btc = to_display_units(100000, 8)   # 0.001
 usd = to_display_units(1050, 2)     # 10.50
@@ -51,13 +51,13 @@ Equivalent to `toSmallestUnits`. Convert display to raw.
 
 <CodeGroup>
 ```typescript TypeScript
-import { toRawAmount } from 'kaleidoswap-sdk';
+import { toRawAmount } from 'kaleido-sdk';
 
 const raw = toRawAmount(0.5, 8);  // 50000000
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_raw_amount
+from kaleido_sdk import to_raw_amount
 
 raw = to_raw_amount(0.5, 8)  # 50000000
 ```
@@ -69,13 +69,13 @@ Equivalent to `toDisplayUnits`. Convert raw to display.
 
 <CodeGroup>
 ```typescript TypeScript
-import { toDisplayAmount } from 'kaleidoswap-sdk';
+import { toDisplayAmount } from 'kaleido-sdk';
 
 const display = toDisplayAmount(50000000, 8);  // 0.5
 ```
 
 ```python Python
-from kaleidoswap_sdk import to_display_amount
+from kaleido_sdk import to_display_amount
 
 display = to_display_amount(50000000, 8)  # 0.5
 ```
@@ -89,7 +89,7 @@ The `PrecisionHandler` manages amount conversions for multiple assets, using the
 
 <CodeGroup>
 ```typescript TypeScript
-import { createPrecisionHandler } from 'kaleidoswap-sdk';
+import { createPrecisionHandler } from 'kaleido-sdk';
 
 // MappedAsset objects with asset_id and precision
 const assets = [
@@ -101,7 +101,7 @@ const handler = createPrecisionHandler(assets);
 ```
 
 ```python Python
-from kaleidoswap_sdk import create_precision_handler
+from kaleido_sdk import create_precision_handler
 
 assets = [
     {"asset_id": "btc-asset-id", "ticker": "BTC", "precision": 8},
@@ -209,7 +209,7 @@ The `AssetPairMapper` helps look up assets and trading pairs from the `listPairs
 ### Creating a Mapper
 
 ```typescript
-import { createAssetPairMapper } from 'kaleidoswap-sdk';
+import { createAssetPairMapper } from 'kaleido-sdk';
 
 const pairsResponse = await client.maker.listPairs();
 const mapper = createAssetPairMapper(pairsResponse);
@@ -288,12 +288,12 @@ Get the SDK version string.
 
 <CodeGroup>
 ```typescript TypeScript
-import { getVersion } from 'kaleidoswap-sdk';
+import { getVersion } from 'kaleido-sdk';
 console.log(getVersion());  // "0.4.0"
 ```
 
 ```python Python
-from kaleidoswap_sdk import get_version
+from kaleido_sdk import get_version
 print(get_version())  # "0.4.0"
 ```
 </CodeGroup>
@@ -304,13 +304,13 @@ Get the SDK package name.
 
 <CodeGroup>
 ```typescript TypeScript
-import { getSdkName } from 'kaleidoswap-sdk';
-console.log(getSdkName());  // "kaleidoswap-sdk"
+import { getSdkName } from 'kaleido-sdk';
+console.log(getSdkName());  // "kaleido-sdk"
 ```
 
 ```python Python
-from kaleidoswap_sdk import get_sdk_name
-print(get_sdk_name())  # "kaleidoswap-sdk"
+from kaleido_sdk import get_sdk_name
+print(get_sdk_name())  # "kaleido-sdk"
 ```
 </CodeGroup>
 

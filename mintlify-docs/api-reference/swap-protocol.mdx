@@ -80,7 +80,7 @@ The SDK handles the WebSocket, init, and execute steps for you:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
   baseUrl: 'https://api.signet.kaleidoswap.com',
@@ -107,7 +107,7 @@ const unsubscribe = await client.maker.streamQuotesByTicker(
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com",
@@ -180,7 +180,7 @@ Web Client / API User                Maker (RGB-LSP)
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleidoswap-sdk';
+import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
   baseUrl: 'https://api.signet.kaleidoswap.com',
@@ -210,7 +210,7 @@ const completed = await client.maker.waitForSwapCompletion(order.order_id, {
 ```
 
 ```python Python
-from kaleidoswap_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com"

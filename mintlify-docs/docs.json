@@ -248,8 +248,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "App Dashboard",
-      "href": "https://app.kaleidoswap.com"
+      "label": "Download Desktop App",
+      "href": "https://github.com/kaleidoswap/desktop-app/releases"
     }
   },
   "footer": {

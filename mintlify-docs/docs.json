@@ -99,60 +99,6 @@
         ]
       },
       {
-        "tab": "Web App",
-        "groups": [
-          {
-            "group": "Overview",
-            "icon": "globe",
-            "pages": [
-              "web-app/introduction",
-              "web-app/getting-started"
-            ]
-          },
-          {
-            "group": "Guide",
-            "icon": "chart-mixed",
-            "pages": [
-              "web-app/wallet-connection",
-              "web-app/how-to-trade",
-              "web-app/advanced-features"
-            ]
-          },
-          {
-            "group": "Reference",
-            "icon": "life-buoy",
-            "pages": [
-              "web-app/faq"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Extensions",
-        "groups": [
-          {
-            "group": "Overview",
-            "icon": "puzzle-piece",
-            "pages": [
-              "extensions/introduction"
-            ]
-          },
-          {
-            "group": "Rate Wallet",
-            "icon": "wallet",
-            "pages": [
-              "extensions/rate/introduction",
-              "extensions/rate/installation",
-              "extensions/rate/getting-started",
-              "extensions/rate/wallet-features",
-              "extensions/rate/swaps",
-              "extensions/rate/dapp-connectivity",
-              "extensions/rate/faq"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "SDK",
         "groups": [
           {

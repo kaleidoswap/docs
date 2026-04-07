@@ -5,21 +5,11 @@ description: Trade RGB assets on the Lightning Network — desktop, browser, and
 
 ![KaleidoSwap — Trade RGB assets on Lightning](/assets/images/hero-banner.png)
 
-KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. Whether you prefer the full power of the **desktop application** with atomic swaps, the convenience of **browser-based trading** through the web app, or a **self-custodial wallet extension** like Rate — KaleidoSwap gives you the tools to trade Bitcoin and RGB assets your way.
+KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. Use the **desktop application** for full node control and atomic swaps.
 
-<CardGroup cols={3}>
-  <Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/installation">
-    Full-featured trading with atomic swaps, node management, and channel control
-  </Card>
-
-  <Card title="Web App" icon="globe" href="/web-app/introduction">
-    Trade from any browser — create orders, pay, and track in real time
-  </Card>
-
-  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
-    Bitcoin Layer 2 wallet in your browser with built-in swaps
-  </Card>
-</CardGroup>
+<Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/installation">
+  Full-featured trading with atomic swaps, node management, and channel control
+</Card>
 
 ---
 
@@ -39,7 +29,7 @@ KaleidoSwap is an open-source platform for trading RGB assets on the Lightning N
   </Card>
 
   <Card title="Multi-Platform" icon="layer-group">
-    Desktop app for power users, web app for quick trades, browser extension for everyday use
+    Available for macOS, Windows, and Linux
   </Card>
 </CardGroup>
 
@@ -49,13 +39,13 @@ KaleidoSwap is an open-source platform for trading RGB assets on the Lightning N
 
 ![KaleidoSwap Platform — Desktop, Web, Extension](/assets/images/platform-overview.png)
 
-| | Desktop App | Web App | Rate Extension |
-|--|-------------|---------|----------------|
-| **Swap Model** | Atomic swaps | Order-based | Maker API swaps |
-| **Node** | Self-hosted or remote | Remote | Remote |
-| **Wallet** | Built-in | External (Alby, Xverse, BitMask, Rate) | Built-in |
-| **Best For** | Power users, node operators | Quick browser-based trades | Everyday wallet + swap use |
-| **Install** | [Download](/desktop-app/getting-started/installation) | [Open App](https://app.kaleidoswap.com) | [Install Extension](/extensions/rate/installation) |
+| | Desktop App |
+|--|-------------|
+| **Swap Model** | Atomic swaps |
+| **Node** | Self-hosted or remote |
+| **Wallet** | Built-in |
+| **Best For** | Power users, node operators |
+| **Install** | [Download](/desktop-app/getting-started/installation) |
 
 ---
 
@@ -83,81 +73,27 @@ KaleidoSwap combines three technologies to enable fast, private, and scalable as
 
 ## Getting Started
 
-Choose your path:
+<Steps>
+  <Step title="Install the app">
+    Download for macOS, Windows, or Linux.
+    [Installation Guide →](/desktop-app/getting-started/installation)
+  </Step>
 
-<Tabs>
-  <Tab title="Desktop App">
-    Run your own node with full control and atomic swaps.
+  <Step title="Create a wallet">
+    Generate a new wallet and save your recovery phrase.
+    [Wallet Setup →](/desktop-app/wallet/creating-wallet)
+  </Step>
 
-    <Steps>
-      <Step title="Install the app">
-        Download for macOS, Windows, or Linux.
-        [Installation Guide →](/desktop-app/getting-started/installation)
-      </Step>
+  <Step title="Deposit & open channels">
+    Fund your wallet and open Lightning channels.
+    [Deposit Guide →](/desktop-app/wallet/deposits) · [Channel Guide →](/desktop-app/channels/opening-channel)
+  </Step>
 
-      <Step title="Create a wallet">
-        Generate a new wallet and save your recovery phrase.
-        [Wallet Setup →](/desktop-app/wallet/creating-wallet)
-      </Step>
-
-      <Step title="Deposit & open channels">
-        Fund your wallet and open Lightning channels.
-        [Deposit Guide →](/desktop-app/wallet/deposits) · [Channel Guide →](/desktop-app/channels/opening-channel)
-      </Step>
-
-      <Step title="Start trading">
-        Execute atomic swaps with RGB assets.
-        [Trading Guide →](/desktop-app/trading/asset-swaps)
-      </Step>
-    </Steps>
-  </Tab>
-
-  <Tab title="Web App">
-    Trade from your browser with order-based swaps.
-
-    <Steps>
-      <Step title="Open the web app">
-        Navigate to [app.kaleidoswap.com](https://app.kaleidoswap.com) — no installation needed.
-      </Step>
-
-      <Step title="Connect your wallet">
-        Use Alby, Xverse, BitMask, or the Rate extension.
-        [Wallet Guide →](/web-app/wallet-connection)
-      </Step>
-
-      <Step title="Create a swap order">
-        Select assets, enter an amount and recipient address, and confirm.
-        [Trading Guide →](/web-app/how-to-trade)
-      </Step>
-
-      <Step title="Pay & track">
-        Pay the deposit on the order page and wait for the maker to fulfill it.
-        [Order Tracking →](/web-app/advanced-features)
-      </Step>
-    </Steps>
-  </Tab>
-
-  <Tab title="Rate Extension">
-    Self-custodial Bitcoin Layer 2 wallet with built-in swaps.
-
-    <Steps>
-      <Step title="Install">
-        Add Rate to Chrome from the Web Store.
-        [Installation Guide →](/extensions/rate/installation)
-      </Step>
-
-      <Step title="Set up your wallet">
-        Create a password, generate Nostr keys, and connect to a node.
-        [Getting Started →](/extensions/rate/getting-started)
-      </Step>
-
-      <Step title="Swap assets">
-        Use the built-in swap interface powered by the Kaleidoswap maker API.
-        [Swap Guide →](/extensions/rate/swaps)
-      </Step>
-    </Steps>
-  </Tab>
-</Tabs>
+  <Step title="Start trading">
+    Execute atomic swaps with RGB assets.
+    [Trading Guide →](/desktop-app/trading/asset-swaps)
+  </Step>
+</Steps>
 
 ---
 
@@ -176,16 +112,8 @@ Choose your path:
     REST API docs with interactive playground
   </Card>
 
-  <Card title="Extensions" icon="puzzle-piece" href="/extensions/introduction">
-    Browser extensions for wallets and DApp connectivity
-  </Card>
-
   <Card title="Desktop Guide" icon="desktop" href="/desktop-app/getting-started/introduction">
     Full desktop app docs: nodes, wallets, channels, and trading
-  </Card>
-
-  <Card title="Web App Guide" icon="globe" href="/web-app/introduction">
-    Browser-based trading with order management
   </Card>
 </CardGroup>
 

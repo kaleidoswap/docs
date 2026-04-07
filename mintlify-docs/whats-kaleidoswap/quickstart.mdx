@@ -3,13 +3,9 @@ title: Quickstart
 description: Get started with KaleidoSwap in minutes
 ---
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Desktop App" icon="desktop" href="#desktop-app-quickstart">
     Atomic swaps via the desktop application
-  </Card>
-
-  <Card title="Web App" icon="globe" href="#web-app-quickstart">
-    Order-based swaps from your browser
   </Card>
 
   <Card title="Developer" icon="code" href="#developer-quickstart">
@@ -82,51 +78,6 @@ description: Get started with KaleidoSwap in minutes
 <Check>
   **Congratulations!** You've completed your first atomic RGB asset swap on Lightning Network.
 </Check>
-
----
-
-## Web App Quickstart
-
-<Note>
-  The web app currently uses **order-based swaps** -- you create an order, pay, and wait for the maker to fulfill it. This is different from the desktop app's atomic swaps.
-</Note>
-
-<Steps>
-  <Step title="Open the Web App">
-    Navigate to [app.kaleidoswap.com](https://app.kaleidoswap.com) in your browser -- no installation needed.
-  </Step>
-
-  <Step title="Connect Your Wallet">
-    Connect a supported wallet:
-
-    | Wallet | Best For |
-    |--------|----------|
-    | **Alby** | Lightning payments |
-    | **Xverse** | Bitcoin & Ordinals |
-    | **BitMask** | RGB asset management |
-    | **Rate** | Bitcoin Layer 2 with built-in swaps |
-
-    <Tip>
-      Don't have a wallet? [Install the Rate extension](/extensions/rate/installation) for a complete Bitcoin Layer 2 experience.
-    </Tip>
-  </Step>
-
-  <Step title="Select Assets & Amount">
-    Choose the asset pair (e.g., BTC → USDT), enter the amount, and provide your **recipient address** where you want to receive the swapped asset.
-  </Step>
-
-  <Step title="Create Order & Pay">
-    Review the quote, confirm the order, and pay the deposit invoice shown on the order page.
-  </Step>
-
-  <Step title="Wait for Execution">
-    After payment is detected, the maker will execute your swap. Track progress on the order page.
-  </Step>
-</Steps>
-
-<Card title="Web App Guide" icon="globe" href="/web-app/introduction">
-  Full web app documentation with detailed trading guides →
-</Card>
 
 ---
 
@@ -273,14 +224,6 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
 <CardGroup cols={3}>
   <Card title="Desktop App Guide" icon="book-open" href="/desktop-app/getting-started/introduction">
     Advanced features: channels, backups, and more
-  </Card>
-
-  <Card title="Web App Guide" icon="globe" href="/web-app/introduction">
-    Full web app trading guide
-  </Card>
-
-  <Card title="Rate Extension" icon="puzzle-piece" href="/extensions/rate/introduction">
-    Bitcoin Layer 2 wallet extension
   </Card>
 
   <Card title="SDK Examples" icon="code" href="/sdk/examples">

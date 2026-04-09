@@ -32,7 +32,7 @@ kaleido [global options] <command> [subcommand] [args]
 | `peer` | Peer connectivity |
 | `payment` | Lightning and RGB+LN payments |
 | `market` | Market discovery, quotes, and analytics |
-| `swap` | Order, atomic, and local node swap flows |
+| `swap` | Order and atomic swap flows |
 | `config` | Stored CLI configuration |
 
 ## `setup`
@@ -59,16 +59,22 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--network`, `--node-url`, `--cr
 | `kaleido node logs <name>` | Stream logs |
 | `kaleido node clean <name>` | Delete volumes |
 | `kaleido node info` | Show node details |
+| `kaleido node network` | Show network information |
 | `kaleido node init` | Initialize the wallet |
 | `kaleido node unlock` | Unlock the wallet |
 | `kaleido node lock` | Lock the wallet |
+| `kaleido node shutdown` | Gracefully shut down the node |
 
-### `node taker`
+### `node swap`
 
 | Command | Summary |
 |--------|---------|
-| `kaleido node taker pubkey` | Print the taker public key |
-| `kaleido node taker whitelist <swapstring>` | Accept a swap on the taker side |
+| `kaleido node swap pubkey` | Print the taker public key |
+| `kaleido node swap init` | Start a local maker-init swap flow |
+| `kaleido node swap whitelist` | Whitelist a swap on the taker side |
+| `kaleido node swap execute` | Execute a local node swap |
+| `kaleido node swap status <payment-hash>` | Check local node swap status |
+| `kaleido node swap list` | List swaps known to the node |
 
 ## `wallet`
 
@@ -84,7 +90,6 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--network`, `--node-url`, `--cr
 | `kaleido wallet restore <path>` | Restore wallet data |
 | `kaleido wallet change-password` | Change wallet password |
 | `kaleido wallet estimate-fee` | Estimate fee rate |
-| `kaleido wallet shutdown` | Gracefully shut down the node |
 
 ## `asset`
 
@@ -124,6 +129,7 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--network`, `--node-url`, `--cr
 |--------|---------|
 | `kaleido channel order create <client-pubkey>` | Create an LSP channel order |
 | `kaleido channel order get <order-id>` | Fetch order status |
+| `kaleido channel order pay <order-id>` | Pay for a channel order |
 | `kaleido channel order decide <order-id>` | Submit a rate decision |
 | `kaleido channel order estimate-fees` | Estimate channel-order fees |
 
@@ -184,16 +190,6 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--network`, `--node-url`, `--cr
 | `kaleido swap atomic execute` | Execute the swap |
 | `kaleido swap atomic status <payment-hash>` | Atomic swap status |
 | `kaleido swap atomic run <pair>` | Run the full atomic flow |
-
-### `swap node`
-
-| Command | Summary |
-|--------|---------|
-| `kaleido swap node init` | Start a low-level node swap |
-| `kaleido swap node whitelist` | Whitelist a taker-side swap |
-| `kaleido swap node execute` | Execute the swap |
-| `kaleido swap node status <payment-hash>` | Node swap status |
-| `kaleido swap node list` | List local swaps |
 
 ## `config`
 

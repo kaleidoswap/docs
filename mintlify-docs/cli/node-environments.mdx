@@ -109,13 +109,13 @@ kaleido node lock
 
 Use `info` to confirm the node is reachable and correctly configured before running wallet, channel, or swap flows.
 
-## Taker Operations
+## Node Swap Operations
 
-The nested `taker` group supports atomic and low-level swap acceptance on the node side:
+The nested `swap` group supports atomic and low-level swap operations on the node side:
 
 ```bash
-kaleido node taker pubkey
-kaleido node taker whitelist '30/rgb:abc.../10/rgb:def.../...'
+kaleido node swap pubkey
+kaleido node swap whitelist '30/rgb:abc.../10/rgb:def.../...'
 ```
 
 ## Recommended Local Flow

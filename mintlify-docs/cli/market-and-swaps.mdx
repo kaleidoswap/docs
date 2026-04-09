@@ -31,15 +31,15 @@ Important quote options:
 
 Supported layer values include `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN` for market quotes.
 
-## Three Swap Scopes
+## Swap Scopes
 
-The `swap` group is split by execution model:
+Swaps are split across two command groups:
 
 | Scope | Use case |
 |------|----------|
 | `swap order` | Create and track maker swap orders through the KaleidoSwap server |
 | `swap atomic` | Run maker-backed atomic swaps using your local node as taker |
-| `swap node` | Drive low-level local RLN swap steps directly |
+| `node swap` | Drive low-level local RLN swap steps directly (under the `node` group) |
 
 ## Maker Order Flow
 
@@ -101,15 +101,16 @@ You can also provide:
 
 ## Local Node Swap Flow
 
-Use `swap node` for low-level RLN swap steps:
+Use `node swap` for low-level RLN swap steps (these live under the `node` command group):
 
 | Command | Purpose |
 |--------|---------|
-| `kaleido swap node init` | Start a local maker-init swap flow |
-| `kaleido swap node whitelist` | Whitelist the swap on the taker side |
-| `kaleido swap node execute` | Execute after whitelisting |
-| `kaleido swap node status <payment-hash>` | Inspect status |
-| `kaleido swap node list` | List swaps known to the node |
+| `kaleido node swap pubkey` | Print the taker public key |
+| `kaleido node swap init` | Start a local maker-init swap flow |
+| `kaleido node swap whitelist` | Whitelist the swap on the taker side |
+| `kaleido node swap execute` | Execute after whitelisting |
+| `kaleido node swap status <payment-hash>` | Inspect status |
+| `kaleido node swap list` | List swaps known to the node |
 
 This path is useful for debugging, demos, and lower-level protocol operations where you want each step exposed separately.
 
@@ -127,7 +128,7 @@ kaleido swap order create BTC/USDT --to-amount 5000000 --receiver-address lnbcrt
 
 ```bash
 kaleido node unlock
-kaleido node taker pubkey
+kaleido node swap pubkey
 kaleido swap atomic run BTC/USDT --from-amount 100000 --from-layer BTC_LN --to-layer RGB_LN
 ```
 

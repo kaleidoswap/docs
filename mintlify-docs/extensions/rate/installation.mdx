@@ -40,9 +40,12 @@ Use manual installation when testing a pre-release build or building from source
 
 <Steps>
   <Step title="Build the Extension">
-    Install dependencies and build:
+    First, download or clone the Rate source code, then open a terminal in the project root directory. If `pnpm` is not installed yet, install it first, then install dependencies and build:
 
     ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    npm install -g pnpm
     pnpm install
     pnpm run build
     ```

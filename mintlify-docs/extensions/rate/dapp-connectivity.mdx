@@ -1,71 +1,80 @@
 ---
 title: DApp Connectivity
-description: WebLN provider and Nostr signer for web apps
+description: RGB WebLN provider and Nostr signer for trusted DApps
 ---
 
 ## Overview
 
-Rate injects APIs into web pages, allowing DApps to interact with your wallet. This enables seamless integration with Lightning-enabled web apps and Nostr clients.
+Rate injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This supports RGB WebLN-style requests, wallet approval flows, and Nostr signing.
 
-## WebLN Provider
+## RGB WebLN Provider
 
-Rate exposes a **WebLN provider** at `window.rgbwebln` that web apps can use to:
+Rate exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
 
-- Request Lightning invoice payments
-- Generate invoices
-- Get node information
+- Request node information
+- Generate RGB invoices
+- Decode RGB invoices
+- Send RGB assets
+- List assets and transfers
+- Request addresses and balances
+- Sign messages where supported
 
 ### How It Works
 
 1. Rate's **content script** is injected into web pages
 2. The content script loads an **injected script** that adds `window.rgbwebln`
-3. Web apps call methods on `window.rgbwebln`
+3. DApps call methods on `window.rgbwebln`
 4. Requests are routed to the Rate **background service worker**
-5. The extension popup shows a **permission prompt** for the user to approve
+5. Sensitive operations can trigger a confirmation or permission prompt
 
 ### Supported Methods
 
 | Method | Description |
 |--------|-------------|
 | `enable()` | Connect the DApp to Rate |
-| `sendPayment(invoice)` | Pay a BOLT11 invoice |
-| `makeInvoice(args)` | Generate a Lightning invoice |
 | `getInfo()` | Get node information |
+| `getAddress()` | Get a receive address |
+| `rgbInvoice(params)` | Create an RGB invoice |
+| `decodeRgbInvoice(params)` | Decode an RGB invoice |
+| `sendAsset(params)` | Request an RGB asset send |
+| `listTransfers(params)` | List transfers for an asset |
+| `listAssets()` | List wallet assets |
+| `getNetworkInfo()` | Get network details |
+| `getBalance()` | Get wallet balance details |
+| `signMessage(message)` | Sign a message where supported |
 
-### Example Usage (for DApp Developers)
+### Example Usage
 
 ```javascript
-// Check if Rate is available
-if (window.rgbwebln) {
-  // Connect to the wallet
+window.addEventListener('rgbWebLNReady', async () => {
   await window.rgbwebln.enable();
 
-  // Pay an invoice
-  const result = await window.rgbwebln.sendPayment('lnbc1...');
+  const info = await window.rgbwebln.getInfo();
 
-  // Generate an invoice
-  const invoice = await window.rgbwebln.makeInvoice({
-    amount: 1000, // sats
-    defaultMemo: 'Payment for service'
+  const { invoice } = await window.rgbwebln.rgbInvoice({
+    asset_id: 'rgb:...',
+    duration_seconds: 3600
   });
-}
+
+  const assets = await window.rgbwebln.listAssets();
+});
 ```
 
 ### Permission Prompts
 
-When a web app makes a request, Rate shows a popup asking you to approve or deny the action. You must explicitly approve each sensitive operation (e.g., paying an invoice).
+When a connected site makes a sensitive request, Rate asks the user to approve or deny the action.
 
 <Warning>
-Always review what a DApp is requesting before approving. Only approve payments and actions from sites you trust.
+Always review what a DApp is requesting before approving. Only approve payments, asset sends, and signing requests from sites you trust.
 </Warning>
 
-## Nostr NIP-07 Signer
+## Nostr Signing
 
-Rate implements the **NIP-07** standard for Nostr key management, allowing Nostr clients to request event signing.
+Rate derives a Nostr identity from the wallet recovery phrase and exposes signing support for compatible Nostr clients.
 
 ### How It Works
 
-1. Rate provides `window.nostr` (or a compatible API)
+1. Rate provides a Nostr-compatible signing API
 2. Nostr clients call signing methods
 3. Rate prompts you to approve the signing request
 
@@ -79,51 +88,34 @@ Rate implements the **NIP-07** standard for Nostr key management, allowing Nostr
 ### Nostr Key Management
 
 Your Nostr keypair is managed in **Settings > Nostr Account**:
-- View your **public key** (npub)
-- View and export your **private key** (nsec)
-- Generate or import keys during onboarding
 
-## Integration with KaleidoSwap Web App
+- View your public key (`npub`)
+- View/export the session private key when available
+- Re-derive identity from the wallet recovery phrase
 
-Rate works as a wallet for the KaleidoSwap Web App:
+## Browser Approval Flow
 
-### Connecting
+Rate keeps DApp approvals user-driven:
 
-1. Open [app.kaleidoswap.com](https://app.kaleidoswap.com)
-2. Click **Connect** and select **Rate** from the wallet list
-3. Approve the connection in the Rate popup
+1. A trusted site requests a connection, payment, asset, or signing action
+2. Rate routes the request through the content script and background service worker
+3. The user reviews the details and approves or rejects the action
 
-### Pay with Wallet
-
-When you create a swap order on the web app, the order page shows a **Pay with Wallet** button if Rate is connected. Clicking it:
-
-1. Sends the deposit invoice to Rate
-2. Rate shows a payment confirmation popup
-3. You approve the payment
-4. The deposit is paid directly from your node -- no need to copy invoices
-
-This provides a seamless experience: create the order in the web app, pay from Rate, and track the order on the same page.
+This keeps wallet-side actions explicit while still allowing DApps to use Rate as a browser provider.
 
 ## Security Considerations
-
-### Site Permissions
-
-- Rate prompts for approval on every sensitive action
-- Payment requests show the invoice details and amount
-- You can deny any request
-
-### Best Practices
 
 | Practice | Description |
 |----------|-------------|
 | **Verify the site** | Check the URL before approving wallet connections |
-| **Review payments** | Read invoice details before approving payments |
+| **Review requests** | Read invoice, asset, or signing details before approving |
 | **Lock when done** | Lock Rate when you are finished using DApps |
 | **Limit exposure** | Only connect to trusted sites |
 
 ## Supported DApps
 
-Rate's WebLN provider is compatible with any web application that uses the WebLN standard. This includes:
-- **KaleidoSwap Web App** - Direct deposit payments
-- **Lightning-enabled web apps** - Any app using WebLN for payments
-- **Nostr clients** - Any client supporting NIP-07 for key management
+Rate's browser provider is designed for:
+
+- **RGB-aware DApps** - Apps that use `window.rgbwebln`
+- **Nostr clients** - Apps that support browser-based Nostr signing
+- **Internal test pages** - Local pages that exercise wallet provider methods during development

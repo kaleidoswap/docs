@@ -14,35 +14,36 @@ description: Common questions and solutions for the Rate extension
   </Accordion>
 
   <Accordion title="Do I need my own node?">
-    **Yes.** Rate connects to an RGB Lightning Node (RLN) for core wallet functionality. Without a node connection, you cannot view balances, send, or receive assets.
+    **Not for every feature.** Spark and Arkade accounts are derived from the Rate recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
     
-    You can connect to:
+    For RLN features, you can connect to:
     - A **local node** by using the [Kaleidoswap Desktop App](/desktop-app/wallet/creating-wallet) or running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) on a local machine.
     - A **remote node** accessible via URL.
   </Accordion>
 
   <Accordion title="Is Rate custodial?">
-    **No.** Rate connects to **your** RGB Lightning Node. Your keys and funds are managed by your node, not by Rate or KaleidoSwap. Rate is a user interface for your node.
+    **No.** Rate stores the wallet mnemonic encrypted locally and derives protocol accounts from it. For optional RLN use, Rate connects to the node you configure.
   </Accordion>
 
-  <Accordion title="Do I need the maker API for basic wallet features?">
-    **No.** The maker API connection is optional. Without it:
+  <Accordion title="Do I need a swap venue for basic wallet features?">
+    **No.** Swap venues are optional. Without them:
     - Send, receive, and balance features work normally
     - Only the **swap** feature is disabled
   </Accordion>
 
   <Accordion title="What assets does Rate support?">
     Rate supports:
-    - **BTC** - Bitcoin (on-chain and Lightning)
-    - **RGB-20 tokens** - Any RGB-20 asset on your node (e.g., USDT, XAUT)
-    
-    Additional protocol support (Spark, Arkade, Liquid) is planned.
+    - **BTC** across Spark, Arkade, Bitcoin L1, and RLN Lightning where connected
+    - **Spark-native assets** when available on the Spark account
+    - **Arkade-native assets** when available on the Arkade account
+    - **RGB assets** when an RGB Lightning Node is connected
   </Accordion>
 
   <Accordion title="How do I back up my wallet?">
     Go to **Settings > Backup Wallet** to export your wallet data. You should also separately back up:
-    - Your **Nostr private key** (nsec) from Settings > Nostr Account
-    - Your **node seed phrase** (managed by your node, not Rate)
+    - Your **Rate recovery phrase**
+    - Your **Nostr private key** if you export it separately
+    - Your **RLN node seed phrase** if you use a separate RGB Lightning Node
   </Accordion>
 
   <Accordion title="What happens if I forget my password?">
@@ -55,18 +56,15 @@ description: Common questions and solutions for the Rate extension
   </Accordion>
 
   <Accordion title="Can I connect to multiple nodes?">
-    Rate connects to one node at a time. You can switch between nodes in **Settings > Networks** using the connection history (last 10 connections are saved).
+    Rate manages Spark, Arkade, and optional RLN accounts. For RLN, connect one node endpoint at a time.
   </Accordion>
 
   <Accordion title="How does auto-lock work?">
     Rate automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
   </Accordion>
 
-  <Accordion title="Can I use Rate with the KaleidoSwap Web App?">
-    **Yes.** Rate works as a wallet for the web app:
-    1. Connect Rate on app.kaleidoswap.com
-    2. Create swap orders in the web app
-    3. Pay deposit invoices directly from Rate using the "Pay with Wallet" button
+  <Accordion title="Can I use Rate with DApps?">
+    **Yes.** Trusted DApps can request wallet actions through Rate's browser provider. Review each connection, payment, asset, or signing request before approving it.
   </Accordion>
 </AccordionGroup>
 
@@ -83,29 +81,29 @@ description: Common questions and solutions for the Rate extension
     2. Check that the node is **running and accessible**
     3. If using a local node, ensure it is running on the expected port
     4. If using a remote node, check network/firewall settings
-    5. If using JWT auth, verify the **token is valid**
+    5. If using a Biscuit/auth token, verify the **token is valid**
     6. Try disconnecting and reconnecting in Settings > Networks
   </Accordion>
 
-  <Accordion title="Maker API not connecting">
+  <Accordion title="Swap venue not connecting">
     **Symptoms:** Swap feature is disabled or shows connection error
     
     **Solutions:**
-    1. Check the **maker URL** in Settings > Networks
-    2. Verify the maker API is accessible
-    3. The maker connection is non-blocking -- the extension still works without it
-    4. Try refreshing the connection
+    1. Check that the relevant account is connected
+    2. Verify RLN if using KaleidoSwap maker pairs
+    3. Verify Spark availability if using Flashnet routes
+    4. Try refreshing the swap screen
   </Accordion>
 
-  <Accordion title="WebLN not detected by web apps">
-    **Symptoms:** Web apps don't detect Rate as a wallet
+  <Accordion title="Provider not detected by a DApp">
+    **Symptoms:** A DApp does not detect Rate as a wallet
     
     **Solutions:**
     1. Ensure Rate is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
-    4. Some apps look for `window.webln` -- Rate provides `window.rgbwebln`
-    5. The KaleidoSwap Web App specifically supports Rate
+    4. Confirm the DApp supports `window.rgbwebln`
+    5. Some apps look only for `window.webln` -- Rate provides `window.rgbwebln`
   </Accordion>
 </AccordionGroup>
 

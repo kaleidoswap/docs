@@ -99,6 +99,31 @@
         ]
       },
       {
+        "tab": "Extensions",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "puzzle-piece",
+            "pages": [
+              "extensions/introduction"
+            ]
+          },
+          {
+            "group": "Rate Wallet",
+            "icon": "wallet",
+            "pages": [
+              "extensions/rate/introduction",
+              "extensions/rate/installation",
+              "extensions/rate/getting-started",
+              "extensions/rate/wallet-features",
+              "extensions/rate/swaps",
+              "extensions/rate/dapp-connectivity",
+              "extensions/rate/faq"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "SDK",
         "groups": [
           {

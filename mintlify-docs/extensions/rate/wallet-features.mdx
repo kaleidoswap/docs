@@ -1,19 +1,21 @@
 ---
 title: Wallet Features
-description: Asset management, send, receive, and more
+description: Accounts, assets, deposits, withdrawals, activity, and settings
 ---
 
 ## Asset Management
+
+<img src="/images/rate/08-dashboard.png" alt="Rate dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 ### Viewing Balances
 
 The Rate dashboard displays all your assets:
 
-- **BTC Balance Card** - Total Bitcoin balance with breakdown:
-  - On-chain BTC
-  - Lightning BTC
-- **RGB Asset List** - All RGB-20 tokens with balances
-- **Layer Filters** - Filter assets by: All Assets, On-chain, Lightning
+- **BTC balance** across Spark, Arkade, Bitcoin L1, and RLN Lightning when connected
+- **Spark assets** from the Spark account
+- **Arkade assets** from the Arkade account
+- **RGB assets** when the optional RGB Lightning Node account is connected
+- **Protocol and network filters** for focusing on BTC, RGB, Spark, Arkade, Bitcoin L1, Lightning, Spark, or Arkade
 
 ### Asset Details
 
@@ -24,8 +26,9 @@ Tap any asset to view details:
 | **Ticker** | Short asset symbol (e.g., USDT) |
 | **Name** | Full asset name |
 | **Precision** | Decimal places |
-| **On-chain Balance** | Amount held on-chain |
-| **Lightning Balance** | Amount held on Lightning |
+| **Account** | Protocol account that owns the asset |
+| **Spendable Balance** | Amount available for the selected route |
+| **Network Badges** | Where the asset can be used, such as Spark, Arkade, RGB-L1, or RGB-LN |
 
 ## Sending Payments
 
@@ -36,9 +39,12 @@ Rate automatically detects the payment type based on what you paste or enter in 
 | Format | Detected As | Example |
 |--------|------------|---------|
 | **BOLT11 invoice** | Lightning payment | `lnbc1...` |
+| **Lightning address** | Lightning payment | `name@example.com` |
+| **LNURL-pay** | Lightning payment | `lnurl1...` |
 | **RGB invoice** | RGB asset transfer | `rgb:...` |
 | **Bitcoin address** | On-chain payment | `bc1q...`, `3...`, `1...` |
-| **Node pubkey** | Keysend payment | `02abc...` |
+| **Spark address** | Spark transfer | Spark address string |
+| **Arkade route** | Arkade transfer or offboard route | Arkade-compatible destination |
 
 ### Send Flow
 
@@ -55,8 +61,8 @@ Rate automatically detects the payment type based on what you paste or enter in 
     Review the payment details:
     - Destination
     - Amount
-    - Estimated fee
-    - Payment type
+    - Selected route/account
+    - Fee or route notes when available
   </Step>
 
   <Step title="Confirm">
@@ -68,28 +74,33 @@ Rate automatically detects the payment type based on what you paste or enter in 
 
 Generate invoices and addresses to receive BTC or RGB assets.
 
+<img src="/images/rate/09-deposit.png" alt="Rate deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
 ### Receive Tabs
 
-| Tab | What It Generates |
-|-----|-------------------|
-| **Lightning** | BOLT11 invoice for BTC or RGB assets |
-| **On-chain** | Bitcoin address for on-chain deposits |
-| **RGB** | RGB invoice for RGB asset transfers |
+Available receive methods depend on the selected asset and connected account:
+
+| Route | What It Generates |
+|-------|-------------------|
+| **Spark** | Spark address or Spark Lightning invoice |
+| **Arkade** | Arkade address, boarding address, or compatible receive route |
+| **Bitcoin L1** | Bitcoin address for on-chain receive |
+| **Lightning** | BOLT11 invoice where the selected account supports it |
+| **RGB** | RGB invoice or RGB Lightning invoice when RLN is connected |
 
 ### Receive Flow
 
 <Steps>
-  <Step title="Select Tab">
-    Choose Lightning, On-chain, or RGB.
+  <Step title="Select Asset">
+    Choose BTC or another supported asset.
   </Step>
 
-  <Step title="Enter Details">
-    - **Amount** (optional for on-chain) - How much to receive
-    - **Memo** (optional) - Description for the payment
+  <Step title="Select Route">
+    Pick an available account route, such as Spark, Arkade, Bitcoin L1, Lightning, or RGB.
   </Step>
 
   <Step title="Generate">
-    Click **Generate** to create the invoice or address. A QR code is displayed along with the text.
+    Create the invoice or address. A QR code is displayed along with the text value.
   </Step>
 
   <Step title="Share">
@@ -103,18 +114,21 @@ Generate invoices and addresses to receive BTC or RGB assets.
 
 ### Deposit
 
-Deposit BTC on-chain into your RGB Lightning Node:
+Deposit BTC or supported assets into the selected account:
+
 1. Click **Deposit** on the dashboard
-2. An on-chain Bitcoin address is displayed
-3. Send BTC to this address from any wallet
+2. Choose the asset and route
+3. Generate an address or invoice
+4. Send funds from an external wallet or service
 
 ### Withdraw
 
-Withdraw on-chain BTC from your node:
+Withdraw sends from the selected account to a detected destination:
+
 1. Click **Withdraw** on the dashboard
-2. Enter the destination Bitcoin address
+2. Paste a Bitcoin address, Lightning invoice, Lightning address, LNURL, RGB invoice, Spark address, or Arkade destination
 3. Enter the amount
-4. Review and confirm
+4. Review the suggested route and confirm
 
 ## Activity History
 
@@ -139,11 +153,19 @@ Click any transaction to see:
 
 Access settings from the gear icon or bottom navigation.
 
+<img src="/images/rate/11-settings.png" alt="Rate settings" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
+### Accounts
+
+- **Spark** - Network selection, SDK details, and connection status
+- **Arkade** - Network selection, VTXO settings, boarding flows, and lifecycle settings
+- **RGB & Lightning** - Optional RLN account, available through experimental settings
+
 ### Nostr Account
 
 - View your **public key** (npub)
-- View and export your **private key** (nsec)
-- Generate a new keypair
+- View/export the session private key when available
+- Use the derived identity for supported DApp signing flows
 
 <Warning>
 Never share your Nostr private key (nsec). Anyone with this key can sign events and act as you.
@@ -154,21 +176,16 @@ Never share your Nostr private key (nsec). Anyone with this key can sign events 
 | Setting | Options |
 |---------|---------|
 | **Currency** | USD, EUR, etc. |
-| **Theme** | Dark mode (default) |
-| **Auto-lock Timeout** | 1, 5, 10, 30 minutes |
-
-### Networks
-
-- **Node URL** - Change or reconnect to a different RGB Lightning Node
-- **Maker URL** - Configure the Kaleidoswap maker API endpoint
-- **Connection history** - Quick-switch between recent node connections
+| **Bitcoin units** | sats, BTC, mBTC, or fiat display modes |
+| **Theme** | Dark mode |
+| **Auto-lock Timeout** | Configurable inactivity timeout |
 
 ### Security
 
 - **Change Password** - Update your wallet password
-- **Backup Wallet** - Export wallet data for backup
+- **Backup Wallet** - Export wallet backup data
 
 ### About
 
-- Extension version
+- Extension version and build information
 - Links to documentation, GitHub, and support

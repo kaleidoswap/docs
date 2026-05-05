@@ -1,15 +1,17 @@
 ---
 title: Getting Started
-description: Set up the Rate extension and connect to your node
+description: Create or import a Rate wallet and choose your network accounts
 ---
 
 ## Onboarding
 
 When you first open Rate, the onboarding flow guides you through initial setup.
 
+<img src="/images/rate/01-welcome.png" alt="Rate welcome screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
 <Steps>
   <Step title="Welcome">
-    The welcome screen introduces Rate. Click **Get Started** to begin.
+    Choose **Create New Wallet** or **Import Existing Wallet**.
   </Step>
 
   <Step title="Create a Password">
@@ -20,110 +22,83 @@ When you first open Rate, the onboarding flow guides you through initial setup.
     Choose a strong password and remember it (this cannot be recovered).
   </Step>
 
-  <Step title="Nostr Key Setup">
-    Rate generates a Nostr keypair for identity and signing:
-    
-    - **Generate new** - A fresh keypair is created automatically
-    - **Import existing** - Enter your existing Nostr private key (nsec)
-    
-    Your Nostr keys enable NIP-07 signing for Nostr-based applications.
+  <Step title="Back Up the Recovery Phrase">
+    Rate generates a 12-word recovery phrase for new wallets. This phrase controls Spark, Arkade, and the Nostr identity derived by the extension.
   </Step>
 
-  <Step title="Connect to Your Node">
-    Enter your RGB Lightning Node (RLN) connection details:
-    
-    - **Node URL** - The URL of your RLN (e.g., `http://localhost:3001`)
-    - **JWT Token** (optional) - Authentication token if your node requires it
-    
-    Rate connects to your node via the Kaleidoswap SDK to manage wallets, assets, and payments.
+  <Step title="Choose RGB Lightning">
+    Decide whether to connect an RGB Lightning Node during onboarding. RLN support is optional and experimental; Spark and Arkade can be used without it.
   </Step>
 
   <Step title="Done">
-    Your wallet is ready. You are taken to the dashboard.
+    Continue to the wallet. Rate starts with Spark and Arkade accounts and adds RLN features when you connect a node.
   </Step>
 </Steps>
 
+<img src="/images/rate/02-password.png" alt="Rate password step" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
+## RGB Lightning Node
+
+RLN is optional. Connect it if you want RGB assets, RGB invoices, RGB Lightning channels, or maker-based RGB swaps.
+
+<img src="/images/rate/04-rln-optional.png" alt="Rate RLN opt-in" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
+### Connection Details
+
+When opting in, enter:
+
+- **RLN Node URL** - The node endpoint, such as `http://localhost:3001`
+- **Biscuit token** - Optional authentication token when your node requires one
+
+<img src="/images/rate/05-rln-connect.png" alt="Rate RLN connection form" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
 <Note>
-An RGB Lightning Node (RLN) connection is required for core wallet features. Without a node, you cannot view balances, send, or receive assets.
+RGB Lightning is shown as an experimental test-network feature in onboarding. You can skip it and connect later from Settings.
 </Note>
-
-## Connecting to an RGB Lightning Node
-
-### Node URL
-
-Enter the URL where your RGB Lightning Node is running. Common configurations:
-
-| Setup | URL |
-|-------|-----|
-| **Local node** | `http://localhost:3001` |
-| **Remote node** | `https://your-node.example.com` |
-
-### Authentication
-
-If your node requires authentication, enter the **JWT token** in the authentication field. This is optional for nodes without auth configured.
-
-### Connection History
-
-Rate saves your last 10 node connections for quick switching. Access them from **Settings > Networks**.
-
-### Connection Status
-
-After connecting, the dashboard shows the node connection status:
-- **Connected** - Node is reachable and synced
-- **Disconnected** - Unable to reach the node
-
-## Maker API Connection
-
-Rate can optionally connect to the **Kaleidoswap maker API** to enable swap functionality:
-
-- **Default URL**: `https://api.regtest.kaleidoswap.com`
-- Configurable in **Settings > Networks**
-
-The maker connection is **not required** for core wallet features — send, receive, and asset management work without it. However, **the swap feature is disabled without a maker API connection**. To use swaps, ensure a valid maker API URL is configured in Settings.
 
 ## Dashboard Overview
 
-After setup, the dashboard shows:
+After setup, the dashboard shows account status and assets across the connected protocols.
 
-### Balance Card
+<img src="/images/rate/08-dashboard.png" alt="Rate dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
-- **Total BTC balance** across all layers
-- Breakdown: on-chain BTC and Lightning BTC
+### Account Status
 
-### Action Buttons
+The dashboard surfaces Spark, Arkade, and RLN account state. Each account shows whether it is ready, offline, optional, or still syncing.
+
+### Asset Filters
+
+Use the asset and network filters to focus on:
+
+- BTC across all protocols
+- Spark assets
+- Arkade assets
+- RGB assets when RLN is connected
+- Bitcoin L1, Lightning, Spark, and Arkade network slices
+
+### Actions
 
 | Action | Description |
 |--------|-------------|
-| **Deposit** | Receive BTC on-chain |
-| **Withdraw** | Send BTC on-chain |
-| **Receive** | Generate a Lightning or RGB invoice |
-| **Swap** | Swap between BTC and RGB assets |
-
-### Asset List
-
-- Lists all RGB-20 tokens with balances
-- Filter by layer: All Assets, On-chain, Lightning
-- Tap an asset to see details (ticker, name, precision, balance breakdown)
-
-### Activity Tab
-
-- View recent transactions
-- Filter by type and status
-- Click a transaction for details
+| **Deposit** | Generate a receive address or invoice for the selected asset and account route |
+| **Withdraw** | Send to a detected destination type through the best compatible route |
+| **Swap** | Open the in-extension swap interface |
 
 ## Lock and Unlock
 
 ### Auto-Lock
 
-Rate automatically locks after a period of inactivity (default: 10 minutes). When locked, the extension shows a lock screen requiring your password.
+Rate automatically locks after a period of inactivity. When locked, the extension requires your password before it decrypts the mnemonic in memory again.
 
 ### Manual Lock
 
-Click the lock icon in the extension header to lock immediately.
+Use **Settings > Lock Wallet** to lock immediately.
 
 ### Changing Lock Timeout
 
-Go to **Settings > Preferences** to adjust the auto-lock timeout.
+Go to **Settings > Preferences** to adjust the auto-lock timeout and Bitcoin unit display.
+
+<img src="/images/rate/06-wallet-ready.png" alt="Rate wallet ready" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 ## Next Steps
 
@@ -135,7 +110,7 @@ Go to **Settings > Preferences** to adjust the auto-lock timeout.
     Swap assets within the extension
   </Card>
   <Card title="DApp Connectivity" icon="plug" href="/extensions/rate/dapp-connectivity">
-    Use Rate with web apps and Nostr
+    Use Rate with trusted DApps and Nostr
   </Card>
   <Card title="FAQ" icon="circle-question" href="/extensions/rate/faq">
     Common questions and troubleshooting

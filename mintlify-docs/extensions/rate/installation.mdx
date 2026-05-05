@@ -1,52 +1,50 @@
 ---
 title: Installation
-description: Install the Rate browser extension
+description: Install or load the Rate browser extension
 ---
 
 ## Browser Requirements
 
-Rate is a web extension compatible with browsers:
+Rate is built as a Manifest V3 web extension.
 
 | Browser | Supported |
 |---------|-----------|
-| **Google Chrome** | Yes |
-| **Brave** | Yes |
-| **Edge** | Yes |
-| **Opera** | Yes |
-| **Firefox** | Yes |
+| **Google Chrome** | Yes, Chromium extension support |
+| **Brave** | Yes, Chromium extension support |
+| **Edge** | Yes, Chromium extension support |
+| **Opera** | Yes, Chromium extension support |
+| **Firefox** | Supported by the manifest gecko configuration |
 | **Safari** | Not yet |
 
 ## Installation
 
-### From Chrome Web Store
+### From a Browser Store
+
+When a browser-store build is available, install it from the Rate listing for your browser and pin the extension icon in the toolbar.
 
 <Steps>
-  <Step title="Open the Chrome Web Store">
-    Navigate to the Rate extension page on the Chrome Web Store.
+  <Step title="Open the Store Listing">
+    Open the Rate wallet listing for your browser.
   </Step>
-
-  <Step title="Click Add to Chrome">
-    Click the **Add to Chrome** button and confirm the installation when prompted.
+  <Step title="Install the Extension">
+    Confirm the browser installation prompt.
   </Step>
-
   <Step title="Pin the Extension">
-    Click the puzzle piece icon in the Chrome toolbar, then click the **Pin** icon next to Rate. This keeps the extension icon visible in your toolbar for quick access.
+    Pin Rate from the extensions menu so the wallet is available from the toolbar.
   </Step>
 </Steps>
 
 ### Manual Installation (Developer Mode)
 
-If you are building from source or testing a pre-release version:
+Use manual installation when testing a pre-release build or building from source.
 
 <Steps>
   <Step title="Build the Extension">
-    Clone the repository and build:
+    Install dependencies and build:
 
     ```bash
-    git clone <repository-url>
-    cd rate-extension
-    npm install
-    npm run build
+    pnpm install
+    pnpm run build
     ```
   </Step>
 
@@ -54,10 +52,6 @@ If you are building from source or testing a pre-release version:
     Navigate to `chrome://extensions` in your browser.
   </Step>
 
-  <Step title="Build the Extension">
-    Go to the repository and build the extension using `pnpm run build`.
-  </Step>
-  
   <Step title="Enable Developer Mode">
     Toggle **Developer mode** in the top-right corner.
   </Step>
@@ -75,11 +69,13 @@ If you are building from source or testing a pre-release version:
 
 After installation, clicking the Rate icon in your toolbar opens the extension popup. On first launch, you are guided through the **onboarding flow**:
 
-1. **Welcome screen** - Introduction to Rate
-2. **Password setup** - Create a secure password to protect your wallet
-3. **Nostr key setup** - Generate a new Nostr keypair or import an existing one
-4. **Node connection** - Connect to your RGB Lightning Node
-5. **Ready** - Your wallet is set up and ready to use
+<img src="/images/rate/01-welcome.png" alt="Rate first launch" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
+1. **Welcome screen** - Create a new wallet or import an existing phrase
+2. **Password setup** - Create a secure password to protect the local wallet
+3. **Recovery phrase backup** - Save the phrase that controls Spark, Arkade, and Nostr identity
+4. **Optional RLN setup** - Connect an RGB Lightning Node, or skip and connect it later
+5. **Ready** - Continue to the wallet dashboard
 
 See [Getting Started](/extensions/rate/getting-started) for more information.
 
@@ -89,17 +85,20 @@ Rate requests the following Chrome extension permissions:
 
 | Permission | Purpose |
 |-----------|---------|
-| **Storage** | Encrypted wallet data stored locally |
-| **Active Tab** | Inject WebLN provider into web pages |
-| **Scripting** | Content script for DApp connectivity |
+| **Storage** | Store encrypted wallet data, preferences, and account configuration locally |
+| **Active Tab** | Support browser-page wallet interactions |
+| **Scripting** | Inject DApp bridge scripts |
+| **Tabs** | Coordinate approval and confirmation windows |
+| **Alarms** | Run scheduled wallet/session tasks |
+| **Notifications** | Notify the user about wallet events where supported |
 
 <Note>
-Rate stores all data locally in your browser using `chrome.storage.local`. No data is sent to external servers except for communication with your RGB Lightning Node and the optional maker API.
+Rate stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect, such as Spark, Arkade, an optional RGB Lightning Node, price data, or swap venues.
 </Note>
 
 ## Updating
 
-Rate updates automatically through the Chrome Web Store. For manual installations, pull the latest code, rebuild, and reload the extension on your browser.
+Store-installed builds update through the browser's extension update system. For manual installations, pull the latest code, rebuild, and reload the unpacked extension in your browser.
 
 ## Uninstalling
 

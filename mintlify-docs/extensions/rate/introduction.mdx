@@ -1,24 +1,26 @@
 ---
 title: Rate Extension
-description: Bitcoin Layer 2 browser wallet with RGB support and built-in swaps
+description: Multi-network Bitcoin wallet extension for Spark, Arkade, RGB, swaps, and DApps
 ---
 
 ## What is Rate?
 
-Rate is a browser extension wallet designed for Bitcoin Layer 2 networks. It connects to your RGB Lightning Node (RLN) and provides a complete wallet experience: asset management, payments, swaps, and DApp connectivity.
+Rate is the KaleidoSwap browser wallet for Bitcoin Layer 2 networks. It gives users one popup for Spark, Arkade, optional RGB Lightning Node (RLN), swaps, Nostr identity, and DApp connectivity.
+
+<img src="/images/rate/08-dashboard.png" alt="Rate wallet dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 <CardGroup cols={2}>
   <Card title="Multi-Protocol" icon="layer-group">
-    Supports RGB, Spark, Arkade, and Liquid (planned)
+    Supports Spark, Arkade, and optional RGB Lightning Node accounts
   </Card>
   <Card title="Built-in Swaps" icon="arrows-rotate">
-    Swap assets directly in the extension via the Kaleidoswap maker API
+    Routes through KaleidoSwap maker pairs and supported Spark/Flashnet venues
   </Card>
   <Card title="DApp Integration" icon="plug">
-    WebLN provider and Nostr NIP-07 signer for seamless web app support
+    Exposes `window.rgbwebln` and Nostr signing support to trusted DApps
   </Card>
   <Card title="Secure" icon="lock">
-    Password-protected, encrypted storage, and auto-lock
+    Argon2id password checks, AES-GCM encrypted mnemonic, and auto-lock
   </Card>
 </CardGroup>
 
@@ -26,38 +28,38 @@ Rate is a browser extension wallet designed for Bitcoin Layer 2 networks. It con
 
 ### Wallet Management
 
-- View **BTC balances** (on-chain and Lightning)
-- View **RGB-20 token balances** with asset details
-- View **Spark token balances** with asset details
-- Balance breakdown by layer (on-chain vs. Lightning)
-- Real-time balance updates
+- Create or import a wallet from a 12 or 24-word recovery phrase
+- Derive Spark, Arkade, and Nostr identity state from the same phrase
+- Opt into RGB Lightning Node support when you want RGB assets and RLN channels
+- View BTC by account and layer: Spark, Arkade, Bitcoin L1, and Lightning/RLN
+- Filter assets by protocol account and network
 
 ### Send and Receive
 
-- **Send** BTC and RGB assets to any address, invoice, or node pubkey
-- **Receive** by generating Lightning invoices, on-chain addresses, or RGB invoices
+- **Send** to Bitcoin addresses, Lightning invoices, Lightning addresses, LNURL-pay, Spark addresses, Arkade routes, and RGB invoices where supported
+- **Receive** through Spark, Arkade, Bitcoin on-chain, Lightning, or RGB invoice flows depending on the selected account and asset
 - QR code generation for easy sharing
-- Auto-detection of payment type (BOLT11, Bitcoin address, RGB invoice, keysend)
+- Auto-detection of destination type and compatible route
 
 ### Asset Swaps
 
-- Swap between BTC and RGB assets via the **Kaleidoswap maker API**
-- Real-time exchange rate quotes
-- Swap preview with fee breakdown
-- Swap status tracking within the extension
+- Fetch KaleidoSwap maker pairs when RLN is connected
+- Use Spark/Flashnet venues when Spark pools are available
+- Review quote output, fee, expiry, and venue before execution
+- Track swap progress and failures directly in the extension
 
 ### DApp Connectivity
 
-- **WebLN provider** (`window.rgbwebln`) - Web apps can request invoices and payments
-- **Nostr NIP-07 signer** - Sign Nostr events from your browser
-- Integration with the **KaleidoSwap Web App** for direct invoice payments
+- **RGB WebLN provider** (`window.rgbwebln`) for node info, address, invoice, asset, and payment requests
+- **Nostr signer** for identity and event signing flows
+- Permission prompts for sensitive DApp operations
 
 ### Security
 
-- **Password-protected** wallet with encrypted storage
-- **Auto-lock** after configurable inactivity period (default: 10 minutes)
-- **Nostr keypair** management (generate or import)
-- No private keys stored in plaintext
+- Argon2id-derived password hash and a separate Argon2id-derived AES-GCM encryption key
+- Master mnemonic encrypted in `chrome.storage.local`; decrypted only in memory while unlocked
+- Nostr private key kept in session storage after derivation
+- Auto-lock timeout configurable from Preferences
 
 ## Architecture
 
@@ -65,22 +67,21 @@ Rate uses a multi-protocol adapter architecture:
 
 | Protocol | Status | Description |
 |----------|--------|-------------|
-| **RGB** | Implemented | Full RGB asset support via RGB Lightning Node |
-| **Spark** | In Progress | Spark protocol adapter |
-| **Arkade** | In Progress | Arkade protocol adapter |
-| **Liquid** | Planned | Liquid protocol adapter |
+| **Spark** | Implemented | Native Spark wallet, Spark BTC, Spark assets, Lightning send/receive, and Flashnet routes |
+| **Arkade** | Implemented | Arkade BTC, Arkade-native assets, boarding/offboarding, and VTXO lifecycle settings |
+| **RGB** | Experimental opt-in | RGB Lightning Node, RGB assets, RGB invoices, and maker-based RGB swaps |
 
-The extension communicates with your RGB Lightning Node via the **Kaleidoswap SDK** and optionally connects to the **Kaleidoswap maker API** for swap functionality.
+The background service worker owns protocol adapter lifecycle and message routing. The popup is a React wallet interface, while the content and injected scripts bridge web pages to the background service worker for DApp requests.
 
 ## How It Works
 
 ![Rate Extension Architecture](/assets/images/rate-extension.png)
 
 - The **extension UI** runs as a popup with a clean wallet interface
-- The **background service worker** handles all API communication
-- **RGB Lightning Node** connection is required for core wallet features
-- **Maker API** connection is optional and enables built-in swap functionality
-- **DApp connectivity** via WebLN (`window.rgbwebln`) and Nostr NIP-07 signer
+- The **background service worker** manages protocol adapters and cross-context messaging
+- **Spark and Arkade** are derived from the wallet recovery phrase
+- **RGB Lightning Node** is optional and currently presented as an experimental feature
+- **DApp connectivity** is handled through content scripts, `window.rgbwebln`, and Nostr signing support
 
 ## Get Started
 

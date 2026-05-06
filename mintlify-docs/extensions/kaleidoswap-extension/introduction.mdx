@@ -1,0 +1,101 @@
+---
+title: KaleidoSwap Extension
+description: Multi-network Bitcoin wallet extension for Spark, Arkade, RGB, swaps, and DApps
+---
+
+## What is the KaleidoSwap Extension?
+
+The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin Layer 2 networks. It gives users one popup for Spark, Arkade, optional RGB Lightning Node (RLN), swaps, Nostr identity, and DApp connectivity.
+
+<img src="/images/kaleidoswap-extension/08-dashboard.png" alt="KaleidoSwap Extension dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+
+<CardGroup cols={2}>
+  <Card title="Multi-Protocol" icon="layer-group">
+    Supports Spark, Arkade, and optional RGB Lightning Node accounts
+  </Card>
+  <Card title="Built-in Swaps" icon="arrows-rotate">
+    Routes through KaleidoSwap maker pairs and supported Spark/Flashnet venues
+  </Card>
+  <Card title="DApp Integration" icon="plug">
+    Exposes `window.rgbwebln` for trusted DApp wallet requests
+  </Card>
+  <Card title="Secure" icon="lock">
+    Argon2id password checks, AES-GCM encrypted mnemonic, and auto-lock
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### Wallet Management
+
+- Create or import a wallet from a 12 or 24-word recovery phrase
+- Derive Spark, Arkade, and Nostr identity state from the same phrase
+- Opt into RGB Lightning Node support when you want RGB assets and RLN channels
+- View BTC by account and layer: Spark, Arkade, Bitcoin L1, and Lightning/RLN
+- Filter assets by protocol account and network
+
+### Send and Receive
+
+- **Send** to Bitcoin addresses, Lightning invoices, Lightning addresses, LNURL-pay, Spark addresses, Arkade routes, and RGB invoices where supported
+- **Receive** through Spark, Arkade, Bitcoin on-chain, Lightning, or RGB invoice flows depending on the selected account and asset
+- QR code generation for easy sharing
+- Auto-detection of destination type and compatible route
+
+### Asset Swaps
+
+- Fetch KaleidoSwap maker pairs when RLN is connected
+- Use Spark/Flashnet venues when Spark pools are available
+- Review quote output, fee, expiry, and venue before execution
+- Track swap progress and failures directly in the extension
+
+### DApp Connectivity
+
+- **RGB WebLN provider** (`window.rgbwebln`) for node info, address, invoice, asset, and payment requests
+- **Nostr identity** derived from the recovery phrase and visible in settings
+- Permission prompts for sensitive DApp operations
+
+### Security
+
+- Argon2id-derived password hash and a separate Argon2id-derived AES-GCM encryption key
+- Master mnemonic encrypted in `chrome.storage.local`; decrypted only in memory while unlocked
+- Nostr private key kept in session storage after derivation
+- Auto-lock timeout configurable from Preferences
+
+## Architecture
+
+The KaleidoSwap Extension uses a multi-protocol adapter architecture:
+
+| Protocol | Status | Description |
+|----------|--------|-------------|
+| **Spark** | Implemented | Native Spark wallet, Spark BTC, Spark assets, Lightning send/receive, and Flashnet routes |
+| **Arkade** | Implemented | Arkade BTC, Arkade-native assets, boarding/offboarding, and VTXO lifecycle settings |
+| **RGB** | Experimental opt-in | RGB Lightning Node, RGB assets, RGB invoices, and maker-based RGB swaps |
+
+The background service worker owns protocol adapter lifecycle and message routing. The popup is a React wallet interface, while the content and injected scripts bridge web pages to the background service worker for DApp requests.
+
+## How It Works
+
+![KaleidoSwap Extension Architecture](/assets/images/kaleidoswap-extension.png)
+
+- The **extension UI** runs as a popup with a clean wallet interface
+- The **background service worker** manages protocol adapters and cross-context messaging
+- **Spark and Arkade** are derived from the wallet recovery phrase
+- **RGB Lightning Node** is optional and currently presented as an experimental feature
+- **DApp connectivity** is handled through content scripts, `window.rgbwebln`, and Nostr signing support
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Install the KaleidoSwap Extension" icon="download" href="/extensions/kaleidoswap-extension/installation">
+    Install the extension in your browser
+  </Card>
+  <Card title="First Steps" icon="rocket" href="/extensions/kaleidoswap-extension/getting-started">
+    Set up your wallet and connect to a node
+  </Card>
+  <Card title="Wallet Features" icon="wallet" href="/extensions/kaleidoswap-extension/wallet-features">
+    Learn about send, receive, and asset management
+  </Card>
+  <Card title="Swaps" icon="arrows-rotate" href="/extensions/kaleidoswap-extension/swaps">
+    Swap assets directly in the extension
+  </Card>
+</CardGroup>

@@ -1,0 +1,200 @@
+---
+title: FAQ & Troubleshooting
+description: Common questions and solutions for the KaleidoSwap Extension
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What browsers does the KaleidoSwap Extension support?">
+    The KaleidoSwap Extension is available on:
+    - Chromium-based browsers such as Google Chrome, Brave, Microsoft Edge, and Opera
+    - Firefox and Zen Browser
+    - Safari is not yet supported
+  </Accordion>
+
+  <Accordion title="Do I need my own node?">
+    **Not for every feature.** Spark and Arkade accounts are derived from the KaleidoSwap Extension recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
+
+    For RLN features, you can connect to:
+    - A **local node** by using the [KaleidoSwap Desktop App](/desktop-app/wallet/creating-wallet) or running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) on a local machine.
+    - A **remote node** accessible via URL.
+  </Accordion>
+
+  <Accordion title="Is the KaleidoSwap Extension custodial?">
+    **No.** The KaleidoSwap Extension stores the wallet mnemonic encrypted locally and derives protocol accounts from it. For optional RLN use, the extension connects to the node you configure.
+  </Accordion>
+
+  <Accordion title="Do I need a swap venue for basic wallet features?">
+    **No.** Swap venues are optional. Without them:
+    - Send, receive, and balance features work normally
+    - Only the **swap** feature is disabled
+  </Accordion>
+
+  <Accordion title="What assets does the KaleidoSwap Extension support?">
+    The KaleidoSwap Extension supports:
+    - **BTC** across Spark, Arkade, Bitcoin L1, and RLN Lightning where connected
+    - **Spark-native assets** when available on the Spark account
+    - **Arkade-native assets** when available on the Arkade account
+    - **RGB assets** when an RGB Lightning Node is connected
+  </Accordion>
+
+  <Accordion title="How do I back up my wallet?">
+    Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen can also publish an encrypted Nostr backup of extension settings and RGB backup metadata.
+
+    Keep separate offline copies of:
+    - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, and the derived Nostr identity
+    - A recent **RGB node backup file** if you use an RGB Lightning Node
+    - Your **RLN node seed phrase or node backup material** if the node is managed separately
+
+    The Nostr settings backup does **not** include your recovery phrase, password hash, or saved RGB API token.
+  </Accordion>
+
+  <Accordion title="What happens if I forget my password?">
+    The KaleidoSwap Extension cannot recover your password. If you forget it, you will need to:
+    1. Uninstall and reinstall the extension
+    2. Import your recovery phrase
+    3. Set up a new password
+    4. Reconnect optional services such as your RGB Lightning Node
+    
+    Spark, Arkade, and the derived Nostr identity are recoverable from the recovery phrase. RGB Lightning Node state must be recovered from the node's own backup material.
+  </Accordion>
+
+  <Accordion title="Can I connect to multiple nodes?">
+    The KaleidoSwap Extension manages Spark, Arkade, and optional RLN accounts. For RLN, connect one node endpoint at a time.
+  </Accordion>
+
+  <Accordion title="How does auto-lock work?">
+    The KaleidoSwap Extension automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
+  </Accordion>
+
+  <Accordion title="Can I use the KaleidoSwap Extension with DApps?">
+    **Yes.** Trusted DApps can request wallet actions through the KaleidoSwap Extension's browser provider. Review each connection, payment, asset, or signing request before approving it.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to node">
+    **Symptoms:** Connection fails or shows "Disconnected"
+    
+    **Solutions:**
+    1. Verify the **node URL** is correct
+    2. Check that the node is **running and accessible**
+    3. If using a local node, ensure it is running on the expected port
+    4. If using a remote node, check network/firewall settings
+    5. If using a Biscuit/auth token, verify the **token is valid**
+    6. Try disconnecting and reconnecting in Settings > Networks
+  </Accordion>
+
+  <Accordion title="Swap venue not connecting">
+    **Symptoms:** Swap feature is disabled or shows connection error
+    
+    **Solutions:**
+    1. Check that the relevant account is connected
+    2. Verify RLN if using KaleidoSwap maker pairs
+    3. Verify Spark availability if using Flashnet routes
+    4. Try refreshing the swap screen
+  </Accordion>
+
+  <Accordion title="Provider not detected by a DApp">
+    **Symptoms:** A DApp does not detect the KaleidoSwap Extension as a wallet
+    
+    **Solutions:**
+    1. Ensure the KaleidoSwap Extension is **installed and unlocked**
+    2. Refresh the web page
+    3. Check that the extension is **enabled** for the site
+    4. Confirm the DApp supports `window.rgbwebln`
+    5. Some apps look only for `window.webln` -- the KaleidoSwap Extension provides `window.rgbwebln`
+  </Accordion>
+</AccordionGroup>
+
+### Payment Issues
+
+<AccordionGroup>
+  <Accordion title="Payment failed">
+    **Symptoms:** Send payment shows error
+    
+    **Solutions:**
+    1. Check your **balance** is sufficient
+    2. Verify the **destination** is correct
+    3. For Lightning, ensure there is a **route** to the destination
+    4. Check that your node is **online and synced**
+    5. Try again after a few moments
+  </Accordion>
+
+  <Accordion title="Invoice generation failed">
+    **Symptoms:** Cannot generate receive invoice
+    
+    **Solutions:**
+    1. Check your **node connection**
+    2. Ensure the node has **inbound liquidity** (for Lightning)
+    3. Try generating a different type (on-chain instead of Lightning)
+    4. Restart the extension and try again
+  </Accordion>
+</AccordionGroup>
+
+### Extension Issues
+
+<AccordionGroup>
+  <Accordion title="Extension not loading">
+    **Symptoms:** Clicking the icon does nothing or shows blank popup
+    
+    **Solutions:**
+    1. Go to `chrome://extensions` and check the KaleidoSwap Extension is **enabled**
+    2. Try **disabling and re-enabling** the extension
+    3. Clear browser cache
+    4. Restart the browser
+    5. For manual installs, try **reloading** the extension
+  </Accordion>
+
+  <Accordion title="Locked out / forgot password">
+    **Symptoms:** Cannot unlock the extension
+    
+    **Solutions:**
+    1. The KaleidoSwap Extension cannot recover passwords
+    2. **Uninstall** the extension and **reinstall**
+    3. Import your recovery phrase
+    4. Set up a new password and reconnect optional services
+  </Accordion>
+
+  <Accordion title="Balances not updating">
+    **Symptoms:** Stale balances shown
+    
+    **Solutions:**
+    1. Check your **node connection** status
+    2. Pull down to **refresh** on the dashboard
+    3. Close and reopen the extension popup
+    4. Verify the node is **synced**
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Join our community for quick help
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report bugs or request features
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues
+  </Card>
+  <Card title="Documentation" icon="book" href="/extensions/kaleidoswap-extension/introduction">
+    Browse KaleidoSwap Extension documentation
+  </Card>
+</CardGroup>
+
+## Reporting Issues
+
+When reporting problems, include:
+1. Browser name and version
+2. KaleidoSwap Extension version (Settings > About)
+3. Node type and version
+4. Steps to reproduce
+5. Error messages or screenshots
+6. Console logs (right-click extension popup > Inspect > Console)

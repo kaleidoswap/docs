@@ -1,0 +1,109 @@
+---
+title: DApp Connectivity
+description: RGB WebLN provider and wallet approval flow for trusted DApps
+---
+
+## Overview
+
+The KaleidoSwap Extension injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This currently supports RGB WebLN-style wallet requests and browser approval flows.
+
+## RGB WebLN Provider
+
+The KaleidoSwap Extension exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
+
+- Request node information
+- Generate RGB invoices
+- Decode RGB invoices
+- Send RGB assets
+- List assets and transfers
+- Request addresses and balances
+
+### How It Works
+
+1. The KaleidoSwap Extension's **content script** is injected into web pages
+2. The content script loads an **injected script** that adds `window.rgbwebln`
+3. DApps call methods on `window.rgbwebln`
+4. Requests are routed to the KaleidoSwap Extension **background service worker**
+5. Sensitive operations can trigger a confirmation or permission prompt
+
+### Supported Methods
+
+| Method | Description |
+|--------|-------------|
+| `enable()` | Connect the DApp to the KaleidoSwap Extension |
+| `getInfo()` | Get node information |
+| `getAddress()` | Get a receive address |
+| `rgbInvoice(params)` | Create an RGB invoice |
+| `decodeRgbInvoice(params)` | Decode an RGB invoice |
+| `sendAsset(params)` | Request an RGB asset send |
+| `listTransfers(params)` | List transfers for an asset |
+| `listAssets()` | List wallet assets |
+| `getNetworkInfo()` | Get network details |
+| `getBalance()` | Get wallet balance details |
+
+### Example Usage
+
+```javascript
+window.addEventListener('rgbWebLNReady', async () => {
+  await window.rgbwebln.enable();
+
+  const info = await window.rgbwebln.getInfo();
+
+  const { invoice } = await window.rgbwebln.rgbInvoice({
+    asset_id: 'rgb:...',
+    duration_seconds: 3600
+  });
+
+  const assets = await window.rgbwebln.listAssets();
+});
+```
+
+### Permission Prompts
+
+When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action.
+
+<Warning>
+Always review what a DApp is requesting before approving. Only approve payments, invoices, and asset sends from sites you trust.
+</Warning>
+
+## Nostr Identity
+
+The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase and makes it available in the extension settings. Browser-page Nostr signing is not exposed yet.
+
+<Note>
+The current injected provider is `window.rgbwebln`. The extension does not currently inject `window.nostr` or implement NIP-07 event signing for web pages.
+</Note>
+
+### Nostr Key Management
+
+Your Nostr keypair is managed in **Settings > Nostr Account**:
+
+- View your public key (`npub`)
+- View/copy the session private key when the wallet is unlocked
+- Re-derive identity from the wallet recovery phrase
+
+## Browser Approval Flow
+
+The KaleidoSwap Extension keeps DApp approvals user-driven:
+
+1. A trusted site requests a connection, payment, asset, or invoice action
+2. The KaleidoSwap Extension routes the request through the content script and background service worker
+3. The user reviews the details and approves or rejects the action
+
+This keeps wallet-side actions explicit while still allowing DApps to use the KaleidoSwap Extension as a browser provider.
+
+## Security Considerations
+
+| Practice | Description |
+|----------|-------------|
+| **Verify the site** | Check the URL before approving wallet connections |
+| **Review requests** | Read invoice and asset details before approving |
+| **Lock when done** | Lock the KaleidoSwap Extension when you are finished using DApps |
+| **Limit exposure** | Only connect to trusted sites |
+
+## Supported DApps
+
+The KaleidoSwap Extension's browser provider is designed for:
+
+- **RGB-aware DApps** - Apps that use `window.rgbwebln`
+- **Internal test pages** - Local pages that exercise wallet provider methods during development

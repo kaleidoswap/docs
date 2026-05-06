@@ -1,18 +1,20 @@
 ---
 title: Swaps
-description: Swap assets directly within the Rate extension
+description: Swap assets directly within the KaleidoSwap Extension
 ---
 
 ## Overview
 
-Rate integrates with the **Kaleidoswap maker API** to let you swap between BTC and RGB assets without leaving the extension. The swap feature requires a maker API connection (configured in Settings > Networks).
+The KaleidoSwap Extension includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
+
+<img src="/images/kaleidoswap-extension/10-swap.png" alt="KaleidoSwap swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 ## Prerequisites
 
 Before swapping:
-1. Your node must be **connected**
-2. The **maker API** must be connected (see [Getting Started](/extensions/rate/getting-started#maker-api-connection-optional))
-3. You must have a **sufficient balance** of the asset you want to swap from
+1. At least one compatible swap venue must be available
+2. The relevant account must be connected
+3. You must have sufficient balance for the source asset and network fees
 
 ## Swap Flow
 
@@ -24,14 +26,15 @@ Before swapping:
   <Step title="Select Assets">
     Choose the **From** and **To** assets:
     - **From** - The asset you want to trade (e.g., BTC)
-    - **To** - The asset you want to receive (e.g., USDT)
+    - **To** - The asset you want to receive
   </Step>
 
   <Step title="Enter Amount">
-    Enter the amount you want to swap. The extension fetches a real-time quote from the maker API showing:
+    Enter the amount you want to swap. The extension fetches a quote from the selected venue showing:
     - Exchange rate
     - Output amount
     - Fees
+    - Expiry
   </Step>
 
   <Step title="Review">
@@ -44,7 +47,7 @@ Before swapping:
   </Step>
 
   <Step title="Confirm">
-    Click **Confirm Swap** to execute. The extension creates the swap order via the maker API.
+    Confirm the swap before the quote expires.
   </Step>
 
   <Step title="Track Status">
@@ -60,7 +63,7 @@ Before swapping:
 
 ## Real-Time Quotes
 
-When you enter an amount, Rate fetches a quote from the maker API:
+When you enter an amount, the KaleidoSwap Extension fetches a quote from the active venue:
 
 | Quote Field | Description |
 |------------|-------------|
@@ -68,6 +71,7 @@ When you enter an amount, Rate fetches a quote from the maker API:
 | **Output Amount** | How much you will receive |
 | **Fee** | Protocol and network fees |
 | **Expiry** | How long the quote is valid |
+| **Venue** | The route provider, such as KaleidoSwap maker or Flashnet |
 
 Quotes update in real time as you change the amount.
 
@@ -83,18 +87,8 @@ After confirming, the swap progresses through several stages:
 | **Completed** | The swap is done and you have received the asset |
 | **Failed** | Something went wrong -- check the logs for details |
 
-## Maker API Configuration
-
-The maker API endpoint can be configured in **Settings > Networks**:
-
-| Setting | Default |
-|---------|---------|
-| **Maker URL** | `https://api.regtest.kaleidoswap.com` |
-
-You can point this to a different maker API if available.
-
 <Note>
-The maker connection is optional. Without it, all other wallet features (send, receive, balances) work normally. Only the swap feature requires a maker connection.
+If no compatible venue or pair is available, the KaleidoSwap Extension shows an empty state instead of a quote. Wallet features such as deposits, withdrawals, balances, and settings still work.
 </Note>
 
 ## Tips

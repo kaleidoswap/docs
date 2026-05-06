@@ -99,6 +99,31 @@
         ]
       },
       {
+        "tab": "Extensions",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "puzzle-piece",
+            "pages": [
+              "extensions/introduction"
+            ]
+          },
+          {
+            "group": "KaleidoSwap Extension",
+            "icon": "wallet",
+            "pages": [
+              "extensions/kaleidoswap-extension/introduction",
+              "extensions/kaleidoswap-extension/installation",
+              "extensions/kaleidoswap-extension/getting-started",
+              "extensions/kaleidoswap-extension/wallet-features",
+              "extensions/kaleidoswap-extension/swaps",
+              "extensions/kaleidoswap-extension/dapp-connectivity",
+              "extensions/kaleidoswap-extension/faq"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "SDK",
         "groups": [
           {

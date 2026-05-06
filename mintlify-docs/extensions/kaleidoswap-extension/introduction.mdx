@@ -17,7 +17,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin Layer 2 
     Routes through KaleidoSwap maker pairs and supported Spark/Flashnet venues
   </Card>
   <Card title="DApp Integration" icon="plug">
-    Exposes `window.rgbwebln` and Nostr signing support to trusted DApps
+    Exposes `window.rgbwebln` for trusted DApp wallet requests
   </Card>
   <Card title="Secure" icon="lock">
     Argon2id password checks, AES-GCM encrypted mnemonic, and auto-lock
@@ -51,7 +51,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin Layer 2 
 ### DApp Connectivity
 
 - **RGB WebLN provider** (`window.rgbwebln`) for node info, address, invoice, asset, and payment requests
-- **Nostr signer** for identity and event signing flows
+- **Nostr identity** derived from the recovery phrase and visible in settings
 - Permission prompts for sensitive DApp operations
 
 ### Security

@@ -1,11 +1,11 @@
 ---
 title: DApp Connectivity
-description: RGB WebLN provider and Nostr signer for trusted DApps
+description: RGB WebLN provider and wallet approval flow for trusted DApps
 ---
 
 ## Overview
 
-The KaleidoSwap Extension injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This supports RGB WebLN-style requests, wallet approval flows, and Nostr signing.
+The KaleidoSwap Extension injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This currently supports RGB WebLN-style wallet requests and browser approval flows.
 
 ## RGB WebLN Provider
 
@@ -17,7 +17,6 @@ The KaleidoSwap Extension exposes an RGB WebLN provider at `window.rgbwebln` tha
 - Send RGB assets
 - List assets and transfers
 - Request addresses and balances
-- Sign messages where supported
 
 ### How It Works
 
@@ -41,7 +40,6 @@ The KaleidoSwap Extension exposes an RGB WebLN provider at `window.rgbwebln` tha
 | `listAssets()` | List wallet assets |
 | `getNetworkInfo()` | Get network details |
 | `getBalance()` | Get wallet balance details |
-| `signMessage(message)` | Sign a message where supported |
 
 ### Example Usage
 
@@ -65,39 +63,30 @@ window.addEventListener('rgbWebLNReady', async () => {
 When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action.
 
 <Warning>
-Always review what a DApp is requesting before approving. Only approve payments, asset sends, and signing requests from sites you trust.
+Always review what a DApp is requesting before approving. Only approve payments, invoices, and asset sends from sites you trust.
 </Warning>
 
-## Nostr Signing
+## Nostr Identity
 
-The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase and exposes signing support for compatible Nostr clients.
+The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase and makes it available in the extension settings. Browser-page Nostr signing is not exposed yet.
 
-### How It Works
-
-1. The KaleidoSwap Extension provides a Nostr-compatible signing API
-2. Nostr clients call signing methods
-3. The KaleidoSwap Extension prompts you to approve the signing request
-
-### Supported Operations
-
-| Operation | Description |
-|-----------|-------------|
-| `getPublicKey()` | Returns your Nostr public key (npub) |
-| `signEvent(event)` | Signs a Nostr event with your private key |
+<Note>
+The current injected provider is `window.rgbwebln`. The extension does not currently inject `window.nostr` or implement NIP-07 event signing for web pages.
+</Note>
 
 ### Nostr Key Management
 
 Your Nostr keypair is managed in **Settings > Nostr Account**:
 
 - View your public key (`npub`)
-- View/export the session private key when available
+- View/copy the session private key when the wallet is unlocked
 - Re-derive identity from the wallet recovery phrase
 
 ## Browser Approval Flow
 
 The KaleidoSwap Extension keeps DApp approvals user-driven:
 
-1. A trusted site requests a connection, payment, asset, or signing action
+1. A trusted site requests a connection, payment, asset, or invoice action
 2. The KaleidoSwap Extension routes the request through the content script and background service worker
 3. The user reviews the details and approves or rejects the action
 
@@ -108,7 +97,7 @@ This keeps wallet-side actions explicit while still allowing DApps to use the Ka
 | Practice | Description |
 |----------|-------------|
 | **Verify the site** | Check the URL before approving wallet connections |
-| **Review requests** | Read invoice, asset, or signing details before approving |
+| **Review requests** | Read invoice and asset details before approving |
 | **Lock when done** | Lock the KaleidoSwap Extension when you are finished using DApps |
 | **Limit exposure** | Only connect to trusted sites |
 
@@ -117,5 +106,4 @@ This keeps wallet-side actions explicit while still allowing DApps to use the Ka
 The KaleidoSwap Extension's browser provider is designed for:
 
 - **RGB-aware DApps** - Apps that use `window.rgbwebln`
-- **Nostr clients** - Apps that support browser-based Nostr signing
 - **Internal test pages** - Local pages that exercise wallet provider methods during development

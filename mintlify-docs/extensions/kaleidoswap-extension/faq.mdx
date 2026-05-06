@@ -15,7 +15,7 @@ description: Common questions and solutions for the KaleidoSwap Extension
 
   <Accordion title="Do I need my own node?">
     **Not for every feature.** Spark and Arkade accounts are derived from the KaleidoSwap Extension recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
-    
+
     For RLN features, you can connect to:
     - A **local node** by using the [KaleidoSwap Desktop App](/desktop-app/wallet/creating-wallet) or running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) on a local machine.
     - A **remote node** accessible via URL.
@@ -40,19 +40,24 @@ description: Common questions and solutions for the KaleidoSwap Extension
   </Accordion>
 
   <Accordion title="How do I back up my wallet?">
-    Go to **Settings > Backup Wallet** to export your wallet data. You should also separately back up:
-    - Your **KaleidoSwap Extension recovery phrase**
-    - Your **Nostr private key** if you export it separately
-    - Your **RLN node seed phrase** if you use a separate RGB Lightning Node
+    Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen can also publish an encrypted Nostr backup of extension settings and RGB backup metadata.
+
+    Keep separate offline copies of:
+    - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, and the derived Nostr identity
+    - A recent **RGB node backup file** if you use an RGB Lightning Node
+    - Your **RLN node seed phrase or node backup material** if the node is managed separately
+
+    The Nostr settings backup does **not** include your recovery phrase, password hash, or saved RGB API token.
   </Accordion>
 
   <Accordion title="What happens if I forget my password?">
     The KaleidoSwap Extension cannot recover your password. If you forget it, you will need to:
     1. Uninstall and reinstall the extension
-    2. Set up a new password
-    3. Reconnect to your node
+    2. Import your recovery phrase
+    3. Set up a new password
+    4. Reconnect optional services such as your RGB Lightning Node
     
-    Your funds are safe on your node -- only the local extension data is lost.
+    Spark, Arkade, and the derived Nostr identity are recoverable from the recovery phrase. RGB Lightning Node state must be recovered from the node's own backup material.
   </Accordion>
 
   <Accordion title="Can I connect to multiple nodes?">
@@ -152,8 +157,8 @@ description: Common questions and solutions for the KaleidoSwap Extension
     **Solutions:**
     1. The KaleidoSwap Extension cannot recover passwords
     2. **Uninstall** the extension and **reinstall**
-    3. Set up a new password and reconnect to your node
-    4. Your funds are safe on the node -- only local extension data is lost
+    3. Import your recovery phrase
+    4. Set up a new password and reconnect optional services
   </Accordion>
 
   <Accordion title="Balances not updating">

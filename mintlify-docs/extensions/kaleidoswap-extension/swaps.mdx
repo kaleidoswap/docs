@@ -1,13 +1,13 @@
 ---
 title: Swaps
-description: Swap assets directly within the Rate extension
+description: Swap assets directly within the KaleidoSwap Extension
 ---
 
 ## Overview
 
-Rate includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
+The KaleidoSwap Extension includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
 
-<img src="/images/rate/10-swap.png" alt="Rate swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/images/kaleidoswap-extension/10-swap.png" alt="KaleidoSwap swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ Before swapping:
 
 ## Real-Time Quotes
 
-When you enter an amount, Rate fetches a quote from the active venue:
+When you enter an amount, the KaleidoSwap Extension fetches a quote from the active venue:
 
 | Quote Field | Description |
 |------------|-------------|
@@ -88,7 +88,7 @@ After confirming, the swap progresses through several stages:
 | **Failed** | Something went wrong -- check the logs for details |
 
 <Note>
-If no compatible venue or pair is available, Rate shows an empty state instead of a quote. Wallet features such as deposits, withdrawals, balances, and settings still work.
+If no compatible venue or pair is available, the KaleidoSwap Extension shows an empty state instead of a quote. Wallet features such as deposits, withdrawals, balances, and settings still work.
 </Note>
 
 ## Tips

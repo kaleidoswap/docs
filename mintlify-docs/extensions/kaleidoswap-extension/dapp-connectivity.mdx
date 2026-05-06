@@ -5,11 +5,11 @@ description: RGB WebLN provider and Nostr signer for trusted DApps
 
 ## Overview
 
-Rate injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This supports RGB WebLN-style requests, wallet approval flows, and Nostr signing.
+The KaleidoSwap Extension injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This supports RGB WebLN-style requests, wallet approval flows, and Nostr signing.
 
 ## RGB WebLN Provider
 
-Rate exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
+The KaleidoSwap Extension exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
 
 - Request node information
 - Generate RGB invoices
@@ -21,17 +21,17 @@ Rate exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
 
 ### How It Works
 
-1. Rate's **content script** is injected into web pages
+1. The KaleidoSwap Extension's **content script** is injected into web pages
 2. The content script loads an **injected script** that adds `window.rgbwebln`
 3. DApps call methods on `window.rgbwebln`
-4. Requests are routed to the Rate **background service worker**
+4. Requests are routed to the KaleidoSwap Extension **background service worker**
 5. Sensitive operations can trigger a confirmation or permission prompt
 
 ### Supported Methods
 
 | Method | Description |
 |--------|-------------|
-| `enable()` | Connect the DApp to Rate |
+| `enable()` | Connect the DApp to the KaleidoSwap Extension |
 | `getInfo()` | Get node information |
 | `getAddress()` | Get a receive address |
 | `rgbInvoice(params)` | Create an RGB invoice |
@@ -62,7 +62,7 @@ window.addEventListener('rgbWebLNReady', async () => {
 
 ### Permission Prompts
 
-When a connected site makes a sensitive request, Rate asks the user to approve or deny the action.
+When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action.
 
 <Warning>
 Always review what a DApp is requesting before approving. Only approve payments, asset sends, and signing requests from sites you trust.
@@ -70,13 +70,13 @@ Always review what a DApp is requesting before approving. Only approve payments,
 
 ## Nostr Signing
 
-Rate derives a Nostr identity from the wallet recovery phrase and exposes signing support for compatible Nostr clients.
+The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase and exposes signing support for compatible Nostr clients.
 
 ### How It Works
 
-1. Rate provides a Nostr-compatible signing API
+1. The KaleidoSwap Extension provides a Nostr-compatible signing API
 2. Nostr clients call signing methods
-3. Rate prompts you to approve the signing request
+3. The KaleidoSwap Extension prompts you to approve the signing request
 
 ### Supported Operations
 
@@ -95,13 +95,13 @@ Your Nostr keypair is managed in **Settings > Nostr Account**:
 
 ## Browser Approval Flow
 
-Rate keeps DApp approvals user-driven:
+The KaleidoSwap Extension keeps DApp approvals user-driven:
 
 1. A trusted site requests a connection, payment, asset, or signing action
-2. Rate routes the request through the content script and background service worker
+2. The KaleidoSwap Extension routes the request through the content script and background service worker
 3. The user reviews the details and approves or rejects the action
 
-This keeps wallet-side actions explicit while still allowing DApps to use Rate as a browser provider.
+This keeps wallet-side actions explicit while still allowing DApps to use the KaleidoSwap Extension as a browser provider.
 
 ## Security Considerations
 
@@ -109,12 +109,12 @@ This keeps wallet-side actions explicit while still allowing DApps to use Rate a
 |----------|-------------|
 | **Verify the site** | Check the URL before approving wallet connections |
 | **Review requests** | Read invoice, asset, or signing details before approving |
-| **Lock when done** | Lock Rate when you are finished using DApps |
+| **Lock when done** | Lock the KaleidoSwap Extension when you are finished using DApps |
 | **Limit exposure** | Only connect to trusted sites |
 
 ## Supported DApps
 
-Rate's browser provider is designed for:
+The KaleidoSwap Extension's browser provider is designed for:
 
 - **RGB-aware DApps** - Apps that use `window.rgbwebln`
 - **Nostr clients** - Apps that support browser-based Nostr signing

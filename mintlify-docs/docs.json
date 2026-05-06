@@ -109,16 +109,16 @@
             ]
           },
           {
-            "group": "Rate Wallet",
+            "group": "KaleidoSwap Extension",
             "icon": "wallet",
             "pages": [
-              "extensions/rate/introduction",
-              "extensions/rate/installation",
-              "extensions/rate/getting-started",
-              "extensions/rate/wallet-features",
-              "extensions/rate/swaps",
-              "extensions/rate/dapp-connectivity",
-              "extensions/rate/faq"
+              "extensions/kaleidoswap-extension/introduction",
+              "extensions/kaleidoswap-extension/installation",
+              "extensions/kaleidoswap-extension/getting-started",
+              "extensions/kaleidoswap-extension/wallet-features",
+              "extensions/kaleidoswap-extension/swaps",
+              "extensions/kaleidoswap-extension/dapp-connectivity",
+              "extensions/kaleidoswap-extension/faq"
             ]
           }
         ]

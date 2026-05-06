@@ -1,11 +1,11 @@
 ---
 title: Installation
-description: Install or load the Rate browser extension
+description: Install or load the KaleidoSwap Extension
 ---
 
 ## Browser Requirements
 
-Rate is built as a Manifest V3 web extension.
+The KaleidoSwap Extension is built as a Manifest V3 web extension.
 
 | Browser | Supported |
 |---------|-----------|
@@ -20,17 +20,17 @@ Rate is built as a Manifest V3 web extension.
 
 ### From a Browser Store
 
-When a browser-store build is available, install it from the Rate listing for your browser and pin the extension icon in the toolbar.
+When a browser-store build is available, install it from the KaleidoSwap Extension listing for your browser and pin the extension icon in the toolbar.
 
 <Steps>
   <Step title="Open the Store Listing">
-    Open the Rate wallet listing for your browser.
+    Open the KaleidoSwap Extension listing for your browser.
   </Step>
   <Step title="Install the Extension">
     Confirm the browser installation prompt.
   </Step>
   <Step title="Pin the Extension">
-    Pin Rate from the extensions menu so the wallet is available from the toolbar.
+    Pin KaleidoSwap from the extensions menu so the wallet is available from the toolbar.
   </Step>
 </Steps>
 
@@ -40,7 +40,7 @@ Use manual installation when testing a pre-release build or building from source
 
 <Steps>
   <Step title="Build the Extension">
-    First, download or clone the Rate source code, then open a terminal in the project root directory. If `pnpm` is not installed yet, install it first, then install dependencies and build:
+    First, download or clone the KaleidoSwap Extension source code, then open a terminal in the project root directory. If `pnpm` is not installed yet, install it first, then install dependencies and build:
 
     ```bash
     git clone <repository-url>
@@ -64,15 +64,15 @@ Use manual installation when testing a pre-release build or building from source
   </Step>
 
   <Step title="Pin the Extension">
-    Pin the Rate icon in your toolbar for easy access.
+    Pin the KaleidoSwap icon in your toolbar for easy access.
   </Step>
 </Steps>
 
 ## First Launch
 
-After installation, clicking the Rate icon in your toolbar opens the extension popup. On first launch, you are guided through the **onboarding flow**:
+After installation, clicking the KaleidoSwap icon in your toolbar opens the extension popup. On first launch, you are guided through the **onboarding flow**:
 
-<img src="/images/rate/01-welcome.png" alt="Rate first launch" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/images/kaleidoswap-extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
 1. **Welcome screen** - Create a new wallet or import an existing phrase
 2. **Password setup** - Create a secure password to protect the local wallet
@@ -80,11 +80,11 @@ After installation, clicking the Rate icon in your toolbar opens the extension p
 4. **Optional RLN setup** - Connect an RGB Lightning Node, or skip and connect it later
 5. **Ready** - Continue to the wallet dashboard
 
-See [Getting Started](/extensions/rate/getting-started) for more information.
+See [Getting Started](/extensions/kaleidoswap-extension/getting-started) for more information.
 
 ## Permissions
 
-Rate requests the following Chrome extension permissions:
+The KaleidoSwap Extension requests the following Chrome extension permissions:
 
 | Permission | Purpose |
 |-----------|---------|
@@ -96,7 +96,7 @@ Rate requests the following Chrome extension permissions:
 | **Notifications** | Notify the user about wallet events where supported |
 
 <Note>
-Rate stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect, such as Spark, Arkade, an optional RGB Lightning Node, price data, or swap venues.
+The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect, such as Spark, Arkade, an optional RGB Lightning Node, price data, or swap venues.
 </Note>
 
 ## Updating
@@ -105,7 +105,7 @@ Store-installed builds update through the browser's extension update system. For
 
 ## Uninstalling
 
-To remove the Rate extension proceed with the instructions provided by your browser.
+To remove the KaleidoSwap Extension, follow the instructions provided by your browser.
 
 <Warning>
 Uninstalling the extension removes all locally stored wallet data. Make sure you have backed up your Nostr keys and any important data before uninstalling.

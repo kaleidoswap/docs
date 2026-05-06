@@ -1,28 +1,28 @@
 ---
 title: FAQ & Troubleshooting
-description: Common questions and solutions for the Rate extension
+description: Common questions and solutions for the KaleidoSwap Extension
 ---
 
 ## Frequently Asked Questions
 
 <AccordionGroup>
-  <Accordion title="What browsers does Rate support?">
-    Rate is available on:
+  <Accordion title="What browsers does the KaleidoSwap Extension support?">
+    The KaleidoSwap Extension is available on:
     - Chromium-based browsers such as Google Chrome, Brave, Microsoft Edge, and Opera
     - Firefox and Zen Browser
     - Safari is not yet supported
   </Accordion>
 
   <Accordion title="Do I need my own node?">
-    **Not for every feature.** Spark and Arkade accounts are derived from the Rate recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
+    **Not for every feature.** Spark and Arkade accounts are derived from the KaleidoSwap Extension recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
     
     For RLN features, you can connect to:
     - A **local node** by using the [KaleidoSwap Desktop App](/desktop-app/wallet/creating-wallet) or running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) on a local machine.
     - A **remote node** accessible via URL.
   </Accordion>
 
-  <Accordion title="Is Rate custodial?">
-    **No.** Rate stores the wallet mnemonic encrypted locally and derives protocol accounts from it. For optional RLN use, Rate connects to the node you configure.
+  <Accordion title="Is the KaleidoSwap Extension custodial?">
+    **No.** The KaleidoSwap Extension stores the wallet mnemonic encrypted locally and derives protocol accounts from it. For optional RLN use, the extension connects to the node you configure.
   </Accordion>
 
   <Accordion title="Do I need a swap venue for basic wallet features?">
@@ -31,8 +31,8 @@ description: Common questions and solutions for the Rate extension
     - Only the **swap** feature is disabled
   </Accordion>
 
-  <Accordion title="What assets does Rate support?">
-    Rate supports:
+  <Accordion title="What assets does the KaleidoSwap Extension support?">
+    The KaleidoSwap Extension supports:
     - **BTC** across Spark, Arkade, Bitcoin L1, and RLN Lightning where connected
     - **Spark-native assets** when available on the Spark account
     - **Arkade-native assets** when available on the Arkade account
@@ -41,13 +41,13 @@ description: Common questions and solutions for the Rate extension
 
   <Accordion title="How do I back up my wallet?">
     Go to **Settings > Backup Wallet** to export your wallet data. You should also separately back up:
-    - Your **Rate recovery phrase**
+    - Your **KaleidoSwap Extension recovery phrase**
     - Your **Nostr private key** if you export it separately
     - Your **RLN node seed phrase** if you use a separate RGB Lightning Node
   </Accordion>
 
   <Accordion title="What happens if I forget my password?">
-    Rate cannot recover your password. If you forget it, you will need to:
+    The KaleidoSwap Extension cannot recover your password. If you forget it, you will need to:
     1. Uninstall and reinstall the extension
     2. Set up a new password
     3. Reconnect to your node
@@ -56,15 +56,15 @@ description: Common questions and solutions for the Rate extension
   </Accordion>
 
   <Accordion title="Can I connect to multiple nodes?">
-    Rate manages Spark, Arkade, and optional RLN accounts. For RLN, connect one node endpoint at a time.
+    The KaleidoSwap Extension manages Spark, Arkade, and optional RLN accounts. For RLN, connect one node endpoint at a time.
   </Accordion>
 
   <Accordion title="How does auto-lock work?">
-    Rate automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
+    The KaleidoSwap Extension automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
   </Accordion>
 
-  <Accordion title="Can I use Rate with DApps?">
-    **Yes.** Trusted DApps can request wallet actions through Rate's browser provider. Review each connection, payment, asset, or signing request before approving it.
+  <Accordion title="Can I use the KaleidoSwap Extension with DApps?">
+    **Yes.** Trusted DApps can request wallet actions through the KaleidoSwap Extension's browser provider. Review each connection, payment, asset, or signing request before approving it.
   </Accordion>
 </AccordionGroup>
 
@@ -96,14 +96,14 @@ description: Common questions and solutions for the Rate extension
   </Accordion>
 
   <Accordion title="Provider not detected by a DApp">
-    **Symptoms:** A DApp does not detect Rate as a wallet
+    **Symptoms:** A DApp does not detect the KaleidoSwap Extension as a wallet
     
     **Solutions:**
-    1. Ensure Rate is **installed and unlocked**
+    1. Ensure the KaleidoSwap Extension is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
     4. Confirm the DApp supports `window.rgbwebln`
-    5. Some apps look only for `window.webln` -- Rate provides `window.rgbwebln`
+    5. Some apps look only for `window.webln` -- the KaleidoSwap Extension provides `window.rgbwebln`
   </Accordion>
 </AccordionGroup>
 
@@ -139,7 +139,7 @@ description: Common questions and solutions for the Rate extension
     **Symptoms:** Clicking the icon does nothing or shows blank popup
     
     **Solutions:**
-    1. Go to `chrome://extensions` and check Rate is **enabled**
+    1. Go to `chrome://extensions` and check the KaleidoSwap Extension is **enabled**
     2. Try **disabling and re-enabling** the extension
     3. Clear browser cache
     4. Restart the browser
@@ -150,7 +150,7 @@ description: Common questions and solutions for the Rate extension
     **Symptoms:** Cannot unlock the extension
     
     **Solutions:**
-    1. Rate cannot recover passwords
+    1. The KaleidoSwap Extension cannot recover passwords
     2. **Uninstall** the extension and **reinstall**
     3. Set up a new password and reconnect to your node
     4. Your funds are safe on the node -- only local extension data is lost
@@ -179,8 +179,8 @@ description: Common questions and solutions for the Rate extension
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
     Direct support for urgent issues
   </Card>
-  <Card title="Documentation" icon="book" href="/extensions/rate/introduction">
-    Browse Rate documentation
+  <Card title="Documentation" icon="book" href="/extensions/kaleidoswap-extension/introduction">
+    Browse KaleidoSwap Extension documentation
   </Card>
 </CardGroup>
 
@@ -188,7 +188,7 @@ description: Common questions and solutions for the Rate extension
 
 When reporting problems, include:
 1. Browser name and version
-2. Rate extension version (Settings > About)
+2. KaleidoSwap Extension version (Settings > About)
 3. Node type and version
 4. Steps to reproduce
 5. Error messages or screenshots

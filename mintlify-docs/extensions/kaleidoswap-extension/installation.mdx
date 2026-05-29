@@ -5,54 +5,38 @@ description: Install or load the KaleidoSwap Extension
 
 ## Browser Requirements
 
-The KaleidoSwap Extension is built as a Manifest V3 web extension.
+The KaleidoSwap Extension is built as a Manifest V3 web extension. The first closed beta is distributed as a Chromium-compatible zip archive for Developer Mode installation.
 
 | Browser | Supported |
 |---------|-----------|
-| **Google Chrome** | Yes, Chromium extension support |
-| **Brave** | Yes, Chromium extension support |
-| **Edge** | Yes, Chromium extension support |
-| **Opera** | Yes, Chromium extension support |
-| **Firefox** | Supported by the manifest gecko configuration |
+| **Google Chrome** | Closed beta target |
+| **Brave** | Closed beta target |
+| **Edge** | Closed beta target |
+| **Opera** | Closed beta target |
+| **Firefox** | Not part of the first closed beta unless a Firefox build is provided |
 | **Safari** | Not yet |
 
 ## Installation
 
-### From a Browser Store
+### Closed Beta Zip (Developer Mode)
 
-When a browser-store build is available, install it from the KaleidoSwap Extension listing for your browser and pin the extension icon in the toolbar.
+The first KaleidoSwap Extension release is an invite-only closed beta. There is no browser-store listing yet, and the extension source repository is not public yet. Invited testers receive a private Drive link from the KaleidoSwap team with the beta zip, checksum, and release notes.
 
-<Steps>
-  <Step title="Open the Store Listing">
-    Open the KaleidoSwap Extension listing for your browser.
-  </Step>
-  <Step title="Install the Extension">
-    Confirm the browser installation prompt.
-  </Step>
-  <Step title="Pin the Extension">
-    Pin KaleidoSwap from the extensions menu so the wallet is available from the toolbar.
-  </Step>
-</Steps>
-
-### Manual Installation (Developer Mode)
-
-Use manual installation when testing a pre-release build or building from source.
+<Warning>
+Only install beta archives shared through the official KaleidoSwap invite or support channel. Do not install forwarded archives from unverified sources.
+</Warning>
 
 <Steps>
-  <Step title="Build the Extension">
-    First, download or clone the KaleidoSwap Extension source code, then open a terminal in the project root directory. If `pnpm` is not installed yet, install it first, then install dependencies and build:
+  <Step title="Download the Beta Zip">
+    Open the private Drive link from your beta invite and download the latest KaleidoSwap Extension zip archive. If a checksum is provided, verify it before installing.
+  </Step>
 
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory>
-    npm install -g pnpm
-    pnpm install
-    pnpm run build
-    ```
+  <Step title="Extract the Archive">
+    Unzip the archive into a stable folder on your machine. Keep this extracted folder in place while the extension is installed, because the browser loads the extension from that folder.
   </Step>
 
   <Step title="Open Extensions Page">
-    Navigate to `chrome://extensions` in your browser.
+    Navigate to `chrome://extensions` in your Chromium-based browser.
   </Step>
 
   <Step title="Enable Developer Mode">
@@ -60,13 +44,24 @@ Use manual installation when testing a pre-release build or building from source
   </Step>
 
   <Step title="Load Unpacked">
-    Click **Load unpacked** and select the `dist` folder from the build output.
+    Click **Load unpacked** and select the extracted folder that contains `manifest.json`. If the archive contains a `dist` folder, select `dist`.
   </Step>
 
   <Step title="Pin the Extension">
     Pin the KaleidoSwap icon in your toolbar for easy access.
   </Step>
 </Steps>
+
+## Not Available Yet
+
+| Channel | Status |
+|---------|--------|
+| **Browser stores** | Not available during the first closed beta |
+| **Source build** | Not available until the extension source is opened |
+
+<Note>
+Closed beta testers should install only the zip provided through the private Drive link. Source-build instructions will be added when the extension repository is made public.
+</Note>
 
 ## First Launch
 
@@ -101,7 +96,7 @@ The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local
 
 ## Updating
 
-Store-installed builds update through the browser's extension update system. For manual installations, pull the latest code, rebuild, and reload the unpacked extension in your browser.
+Closed beta builds do not auto-update through a browser store. When a new beta is available, download the latest zip from the private Drive link, extract it, then return to `chrome://extensions` and click **Reload** on the KaleidoSwap Extension card. If you extracted the new build into a different folder, remove the old unpacked extension and load the new folder.
 
 ## Uninstalling
 

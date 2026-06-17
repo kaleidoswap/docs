@@ -9,13 +9,6 @@ description: 'SDK and RGB Lightning Node API compatibility information'
 
 The SDK automatically supports the most recent RLN API release. Always keep your SDK and RGB Lightning Node updated to ensure full compatibility and access to the latest features and security improvements.
 
-<Warning>
-  RLN v0.7.1 introduced breaking request-schema changes that require **SDK v0.1.9+**:
-  - `ListUnspentsRequest` now requires a `settled_only` field (older SDKs send only `{skip_sync}` and get `HTTP 400 "Failed to deserialize the JSON body into the target type"`).
-  - `POST /sendasset` was renamed to `POST /sendrgb`.
-  - New endpoints: `POST /inflate`, `POST /issueassetifa` (Inflatable Fungible Assets).
-</Warning>
-
 <Note>
 To check the latest RLN API changes and updates, refer to the [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) or your node documentation.
 </Note>

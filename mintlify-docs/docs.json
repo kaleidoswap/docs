@@ -149,7 +149,8 @@
             "pages": [
               "sdk/api-reference",
               "sdk/types",
-              "sdk/websocket"
+              "sdk/websocket",
+              "sdk/nwc"
             ]
           },
           {

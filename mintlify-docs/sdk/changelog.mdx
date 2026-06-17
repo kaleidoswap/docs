@@ -7,7 +7,31 @@ description: SDK and API version history for KaleidoSwap
   This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
-## SDK v0.1.5 — Current
+## SDK v0.1.9 — Current
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Added
+
+- **NWC (Nostr Wallet Connect, NIP-47) client** — new `kaleido-sdk/nwc` subpath. `NWCClient` exposes `rln_*` RLN extension methods and an `RlnTransport` seam that runs the RLN client over an NWC connection (NIP-44 encryption, NIP-04 fallback). LN-invoice decode, send-BTC and list-payments are mapped over the NWC transport.
+- RLN client methods + models for `POST /sendrgb`, `POST /inflate`, `POST /issueassetifa`, and Inflatable Fungible Asset (IFA) types.
+
+### Changed
+
+- Regenerated the RLN models against `kaleidoswap/rgb-lightning-node` **v0.7.1**.
+
+### Breaking changes
+
+- `ListUnspentsRequest` now requires `settled_only`. RLN 0.7.1 rejects the old `{skip_sync}`-only body with `HTTP 400 "Failed to deserialize the JSON body into the target type"`. The `list_unspents()` convenience method defaults `settled_only=False`; callers that build the request directly must set it.
+- `POST /sendasset` was renamed to `POST /sendrgb` (`SendAssetRequest`/`SendAssetResponse` → `SendRgbRequest`/`SendRgbResponse`).
+
+<Note>
+  Versions 0.1.6–0.1.8 are omitted here; see the full [CHANGELOG](https://github.com/kaleidoswap/kaleido-sdk/blob/master/CHANGELOG.md) in the SDK repository.
+</Note>
+
+## SDK v0.1.5
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 

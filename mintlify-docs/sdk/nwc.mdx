@@ -1,0 +1,89 @@
+---
+title: 'Nostr Wallet Connect (NWC)'
+description: 'Control a remote RGB Lightning Node over Nostr Wallet Connect (NIP-47) with the kaleido-sdk/nwc client'
+---
+
+## Overview
+
+Since **kaleido-sdk 0.1.9**, the SDK ships a **Nostr Wallet Connect (NIP-47)** client on the
+`kaleido-sdk/nwc` subpath. It lets a client app drive a remote wallet service — for example the
+KaleidoSwap desktop hub running an RGB Lightning Node — over a Nostr relay, without a direct HTTP
+connection to the node.
+
+On top of the standard NIP-47 wallet methods, the client adds **`rln*` RGB Lightning extension
+methods** so you can read balances, manage RGB assets, and open invoices on the remote node through
+the same encrypted NWC transport.
+
+<Info>
+  Transport is end-to-end encrypted with **NIP-44**, falling back to **NIP-04** when the wallet
+  service does not advertise NIP-44 support.
+</Info>
+
+## Connecting
+
+You need an NWC **connection URI** (`nostr+walletconnect://...`) issued by the wallet service.
+
+```ts
+import { NWCClient } from 'kaleido-sdk/nwc';
+
+const nwc = new NWCClient(connectionUri);
+
+const { balance } = await nwc.getBalance();
+console.log('balance (msat):', balance);
+
+// release the relay subscription when done
+nwc.close();
+```
+
+`parseNwcUri(uri)` is exported if you need to inspect a URI (relay, wallet pubkey, secret) before
+connecting, and `NwcError` is thrown on protocol/timeout failures.
+
+## Standard wallet methods (NIP-47)
+
+```ts
+await nwc.getInfo();                              // capabilities / supported methods
+await nwc.getBalance();                           // { balance } in msat
+await nwc.makeInvoice({ amount, description });    // create a BOLT11 invoice
+await nwc.payInvoice({ invoice });                 // pay a BOLT11 invoice
+await nwc.payKeysend({ pubkey, amount });          // spontaneous payment
+await nwc.lookupInvoice({ payment_hash });         // invoice status
+await nwc.listTransactions({ limit, offset });     // payment history
+```
+
+## RGB Lightning Node extension methods
+
+These map RLN operations over the same NWC connection:
+
+```ts
+await nwc.rlnNodeInfo();                 // NodeInfoResponse
+await nwc.rlnListAssets();               // ListAssetsResponse
+await nwc.rlnAssetBalance({ asset_id }); // AssetBalanceResponse
+await nwc.rlnGetAddress();               // on-chain address
+await nwc.rlnListChannels();             // ListChannelsResponse
+await nwc.rlnRgbInvoice(params);         // create an RGB invoice
+await nwc.rlnDecodeRgbInvoice({ invoice });
+await nwc.rlnSendAsset(params);          // SendRgbRequest -> SendRgbResponse
+```
+
+## Running the full RLN client over NWC
+
+If you already use the [`RlnClient`](/sdk/api-reference) against an HTTP `nodeUrl`, you can swap the
+transport for NWC instead — same client surface, routed over Nostr:
+
+```ts
+import { createNwcRlnClient } from 'kaleido-sdk/nwc';
+
+const rln = createNwcRlnClient(connectionUri);
+const info = await rln.getNodeInfo();
+const channels = await rln.listChannels();
+```
+
+`NwcRlnNodeClient` is the underlying transport if you need to construct it directly.
+
+## When to use NWC vs HTTP
+
+| | HTTP (`nodeUrl`) | NWC |
+| --- | --- | --- |
+| Connectivity | Direct reachability to the node's REST API | Works through a Nostr relay — no inbound port / public node URL needed |
+| Auth | API key / Authorization header | NWC connection secret, encrypted (NIP-44/04) |
+| Best for | Server-side and same-network integrations | Remote control of a user's node (e.g. the desktop hub) over the open internet |

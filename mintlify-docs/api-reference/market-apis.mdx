@@ -31,7 +31,7 @@ Fetch the list of assets available for trading on the RGB Lightning Node.
 ### Response Structure
 - **`assets`**: Array of supported assets.
   - **`asset_id`**: The unique identifier of the asset.
-  - **`asset_iface`**: The interface type (e.g., `RGB20`).
+  - **`asset_iface`**: The RGB interface type (e.g., `NIA` — Non-Inflatable Asset, formerly `RGB20`).
   - **`ticker`**: Short name or symbol of the asset (e.g., `USDT`).
   - **`name`**: Full name of the asset (e.g., `Tether USD`).
   - **`precision`**: Decimal precision for the asset.
@@ -47,7 +47,7 @@ Fetch the list of assets available for trading on the RGB Lightning Node.
   "assets": [
     {
       "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-      "asset_iface": "RGB20",
+      "asset_iface": "NIA",
       "ticker": "USDT",
       "name": "Tether USD",
       "precision": 6,
@@ -57,7 +57,7 @@ Fetch the list of assets available for trading on the RGB Lightning Node.
     },
     {
       "asset_id": "rgb:2AqCRS7-BAchKZra7-nmyQz7z68-itsY6o85v-z8gQJAXMD-evdFnKz",
-      "asset_iface": "RGB20",
+      "asset_iface": "NIA",
       "ticker": "ETH",
       "name": "Ethereum",
       "precision": 8,

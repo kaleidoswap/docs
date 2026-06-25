@@ -45,9 +45,13 @@ RGB enables scalable and confidential smart contracts on Bitcoin using client-si
 
 ### RGB Asset Types
 
+<Note>
+  RGB interfaces were previously known by their schema numbers (RGB20, RGB21, RGB25). The current RGB standard names them **NIA**, **UDA**, **CFA**, and **IFA**.
+</Note>
+
 <Tabs>
-  <Tab title="RGB20 - Fungible Assets">
-    **RGB20** tokens are fungible assets similar to ERC-20 on Ethereum.
+  <Tab title="NIA - Fungible Assets">
+    **NIA** (Non-Inflatable Asset, formerly RGB20) tokens are fixed-supply fungible assets similar to ERC-20 on Ethereum.
 
     **Use Cases**:
     - Stablecoins (USDT, USDC)
@@ -58,15 +62,32 @@ RGB enables scalable and confidential smart contracts on Bitcoin using client-si
     **Properties**:
     - Divisible
     - Interchangeable
-    - Fixed or variable supply
+    - Fixed supply (non-inflatable)
   </Tab>
 
-  <Tab title="RGB21 - NFTs">
+  <Tab title="IFA - Inflatable Assets">
     <Note>
-      RGB21 assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with RGB20 fungible tokens at this time.
+      IFA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
     </Note>
 
-    **RGB21** tokens are non-fungible, unique digital assets.
+    **IFA** (Inflatable Fungible Asset) tokens are fungible assets whose supply can be increased or decreased by the issuer (e.g. mint/burn).
+
+    **Use Cases**:
+    - Stablecoins with managed supply
+    - Re-issuable utility tokens
+
+    **Properties**:
+    - Divisible
+    - Interchangeable
+    - Variable supply (issuer-controlled inflation/replacement)
+  </Tab>
+
+  <Tab title="UDA - NFTs">
+    <Note>
+      UDA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
+    </Note>
+
+    **UDA** (Unique Digital Asset, formerly RGB21) tokens are non-fungible, unique digital assets.
 
     **Use Cases**:
     - Digital art
@@ -80,21 +101,21 @@ RGB enables scalable and confidential smart contracts on Bitcoin using client-si
     - Provably scarce
   </Tab>
 
-  <Tab title="RGB25 - Unique Digital Assets">
+  <Tab title="CFA - Collectibles">
     <Note>
-      RGB25 assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with RGB20 fungible tokens at this time.
+      CFA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
     </Note>
 
-    **RGB25** provides more complex asset functionality.
+    **CFA** (Collectible Fungible Asset, formerly RGB25) provides collectible asset functionality with richer media and metadata.
 
     **Use Cases**:
-    - Complex financial instruments
-    - Multi-asset bundles
-    - Advanced DeFi primitives
+    - Collectible series
+    - Media-backed assets
+    - Multi-edition items
 
     **Properties**:
-    - Programmable
-    - Composable
+    - Fungible within a collection
+    - Rich metadata/media
     - Advanced state management
   </Tab>
 </Tabs>
@@ -124,7 +145,7 @@ KaleidoSwap extends the Lightning Network to support RGB assets alongside native
 
 - **Transfer USDT instantly** through Lightning channels
 - **Trade assets atomically** via HTLC-based atomic swaps
-- **Multi-asset channels** supporting BTC + RGB20 tokens simultaneously
+- **Multi-asset channels** supporting BTC + NIA tokens simultaneously
 
 ## Lightning Service Providers (LSPs)
 

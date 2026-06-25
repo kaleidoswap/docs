@@ -10,16 +10,20 @@ description: Key terms and concepts for RGB, Lightning Network, and KaleidoSwap
     A digital asset created using the RGB protocol. RGB assets are client-validated smart contracts that leverage Bitcoin's security while maintaining scalability and privacy through off-chain validation.
   </Accordion>
 
-  <Accordion title="RGB20" icon="coins">
-    The RGB protocol standard for fungible tokens, similar to ERC-20 on Ethereum. Used for creating and managing divisible assets like stablecoins or utility tokens.
+  <Accordion title="NIA (formerly RGB20)" icon="coins">
+    Non-Inflatable Asset — the RGB interface for fixed-supply fungible tokens, similar to ERC-20 on Ethereum. Used for creating and managing divisible assets like stablecoins or utility tokens. This is the asset type KaleidoSwap trades today.
   </Accordion>
 
-  <Accordion title="RGB21" icon="image">
-    The RGB protocol standard for non-fungible tokens (NFTs), comparable to ERC-721. Used for unique digital assets and collectibles.
+  <Accordion title="IFA" icon="coins">
+    Inflatable Fungible Asset — the RGB interface for fungible tokens whose supply can be expanded or replaced by the issuer (mint/burn). Not currently supported by KaleidoSwap.
   </Accordion>
 
-  <Accordion title="RGB25" icon="layer-group">
-    The RGB protocol standard for asset containers and complex smart contracts with multiple asset types.
+  <Accordion title="UDA (formerly RGB21)" icon="image">
+    Unique Digital Asset — the RGB interface for non-fungible tokens (NFTs), comparable to ERC-721. Used for unique digital assets and collectibles. Not currently supported by KaleidoSwap.
+  </Accordion>
+
+  <Accordion title="CFA (formerly RGB25)" icon="layer-group">
+    Collectible Fungible Asset — the RGB interface for collectibles with rich media and metadata. Not currently supported by KaleidoSwap.
   </Accordion>
 
   <Accordion title="Asset ID" icon="fingerprint">
@@ -35,7 +39,7 @@ description: Key terms and concepts for RGB, Lightning Network, and KaleidoSwap
   </Accordion>
 
   <Accordion title="Schema" icon="sitemap">
-    The blueprint defining an RGB asset's properties, state transitions, and validation rules. Different schemas (RGB20, RGB21, RGB25) enable different asset types.
+    The blueprint defining an RGB asset's properties, state transitions, and validation rules. Different interfaces (NIA, IFA, UDA, CFA — formerly RGB20/21/25) enable different asset types.
   </Accordion>
 </AccordionGroup>
 

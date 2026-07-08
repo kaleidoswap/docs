@@ -10,13 +10,10 @@ The Market APIs are the starting point for any swap integration. They give you t
 - **List assets** — discover all RGB assets supported by the maker (asset IDs, tickers, precision).
 - **List trading pairs** — find which pairs are active and their min/max order sizes.
 - **Request a quote** — get a locked price for a specific amount; the returned `rfq_id` is used to create an order.
-- **Estimate Bitcoin fees** — get current on-chain fee estimates for funding transactions.
 
 All Market API endpoints are public and require no authentication.
 
 **Base URL:** `https://api.signet.kaleidoswap.com/api/v1` (Signet) or `https://api.regtest.kaleidoswap.com/api/v1` (Regtest)
-
----
 
 ---
 
@@ -210,49 +207,6 @@ Request a quote for a specific trading pair and amount. The response includes de
 - The `fee` is already included in the `to_amount`.
 - Precision fields help clients format and display values correctly.
 - The `rfq_id` can be used in subsequent swap initiation requests if the client decides to proceed with the trade.
-
----
-
-## Estimate Bitcoin Fee
-
-### Endpoint
-**`GET /api/v1/market/bitcoin_fee_estimate`**
-
-### Description
-Estimate the Bitcoin fee required to include a transaction in a specified number of target blocks.
-
-### Query Parameters
-- `target_blocks` (integer, required): The number of blocks within which you aim to have the transaction confirmed.
-
-### Example Request
-```bash
-GET /api/v1/market/bitcoin_fee_estimate?target_blocks=3
-```
-
-### Response Structure
-- `estimated_fee_sat`: The estimated fee in satoshis required for the transaction to be confirmed within the target number of blocks.
-- `target_blocks`: The number of blocks within which the fee estimate is applicable.
-- `timestamp`: The server-side timestamp when the estimate was generated.
-
-### Example Response
-```json
-{
-  "estimated_fee_sat": 253,
-  "target_blocks": 3,
-  "timestamp": 1691160765
-}
-```
-
-### Field Descriptions
-
-- **`estimated_fee_sat`**: The estimated fee in satoshis needed for the transaction to be included in the next target_blocks blocks.
-- **`target_blocks`**: The user-specified number of blocks within which the transaction should be confirmed.
-- **`timestamp`**: The Unix timestamp indicating when the fee estimate was generated.
-
-### Additional Notes
-
-- Fee estimates are based on current network conditions and may vary. It's advisable to check closer to the time of transaction submission.
-- If `target_blocks` is set too low, the estimated fee might be higher to ensure timely confirmation.
 
 ---
 

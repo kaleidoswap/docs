@@ -74,7 +74,7 @@ From the [Releases page](https://github.com/kaleidoswap/desktop-app/releases), d
 | macOS Intel | `KaleidoSwap_<version>_x64.dmg` | `KaleidoSwap_<version>_x64.dmg.asc` |
 | Linux (AppImage) | `KaleidoSwap_<version>_amd64.AppImage` | `KaleidoSwap_<version>_amd64.AppImage.asc` |
 | Linux (DEB) | `KaleidoSwap_<version>_amd64.deb` | `KaleidoSwap_<version>_amd64.deb.asc` |
-| Windows | `KaleidoSwap_<version>_x64-setup.msi` | `KaleidoSwap_<version>_x64-setup.msi.asc` |
+| Windows | `KaleidoSwap_<version>_x64_en-US.msi` | `KaleidoSwap_<version>_x64_en-US.msi.asc` |
 
 ### 3. Verify the Signature
 
@@ -82,23 +82,23 @@ Run `gpg --verify` with the signature file first, then the binary:
 
 <CodeGroup>
 ```sh macOS (Apple Silicon)
-gpg --verify KaleidoSwap_0.3.2_aarch64.dmg.asc \
-             KaleidoSwap_0.3.2_aarch64.dmg
+gpg --verify KaleidoSwap_0.5.0_aarch64.dmg.asc \
+             KaleidoSwap_0.5.0_aarch64.dmg
 ```
 
 ```sh macOS (Intel)
-gpg --verify KaleidoSwap_0.3.2_x64.dmg.asc \
-             KaleidoSwap_0.3.2_x64.dmg
+gpg --verify KaleidoSwap_0.5.0_x64.dmg.asc \
+             KaleidoSwap_0.5.0_x64.dmg
 ```
 
 ```sh Linux
-gpg --verify KaleidoSwap_0.3.2_amd64.AppImage.asc \
-             KaleidoSwap_0.3.2_amd64.AppImage
+gpg --verify KaleidoSwap_0.5.0_amd64.AppImage.asc \
+             KaleidoSwap_0.5.0_amd64.AppImage
 ```
 
 ```sh Windows
-gpg --verify KaleidoSwap_0.3.2_x64-setup.msi.asc `
-             KaleidoSwap_0.3.2_x64-setup.msi
+gpg --verify KaleidoSwap_0.5.0_x64_en-US.msi.asc `
+             KaleidoSwap_0.5.0_x64_en-US.msi
 ```
 </CodeGroup>
 
@@ -138,12 +138,12 @@ For a quick integrity check without GPG, you can compare checksums. The SHA256 h
 
 ```sh
 # macOS / Linux
-shasum -a 256 KaleidoSwap_0.3.2_aarch64.dmg
+shasum -a 256 KaleidoSwap_0.5.0_aarch64.dmg
 ```
 
 ```powershell
 # Windows (PowerShell)
-Get-FileHash -Algorithm SHA256 KaleidoSwap_0.3.2_x64-setup.msi
+Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.0_x64_en-US.msi
 ```
 
 ## Troubleshooting

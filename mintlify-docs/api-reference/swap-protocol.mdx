@@ -148,10 +148,10 @@ Web Client / API User                Maker (RGB-LSP)
         |<─── { rfq_id, price,  ──────────|
         |        to_amount, expires_at }   |
         |                                  |
-        |──── POST /api/v1/swap-orders ───>|
+        |──── POST /api/v1/swaps/orders ──>|
         |       (rfq_id, receiver_address) |
         |<─── { order_id, status: ────────|
-        |        AWAITING_DEPOSIT,         |
+        |        OPEN,                     |
         |        deposit_address }         |
         |                                  |
         |──── Pay deposit ─────────────────────> Bitcoin / Lightning Network
@@ -159,7 +159,7 @@ Web Client / API User                Maker (RGB-LSP)
         |                    Maker detects payment
         |                    Maker sends asset to receiver_address
         |                                  |
-        |──── GET /api/v1/swap-orders ────>|
+        |──── GET /api/v1/swaps/orders ───>|
         |       /{order_id}                |
         |<─── { status: FILLED } ─────────|
 ```
@@ -168,10 +168,12 @@ Web Client / API User                Maker (RGB-LSP)
 
 | State | Description |
 |-------|-------------|
-| `AWAITING_DEPOSIT` | Order created, waiting for payment |
-| `PAYMENT_CONFIRMED` | Payment received, maker processing |
+| `OPEN` | Order created, waiting for the deposit |
+| `PENDING_PAYMENT` | Deposit detected, awaiting confirmation |
+| `PAID` | Payment confirmed, maker processing |
 | `EXECUTING` | Maker sending the swapped asset |
 | `FILLED` | Swap complete |
+| `CANCELLED` | Order cancelled before completion |
 | `EXPIRED` | Deposit window elapsed without payment |
 | `FAILED` | Execution error — contact support |
 | `PENDING_RATE_DECISION` | Rate changed, taker must accept or reject |

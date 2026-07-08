@@ -5,7 +5,7 @@ description: 'SDK and Maker API compatibility information'
 
 ## Compatibility
 
-**SDK v0.1.5** is compatible with the **latest Maker API** version.
+**SDK v0.1.11** is compatible with the **latest Maker API** version.
 
 The SDK automatically supports the most recent Maker API release. Always keep your SDK and Maker API updated to ensure full compatibility and access to the latest features.
 
@@ -30,7 +30,7 @@ To use Maker API features with the SDK:
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+import { KaleidoClient, Layer } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
   baseUrl: 'https://api.regtest.kaleidoswap.com',
@@ -39,12 +39,15 @@ const client = KaleidoClient.create({
 // Access Maker API through client.maker
 const assets = await client.maker.listAssets();
 const pairs = await client.maker.listPairs();
-const quote = await client.maker.getQuote({ asset_id: '...', network: 'BTC' });
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
+});
 ```
 
 ```python Python
 import asyncio
-from kaleido_sdk import KaleidoClient
+from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
 
 async def main():
     client = KaleidoClient.create(
@@ -54,7 +57,12 @@ async def main():
     # Access Maker API through client.maker
     assets = await client.maker.list_assets()
     pairs = await client.maker.list_pairs()
-    quote = await client.maker.get_quote({"asset_id": "...", "network": "BTC"})
+    quote = await client.maker.get_quote(
+        PairQuoteRequest(
+            from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+            to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+        )
+    )
 
 asyncio.run(main())
 ```

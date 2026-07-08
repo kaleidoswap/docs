@@ -23,7 +23,7 @@ KaleidoSwap browser extensions bring wallet management, protocol accounts, swaps
 | **Wallet** | Built-in wallet access from the browser toolbar |
 | **Payments** | Direct approval flows without copying requests between tools |
 | **Asset Management** | BTC and assets across Spark, Arkade, and optional RGB Lightning Node accounts |
-| **DApp Support** | RGB WebLN and Nostr integration for trusted DApps |
+| **DApp Support** | WebLN, WebBTC, and Nostr (NIP-07) providers for trusted DApps |
 | **Swaps** | In-extension swap surface when a supported venue is connected |
 
 ## Available Extensions
@@ -37,7 +37,7 @@ The KaleidoSwap Extension is a browser wallet purpose-built for Bitcoin Layer 2 
 - **Wallet management** - View BTC and assets across Spark, Arkade, and optional RGB Lightning Node accounts.
 - **Multi-route transfers** - Deposit and withdraw through Spark, Arkade, Lightning, Bitcoin addresses, RGB invoices, and compatible account routes.
 - **Built-in swaps** - Use KaleidoSwap maker pairs and Spark/Flashnet routes when a supported venue is connected.
-- **DApp connectivity** - Expose `window.rgbwebln` for RGB WebLN requests and trusted DApps.
+- **DApp connectivity** - Inject standard `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07) providers for trusted DApps.
 - **Browser approvals** - Review supported payment, invoice, and asset requests from trusted DApps without leaving the browser.
 
 <Card title="Get Started with the KaleidoSwap Extension" icon="rocket" href="/extensions/kaleidoswap-extension/getting-started">

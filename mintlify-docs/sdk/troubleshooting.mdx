@@ -101,22 +101,22 @@ description: 'Common issues and solutions'
 
     **Solutions:**
     1. Check min/max limits from `listPairs` response
-    2. Ensure you are sending raw amounts (use `toSmallestUnits` / `to_smallest_units`)
+    2. Ensure you are sending raw amounts (use `parseRawAmount` / `parse_raw_amount`)
     3. Validate amounts before sending
 
     <CodeGroup>
     ```typescript TypeScript
-    import { toSmallestUnits } from 'kaleido-sdk';
+    import { parseRawAmount } from 'kaleido-sdk';
 
     // Convert 0.001 BTC to satoshis (100000)
-    const amount = toSmallestUnits(0.001, 8);
+    const amount = parseRawAmount(0.001, 8);
     ```
 
     ```python Python
-    from kaleido_sdk import to_smallest_units
+    from kaleido_sdk import parse_raw_amount
 
     # Convert 0.001 BTC to satoshis (100000)
-    amount = to_smallest_units(0.001, 8)
+    amount = parse_raw_amount(0.001, 8)
     ```
     </CodeGroup>
   </Accordion>

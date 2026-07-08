@@ -45,10 +45,12 @@ RLN is optional. Connect it if you want RGB assets, RGB invoices, RGB Lightning 
 
 ### Connection Details
 
-When opting in, enter:
+The extension can reach your RLN over two transports:
 
-- **RLN Node URL** - The node endpoint, such as `http://localhost:3001`
-- **Biscuit token** - Optional authentication token when your node requires one
+- **Direct** - Enter the **RLN Node URL** (the node endpoint, such as `http://localhost:3001`) and an optional **Biscuit / JWT token** when your node requires one.
+- **Nostr Wallet Connect (NWC)** - Paste a `nostr+walletconnect://` connection string (for example, from the KaleidoSwap Desktop App). Your node stays remote and only signed requests travel over the relay.
+
+Both transports share the same maker URL for RGB swaps.
 
 <img src="/images/kaleidoswap-extension/05-rln-connect.png" alt="KaleidoSwap Extension RLN connection form" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 

@@ -58,7 +58,7 @@ Use this flow when you want server-managed swap orders.
 
 ```bash
 kaleido swap order create BTC/USDT \
-  --to-amount 5000000 \
+  --to-amount 5 \
   --receiver-address lnbcrt... \
   --receiver-format BOLT11
 ```
@@ -90,7 +90,7 @@ Use `swap atomic` when the maker side is remote but execution uses your local no
 ### Example
 
 ```bash
-kaleido swap atomic run BTC/USDT --to-amount 5000000
+kaleido swap atomic run BTC/USDT --to-amount 5
 ```
 
 You can also provide:
@@ -121,7 +121,7 @@ This path is useful for debugging, demos, and lower-level protocol operations wh
 ```bash
 kaleido market pairs
 kaleido market quote BTC/USDT --from-amount 100000
-kaleido swap order create BTC/USDT --to-amount 5000000 --receiver-address lnbcrt... --receiver-format BOLT11
+kaleido swap order create BTC/USDT --to-amount 5 --receiver-address lnbcrt... --receiver-format BOLT11
 ```
 
 ### With a local node

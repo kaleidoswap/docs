@@ -10,15 +10,15 @@ You can install the Kaleidoswap Desktop App in two ways:
 ### 1. Download Binaries
 
 1. **Download**: Visit the [Releases](https://github.com/kaleidoswap/desktop-app/releases) page and download the appropriate binary for your operating system.
-2. **Verify**: Download the `manifest.txt` and `manifest.txt.sig` files to verify the authenticity of your download. See our [Binary Verification Guide](/desktop-app/getting-started/verify-binaries) for detailed instructions.
+2. **Verify**: Every binary is published alongside a per-file GPG signature (`.asc`). Download the matching `.asc` file for your platform and verify it before installing. See our [Binary Verification Guide](/desktop-app/getting-started/verify-binaries) for detailed instructions.
 3. **Install**: Run the app by executing the binary.
 
 ### 2. Building Locally
 
 #### Common Prerequisites
 
-- **Tauri 1.6.0**  
-  Make sure you have installed all the [official Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) (Rust, Node.js, npm, pnpm).
+- **Tauri 2.x**  
+  Make sure you have installed all the [official Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) (Rust, Node.js, pnpm).
 - **Repository**  
   ```sh
   git clone https://github.com/kaleidoswap/desktop-app
@@ -34,23 +34,23 @@ You can install the Kaleidoswap Desktop App in two ways:
 - Ensure **Microsoft Visual C++** is installed (via Visual Studio or Build Tools)
 
 **Linux:**
-- Install `build-essential`, `pkg-config`, and SSL libraries
-- Install GTK and WebKit requirements (libsoup 2.4, javascriptcoregtk 4.0, webkit2gtk 4.0)
-- Confirm correct installation of Rust, Node.js, npm, and pnpm
+- Install `build-essential` and `pkg-config`
+- Install the WebKitGTK / GTK dependencies used by the CI build: `libwebkit2gtk-4.1-dev`, `libwebkit2gtk-4.0-dev`, `libgtk-3-dev`, `libglib2.0-dev`, `librsvg2-dev`, `libappindicator3-dev`, and `patchelf`
+- Confirm correct installation of Rust, Node.js, and pnpm
 
 #### Building and Running
 
 1. **Install dependencies**:  
    ```sh
-   npm install
+   pnpm install
    ```
 2. **Build the Tauri app**:  
    ```sh
-   tauri build
+   pnpm tauri build
    ```
 3. **Run Kaleidoswap in development mode**:  
    ```sh
-   tauri dev
+   pnpm tauri dev
    ```
 
 ## Node Setup Options

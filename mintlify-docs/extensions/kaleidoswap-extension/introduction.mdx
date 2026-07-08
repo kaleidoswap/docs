@@ -17,7 +17,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin Layer 2 
     Routes through KaleidoSwap maker pairs and supported Spark/Flashnet venues
   </Card>
   <Card title="DApp Integration" icon="plug">
-    Exposes `window.rgbwebln` for trusted DApp wallet requests
+    Injects standard `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07) providers for trusted DApps
   </Card>
   <Card title="Secure" icon="lock">
     Argon2id password checks, AES-GCM encrypted mnemonic, and auto-lock
@@ -50,8 +50,9 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin Layer 2 
 
 ### DApp Connectivity
 
-- **RGB WebLN provider** (`window.rgbwebln`) for node info, address, invoice, asset, and payment requests
-- **Nostr identity** derived from the recovery phrase and visible in settings
+- **WebLN provider** (`window.webln`) for node info, invoices, payments, keysend, and LNURL
+- **WebBTC provider** (`window.webbtc`) for on-chain addresses, PSBT signing, and broadcasting
+- **Nostr provider** (`window.nostr`) implementing NIP-07 event signing and encryption, derived from the recovery phrase
 - Permission prompts for sensitive DApp operations
 
 ### Security
@@ -81,7 +82,7 @@ The background service worker owns protocol adapter lifecycle and message routin
 - The **background service worker** manages protocol adapters and cross-context messaging
 - **Spark and Arkade** are derived from the wallet recovery phrase
 - **RGB Lightning Node** is optional and currently presented as an experimental feature
-- **DApp connectivity** is handled through content scripts, `window.rgbwebln`, and Nostr signing support
+- **DApp connectivity** is handled through content scripts that inject `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07)
 
 ## Get Started
 

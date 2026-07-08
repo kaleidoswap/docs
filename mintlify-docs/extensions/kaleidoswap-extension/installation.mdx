@@ -65,7 +65,7 @@ Closed beta testers should install only the zip provided through the private Dri
 
 ## First Launch
 
-After installation, clicking the KaleidoSwap icon in your toolbar opens the extension popup. On first launch, you are guided through the **onboarding flow**:
+After installation, clicking the KaleidoSwap icon in your toolbar opens the wallet in the browser **side panel** (on browsers that don't support the side panel API, it falls back to a toolbar popup). On first launch, you are guided through the **onboarding flow**:
 
 <img src="/images/kaleidoswap-extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
@@ -89,6 +89,8 @@ The KaleidoSwap Extension requests the following Chrome extension permissions:
 | **Tabs** | Coordinate approval and confirmation windows |
 | **Alarms** | Run scheduled wallet/session tasks |
 | **Notifications** | Notify the user about wallet events where supported |
+| **Clipboard Read** | Read pasted invoices, addresses, and connection strings |
+| **Side Panel** | Open the wallet in the browser side panel |
 
 <Note>
 The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect, such as Spark, Arkade, an optional RGB Lightning Node, price data, or swap venues.

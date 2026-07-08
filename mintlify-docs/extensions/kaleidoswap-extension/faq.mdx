@@ -108,8 +108,8 @@ description: Common questions and solutions for the KaleidoSwap Extension
     1. Ensure the KaleidoSwap Extension is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
-    4. Confirm the DApp supports `window.rgbwebln`
-    5. Some apps look only for `window.webln` -- the KaleidoSwap Extension provides `window.rgbwebln`
+    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, and `window.nostr` (NIP-07)
+    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, and `nostr:ready`
   </Accordion>
 </AccordionGroup>
 

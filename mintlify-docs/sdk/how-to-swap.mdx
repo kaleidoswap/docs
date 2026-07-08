@@ -58,12 +58,12 @@ Request a price quote for trading BTC for the RGB asset.
 quote = await client.maker.get_quote(PairQuoteRequest(
     from_asset=SwapLegInput(
         asset_id="BTC", 
-        layer=Layer.btc_ln, 
+        layer=Layer.BTC_LN, 
         amount=100000  # 100,000 sats
     ),
     to_asset=SwapLegInput(
         asset_id=asset_id, 
-        layer=Layer.rgb_ln
+        layer=Layer.RGB_LN
     )
 ))
 
@@ -82,7 +82,7 @@ request = CreateSwapOrderRequest(
     to_asset=quote.to_asset,
     receiver_address=ReceiverAddress(
         address="lnbc1...", # Your destination invoice
-        format=ReceiverAddressFormat.bolt11,
+        format=ReceiverAddressFormat.BOLT11,
     ),
     min_onchain_conf=1,
 )
@@ -103,11 +103,11 @@ Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning N
 ```python Python
 from kaleido_sdk import (
     ConfirmSwapRequest,
-    InitiateSwapRequest,
     KaleidoClient,
     Layer,
     PairQuoteRequest,
     SwapLegInput,
+    SwapRequest,
 )
 from kaleido_sdk.rln import TakerRequest
 
@@ -126,12 +126,12 @@ Obtain a quote for the asset pair you wish to swap.
 quote = await client.maker.get_quote(PairQuoteRequest(
     from_asset=SwapLegInput(
         asset_id="BTC", 
-        layer=Layer.btc_ln, 
+        layer=Layer.BTC_LN, 
         amount=1000000
     ),
     to_asset=SwapLegInput(
         asset_id="rgb:...:...", # Your RGB asset ID
-        layer=Layer.rgb_ln
+        layer=Layer.RGB_LN
     )
 ))
 ```
@@ -140,7 +140,7 @@ quote = await client.maker.get_quote(PairQuoteRequest(
 Initialize the swap lock with the Maker based on the RFQ.
 
 ```python Python
-swap_request = InitiateSwapRequest(
+swap_request = SwapRequest(
     rfq_id=quote.rfq_id,
     from_asset=quote.from_asset.asset_id,
     from_amount=quote.from_asset.amount,

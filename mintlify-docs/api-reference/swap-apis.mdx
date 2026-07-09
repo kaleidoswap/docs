@@ -11,7 +11,7 @@ To use these endpoints you need:
 - A running **RGB Lightning Node (RLN)** to whitelist and route the HTLC.
 - A **WebSocket connection** to the maker for live price streaming and `rfq_id` generation.
 
-If you are building a web integration without a full node, use the [order-based swap flow](/api-reference/market-apis) via Market APIs instead, and refer to the [Swap Protocol](/api-reference/swap-protocol) for a comparison of both models.
+See the [Market APIs](/api-reference/market-apis) for quotes and asset data, and the [Swap Protocol](/api-reference/swap-protocol) for a full walkthrough of the atomic swap flow.
 
 **Base URL:** `https://api.signet.kaleidoswap.com/api/v1` (Signet) or `https://api.regtest.kaleidoswap.com/api/v1` (Regtest)
 
@@ -222,17 +222,21 @@ Execute the swap after it has been initiated and validated.
 ## Get Swap Status
 
 ### Endpoint
-`GET /api/v1/swaps/status`
+`POST /api/v1/swaps/atomic/status`
 
 ### Description
-Retrieve the current status of a swap using the associated `payment_hash`.
+Retrieve the current status of an atomic swap using the associated `payment_hash`.
 
-### Query Parameters
-- `payment_hash` (string, required): The payment hash of the swap whose status is to be retrieved.
+### Request Body
+| Field          | Type   | Description                                            |
+|----------------|--------|--------------------------------------------------------|
+| `payment_hash` | String | The payment hash of the swap whose status to retrieve. |
 
 ### Example Request
-```bash
-GET /api/v1/swaps/status?payment_hash=7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664
+```json
+{
+  "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664"
+}
 ```
 
 ### Response

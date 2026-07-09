@@ -37,42 +37,8 @@ Swaps are split across two command groups:
 
 | Scope | Use case |
 |------|----------|
-| `swap order` | Create and track maker swap orders through the KaleidoSwap server |
 | `swap atomic` | Run maker-backed atomic swaps using your local node as taker |
 | `node swap` | Drive low-level local RLN swap steps directly (under the `node` group) |
-
-## Maker Order Flow
-
-Use this flow when you want server-managed swap orders.
-
-### Subcommands
-
-| Command | Purpose |
-|--------|---------|
-| `kaleido swap order create <pair>` | Create an order from a live quote |
-| `kaleido swap order decide <order-id>` | Submit a pending rate decision |
-| `kaleido swap order status <order-id>` | Check order status |
-| `kaleido swap order history` | List historical orders |
-
-### Example
-
-```bash
-kaleido swap order create BTC/USDT \
-  --to-amount 5 \
-  --receiver-address lnbcrt... \
-  --receiver-format BOLT11
-```
-
-Useful options:
-
-- `--from-amount` or `--to-amount`
-- `--from-layer`
-- `--to-layer`
-- `--receiver-address`
-- `--receiver-format`
-- `--min-onchain-conf`
-- `--refund-address`
-- `--email`
 
 ## Atomic Swap Flow
 
@@ -116,13 +82,14 @@ This path is useful for debugging, demos, and lower-level protocol operations wh
 
 ## Recommended Trade Flow
 
-### Market-only
+### Browse the market (no node required)
 
 ```bash
 kaleido market pairs
 kaleido market quote BTC/USDT --from-amount 100000
-kaleido swap order create BTC/USDT --to-amount 5 --receiver-address lnbcrt... --receiver-format BOLT11
 ```
+
+Executing a swap requires a local RLN node — use the atomic flow below.
 
 ### With a local node
 

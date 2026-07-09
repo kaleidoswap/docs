@@ -7,7 +7,21 @@ description: SDK and API version history for KaleidoSwap
   This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
-## SDK v0.1.11 — Current
+## SDK v0.1.12 — Current
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Removed
+
+- **Order-based swap flow.** The maker API's `/api/v1/swaps/orders/*` endpoints were retired, so the SDK no longer ships the order-based surface: methods `createSwapOrder`/`create_swap_order`, `getSwapOrderStatus`/`get_swap_order_status`, `getOrderHistory`/`get_order_history`, `getOrderAnalytics`/`get_order_analytics`, the rate-decision method, and `waitForSwapCompletion`/`wait_for_swap_completion` (plus `SwapCompletionOptions`), along with the `SwapOrder*`, `OrderHistory*`, `OrderStats*`, and `RateDecision*` types.
+
+### Breaking changes
+
+- Migrate from the removed order-based methods to the **atomic swap flow**: `initSwap`/`init_swap` → whitelist the swapstring on your RLN node → `executeSwap`/`execute_swap`, with status via `getAtomicSwapStatus`/`get_atomic_swap_status`. LSPS1 channel orders (`createLspOrder`/`getLspOrder`) are unaffected.
+
+## SDK v0.1.11
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 

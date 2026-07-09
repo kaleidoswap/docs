@@ -236,7 +236,7 @@ import {
 
 try {
   const quote = await client.maker.getQuote({ /* ... */ });
-  const order = await client.maker.createSwapOrder({ /* ... */ });
+  const swap = await client.maker.initSwap({ /* ... */ });
 } catch (error) {
   if (error instanceof QuoteExpiredError) {
     // Get a fresh quote and retry
@@ -276,13 +276,13 @@ from kaleido_sdk import (
     InsufficientBalanceError,
     RateLimitError,
     PairQuoteRequest,
-    CreateSwapOrderRequest,
+    SwapRequest,
 )
 import time
 
 try:
     quote = await client.maker.get_quote(PairQuoteRequest(...))
-    order = await client.maker.create_swap_order(CreateSwapOrderRequest(...))
+    swap = await client.maker.init_swap(SwapRequest(...))
 except QuoteExpiredError:
     # Get a fresh quote and retry
     pass

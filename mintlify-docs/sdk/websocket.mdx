@@ -315,8 +315,8 @@ The WebSocket uses a JSON message protocol:
     Always call the unsubscribe function returned by `streamQuotes` / `streamQuotesByTicker` when you no longer need quotes. This prevents memory leaks and unnecessary network traffic.
   </Accordion>
 
-  <Accordion title="Use rfq_id from quotes to create orders">
-    The `rfq_id` in each quote response is what you pass to `createSwapOrder`. Use the most recent quote to ensure the rate is still valid.
+  <Accordion title="Use rfq_id from quotes to initiate swaps">
+    The `rfq_id` in each quote response is what you pass to `initSwap` (`POST /api/v1/swaps/init`). Use the most recent quote to ensure the rate is still valid.
   </Accordion>
 </AccordionGroup>
 

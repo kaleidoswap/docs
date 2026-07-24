@@ -4,7 +4,7 @@ description: SDK and API version history for KaleidoSwap
 ---
 
 <Note>
-  This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
+  This changelog covers the KaleidoSDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For Desktop App releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
 ## SDK v0.1.15 — Current
@@ -146,8 +146,8 @@ Full RGB Lightning Node operations for wallet management, Lightning channels, an
 | Endpoint group | Base path | Description |
 |----------------|-----------|-------------|
 | Market | `/api/v1/market/` | Assets, pairs, quotes, fee estimates |
-| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by desktop app |
-| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by web app |
+| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by Desktop App |
+| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by Web App |
 | LSPS1 | `/api/v1/lsps1/` | Channel ordering and liquidity |
 
 ### RLN API endpoints
@@ -168,6 +168,6 @@ Provided by the RGB Lightning Node directly at `nodeUrl`. Includes wallet, BTC, 
 
 ## Roadmap
 
-- **Atomic order-based swaps** — order-based swaps (currently used by the web app) will be upgraded to use the same HTLC atomic model as the desktop app, removing the trust requirement for web users.
+- **Atomic order-based swaps** — order-based swaps (currently used by the Web App) will be upgraded to use the same HTLC atomic model as the Desktop App, removing the trust requirement for web users.
 - **Mainnet launch** — production environment for real BTC and RGB assets.
 - **Additional Layer support** — Spark, Arkade, and Liquid protocol adapters in the KaleidoSwap Extension.

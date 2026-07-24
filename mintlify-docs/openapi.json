@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Kaleidoswap RGB-LSP API",
+    "title": "KaleidoSwap RGB-LSP API",
     "description": "API for managing swaps and channels",
     "version": "0.1.0"
   },

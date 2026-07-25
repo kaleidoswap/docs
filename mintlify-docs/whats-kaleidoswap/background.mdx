@@ -31,14 +31,14 @@ Payment channels are opened between your node and a peer (or an LSP). Once open,
 
 ## RGB Protocol
 
-RGB is a client-validated smart contract system built on top of Bitcoin. Unlike Ethereum-style smart contracts, RGB keeps contract logic and state **off-chain** while using Bitcoin transactions as cryptographic commitments. This means:
+RGB is a client-validated smart contract system built on top of Bitcoin (see the [official RGB protocol documentation](https://docs.rgb.info) for the full specification). Unlike Ethereum-style smart contracts, RGB keeps contract logic and state **off-chain** while using Bitcoin transactions as cryptographic commitments. This means:
 
 - **Privacy** — Asset balances and transfers are not visible on the blockchain
 - **Scalability** — No blockchain bloat from token transfers
 - **Bitcoin security** — Asset state is anchored to Bitcoin's proof-of-work
 - **Programmability** — RGB NIA fungible tokens (like USDT, XAUT) and future asset interfaces
 
-In KaleidoSwap, RGB assets are issued, transferred, and swapped using this protocol — both on-chain and over Lightning channels.
+In KaleidoSwap, RGB assets are issued, transferred, and swapped using this protocol — both on-chain and over Lightning channels. This stack powered [the first ever RGB asset swap on Lightning mainnet](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd), executed by KaleidoSwap in 2025.
 
 ## Lightning Service Providers (LSPs)
 

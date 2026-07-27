@@ -7,9 +7,42 @@ description: SDK and API version history for KaleidoSwap
   This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
-## SDK v0.1.13 — Current
+## SDK v0.1.15 — Current
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Fixed
+
+- Completes the 0.1.14 release, which published to **npm only** (the PyPI job was skipped after a stale decode-invoice unit test failed). No functional change versus 0.1.14.
+
+## SDK v0.1.14
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+<Warning>
+If your RGB Lightning Node still runs **v0.7.1**, stay on SDK **0.1.13** — the regenerated 0.1.14+ models target the 0.8.0 API shapes.
+</Warning>
+
+### Changed
+
+- Synced the vendored RGB Lightning Node OpenAPI spec to RLN **v0.8.0** and regenerated the node models (Python + TypeScript).
+- `refreshTransfers()` / `refresh_transfers()` now returns a `RefreshResponse` (`{ transfers }`) instead of an empty body.
+
+### Added
+
+- New RLN endpoints from v0.8.0: `/getconsignment`, `/provideoutofbandack`, `/provideoutofbandconsignment` (out-of-band consignment transfer), plus their request/response types.
+- New transfer status `WaitingBroadcast`.
+- `Utxo` gains `exists` and `derivation_index`; `Unspent` gains `pending_blinded`.
+
+### Breaking changes
+
+- **`RgbInvoiceRequest` now requires `expiration_timestamp` and `transport_endpoints`** (previously optional/absent in RLN 0.7.1). Callers of `createRgbInvoice`/`create_rgb_invoice` must supply both.
+- **`SendRgbRequest` now requires `expiration_timestamp`** for `sendRgb`/`send_rgb`.
+- `TransferTransportEndpoint.proxy_endpoint` was removed.
+
+## SDK v0.1.13
 
 **Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
 

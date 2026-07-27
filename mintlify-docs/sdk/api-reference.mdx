@@ -179,6 +179,10 @@ quote = await client.maker.get_quote(
 | `listPayments()` | `list_payments()` |
 | `getPayment(body)` | `get_payment(body)` |
 
+<Note>
+Since SDK 0.1.14 (RLN v0.8.0), `createRgbInvoice`/`create_rgb_invoice` requires `expiration_timestamp` and `transport_endpoints` in the request body, and `sendRgb`/`send_rgb` requires `expiration_timestamp`. See [RLN API Compatibility](/sdk/rln-api-compatibility).
+</Note>
+
 ### Swap Coordination and Utilities
 
 | TypeScript | Python | Notes |

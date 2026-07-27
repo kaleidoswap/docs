@@ -7,14 +7,7 @@ description: 'SDK and RGB Lightning Node API compatibility information'
 
 **SDK v0.1.15** is generated against **RGB Lightning Node API v0.8.0** (the `kaleidoswap/rgb-lightning-node` fork).
 
-| Your RLN version | Use SDK |
-|---|---|
-| **v0.8.0** | 0.1.14 or later (current: 0.1.15) |
-| **v0.7.1** | 0.1.13 (the last release generated against the 0.7.1 API) |
-
-RLN v0.8.0 made two request shapes stricter: `createRgbInvoice`/`create_rgb_invoice` now requires `expiration_timestamp` **and** `transport_endpoints`, and `sendRgb`/`send_rgb` now requires `expiration_timestamp`. See the [changelog](/sdk/changelog) for the full list of 0.8.0 changes.
-
-Always keep your SDK and RGB Lightning Node updated to ensure full compatibility and access to the latest features and security improvements.
+The SDK automatically supports the most recent RLN API release. Always keep your SDK and RGB Lightning Node updated to ensure full compatibility and access to the latest features and security improvements. See the [changelog](/sdk/changelog) for version history.
 
 <Note>
 To check the latest RLN API changes and updates, refer to the [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) or your node documentation.

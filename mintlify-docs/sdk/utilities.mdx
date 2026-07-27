@@ -5,67 +5,29 @@ description: 'Helper functions for amount conversion, precision handling, and as
 
 ## Amount Conversion
 
-### `toSmallestUnits` / `to_smallest_units`
+### `parseRawAmount` / `parse_raw_amount`
 
-Convert a display amount to the smallest unit (e.g., BTC to satoshis).
-
-<CodeGroup>
-```typescript TypeScript
-import { toSmallestUnits } from 'kaleido-sdk';
-
-const sats = toSmallestUnits(0.001, 8);   // 100000
-const usdt = toSmallestUnits(10.50, 2);   // 1050
-```
-
-```python Python
-from kaleido_sdk import to_smallest_units
-
-sats = to_smallest_units(0.001, 8)   # 100000
-usdt = to_smallest_units(10.50, 2)   # 1050
-```
-</CodeGroup>
-
-### `toDisplayUnits` / `to_display_units`
-
-Convert from smallest units back to display units.
+Convert a display amount to the raw (smallest) unit (e.g., BTC to satoshis).
 
 <CodeGroup>
 ```typescript TypeScript
-import { toDisplayUnits } from 'kaleido-sdk';
+import { parseRawAmount } from 'kaleido-sdk';
 
-const btc = toDisplayUnits(100000, 8);   // 0.001
-const usd = toDisplayUnits(1050, 2);     // 10.50
+const sats = parseRawAmount(0.001, 8);   // 100000
+const usdt = parseRawAmount(10.50, 2);   // 1050
 ```
 
 ```python Python
-from kaleido_sdk import to_display_units
+from kaleido_sdk import parse_raw_amount
 
-btc = to_display_units(100000, 8)   # 0.001
-usd = to_display_units(1050, 2)     # 10.50
-```
-</CodeGroup>
-
-### `toRawAmount` / `to_raw_amount`
-
-Equivalent to `toSmallestUnits`. Convert display to raw.
-
-<CodeGroup>
-```typescript TypeScript
-import { toRawAmount } from 'kaleido-sdk';
-
-const raw = toRawAmount(0.5, 8);  // 50000000
-```
-
-```python Python
-from kaleido_sdk import to_raw_amount
-
-raw = to_raw_amount(0.5, 8)  # 50000000
+sats = parse_raw_amount(0.001, 8)   # 100000
+usdt = parse_raw_amount(10.50, 2)   # 1050
 ```
 </CodeGroup>
 
 ### `toDisplayAmount` / `to_display_amount`
 
-Equivalent to `toDisplayUnits`. Convert raw to display.
+Convert a raw (smallest-unit) amount back to a display amount.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -289,12 +251,12 @@ Get the SDK version string.
 <CodeGroup>
 ```typescript TypeScript
 import { getVersion } from 'kaleido-sdk';
-console.log(getVersion());  // "0.4.0"
+console.log(getVersion());  // "0.1.11"
 ```
 
 ```python Python
 from kaleido_sdk import get_version
-print(get_version())  # "0.4.0"
+print(get_version())  # "0.1.11"
 ```
 </CodeGroup>
 

@@ -1,5 +1,6 @@
 ---
 title: Getting Started
+description: Set up and start calling the KaleidoSwap Maker API across the Regtest and Signet environments
 ---
 
 Welcome to the Kaleidoswap API! This guide will help you set up and start using the API quickly and effectively.
@@ -10,8 +11,13 @@ Welcome to the Kaleidoswap API! This guide will help you set up and start using 
 
 The Kaleidoswap API is accessible via HTTPS for secure communication. Here are the available environments:
 
+### Regtest
+A local-style regtest network with instant block generation, ideal for rapid development and unit testing. This environment is **currently live**. All API requests in this environment should be directed to the following base URL:
+
+- **Base URL:** `https://api.regtest.kaleidoswap.com/api/v1`
+
 ### Signet (MutinyNet)
-The testnet environment is used for development and testing purposes. All API requests in this environment should be directed to the following base URL:
+A public testnet with realistic network conditions, recommended for integration testing before mainnet. This environment is **currently live**. All API requests in this environment should be directed to the following base URL:
 
 - **Base URL:** `https://api.signet.kaleidoswap.com/api/v1`
 
@@ -92,7 +98,7 @@ Kaleidoswap uses versioning to ensure backward compatibility. The current API ve
 
 **Version**: `v1`
 
-The version number is reflected in the base URL, as in `https://api.testnet.kaleidoswap.com/api/v1`.
+The version number is reflected in the base URL, as in `https://api.signet.kaleidoswap.com/api/v1`.
 
 ---
 

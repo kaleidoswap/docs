@@ -15,8 +15,8 @@ Before you can swap, make sure you have:
 ## Performing an Asset Swap
 
 <Steps>
-  <Step title="Navigate to Trade">
-    Click on the **"Trade"** tab in the left sidebar. Select the **"Market Maker"** option to start.
+  <Step title="Navigate to Trading">
+    Click on the **"Trading"** tab in the left sidebar. Select the **"Market Maker"** tab to start.
   </Step>
 
   <Step title="Select assets">
@@ -38,14 +38,26 @@ Before you can swap, make sure you have:
 
 ![Trading Page](/images/desktop-app/19_trading_page.png)
 
+## Trading Modes
+
+The **Trading** section groups several ways to trade, each on its own tab:
+
+- **Market Maker** — Trade against a connected market maker's live quotes. Swaps execute atomically at the maker's current rate. This is the default and the flow described above.
+- **Manual Swaps** — Request and confirm individual swaps yourself, choosing the maker and reviewing each quote before executing.
+- **DCA** — Automate BTC accumulation with fixed-interval buys or downside price triggers. Each successful execution converts a fixed amount into BTC.
+- **Limit Orders** — Set a target price for a trading pair; when the market reaches your price, the swap executes automatically.
+- **Nostr P2P** *(coming soon)* — Peer-to-peer trading over Nostr, trading directly with other users without relying on a centralized maker.
+
 ## Supported Trading Pairs
+
+The available pairs are driven by your connected maker, so the exact list varies. At the time of writing, the default KaleidoSwap maker offers pairs such as:
 
 | Pair | Description |
 |------|------------|
 | **BTC / USDT** | Bitcoin to Tether USD (RGB NIA) |
 | **BTC / XAUT** | Bitcoin to Tether Gold (RGB NIA) |
 
-Additional pairs may be available depending on your connected LSP and market maker.
+The **Available Trading Pairs** panel in the app always reflects the pairs your connected maker currently supports.
 
 ## Swap History
 

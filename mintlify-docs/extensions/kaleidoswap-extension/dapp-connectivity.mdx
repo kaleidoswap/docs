@@ -1,78 +1,163 @@
 ---
 title: DApp Connectivity
-description: RGB WebLN provider and wallet approval flow for trusted DApps
+description: WebLN, WebBTC, and Nostr (NIP-07) providers plus the wallet approval flow for trusted DApps
 ---
 
 ## Overview
 
-The KaleidoSwap Extension injects APIs into browser pages so DApps can interact with wallet capabilities after user approval. This currently supports RGB WebLN-style wallet requests and browser approval flows.
+The KaleidoSwap Extension injects standard wallet providers into browser pages so DApps can interact with wallet capabilities after user approval. It follows the same provider conventions as other browser wallets (Alby-style), so most existing WebLN, WebBTC, and Nostr apps work without any KaleidoSwap-specific integration.
 
-## RGB WebLN Provider
+The extension injects:
 
-The KaleidoSwap Extension exposes an RGB WebLN provider at `window.rgbwebln` that DApps can use to:
-
-- Request node information
-- Generate RGB invoices
-- Decode RGB invoices
-- Send RGB assets
-- List assets and transfers
-- Request addresses and balances
+- **`window.webln`** — [WebLN](https://www.webln.dev/) provider for Lightning (invoices, payments, message signing, keysend, LNURL).
+- **`window.webbtc`** — WebBTC provider for on-chain Bitcoin (addresses, PSBT signing, BIP-322 message signing, broadcasting).
+- **`window.nostr`** — full [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) provider for Nostr event signing and encryption.
+- **`window.bitcoin`** — a Bitcoin Wallet Standard provider (Unisat/OKX/Leather-style) that some DApps probe for on-chain accounts.
 
 ### How It Works
 
 1. The KaleidoSwap Extension's **content script** is injected into web pages
-2. The content script loads an **injected script** that adds `window.rgbwebln`
-3. DApps call methods on `window.rgbwebln`
+2. The content script loads an **injected script** that adds `window.webln`, `window.webbtc`, `window.nostr`, and `window.bitcoin`
+3. DApps call methods on those providers
 4. Requests are routed to the KaleidoSwap Extension **background service worker**
-5. Sensitive operations can trigger a confirmation or permission prompt
+5. Sensitive operations trigger a confirmation or permission prompt
+
+### Provider Ready Events
+
+The injected script dispatches ready events (both with and without the colon, for SDK parity) once the providers are installed:
+
+- `webln:ready` / `weblnReady`
+- `webbtc:ready` / `webbtcReady`
+- `nostr:ready`
+- `bitcoin:ready`
+
+## WebLN Provider
+
+`window.webln` follows the WebLN spec and can be used to:
+
+- Request node information
+- Create Lightning invoices
+- Send Lightning payments
+- Sign and verify messages
+- Send keysend payments
+- Handle LNURL requests
+- Read balance details
 
 ### Supported Methods
 
 | Method | Description |
 |--------|-------------|
-| `enable()` | Connect the DApp to the KaleidoSwap Extension |
-| `getInfo()` | Get node information |
-| `getAddress()` | Get a receive address |
-| `rgbInvoice(params)` | Create an RGB invoice |
-| `decodeRgbInvoice(params)` | Decode an RGB invoice |
-| `sendAsset(params)` | Request an RGB asset send |
-| `listTransfers(params)` | List transfers for an asset |
-| `listAssets()` | List wallet assets |
-| `getNetworkInfo()` | Get network details |
+| `enable()` | Connect the DApp and request approval for the origin |
+| `getInfo()` | Get node information and supported methods |
+| `sendPayment(paymentRequest)` | Pay a BOLT-11 invoice |
+| `makeInvoice(args)` | Create a Lightning invoice |
+| `signMessage(message)` | Sign a message with the node key |
+| `verifyMessage(signature, message)` | Verify a signed message |
+| `keysend(args)` | Send a spontaneous (keysend) payment |
+| `lnurl(input)` | Handle an LNURL request |
 | `getBalance()` | Get wallet balance details |
+| `request(method, params)` | Low-level passthrough request |
 
 ### Example Usage
 
 ```javascript
-window.addEventListener('rgbWebLNReady', async () => {
-  await window.rgbwebln.enable();
+window.addEventListener('webln:ready', async () => {
+  await window.webln.enable();
 
-  const info = await window.rgbwebln.getInfo();
+  const info = await window.webln.getInfo();
 
-  const { invoice } = await window.rgbwebln.rgbInvoice({
-    asset_id: 'rgb:...',
-    duration_seconds: 3600
+  const { paymentRequest } = await window.webln.makeInvoice({
+    amount: 1000,
+    defaultMemo: 'Coffee'
   });
 
-  const assets = await window.rgbwebln.listAssets();
+  const { preimage } = await window.webln.sendPayment('lnbc...');
 });
 ```
 
-### Permission Prompts
+## WebBTC Provider
 
-When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action.
+`window.webbtc` is an on-chain Bitcoin provider that can:
+
+- Return a receive address
+- Sign and finalize PSBTs
+- Sign messages (BIP-322)
+- Broadcast raw transactions
+- Send on-chain payments
+
+### Supported Methods
+
+| Method | Description |
+|--------|-------------|
+| `enable()` | Connect the DApp and request approval for the origin |
+| `getInfo()` | Get node/network information and supported methods |
+| `getAddress()` | Get an on-chain receive address |
+| `signPsbt(psbtHex)` | Sign wallet-owned inputs in a PSBT |
+| `finalizePsbt(psbtHex)` | Finalize a signed PSBT into broadcastable hex |
+| `broadcastTransaction(txHex)` | Broadcast a raw, signed transaction |
+| `signMessage(message, address?)` | Sign a message (BIP-322) |
+| `sendPayment(paymentRequest)` | Pay a BIP-21 or BOLT-11 request |
+| `sendTransaction(address, amount)` | Send an on-chain payment |
+
+<Note>
+Some DApps probe `window.bitcoin` (a Bitcoin Wallet Standard provider) instead of, or alongside, `window.webbtc`. It exposes `connect()`, `getAccounts()`, `getPublicKey()`, `signMessage()`, `signPsbt()`, `pushPsbt()`, and `sendBitcoin()` over the same wallet keys.
+</Note>
+
+### PSBT Confirmations
+
+Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the confirmation prompt decodes the PSBT and shows the destinations, amounts, and network fee before you approve. If the amounts cannot be decoded from the PSBT, the prompt shows an explicit warning instead.
+
+## Nostr Provider (NIP-07)
+
+The KaleidoSwap Extension injects a full **NIP-07** provider at `window.nostr`, so Nostr web apps can request the wallet's public key, sign events, and encrypt or decrypt direct messages. The Nostr identity is derived from the wallet recovery phrase (or an imported identity, when set).
+
+### Supported Methods
+
+| Method | Description |
+|--------|-------------|
+| `getPublicKey()` | Return the wallet's Nostr public key (hex) |
+| `signEvent(event)` | Sign a Nostr event |
+| `getRelays()` | Return the configured relays |
+| `signSchnorr(sigHash)` | Sign a 32-byte hash with the Nostr key |
+| `nip04.encrypt(pubkey, plaintext)` / `nip04.decrypt(pubkey, ciphertext)` | NIP-04 encryption |
+| `nip44.encrypt(pubkey, plaintext)` / `nip44.decrypt(pubkey, ciphertext)` | NIP-44 encryption |
+
+### Example Usage
+
+```javascript
+window.addEventListener('nostr:ready', async () => {
+  const pubkey = await window.nostr.getPublicKey();
+
+  const signed = await window.nostr.signEvent({
+    kind: 1,
+    content: 'Hello from KaleidoSwap',
+    tags: [],
+    created_at: Math.floor(Date.now() / 1000)
+  });
+});
+```
+
+## Nostr Connect (NIP-46)
+
+Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for Nostr apps that support [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) (nsecBunker). From **Settings > Nostr Connect**, generate a `bunker://` connection string and paste it into the client app; signing requests then travel over Nostr relays and are approved in the extension. Active NIP-46 sessions appear in Connected Apps, where they can be reviewed and revoked.
+
+## Nostr Wallet Connect (NWC)
+
+The extension can also expose the wallet to external apps over **Nostr Wallet Connect**: pair an app by scanning the pairing QR code, then control what it can do with **amount-aware budgets**. Zap payments (NIP-57) made through NWC are validated and correlated with wallet activity.
+
+## Permission Prompts and Connected Sites
+
+When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. Connected Nostr clients start from a "Reasonable" consent default (comparable to other NIP-07 wallets): routine, low-risk operations are allowed for a connected app, while payments and other sensitive actions still prompt.
+
+**Settings > Connected Sites** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
 
 <Warning>
-Always review what a DApp is requesting before approving. Only approve payments, invoices, and asset sends from sites you trust.
+Always review what a DApp is requesting before approving. Only approve payments, invoices, asset sends, and signing requests from sites you trust.
 </Warning>
 
 ## Nostr Identity
 
-The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase and makes it available in the extension settings. Browser-page Nostr signing is not exposed yet.
-
-<Note>
-The current injected provider is `window.rgbwebln`. The extension does not currently inject `window.nostr` or implement NIP-07 event signing for web pages.
-</Note>
+The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phrase (or an imported identity) and exposes it both to web pages through `window.nostr` and in the extension settings.
 
 ### Nostr Key Management
 
@@ -82,11 +167,13 @@ Your Nostr keypair is managed in **Settings > Nostr Account**:
 - View/copy the session private key when the wallet is unlocked
 - Re-derive identity from the wallet recovery phrase
 
+By default the identity is derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your own key (`nsec1…` or 64-character hex) during onboarding or later from Settings; it is stored encrypted and used everywhere the derived identity would be.
+
 ## Browser Approval Flow
 
 The KaleidoSwap Extension keeps DApp approvals user-driven:
 
-1. A trusted site requests a connection, payment, asset, or invoice action
+1. A trusted site requests a connection, payment, invoice, asset, or signing action
 2. The KaleidoSwap Extension routes the request through the content script and background service worker
 3. The user reviews the details and approves or rejects the action
 
@@ -97,13 +184,15 @@ This keeps wallet-side actions explicit while still allowing DApps to use the Ka
 | Practice | Description |
 |----------|-------------|
 | **Verify the site** | Check the URL before approving wallet connections |
-| **Review requests** | Read invoice and asset details before approving |
+| **Review requests** | Read invoice, asset, and signing details before approving |
 | **Lock when done** | Lock the KaleidoSwap Extension when you are finished using DApps |
 | **Limit exposure** | Only connect to trusted sites |
 
 ## Supported DApps
 
-The KaleidoSwap Extension's browser provider is designed for:
+The KaleidoSwap Extension's browser providers are designed for:
 
-- **RGB-aware DApps** - Apps that use `window.rgbwebln`
+- **WebLN apps** - Apps that use `window.webln` for Lightning invoices and payments
+- **WebBTC / Bitcoin apps** - Apps that use `window.webbtc` or `window.bitcoin` for on-chain addresses, PSBTs, and message signing
+- **Nostr apps** - Apps that use `window.nostr` (NIP-07) for identity and event signing
 - **Internal test pages** - Local pages that exercise wallet provider methods during development

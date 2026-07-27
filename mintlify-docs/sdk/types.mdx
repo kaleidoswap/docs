@@ -61,24 +61,19 @@ client = KaleidoClient.create(
 ```typescript TypeScript
 import type {
   Asset,
-  CreateSwapOrderRequest,
   PairQuoteRequest,
   PairQuoteResponse,
-  SwapOrderStatusRequest,
   TradingPair,
 } from 'kaleido-sdk';
-import { Layer, ReceiverAddressFormat } from 'kaleido-sdk';
+import { Layer } from 'kaleido-sdk';
 ```
 
 ```python Python
 from kaleido_sdk import (
     Asset,
-    CreateSwapOrderRequest,
     Layer,
     PairQuoteRequest,
     PairQuoteResponse,
-    ReceiverAddressFormat,
-    SwapOrderStatusRequest,
     TradingPair,
 )
 ```
@@ -101,24 +96,6 @@ from kaleido_sdk import Layer
 
 from_layer = Layer.BTC_LN
 to_layer = Layer.RGB_LN
-```
-</CodeGroup>
-
-## Receiver Address Formats
-
-Use `ReceiverAddressFormat` when creating order-based swaps that need a destination.
-
-<CodeGroup>
-```typescript TypeScript
-import { ReceiverAddressFormat } from 'kaleido-sdk';
-
-const format = ReceiverAddressFormat.BOLT11;
-```
-
-```python Python
-from kaleido_sdk import ReceiverAddressFormat
-
-format = ReceiverAddressFormat.BOLT11
 ```
 </CodeGroup>
 
@@ -148,44 +125,10 @@ response = await client.maker.get_quote(request)
 ```
 </CodeGroup>
 
-## Order Models
-
-<CodeGroup>
-```typescript TypeScript
-import type {
-  CreateSwapOrderRequest,
-  SwapOrder,
-  SwapOrderStatusRequest,
-  SwapOrderStatusResponse,
-} from 'kaleido-sdk';
-```
-
-```python Python
-from kaleido_sdk import (
-    CreateSwapOrderRequest,
-    SwapOrder,
-    SwapOrderStatusRequest,
-    SwapOrderStatusResponse,
-)
-```
-</CodeGroup>
-
-Notable fields used by the current client implementations:
-
-- `CreateSwapOrderRequest`: `rfq_id`, `from_asset`, `to_asset`, `receiver_address`, `min_onchain_conf?`
-- `CreateSwapOrderResponse`: `id`, `rfq_id`, `status`, `access_token`, `deposit_address?`
-- `SwapOrderStatusRequest`: `order_id`, `access_token?`
-
 ## Utility Types
 
 TypeScript also exports WebSocket and logging-related types from the package root:
 
 ```typescript
-import type { QuoteResponse, LogLevelValue, SdkLogger, SwapCompletionOptions } from 'kaleido-sdk';
-```
-
-Python exposes the polling helper type used by `wait_for_swap_completion(...)`:
-
-```python
-from kaleido_sdk import SwapCompletionOptions
+import type { QuoteResponse, LogLevelValue, SdkLogger } from 'kaleido-sdk';
 ```

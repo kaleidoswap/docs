@@ -258,9 +258,9 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
        - Open additional channels for more liquidity
        - Wait and retry
 
-    4. **Swap order stuck**:
-       - Check order status: `/api/v1/swaps/orders/status`
-       - Contact support with Order ID for assistance
+    4. **Swap stuck**:
+       - Check swap status: `POST /api/v1/swaps/atomic/status` (by payment hash)
+       - Contact support with the payment hash for assistance
   </Accordion>
 
   <Accordion title="Unexpected swap price" icon="triangle-exclamation">

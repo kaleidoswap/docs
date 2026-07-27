@@ -1,100 +1,17 @@
 ---
 title: "How to Create Swaps"
-description: "Step-by-step guide for creating and executing swap orders and atomic swaps."
+description: "Step-by-step guide for creating and executing atomic swaps."
 ---
 
 # Creating Swaps
 
-This guide provides a detailed walkthrough on how to execute both Order-Based Swaps (custodial/invoicing) and Atomic Swaps (direct node-to-node) using the Kaleido Python SDK.
+This guide provides a detailed walkthrough on how to execute Atomic Swaps (direct node-to-node) using the Kaleido Python SDK.
 
 These examples leverage the Pydantic models from `kaleido_sdk` to ensure type safety and precise API interactions.
 
 ---
 
-## 1. Creating a Swap Order
-
-Swap orders involve locking in a rate via a quote and receiving a deposit address (or invoice) to fund the swap.
-
-### Prerequisites & Imports
-
-```python Python
-from kaleido_sdk import (
-    CreateSwapOrderRequest,
-    KaleidoClient,
-    Layer,
-    PairQuoteRequest,
-    ReceiverAddress,
-    ReceiverAddressFormat,
-    SwapLegInput,
-)
-
-client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com"
-)
-```
-
-### Step-by-Step Flow
-
-#### Step 1: Find the Desired Asset ID
-Before requesting a quote, you often need the exact RGB Asset ID. You can discover this via the market API.
-
-```python Python
-# List all available assets
-assets_response = await client.maker.list_assets()
-
-# Find the specific asset (e.g., USDT)
-usdt_asset = next((a for a in assets_response.assets if a.ticker == "USDT"), None)
-if not usdt_asset:
-    raise ValueError("USDT asset not found")
-
-# Extract the RGB Protocol ID
-asset_id = usdt_asset.protocol_ids.get("RGB")
-```
-
-#### Step 2: Request a Quote
-Request a price quote for trading BTC for the RGB asset. 
-
-```python Python
-quote = await client.maker.get_quote(PairQuoteRequest(
-    from_asset=SwapLegInput(
-        asset_id="BTC", 
-        layer=Layer.btc_ln, 
-        amount=100000  # 100,000 sats
-    ),
-    to_asset=SwapLegInput(
-        asset_id=asset_id, 
-        layer=Layer.rgb_ln
-    )
-))
-
-print(f"RFQ ID: {quote.rfq_id}")
-print(f"From: {quote.from_asset.amount} sats")
-print(f"To: {quote.to_asset.amount} USDT")
-```
-
-#### Step 3: Create the Swap Order
-Use the quote's `from_asset` and `to_asset` (they are full `SwapLeg` objects with amounts) when creating the order.
-
-```python Python
-request = CreateSwapOrderRequest(
-    rfq_id=quote.rfq_id,
-    from_asset=quote.from_asset,
-    to_asset=quote.to_asset,
-    receiver_address=ReceiverAddress(
-        address="lnbc1...", # Your destination invoice
-        format=ReceiverAddressFormat.bolt11,
-    ),
-    min_onchain_conf=1,
-)
-
-order = await client.maker.create_swap_order(request)
-
-print(f"Order created! Deposit funds to: {order.deposit_address.address}")
-```
-
----
-
-## 2. Executing an Atomic Swap
+## Executing an Atomic Swap
 
 Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning Nodes. You must run an RLN node alongside this client.
 
@@ -103,11 +20,11 @@ Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning N
 ```python Python
 from kaleido_sdk import (
     ConfirmSwapRequest,
-    InitiateSwapRequest,
     KaleidoClient,
     Layer,
     PairQuoteRequest,
     SwapLegInput,
+    SwapRequest,
 )
 from kaleido_sdk.rln import TakerRequest
 
@@ -126,12 +43,12 @@ Obtain a quote for the asset pair you wish to swap.
 quote = await client.maker.get_quote(PairQuoteRequest(
     from_asset=SwapLegInput(
         asset_id="BTC", 
-        layer=Layer.btc_ln, 
+        layer=Layer.BTC_LN, 
         amount=1000000
     ),
     to_asset=SwapLegInput(
         asset_id="rgb:...:...", # Your RGB asset ID
-        layer=Layer.rgb_ln
+        layer=Layer.RGB_LN
     )
 ))
 ```
@@ -140,7 +57,7 @@ quote = await client.maker.get_quote(PairQuoteRequest(
 Initialize the swap lock with the Maker based on the RFQ.
 
 ```python Python
-swap_request = InitiateSwapRequest(
+swap_request = SwapRequest(
     rfq_id=quote.rfq_id,
     from_asset=quote.from_asset.asset_id,
     from_amount=quote.from_asset.amount,

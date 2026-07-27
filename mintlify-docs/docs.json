@@ -117,6 +117,7 @@
               "extensions/kaleidoswap-extension/getting-started",
               "extensions/kaleidoswap-extension/wallet-features",
               "extensions/kaleidoswap-extension/swaps",
+              "extensions/kaleidoswap-extension/bridge",
               "extensions/kaleidoswap-extension/dapp-connectivity",
               "extensions/kaleidoswap-extension/faq"
             ]

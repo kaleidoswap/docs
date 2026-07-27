@@ -7,7 +7,41 @@ description: SDK and API version history for KaleidoSwap
   This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
 </Note>
 
-## SDK v0.1.9 — Current
+## SDK v0.1.13 — Current
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Removed
+
+- **Order-based swap flow.** The maker API's `/api/v1/swaps/orders/*` endpoints were retired, so the SDK no longer ships the order-based surface: methods `createSwapOrder`/`create_swap_order`, `getSwapOrderStatus`/`get_swap_order_status`, `getOrderHistory`/`get_order_history`, `getOrderAnalytics`/`get_order_analytics`, the swap-order rate-decision method, and `waitForSwapCompletion`/`wait_for_swap_completion` (plus `SwapCompletionOptions`), along with the `SwapOrder*`, `OrderHistory*`, and `OrderStats*` types. (The LSPS1 `submitLspRateDecision` + `RateDecisionRequest`/`RateDecisionResponse` are unaffected.)
+
+### Breaking changes
+
+- Migrate from the removed order-based methods to the **atomic swap flow**: `initSwap`/`init_swap` → whitelist the swapstring on your RLN node → `executeSwap`/`execute_swap`, with status via `getAtomicSwapStatus`/`get_atomic_swap_status`. LSPS1 channel orders (`createLspOrder`/`getLspOrder`) are unaffected.
+
+## SDK v0.1.11
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Fixed
+
+- `refreshTransfers()` / `refresh_transfers()` now send `filter: []` (refresh all pending transfers) in their default body. RLN 0.7.1 made `filter` a required field on `RefreshRequest` (`POST /refreshtransfers`); the previous `{skip_sync}`-only default was rejected with `HTTP 400 "Failed to deserialize the JSON body into the target type"`. Applies to both the TypeScript and Python clients.
+
+## SDK v0.1.10
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Fixed
+
+- **TypeScript** `listUnspents()` now sends `settled_only: false` by default, matching the Python client and RLN 0.7.1's required `ListUnspentsRequest` shape. In 0.1.9 the TS convenience method still sent the `{skip_sync}`-only body and was rejected by RLN 0.7.1 with `HTTP 400 "Failed to deserialize the JSON body into the target type"`.
+
+## SDK v0.1.9
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 

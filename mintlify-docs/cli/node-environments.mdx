@@ -8,7 +8,7 @@ description: 'Create, run, switch, and maintain named local RGB Lightning Node e
 `kaleido node` manages **named Docker Compose environments** stored under a base directory, which defaults to:
 
 ```text
-~/.kaleido/spawn/
+~/.kaleido
 ```
 
 Each environment gets its own compose file and volumes, which makes it practical to keep separate local stacks for development, testing, or demos.
@@ -16,7 +16,7 @@ Each environment gets its own compose file and volumes, which makes it practical
 Example layout:
 
 ```text
-~/.kaleido/spawn/
+~/.kaleido/
 ├── default/
 │   ├── docker-compose.yml
 │   └── volumes/
@@ -98,7 +98,7 @@ Notable unlock options:
 - `--announce-alias`
 - `--announce-address`
 
-By default, the command uses the rgbtools regtest services exposed by the CLI.
+By default, the command uses the KaleidoSwap signet services exposed by the CLI.
 
 ## Inspect And Lock
 

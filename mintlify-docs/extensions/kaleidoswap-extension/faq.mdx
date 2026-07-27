@@ -15,11 +15,13 @@ description: Common questions and solutions for the KaleidoSwap Extension
   </Accordion>
 
   <Accordion title="Do I need my own node?">
-    **Not for every feature.** Spark and Arkade accounts are derived from the KaleidoSwap Extension recovery phrase. An RGB Lightning Node (RLN) is only required for RGB assets, RGB invoices, RLN Lightning channels, and maker-based RGB swaps.
+    **No.** Spark, Arkade, Liquid, and node-less RGB-L1 accounts are all derived from the KaleidoSwap Extension recovery phrase and run without any node — including RGB assets on Bitcoin L1, which run entirely in the extension via WebAssembly.
 
-    For RLN features, you can connect to:
+    An RGB Lightning Node (RLN) is only needed if you want RGB **Lightning channels** and maker-based RGB swaps. For RLN features, you can connect to:
     - A **local node** by using the [KaleidoSwap Desktop App](/desktop-app/wallet/creating-wallet) or running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) on a local machine.
-    - A **remote node** accessible via URL.
+    - A **remote node** accessible via URL or over **Nostr Wallet Connect**.
+
+    Note that the node-less RGB-L1 account and the RLN account are mutually exclusive backings for RGB assets.
   </Accordion>
 
   <Accordion title="Is the KaleidoSwap Extension custodial?">
@@ -34,19 +36,22 @@ description: Common questions and solutions for the KaleidoSwap Extension
 
   <Accordion title="What assets does the KaleidoSwap Extension support?">
     The KaleidoSwap Extension supports:
-    - **BTC** across Spark, Arkade, Bitcoin L1, and RLN Lightning where connected
+    - **BTC** across Spark, Arkade, Liquid (L-BTC), Bitcoin L1, and RLN Lightning where connected
     - **Spark-native assets** when available on the Spark account
     - **Arkade-native assets** when available on the Arkade account
-    - **RGB assets** when an RGB Lightning Node is connected
+    - **Liquid assets** such as USDt on the Liquid account
+    - **RGB assets** on Bitcoin L1 through the node-less RGB-L1 account, or over Lightning when an RGB Lightning Node is connected
   </Accordion>
 
   <Accordion title="How do I back up my wallet?">
     Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen can also publish an encrypted Nostr backup of extension settings and RGB backup metadata.
 
     Keep separate offline copies of:
-    - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, and the derived Nostr identity
+    - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, Liquid, RGB-L1, and the derived Nostr identity
     - A recent **RGB node backup file** if you use an RGB Lightning Node
     - Your **RLN node seed phrase or node backup material** if the node is managed separately
+
+    The node-less **RGB-L1 account backs itself up automatically**: RGB state is written to an encrypted cloud (VSS) backup and a local backup on every receive. When you re-import the wallet, onboarding offers to restore from the cloud backup — restore only happens with your explicit consent.
 
     The Nostr settings backup does **not** include your recovery phrase, password hash, or saved RGB API token.
   </Accordion>
@@ -58,11 +63,11 @@ description: Common questions and solutions for the KaleidoSwap Extension
     3. Set up a new password
     4. Reconnect optional services such as your RGB Lightning Node
     
-    Spark, Arkade, and the derived Nostr identity are recoverable from the recovery phrase. RGB Lightning Node state must be recovered from the node's own backup material.
+    Spark, Arkade, Liquid, and the derived Nostr identity are recoverable from the recovery phrase, and node-less RGB-L1 state can be restored from its cloud (VSS) backup during onboarding. RGB Lightning Node state must be recovered from the node's own backup material.
   </Accordion>
 
   <Accordion title="Can I connect to multiple nodes?">
-    The KaleidoSwap Extension manages Spark, Arkade, and optional RLN accounts. For RLN, connect one node endpoint at a time.
+    The KaleidoSwap Extension manages Spark, Arkade, Liquid, RGB-L1, and optional RLN accounts. For RLN, connect one node endpoint at a time (direct URL or NWC).
   </Accordion>
 
   <Accordion title="How does auto-lock work?">
@@ -108,8 +113,8 @@ description: Common questions and solutions for the KaleidoSwap Extension
     1. Ensure the KaleidoSwap Extension is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
-    4. Confirm the DApp supports `window.rgbwebln`
-    5. Some apps look only for `window.webln` -- the KaleidoSwap Extension provides `window.rgbwebln`
+    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, and `window.nostr` (NIP-07)
+    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, and `nostr:ready`
   </Accordion>
 </AccordionGroup>
 

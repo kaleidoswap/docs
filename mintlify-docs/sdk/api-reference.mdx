@@ -85,67 +85,6 @@ quote = await client.maker.get_quote(
 ```
 </CodeGroup>
 
-### Swap Orders
-
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `createSwapOrder(body)` | `create_swap_order(body)` | Create a swap order from a quote |
-| `getSwapOrderStatus(body)` | `get_swap_order_status(body)` | Fetch current order status |
-| `getOrderHistory(params?)` | `get_order_history(...)` | History with optional filters |
-| `getOrderAnalytics()` | `get_order_analytics()` | Aggregate order analytics |
-| `submitRateDecision(body)` | `submit_rate_decision(body)` | Accept or reject a refreshed rate |
-| `waitForSwapCompletion(orderId, options)` | `wait_for_swap_completion(order_id, options)` | Poll until terminal state |
-
-`waitForSwapCompletion` in TypeScript requires `accessToken` inside `options`. The Python helper currently polls with just `order_id`.
-
-<CodeGroup>
-```typescript TypeScript
-const order = await client.maker.createSwapOrder({
-  rfq_id: quote.rfq_id,
-  from_asset: quote.from_asset,
-  to_asset: quote.to_asset,
-  receiver_address: {
-    address: 'demo-receiver-address',
-    format: 'BOLT11',
-  },
-});
-
-const status = await client.maker.getSwapOrderStatus({
-  order_id: order.id,
-  access_token: order.access_token,
-});
-
-const completed = await client.maker.waitForSwapCompletion(order.id, {
-  accessToken: order.access_token,
-  timeout: 300000,
-  pollInterval: 2000,
-  onStatusUpdate: (next) => console.log(next),
-});
-```
-
-```python Python
-from kaleido_sdk import CreateSwapOrderRequest, SwapCompletionOptions, SwapOrderStatusRequest
-
-order = await client.maker.create_swap_order(
-    CreateSwapOrderRequest(
-        rfq_id=quote.rfq_id,
-        from_asset=quote.from_asset,
-        to_asset=quote.to_asset,
-        receiver_address={"address": "demo-receiver-address", "format": "BOLT11"},
-    )
-)
-
-status = await client.maker.get_swap_order_status(
-    SwapOrderStatusRequest(order_id=order.id)
-)
-
-completed = await client.maker.wait_for_swap_completion(
-    order.id,
-    SwapCompletionOptions(timeout=300.0, poll_interval=2.0),
-)
-```
-</CodeGroup>
-
 ### Atomic Swaps
 
 | TypeScript | Python | Notes |
@@ -210,11 +149,14 @@ completed = await client.maker.wait_for_swap_completion(
 | `issueAssetNIA(body)` | `issue_asset_nia(body)` |
 | `issueAssetCFA(body)` | `issue_asset_cfa(body)` |
 | `issueAssetUDA(body)` | `issue_asset_uda(body)` |
+| `issueAssetIFA(body)` | `issue_asset_ifa(body)` |
+| `inflate(body)` | `inflate(body)` |
 | `sendRgb(body)` | `send_rgb(body)` |
 | `listTransfers(body)` | `list_transfers(body)` |
 | `refreshTransfers(body?)` | `refresh_transfers(body=None)` |
 | `syncRgbWallet()` | `sync_rgb_wallet()` |
 | `failTransfers(body)` | `fail_transfers(body)` |
+| `decodeSwapstring(body)` | `decode_swapstring(body)` |
 
 ### Channels, Peers, Invoices, and Payments
 

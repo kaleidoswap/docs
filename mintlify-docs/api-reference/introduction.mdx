@@ -32,7 +32,7 @@ The **Maker API** is publicly accessible and handles all trading and liquidity o
 |------|-----|----------------|
 | Get available assets or trading pairs | Maker API | [Market APIs](/api-reference/market-apis) |
 | Get a price quote for a swap | Maker API | [Market APIs](/api-reference/market-apis) |
-| Create or track a swap order | Maker API | [Swap APIs](/api-reference/swap-apis) |
+| Initiate or track an atomic swap | Maker API | [Swap APIs](/api-reference/swap-apis) |
 | Order a Lightning channel from an LSP | Maker API | [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) |
 | Stream real-time prices | Maker API (WebSocket) | [Swap Protocol](/api-reference/swap-protocol) |
 | Check wallet balance or node info | RLN API | Requires your own node |
@@ -55,12 +55,30 @@ The **Maker API** is publicly accessible and handles all trading and liquidity o
 
 ## Base Response Format
 
-All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Error responses use the following format:
+All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Errors use one of two envelopes.
+
+**Application errors** (invalid parameters, missing resources, conflicts, rate limits, server errors) return a structured envelope:
 
 ```json
 {
-  "error": "error_code",
-  "message": "Human-readable description of the error"
+  "error_code": "PAIR_NOT_FOUND",
+  "message": "Trading pair not found: BTC/USDT",
+  "details": {},
+  "request_id": "req_01HV8Q9X7G0Q7Y3Z"
+}
+```
+
+**Request-validation errors** (schema validation failures, HTTP `422`) return FastAPI's validation envelope:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "rfq_id"],
+      "msg": "Field required",
+      "type": "missing"
+    }
+  ]
 }
 ```
 

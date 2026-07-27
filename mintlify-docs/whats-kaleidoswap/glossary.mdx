@@ -118,10 +118,6 @@ description: Key terms and concepts for RGB, Lightning Network, and KaleidoSwap
     A trustless exchange of one asset for another that either completes entirely or fails entirely, with no possibility of partial execution.
   </Accordion>
 
-  <Accordion title="Swap Order" icon="rectangle-list">
-    An order to exchange one asset for another at a specified price, which can be settled on-chain or via Lightning.
-  </Accordion>
-
   <Accordion title="RFQ (Request for Quote)" icon="comment-dollar">
     A request to get a price quote for swapping between two assets. Quotes are valid for a limited time.
   </Accordion>
@@ -242,8 +238,8 @@ description: Key terms and concepts for RGB, Lightning Network, and KaleidoSwap
     The difference between expected price and actual execution price, typically due to market movement or liquidity constraints.
   </Accordion>
 
-  <Accordion title="Order Status" icon="list-check">
-    The current state of a swap order: OPEN, PENDING_PAYMENT, PAID, EXECUTING, FILLED, CANCELLED, EXPIRED, or FAILED.
+  <Accordion title="Swap Status" icon="list-check">
+    The current state of an atomic swap: Waiting, Pending, Succeeded, Expired, or Failed.
   </Accordion>
 </AccordionGroup>
 

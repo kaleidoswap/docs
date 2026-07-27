@@ -182,11 +182,11 @@ The API works with raw (smallest unit) amounts. Convert display amounts before s
 
 <CodeGroup>
 ```typescript TypeScript
-import { toSmallestUnits } from 'kaleido-sdk';
+import { parseRawAmount } from 'kaleido-sdk';
 
 // User enters 0.001 BTC
 const userInput = 0.001;
-const rawAmount = toSmallestUnits(userInput, 8);  // 100000
+const rawAmount = parseRawAmount(userInput, 8);  // 100000
 
 const quote = await client.maker.getQuote({
   from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: rawAmount },
@@ -195,15 +195,15 @@ const quote = await client.maker.getQuote({
 ```
 
 ```python Python
-from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, to_smallest_units
+from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, parse_raw_amount
 
 # User enters 0.001 BTC
 user_input = 0.001
-raw_amount = to_smallest_units(user_input, 8)  # 100000
+raw_amount = parse_raw_amount(user_input, 8)  # 100000
 
 quote = await client.maker.get_quote(PairQuoteRequest(
-    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.btc_ln, amount=raw_amount),
-    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.rgb_ln)
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=raw_amount),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN)
 ))
 ```
 </CodeGroup>

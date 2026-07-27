@@ -15,7 +15,7 @@ Opening a channel through an LSP involves four general steps:
 
 ## Step 1: Connect to LSP
 
-First, after going to the **"Buy a Channel"** functionality from the left vertical menu, you'll need to connect to an LSP:
+First, after going to the **"Buy a New Channel"** functionality from the left vertical menu, you'll need to connect to an LSP:
 1. Enter the LSP URL or select the default KaleidoSwap LSP.
 2. The LSP connection string will be displayed.
 3. Confirm the connection to proceed.
@@ -24,7 +24,7 @@ First, after going to the **"Buy a Channel"** functionality from the left vertic
 
 ## Step 2: Configure Channel Order
 
-1. Set the total **channel capacity** (in satoshis). This represents the total size of the channel (min: 50,000 sats; max: 10,000,000 sats).
+1. Set the total **channel capacity** (in satoshis). This represents the total size of the channel (min: 50,000 sats; max: 16,777,215 sats).
 2. Choose the **outbound liquidity** you want to purchase. This is the amount the LSP commits to your channel, while the remaining capacity becomes your inbound liquidity. Example: For a 1M sat channel with 700k outbound, you'll have 300k inbound capacity.
 3. Select how long the LSP needs to guarantee to keep the channel open (**channel duration**), among the following options:
 - 1 week (1,008 blocks)
@@ -124,4 +124,4 @@ For assistance:
 
 ---
 
-*Next: [Asset Swaps](asset-swaps.md)*
+*Next: [Asset Swaps](/desktop-app/trading/asset-swaps)*

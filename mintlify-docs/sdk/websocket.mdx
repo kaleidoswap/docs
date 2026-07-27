@@ -61,8 +61,8 @@ unsubscribe = await client.maker.stream_quotes_by_ticker(
     to_ticker="USDT",
     amount=100000,
     on_update=lambda quote: print(f"Price: {quote.price}, RFQ: {quote.rfq_id}"),
-    preferred_from_layer=Layer.btc_ln,
-    preferred_to_layer=Layer.rgb_ln
+    preferred_from_layer=Layer.BTC_LN,
+    preferred_to_layer=Layer.RGB_LN
 )
 
 # Stop streaming when done
@@ -93,8 +93,8 @@ unsubscribe = await client.maker.stream_quotes(
     from_asset="BTC",
     to_asset="USDT",
     from_amount=100000,
-    from_layer=Layer.btc_ln,
-    to_layer=Layer.rgb_ln,
+    from_layer=Layer.BTC_LN,
+    to_layer=Layer.RGB_LN,
     on_update=lambda quote: print(f"{quote.from_amount} -> {quote.to_amount}")
 )
 ```
@@ -315,8 +315,8 @@ The WebSocket uses a JSON message protocol:
     Always call the unsubscribe function returned by `streamQuotes` / `streamQuotesByTicker` when you no longer need quotes. This prevents memory leaks and unnecessary network traffic.
   </Accordion>
 
-  <Accordion title="Use rfq_id from quotes to create orders">
-    The `rfq_id` in each quote response is what you pass to `createSwapOrder`. Use the most recent quote to ensure the rate is still valid.
+  <Accordion title="Use rfq_id from quotes to initiate swaps">
+    The `rfq_id` in each quote response is what you pass to `initSwap` (`POST /api/v1/swaps/init`). Use the most recent quote to ensure the rate is still valid.
   </Accordion>
 </AccordionGroup>
 

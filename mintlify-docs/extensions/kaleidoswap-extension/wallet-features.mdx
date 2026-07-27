@@ -3,6 +3,18 @@ title: Wallet Features
 description: Accounts, assets, deposits, withdrawals, activity, and settings
 ---
 
+## Accounts
+
+The KaleidoSwap Extension derives multiple protocol accounts from one recovery phrase:
+
+| Account | What It Holds | Notes |
+|---------|---------------|-------|
+| **Spark** | Spark BTC, Spark-native assets, Lightning send/receive | Also powers Flashnet swaps and the cross-chain bridge |
+| **Arkade** | Arkade BTC and Arkade-native assets | Boarding/offboarding and VTXO lifecycle; optional rotating-address (HD) mode |
+| **Liquid** | L-BTC and Liquid assets such as USDt | Node-less and self-custodial; mainnet by default |
+| **RGB-L1** | RGB assets and BTC on Bitcoin L1 | Node-less, runs in WebAssembly; mainnet by default |
+| **RGB Lightning (RLN)** | RGB assets over Lightning channels | Optional, experimental; replaces the RGB-L1 backing when connected |
+
 ## Asset Management
 
 <img src="/images/kaleidoswap-extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
@@ -11,11 +23,18 @@ description: Accounts, assets, deposits, withdrawals, activity, and settings
 
 The KaleidoSwap dashboard displays all your assets:
 
-- **BTC balance** across Spark, Arkade, Bitcoin L1, and RLN Lightning when connected
+- **BTC balance** across Spark, Arkade, Liquid, Bitcoin L1, and RLN Lightning when connected
 - **Spark assets** from the Spark account
 - **Arkade assets** from the Arkade account
-- **RGB assets** when the optional RGB Lightning Node account is connected
-- **Protocol and network filters** for focusing on BTC, RGB, Spark, Arkade, Bitcoin L1, or Lightning
+- **Liquid assets** from the Liquid account
+- **RGB assets** from the node-less RGB-L1 account, or from RLN when connected
+- **Protocol and network filters** for focusing on a single backing or network slice
+
+Assets with the same ticker across backings are merged into a single dashboard row that expands into its per-network balances.
+
+### Hiding Assets
+
+You can hide assets you don't want on the dashboard from the manage-assets view. Hidden assets keep their balances; they are just removed from the list until you unhide them.
 
 ### Asset Details
 
@@ -28,7 +47,7 @@ Tap any asset to view details:
 | **Precision** | Decimal places |
 | **Account** | Protocol account that owns the asset |
 | **Spendable Balance** | Amount available for the selected route |
-| **Network Badges** | Where the asset can be used, such as Spark, Arkade, RGB-L1, or RGB-LN |
+| **Network Badges** | Where the asset can be used, such as Spark, Arkade, Liquid, RGB-L1, or RGB-LN |
 
 ## Sending Payments
 
@@ -43,6 +62,7 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
 | **LNURL-pay** | Lightning payment | `lnurl1...` |
 | **RGB invoice** | RGB asset transfer | `rgb:...` |
 | **Bitcoin address** | On-chain payment | `bc1q...`, `3...`, `1...` |
+| **Liquid address / URI** | Liquid transfer | `lq1...`, `liquidnetwork:...` |
 | **Spark address** | Spark transfer | Spark address string |
 | **Arkade route** | Arkade transfer or offboard route | Arkade-compatible destination |
 
@@ -54,7 +74,7 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 
   <Step title="Enter Amount">
-    For addresses and keysend, enter the amount in sats or BTC. For invoices, the amount is pre-filled from the invoice.
+    For addresses and keysend, enter the amount in sats or BTC. For invoices, the amount is pre-filled from the invoice. **Max** fills the spendable balance and, for on-chain sends, reserves the network fee so the transaction can actually broadcast.
   </Step>
 
   <Step title="Review">
@@ -72,7 +92,7 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
 
 ## Receiving Payments
 
-Generate invoices and addresses to receive supported assets across Spark, Arkade, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
+Generate invoices and addresses to receive supported assets across Spark, Arkade, Liquid, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
 
 <img src="/images/kaleidoswap-extension/09-deposit.png" alt="KaleidoSwap deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
@@ -84,9 +104,10 @@ Available receive methods depend on the selected asset and connected account:
 |-------|-------------------|
 | **Spark** | Spark address or Spark Lightning invoice |
 | **Arkade** | Arkade address, boarding address, or compatible receive route |
+| **Liquid** | Liquid address for L-BTC or issued assets |
 | **Bitcoin L1** | Bitcoin address for on-chain receive |
 | **Lightning** | BOLT11 invoice where the selected account supports it |
-| **RGB** | RGB invoice or RGB Lightning invoice when RLN is connected |
+| **RGB** | Blinded RGB invoice (node-less), or RGB Lightning invoice when RLN is connected |
 
 ### Receive Flow
 
@@ -96,7 +117,7 @@ Available receive methods depend on the selected asset and connected account:
   </Step>
 
   <Step title="Select Route">
-    Pick an available account route, such as Spark, Arkade, Bitcoin L1, Lightning, or RGB.
+    Pick an available account route, such as Spark, Arkade, Liquid, Bitcoin L1, Lightning, or RGB.
   </Step>
 
   <Step title="Generate">
@@ -126,9 +147,11 @@ Deposit BTC or supported assets into the selected account:
 Withdraw sends from the selected account to a detected destination:
 
 1. Click **Withdraw** on the dashboard
-2. Paste a Bitcoin address, Lightning invoice, Lightning address, LNURL, RGB invoice, Spark address, or Arkade destination
+2. Paste a Bitcoin address, Lightning invoice, Lightning address, LNURL, RGB invoice, Liquid address or `liquidnetwork:` URI, Spark address, or Arkade destination
 3. Enter the amount
 4. Review the suggested route and confirm
+
+For withdrawals from Spark to external chains (EVM networks, Solana, and more), see [Bridge](/extensions/kaleidoswap-extension/bridge).
 
 ## Activity History
 
@@ -136,8 +159,8 @@ View all your transactions in the **Activity** tab:
 
 ### Transaction List
 
-- Lists all recent transactions
-- Each entry shows: type, amount, status, and timestamp
+- Lists recent transactions across all connected accounts; sources load concurrently and render progressively
+- Each entry shows: type, amount, status, carrier network, and timestamp
 - Filter by transaction type or status
 
 ### Transaction Details
@@ -146,8 +169,16 @@ Click any transaction to see:
 - Full transaction details
 - Transaction ID
 - Amounts and fees
-- Status
+- Carrier and status
 - Timestamp
+
+## KaleidoSwap Handle
+
+You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from Settings. The handle checks availability live as you type, links to your wallet for receiving Lightning payments, and is automatically re-linked when you restore the wallet.
+
+## Full-Tab View
+
+The wallet normally opens in the browser side panel (or a toolbar popup). For a larger workspace, use **Settings > Open in Full Tab** to open the wallet as a full browser tab.
 
 ## Settings
 
@@ -158,14 +189,17 @@ Access settings from the gear icon or bottom navigation.
 ### Accounts
 
 - **Spark** - Network selection, SDK details, and connection status
-- **Arkade** - Network selection, VTXO settings, boarding flows, and lifecycle settings
-- **RGB & Lightning** - Optional RLN account, available through experimental settings
+- **Arkade** - Network selection, VTXO settings, boarding flows, lifecycle settings, and an optional rotating-address (HD) mode with restore via gap scan
+- **Liquid** - Network selection and the Esplora/waterfalls sync endpoint (a fast default is provided; you can supply your own)
+- **RGB-L1** - Network selection plus the Esplora indexer and RGB proxy endpoints for the node-less account
+- **RGB & Lightning** - Optional RLN account (direct URL or NWC), available through experimental settings
 
-### Nostr Account
+### Nostr
 
-- View your **public key** (npub)
-- View/export the session private key when available
-- Use the derived identity for supported DApp signing flows
+- **Nostr Account** - View your public key (npub), view/export the session private key when available, and re-derive or import your identity
+- **Connected Sites** - Review every site and app connected to the wallet and revoke individual capabilities
+- **Nostr Connect (NIP-46)** - Generate a `bunker://` connection string so external Nostr apps can request signatures remotely
+- **Nostr Wallet Connect** - Pair external apps to the wallet over NWC with a QR code, and set amount-aware budgets
 
 <Warning>
 Never share your Nostr private key (nsec). Anyone with this key can sign events and act as you.
@@ -175,15 +209,17 @@ Never share your Nostr private key (nsec). Anyone with this key can sign events 
 
 | Setting | Options |
 |---------|---------|
-| **Currency** | USD, EUR, etc. |
+| **Currency** | USD, EUR, GBP, JPY, CHF, CAD, CNY, KRW |
+| **Language** | English, Spanish, French, German, Portuguese, Japanese, Italian, Korean, Chinese |
 | **Bitcoin units** | sats, BTC, mBTC, or fiat display modes |
 | **Theme** | Dark mode |
-| **Auto-lock Timeout** | Configurable inactivity timeout |
+| **Auto-lock Timeout** | 1 minute to 1 hour, or never |
 
 ### Security
 
 - **Change Password** - Update your wallet password
-- **Backup Wallet** - Reveal the recovery phrase after password confirmation, publish an encrypted Nostr settings backup, create an RGB node backup file, and upload an existing RGB backup archive to Nostr
+- **Passkey Login** - Register or remove a passkey (WebAuthn) for unlocking the wallet
+- **Backup Wallet** - Reveal the recovery phrase after password confirmation, publish an encrypted Nostr settings backup, and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
 
 ### About
 

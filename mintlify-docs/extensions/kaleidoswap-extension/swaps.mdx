@@ -9,12 +9,18 @@ The KaleidoSwap Extension includes an in-extension swap surface. It can use Kale
 
 <img src="/images/kaleidoswap-extension/10-swap.png" alt="KaleidoSwap swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
 
+<Note>
+Swaps exchange one asset for another inside your wallet. To move funds between Spark and external chains (EVM networks, Solana, and more), use the [Bridge](/extensions/kaleidoswap-extension/bridge) instead.
+</Note>
+
 ## Prerequisites
 
 Before swapping:
 1. At least one compatible swap venue must be available
 2. The relevant account must be connected
 3. You must have sufficient balance for the source asset and network fees
+
+The amount input is gated by your **spendable** balance for the selected source asset, so you cannot quote more than the wallet can actually send.
 
 ## Swap Flow
 
@@ -74,6 +80,10 @@ When you enter an amount, the KaleidoSwap Extension fetches a quote from the act
 | **Venue** | The route provider, such as KaleidoSwap maker or Flashnet |
 
 Quotes update in real time as you change the amount.
+
+### Slippage Tolerance
+
+Flashnet swaps enforce your configured slippage tolerance: the minimum output amount is derived from the tolerance you set, and the swap fails rather than executing at a worse rate.
 
 ## Swap Status
 

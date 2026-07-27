@@ -1,0 +1,91 @@
+---
+title: Bridge
+description: Move funds between Spark and external chains
+---
+
+## Overview
+
+The **Bridge** moves funds between your Spark account and external blockchains through **Flashnet Orchestra**. It works in both directions:
+
+- **Deposit** - Send assets from an external chain (for example USDC on Ethereum or Solana) and receive **BTC** or **USDB** on your Spark account.
+- **Withdraw** - Send from Spark to a supported destination on an external chain. Pasting an external-chain address in the Withdraw flow detects the compatible bridge routes automatically.
+
+<Note>
+The Bridge moves funds across chains. To exchange one asset for another inside your wallet, use [Swaps](/extensions/kaleidoswap-extension/swaps).
+</Note>
+
+## Supported Networks
+
+Available routes come from Flashnet Orchestra and can change over time. Networks surfaced in the bridge UI include Ethereum, Base, Arbitrum, Optimism, Polygon, Solana, Tron, Avalanche, BNB Chain, HyperCore, and HyperEVM, with common assets such as BTC, USDT, and USDC.
+
+Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asset picker to narrow the route list.
+
+## Bridging In (Deposit)
+
+<Steps>
+  <Step title="Open Bridge">
+    Open **Bridge** from the dashboard.
+  </Step>
+
+  <Step title="Pick the Source">
+    Choose the source chain and asset you will send from. Use the network filter or quick chips to find it faster.
+  </Step>
+
+  <Step title="Pick the Destination">
+    Choose what you want to receive on Spark: **BTC** or **USDB**.
+  </Step>
+
+  <Step title="Get a Quote">
+    Enter the amount. The extension fetches a quote showing the expected output, fees, and limits.
+  </Step>
+
+  <Step title="Send the Funds">
+    The bridge shows a deposit address (with QR code) on the source chain. Send the quoted amount from your external wallet.
+  </Step>
+
+  <Step title="Track the Order">
+    The order status updates as the deposit confirms and the funds arrive on Spark. Orders are persisted, so tracking resumes even if you close the extension mid-bridge.
+  </Step>
+</Steps>
+
+## Bridging Out (Withdraw)
+
+Cross-chain withdrawals start from the regular **Withdraw** flow:
+
+<Steps>
+  <Step title="Paste the Destination">
+    Paste an address on the destination chain (for example an EVM or Solana address). The extension detects which bridge routes can reach it.
+  </Step>
+
+  <Step title="Choose Route and Amount">
+    Pick the destination asset and enter the amount. Quotes are **exact-out**: the quote tells you what the recipient will receive.
+  </Step>
+
+  <Step title="Review and Confirm">
+    Review the destination, output amount, and fees, then confirm. The extension pays from your Spark account and the bridge delivers on the destination chain.
+  </Step>
+
+  <Step title="Track the Order">
+    Order progress is tracked persistently until completion, surviving extension restarts.
+  </Step>
+</Steps>
+
+## Order Tracking and Recovery
+
+Bridge orders are saved locally as a session. If the extension closes or the service worker restarts while an order is in flight, the bridge screen restores the pending order and continues tracking it. Completed and failed orders show their final status with the relevant transaction references.
+
+## Tips
+
+<AccordionGroup>
+  <Accordion title="Verify the destination address">
+    Cross-chain transfers are irreversible. Double-check the destination address and chain before confirming.
+  </Accordion>
+
+  <Accordion title="Respect quote limits">
+    Quotes include minimum and maximum amounts. Sending outside the quoted amount on a deposit can delay or strand the order.
+  </Accordion>
+
+  <Accordion title="Leave the order screen open when possible">
+    Tracking recovers automatically after a restart, but keeping the screen open gives you live status updates.
+  </Accordion>
+</AccordionGroup>

@@ -103,6 +103,10 @@ window.addEventListener('webln:ready', async () => {
 Some DApps probe `window.bitcoin` (a Bitcoin Wallet Standard provider) instead of, or alongside, `window.webbtc`. It exposes `connect()`, `getAccounts()`, `getPublicKey()`, `signMessage()`, `signPsbt()`, `pushPsbt()`, and `sendBitcoin()` over the same wallet keys.
 </Note>
 
+### PSBT Confirmations
+
+Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the confirmation prompt decodes the PSBT and shows the destinations, amounts, and network fee before you approve. If the amounts cannot be decoded from the PSBT, the prompt shows an explicit warning instead.
+
 ## Nostr Provider (NIP-07)
 
 The KaleidoSwap Extension injects a full **NIP-07** provider at `window.nostr`, so Nostr web apps can request the wallet's public key, sign events, and encrypt or decrypt direct messages. The Nostr identity is derived from the wallet recovery phrase (or an imported identity, when set).
@@ -133,9 +137,19 @@ window.addEventListener('nostr:ready', async () => {
 });
 ```
 
-## Permission Prompts
+## Nostr Connect (NIP-46)
 
-When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action.
+Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for Nostr apps that support [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) (nsecBunker). From **Settings > Nostr Connect**, generate a `bunker://` connection string and paste it into the client app; signing requests then travel over Nostr relays and are approved in the extension. Active NIP-46 sessions appear in Connected Apps, where they can be reviewed and revoked.
+
+## Nostr Wallet Connect (NWC)
+
+The extension can also expose the wallet to external apps over **Nostr Wallet Connect**: pair an app by scanning the pairing QR code, then control what it can do with **amount-aware budgets**. Zap payments (NIP-57) made through NWC are validated and correlated with wallet activity.
+
+## Permission Prompts and Connected Sites
+
+When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. Connected Nostr clients start from a "Reasonable" consent default (comparable to other NIP-07 wallets): routine, low-risk operations are allowed for a connected app, while payments and other sensitive actions still prompt.
+
+**Settings > Connected Sites** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
 
 <Warning>
 Always review what a DApp is requesting before approving. Only approve payments, invoices, asset sends, and signing requests from sites you trust.
@@ -152,6 +166,8 @@ Your Nostr keypair is managed in **Settings > Nostr Account**:
 - View your public key (`npub`)
 - View/copy the session private key when the wallet is unlocked
 - Re-derive identity from the wallet recovery phrase
+
+By default the identity is derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your own key (`nsec1…` or 64-character hex) during onboarding or later from Settings; it is stored encrypted and used everywhere the derived identity would be.
 
 ## Browser Approval Flow
 

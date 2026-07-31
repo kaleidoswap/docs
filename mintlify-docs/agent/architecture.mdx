@@ -1,0 +1,132 @@
+---
+title: 'kaleidoagent Architecture'
+description: 'The always-on autonomous Bitcoin L2 agent — Nanobot runtime, skills, and MCP server wiring'
+---
+
+## What This Is
+
+[kaleidoagent](https://github.com/kaleidoswap/kaleidoagent) is a fully autonomous, non-custodial
+Bitcoin L2 agent: it manages a Lightning + RGB wallet, executes atomic HTLC swaps on the KaleidoSwap
+DEX, runs portfolio rebalancing and DCA strategies, keeps Lightning channel liquidity healthy, and
+serves as an interactive wallet-assistant chat — all driven by an LLM (Claude or OpenAI) reasoning
+over the `kaleido` CLI and MCP tool calls.
+
+<Info>
+kaleidoagent is a separate, always-on server — it does **not** currently embed
+[kaleido-mind](/mind/architecture)'s `Engine`. It has its own agent loop. See
+[kaleido-mind's relationship note](/mind/architecture#relationship-to-kaleidoagent) for the
+convergence path being considered.
+</Info>
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        KaleidoAgent                          │
+│                                                              │
+│  index.ts (Node.js bootstrap)                                │
+│    │                                                         │
+│    ├── NanobotManager ──► Nanobot gateway                    │
+│    │     │  (core runtime: scheduling, LLM, MCP, Telegram)   │
+│    │     │                                                    │
+│    │     └── MCP servers (managed by Nanobot)                 │
+│    │           └── kaleido (kaleido-mcp) — unified wallet+DEX │
+│    │                                                          │
+│    ├── StatusServer :4242  (bridge API for webapp)           │
+│    │     ├── NanobotTaskRunner  (triggers agent tasks)       │
+│    │     ├── NanobotChatRunner  (wallet assistant chat)      │
+│    │     └── WalletBridge       (live balance cache)         │
+│    │                                                          │
+│    └── Scheduler  (manual / startup task triggers)           │
+│                                                              │
+│  React Dashboard :5173  (Vite + Tailwind)                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Nanobot is the core runtime** — it handles agent execution, cron scheduling, MCP tool
+integration, Telegram messaging, and memory. Node.js is a thin bridge that boots Nanobot and serves
+a local control-panel API on `:4242`.
+
+## Two Execution Modes
+
+| Mode | How it works | When to use |
+|---|---|---|
+| `skill` _(default)_ | SKILL.md files load as the system prompt; the agent calls a single `run_kaleido_command` tool that shells out to the `kaleido` CLI. Nanobot manages all MCP connections directly. | Lightweight — no direct MCP connection from Node.js |
+| `mcp` | Node.js connects to MCP servers directly via `McpManager`; the agent calls kaleido-mcp's tools inline (`AgentRunner`, Claude/OpenAI API turns) | Debugging, or setups needing fine-grained tool control from Node.js |
+
+## MCP Server Wiring
+
+kaleidoagent registers `kaleido-mcp` — [the unified MCP server](/mcp/overview) — as its primary
+tool source, giving it `spark_*`, `wdk_*`/`rln_*`, `kaleidoswap_*`, `mpp_*`/`l402_*`, and
+`kaleido_node_*` tools in one connection. Historically kaleidoagent's config also referenced the
+now-archived standalone `kaleidoswap-mcp` and `mpp-gateway-mcp` servers directly; since both are
+superseded by kaleido-mcp (see [MCP Servers Overview](/mcp/overview#retired-servers)), new
+configurations should rely on kaleido-mcp alone rather than wiring those up separately.
+
+Remote, third-party MCP servers can be registered too, gated behind an API key check — e.g. a
+Bitrefill gift-card MCP that's only registered if a `BITREFILL_API_KEY` env var is present, since
+the upstream endpoint rejects anonymous connections.
+
+## Autonomous Loops
+
+| Loop | Default interval | Skill | Purpose |
+|---|---|---|---|
+| `rebalance` | on-demand / cron | `portfolio-manager` | Drift detection → atomic swap execution |
+| `heartbeat` | 5 min | `channel-manager` | Node health, RGB flush, LSPS1 channel purchase |
+| `daily_summary` | 00:00 UTC | `kaleidoagent` | Portfolio snapshot, trade history, market data |
+
+## Skills
+
+Skills are `SKILL.md` files loaded at runtime that encode the agent's operational logic, including
+inline `!`kaleido command`` bash injections executed and substituted before reaching the LLM.
+
+| Skill | Purpose |
+|---|---|
+| `portfolio-manager` | Drift detection → atomic swap execution, with risk checks |
+| `channel-manager` | Node health, RGB transfer flush, LSPS1 channel purchasing |
+| `kaleidoagent` | Daily summary: portfolio snapshot, market data, trade history |
+| `kaleidoswap` | KaleidoSwap DEX operations reference |
+| `wallet-assistant` | Interactive wallet queries and operations via chat |
+| `dca` | Dollar-cost averaging strategy |
+| `cross-l2` | Cross-layer moves between Spark L2 and Lightning |
+| `mpp` | MPP / L402 payment-gated data access |
+
+## Risk Controls
+
+Portfolio rebalancing is gated by configurable risk parameters: `dry_run` (simulate without
+executing), `max_swap_usd`, `min_btc_reserve_sats`, `stop_loss_btc_sats`, `rebalance_threshold_pct`,
+and `max_concurrent_orders`. `dry_run` defaults to `true`.
+
+## Status API
+
+A local-only control API on `http://localhost:4242`:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/health` | GET | Service health |
+| `/status` | GET | Full state: uptime, balances, recent runs, token costs |
+| `/wallets` | GET | Live wallet snapshot |
+| `/run` | POST | Trigger a task, e.g. `{ "task_id": "rebalance" }` |
+| `/chat` | POST | Wallet-assistant chat |
+| `/config` | GET/POST | Read/update agent config |
+| `/tasks` | GET/POST | List or create scheduled tasks |
+| `/skills` | GET/PATCH | List skills, or enable/disable one |
+
+## Atomic Swap Flow
+
+Same 5-step HTLC protocol as elsewhere in the KaleidoSwap stack, driven via `kaleido-mcp` or CLI:
+
+```
+1. kaleidoswap_get_quote    → rfq_id + amounts             (kaleido-mcp)
+2. kaleidoswap_atomic_init  → swapstring + payment_hash     (kaleido-mcp)
+3. wdk_atomic_taker         → whitelist HTLC on RLN node    (kaleido-mcp)
+4. kaleidoswap_atomic_execute → HTLC settlement triggered   (kaleido-mcp)
+5. kaleidoswap_atomic_status → poll → Succeeded             (kaleido-mcp)
+```
+
+## Configuration
+
+Primary config lives in `agent.config.json` — model choice, MCP server commands/env, portfolio
+targets and risk limits, schedule intervals, and the enabled skill list. See the
+[repo README](https://github.com/kaleidoswap/kaleidoagent#configuration) for the full schema and
+environment variable reference.

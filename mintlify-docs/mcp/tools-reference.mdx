@@ -1,0 +1,126 @@
+---
+title: 'MCP Tools Reference'
+description: 'Every tool exposed by kaleido-mcp, grouped by domain'
+---
+
+All tools below are served by [kaleido-mcp](/mcp/overview) over a single MCP connection. Tools
+marked with a 🔒 icon in the underlying tool contract require host-side confirmation before
+executing (spend-moving actions) — see each host's own confirmation UX.
+
+## Spark L2 Wallet (`spark_*`)
+
+WDK built-in tools (via `@tetherto/wdk-mcp-toolkit`, scoped to the `spark` chain): `getAddress`,
+`getBalance`, `sendTransaction`, `transfer`, `getTokenBalance`, `quoteSendTransaction`,
+`quoteTransfer`, `getFeeRates`, `sign`, `verify`.
+
+Custom Spark tools, on top of the built-ins:
+
+| Tool | Description |
+|---|---|
+| `spark_get_balance` | Spark L2 wallet balance in satoshis (fee-free transfers) |
+| `spark_get_address` | Spark L2 address for receiving sats or tokens |
+| `spark_get_token_balance` | Balance of a Spark token (e.g. USDT) by token identifier |
+| `spark_get_deposit_address` | Bitcoin L1 address to bridge BTC into the Spark L2 wallet |
+| `spark_create_lightning_invoice` | BOLT11 invoice to receive BTC into Spark via Lightning |
+| `spark_pay_lightning_invoice` | Pay a BOLT11 invoice from the Spark wallet |
+| `spark_quote_lightning_payment` | Estimate the Lightning routing fee before paying |
+| `spark_send_sats` | Send satoshis to another Spark L2 address (fee-free) |
+| `spark_transfer_token` | Transfer a Spark token (e.g. USDT) to another address (fee-free) |
+| `spark_quote_withdraw` | Fee quote for a cooperative-exit withdrawal to Bitcoin L1 |
+| `spark_withdraw` | Withdraw BTC from Spark L2 to a Bitcoin L1 address |
+| `spark_get_transfers` | Recent Spark L2 transfer history |
+| `spark_create_sats_invoice` | Spark invoice (`spark1...`) to receive BTC sats |
+| `spark_create_tokens_invoice` | Spark invoice (`spark1...`) to receive tokens |
+| `spark_pay_spark_invoice` | Pay one or more Spark invoices |
+| `spark_get_spark_invoices` | Query status of one or more Spark invoices |
+| `spark_mpp_pay` | Pay an MPP Lightning challenge from the Spark wallet |
+
+## RLN — RGB Lightning Node (`wdk_*`, alias `rln_*`)
+
+| Tool | Description |
+|---|---|
+| `wdk_get_node_info` | Node identity: pubkey, channel count, Lightning balance, peers |
+| `wdk_get_balances` | BTC on-chain (vanilla/colored UTXOs) and Lightning balance |
+| `wdk_get_asset_balance` | Balance of a specific RGB asset (USDT, XAUT) by `asset_id` |
+| `wdk_list_assets` | All RGB assets held by the node (NIA, UDA, CFA schemas) |
+| `wdk_get_address` | On-chain BTC address for receiving deposits |
+| `wdk_create_rgb_invoice` | Create an RGB invoice to receive an RGB asset |
+| `wdk_create_ln_invoice` | Create a BOLT11 invoice to receive BTC via Lightning |
+| `wdk_pay_invoice` | Pay a BOLT11 Lightning invoice |
+| `wdk_send_btc` | Send BTC on-chain |
+| `wdk_send_asset` | Send an RGB asset (USDT/XAUT) on-chain |
+| `wdk_list_channels` | All Lightning channels: capacity, balance, usability, RGB allocation |
+| `wdk_connect_peer` | Connect to a Lightning peer (`pubkey@host:port`) — required before LSPS1 channel purchase |
+| `wdk_open_channel` | Open a Lightning channel, optionally with RGB asset allocation |
+| `wdk_close_channel` | Close a Lightning channel (`force=true` only for unresponsive peers) |
+| `wdk_get_channel_id` | Resolve a `temporary_channel_id` to the permanent `channel_id` |
+| `wdk_list_payments` | Recent Lightning payments (sent and received) |
+| `wdk_refresh_transfers` | Sync pending RGB asset transfers (call after a KaleidoSwap order fills) |
+| `wdk_atomic_taker` | Step 2 of atomic HTLC swap — whitelist the incoming HTLC |
+| `wdk_list_swaps` | List all atomic swaps on the node (maker and taker sides) |
+| `wdk_get_swap` | Atomic swap status by `payment_hash` |
+| `wdk_mpp_pay` | Pay an MPP Lightning challenge from the RLN wallet |
+
+## KaleidoSwap DEX (`kaleidoswap_*`)
+
+| Tool | Description |
+|---|---|
+| `kaleidoswap_get_assets` | Tradeable assets: ticker, name, precision, RGB protocol ID |
+| `kaleidoswap_get_pairs` | Tradeable pairs with available layer routes |
+| `kaleidoswap_get_quote` | Price quote for a swap — output amount, price, fee, `rfq_id` |
+| `kaleidoswap_get_spreads` | Quotes across all routes for a pair — detect arbitrage |
+| `kaleidoswap_place_order` | Place a REST swap order — returns a `deposit_address` |
+| `kaleidoswap_get_order_status` | Poll order status until `FILLED \| FAILED \| EXPIRED \| CANCELLED` |
+| `kaleidoswap_get_open_orders` | Orders placed in this session with last known status |
+| `kaleidoswap_cancel_order` | Mark an order cancelled in the local session tracker |
+| `kaleidoswap_get_position` | Session trading stats: fill rate, volume by asset |
+| `kaleidoswap_atomic_init` | Step 1 of atomic swap — returns `swapstring` + `payment_hash` |
+| `kaleidoswap_atomic_execute` | Step 3 — confirm execution after `wdk_atomic_taker` whitelists the HTLC |
+| `kaleidoswap_atomic_status` | Poll atomic swap status by `payment_hash` |
+| `kaleidoswap_lsp_get_info` | LSP peer connection info and channel capacity limits |
+| `kaleidoswap_lsp_estimate_fees` | Estimate LSPS1 channel opening fees before committing |
+| `kaleidoswap_lsp_create_order` | Request a new Lightning channel (LSPS1) — returns a BOLT11 invoice |
+| `kaleidoswap_lsp_get_order` | Poll LSPS1 channel order status |
+| `kaleidoswap_lsp_quote_asset_channel` | Quote a new channel pre-loaded with an RGB asset (USDT, XAUT) |
+| `kaleidoswap_lsp_create_asset_channel` | Order a new asset-preloaded channel from the LSP |
+
+## MPP / L402 / 402index.io (`mpp_*`, `l402_*`)
+
+| Tool | Description |
+|---|---|
+| `mpp_request_challenge` | Probe an MPP-protected URL; parse an HTTP 402 into invoice + `challenge_id` |
+| `mpp_submit_credential` | Submit a payment credential (after `wdk_mpp_pay`/`spark_mpp_pay`) to access the resource |
+| `mpp_parse_challenge_header` | Parse a raw `WWW-Authenticate` header without an HTTP request |
+| `l402_request_challenge` | Legacy L402 challenge for a premium endpoint — BOLT11 invoice + macaroon |
+| `l402_fetch_resource` | Fetch an L402-gated resource after paying the invoice |
+| `search_paid_apis` | Search the 402index.io directory for payment-gated APIs (L402/MPP/x402) |
+
+## Market Data (`l402_get_*`, alias `get_*`)
+
+WDK built-in pricing tools (Bitfinex): `getCurrentPrice`, `getHistoricalPrice`.
+
+| Tool | Description |
+|---|---|
+| `l402_get_price` | Spot price + 24h stats for BTC/USDT/XAUT/ETH |
+| `l402_get_market_data` | Batch prices for multiple assets in one call |
+| `l402_get_ohlcv` | OHLCV candle data over the last N days |
+| `l402_get_sentiment` | Crypto Fear & Greed Index (0–100) with a trading signal |
+
+## Node Lifecycle (`kaleido_node_*`)
+
+Shells out to a local `kaleido` CLI binary — see [Node Environments](/cli/node-environments) for
+the CLI-native equivalent of these operations.
+
+| Tool | Description |
+|---|---|
+| `kaleido_node_list` | List all kaleido node environments and their node URLs |
+| `kaleido_node_up` | Start Docker containers for a named environment |
+| `kaleido_node_stop` | Stop running containers (data preserved) |
+| `kaleido_node_down` | Stop and remove containers/networks (volumes preserved) |
+| `kaleido_node_ps` | Docker container status for a named environment |
+| `kaleido_node_status` | RLN node health check |
+| `kaleido_node_info` | Detailed node and network info from the active RLN node |
+| `kaleido_node_use` | Set the active node URL in kaleido config |
+| `kaleido_node_init` | Initialize the RLN node wallet for the first time |
+| `kaleido_node_unlock` | Unlock the RLN node wallet after a restart |
+| `kaleido_node_lock` | Lock the RLN node wallet |

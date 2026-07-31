@@ -1,0 +1,97 @@
+---
+title: 'MCP Servers Overview'
+description: 'Give an AI agent wallet, DEX, and payment tools over the Model Context Protocol'
+---
+
+## What This Covers
+
+KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop,
+[kaleidoagent](/agent/architecture), [kaleido-mind](/mind/architecture)-based hosts, or any other
+[MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`** — a single unified server.
+
+## Why One Server
+
+Several focused, single-domain MCP servers existed early on (a KaleidoSwap DEX server, an MPP/L402
+payment server, per-wallet servers for RLN and Spark). They've since been consolidated into
+`kaleido-mcp`, which re-exposes the same tool contracts under one connection:
+
+<CardGroup cols={2}>
+  <Card title="One connection" icon="plug">
+    An agent host configures a single MCP server instead of wiring up four or five.
+  </Card>
+  <Card title="Same tool names" icon="fingerprint">
+    Tool contracts (`kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`) are unchanged from the
+    original focused servers — nothing to relearn.
+  </Card>
+  <Card title="One place to maintain" icon="wrench">
+    Bug fixes and new tools land in one repo instead of being duplicated across several.
+  </Card>
+  <Card title="Actively maintained" icon="check">
+    The standalone `kaleidoswap-mcp` and `mpp-gateway-mcp` repos are archived; `kaleido-mcp` is
+    where ongoing work happens.
+  </Card>
+</CardGroup>
+
+## Domains
+
+`kaleido-mcp` bundles seven tool domains in one process:
+
+| Domain | Prefix | What it does |
+|---|---|---|
+| Spark L2 wallet | `spark_*` | Fee-free transfers, Lightning pay/receive, BTC bridge, token transfers |
+| RLN (RGB Lightning Node) | `wdk_*` (alias `rln_*`) | RGB assets, Lightning channels, balances, atomic swap taker step |
+| KaleidoSwap DEX | `kaleidoswap_*` | Quotes, REST orders, atomic HTLC swaps, LSPS1 channel purchases |
+| MPP / L402 payments | `mpp_*` / `l402_*` | Payment-gated API access, challenge/credential flow |
+| 402index.io discovery | `search_paid_apis` | Find pay-per-call APIs by protocol/category |
+| Market data | `l402_get_*` | Prices, OHLCV candles, Fear & Greed sentiment |
+| Node lifecycle | `kaleido_node_*` | Local Docker signet/regtest environment management via the `kaleido` CLI |
+
+See the [full tools reference](/mcp/tools-reference) for every tool name, description, and required
+arguments.
+
+## Installation & Configuration
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-mcp
+cd kaleido-mcp
+npm install
+npm run build
+```
+
+```bash
+# stdio (Claude Desktop, kaleidoagent, ...)
+WDK_SEED="word1 word2 ..." node dist/index.js
+
+# HTTP transport
+PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
+```
+
+| Env var | Required | Description |
+|---|---|---|
+| `WDK_SEED` | yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. Server still boots without it — Spark tools are just disabled. |
+| `SPARK_NETWORK` | no | `MAINNET` or `REGTEST` |
+| `RLN_NODE_URL` | no | RLN daemon URL, default `http://localhost:3001` |
+| `KALEIDOSWAP_API_URL` | no | KaleidoSwap API URL, default `https://api.kaleidoswap.com` |
+| `KALEIDO_BIN` | no | Path to the `kaleido` CLI, for node lifecycle tools |
+| `PORT` | no | Enable Streamable HTTP transport instead of stdio |
+| `MCP_AUTH_TOKEN` | no | Bearer token for HTTP mode |
+
+## Legacy Aliases
+
+Some tools are still reachable under older names (`rln_*` for `wdk_*`, generic `get_*` for the
+`l402_get_*` market tools) for backward compatibility with earlier integrations. New integrations
+should use the canonical `wdk_*` / `l402_*` names.
+
+## Retired Servers
+
+These repos are archived — their functionality lives in `kaleido-mcp` now:
+
+| Repo | Superseded by |
+|---|---|
+| `kaleidoswap-mcp` | `kaleidoswap_*` tools in kaleido-mcp |
+| `mpp-gateway-mcp` | `mpp_*` / `l402_*` tools in kaleido-mcp |
+| `kaleido-node-mcp` | Node-lifecycle tools ported (`kaleido_node_*`); wallet/asset/channel/payment tools dropped in favor of the SDK-backed `wdk_*` tools above |
+
+The per-wallet servers `wdk-wallet-rln-mcp` and `wdk-wallet-spark-mcp` remain standalone, actively
+maintained repos — `kaleido-mcp` depends on the same underlying wallet SDKs rather than on those
+servers directly.

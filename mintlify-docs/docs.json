@@ -211,6 +211,33 @@
         ]
       },
       {
+        "tab": "AI & MCP",
+        "groups": [
+          {
+            "group": "MCP Servers",
+            "icon": "plug",
+            "pages": [
+              "mcp/overview",
+              "mcp/tools-reference"
+            ]
+          },
+          {
+            "group": "kaleido-mind",
+            "icon": "brain",
+            "pages": [
+              "mind/architecture"
+            ]
+          },
+          {
+            "group": "kaleidoagent",
+            "icon": "robot",
+            "pages": [
+              "agent/architecture"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {

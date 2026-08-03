@@ -20,6 +20,8 @@ Available routes come from Flashnet Orchestra and can change over time. Networks
 
 Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asset picker to narrow the route list.
 
+<img src="/assets/images/extension/26-bridge-source-picker.png" alt="Bridge source asset picker listing BTC, USDC on Base, and USDT on Ethereum with a search field" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Bridging In (Deposit)
 
 <Steps>
@@ -48,6 +50,10 @@ Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asse
   </Step>
 </Steps>
 
+<img src="/assets/images/extension/27-bridge-quote.png" alt="Bridge deposit quote showing amount sent, estimated amount received, fee in basis points, and expiry above the deposit QR code" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/28-bridge-deposit-address.png" alt="Bridge deposit address with QR code, copyable address, a waiting for deposit status, and a field to paste the transaction hash" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Bridging Out (Withdraw)
 
 Cross-chain withdrawals start from the regular **Withdraw** flow:
@@ -70,9 +76,13 @@ Cross-chain withdrawals start from the regular **Withdraw** flow:
   </Step>
 </Steps>
 
+<img src="/assets/images/extension/30-bridge-withdraw.png" alt="Cross-chain withdrawal detected in the Withdraw flow, with destination network, recipient address, receive token, exact-out amount, and fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Order Tracking and Recovery
 
 Bridge orders are saved locally as a session. If the extension closes or the service worker restarts while an order is in flight, the bridge screen restores the pending order and continues tracking it. Completed and failed orders show their final status with the relevant transaction references.
+
+<img src="/assets/images/extension/29-bridge-tracking.png" alt="Bridge order processing with a six stage progress list from processing to completed, plus the route and order ID" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## Tips
 
@@ -89,3 +99,9 @@ Bridge orders are saved locally as a session. If the extension closes or the ser
     Tracking recovers automatically after a restart, but keeping the screen open gives you live status updates.
   </Accordion>
 </AccordionGroup>
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

@@ -1,0 +1,64 @@
+---
+title: "KaleidoSwap Extension: Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Links for KaleidoSwap Extension users — beta access, community and support channels, and documentation for the Spark, Arkade, Liquid, RGB, and Nostr standards"
+---
+
+## Protocol Documentation
+
+The Extension derives one account per layer from a single recovery phrase. These are the upstream references for each.
+
+<CardGroup cols={2}>
+  <Card title="Spark" icon="bolt-lightning" href="https://docs.spark.money">
+    Statechain-based transfers, Lightning send and receive, and the tokens behind the Spark account.
+  </Card>
+  <Card title="Arkade" icon="alien-8bit" href="https://docs.arkadeos.com">
+    VTXOs, boarding and offboarding, and the batch settlement model behind the Arkade account.
+  </Card>
+  <Card title="Liquid" icon="droplet" href="https://docs.liquid.net">
+    The federated sidechain behind L-BTC and issued assets such as USDt.
+  </Card>
+  <Card title="RGB Protocol" icon="gem" href="https://docs.rgb.info">
+    Client-side validation and asset interfaces, for both node-less RGB-L1 and RGB over Lightning.
+  </Card>
+</CardGroup>
+
+## DApp Standards
+
+Specifications for the providers the Extension injects into web pages. See [DApp connectivity](/extensions/kaleidoswap-extension/dapp-connectivity) for how each is exposed.
+
+<CardGroup cols={2}>
+  <Card title="WebLN" icon="bolt" href="https://www.webln.dev/">
+    The browser provider standard for Lightning, injected at `window.webln`.
+  </Card>
+  <Card title="NIP-07" icon="signature" href="https://github.com/nostr-protocol/nips/blob/master/07.md">
+    In-page Nostr signing, injected at `window.nostr`.
+  </Card>
+  <Card title="NIP-46" icon="tower-broadcast" href="https://github.com/nostr-protocol/nips/blob/master/46.md">
+    Nostr Connect remote signing over relays, via a `bunker://` string.
+  </Card>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    The tool protocol behind the KaleidoSwap [MCP servers](/ai-tools/mcp-servers).
+  </Card>
+</CardGroup>
+
+## Community & Support
+
+<CardGroup cols={2}>
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    Join the community for support and discussion with other beta testers.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>
+
+<Note>
+  When reporting a problem, include your browser and version, the Extension version from **Settings > About**, steps to reproduce, and console logs (right-click the popup, then **Inspect > Console**). See [Troubleshooting](/extensions/kaleidoswap-extension/troubleshooting) first.
+</Note>
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

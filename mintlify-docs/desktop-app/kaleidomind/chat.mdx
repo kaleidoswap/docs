@@ -1,0 +1,35 @@
+---
+title: "Chat with Your Wallet"
+sidebarTitle: "Chat"
+description: "Use KaleidoMind chat in the KaleidoSwap Desktop App to check balances, trade, and buy channels in plain language, with every spend behind a confirmation"
+---
+
+<Warning>
+  KaleidoMind is an experimental preview. Expect rough edges and occasional incorrect responses, and always review the confirmation details before approving a spend.
+</Warning>
+
+Chat is the conversational surface of [KaleidoMind](/ai-tools/kaleido-mind), the on-device assistant bundled with the Desktop App. You ask in plain language; the model reads your wallet and node through tools and drafts the action. Nothing moves until you confirm.
+
+Enable it from **Settings > Capabilities** by choosing **Node + Mind**. See [Brain](/desktop-app/kaleidomind/brain) for what runs behind it.
+
+## What You Can Ask
+
+| Ask | What happens |
+|-----|--------------|
+| **Balances, channels, prices** | The model reads state through its tools and answers directly. No confirmation needed — nothing is being spent |
+| **"Buy 1 USDT"** | Quotes the maker and runs the full atomic swap behind a single confirmation showing the real numbers |
+| **"Buy a channel"** | Orders inbound BTC liquidity, or an RGB asset channel pre-loaded via the LSP, as a one-confirmation flow |
+
+Read-only questions are free to ask. Anything that moves funds stops at a confirmation sheet first.
+
+## Confirmation Before Spend
+
+Every fund-moving action is gated. The confirmation sheet is built from the resolved call — the actual amounts, assets, and destination — not from the model's description of it, so a wrong unit or recipient shows up where you can catch it.
+
+The model cannot bypass this gate. It is part of the tool contract, not a UI courtesy.
+
+## While a Turn Runs
+
+- **Live tool activity** — tool calls render as typed result cards as they happen, so you can see which balances, channels, or quotes were actually read
+- **Reasoning** — optionally expand the model's thinking for a turn
+- **Stop** — cancel at any point; the running on-device inference aborts immediately and the turn ends cleanly

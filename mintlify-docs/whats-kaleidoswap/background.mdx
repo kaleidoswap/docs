@@ -1,59 +1,122 @@
 ---
-title: "How KaleidoSwap Works: Bitcoin, Lightning & RGB"
+title: "How KaleidoSwap Works: Bitcoin, Lightning & L2s"
 sidebarTitle: "How It Works"
-description: "The technology behind KaleidoSwap — Bitcoin, the Lightning Network, and the RGB protocol for issuing and trading assets with client-side validation"
+description: "The technology behind KaleidoSwap, with Bitcoin as settlement, Lightning as the interoperability bus, and hash-locked contracts that make cross-layer trades atomic."
 ---
 
-KaleidoSwap builds on three foundational technologies to enable fast, private, and scalable asset trading on Bitcoin.
+Bitcoin is no longer one layer. Assets now live on Lightning channels, on statechains, in virtual UTXOs, on a federated sidechain, and on client-validated overlays anchored to Bitcoin itself. Each of those layers has its own state model, and none of them can read another's balance sheet.
 
-## Bitcoin Network
+What almost all of them *can* express is a **hash-locked contract**: pay out only to whoever reveals the preimage of a hash, or refund after a deadline. That single shared primitive is what KaleidoSwap builds on. One preimage, used on both legs of a trade, makes an exchange across two incompatible layers either complete on both sides or complete on neither.
 
-Bitcoin provides the base settlement layer. All KaleidoSwap wallets are Bitcoin wallets at their core — they hold UTXOs, sign transactions, and broadcast to the Bitcoin network. On-chain transactions are used for:
+## Bitcoin: the settlement layer
 
-- **Wallet funding** — Depositing BTC to your KaleidoSwap wallet
-- **Channel opens/closes** — Anchoring Lightning channels to the blockchain
-- **RGB commitments** — Embedding asset state transitions into Bitcoin transactions
+Every KaleidoSwap wallet is a Bitcoin wallet at its core: it holds UTXOs, signs transactions, and broadcasts to the Bitcoin network. On-chain transactions are used for:
+
+- **Wallet funding** — depositing BTC before moving to a faster layer
+- **Channel opens and closes** — anchoring Lightning channels to the chain
+- **RGB commitments** — embedding asset state transitions into Bitcoin transactions
+- **Peg-ins and exits** — entering and leaving Liquid, Arkade, or Spark
+
+Bitcoin is where value ultimately settles and where every layer above inherits its security.
+
+## Lightning: the interoperability bus
+
+The Lightning Network is a second-layer protocol that moves value through bidirectional payment channels instead of blocks. In KaleidoSwap it plays two distinct roles.
+
+The first is **fast, cheap payments**. Swaps settle in seconds rather than confirmations, and fees are measured in satoshis.
+
+The second is the reason the whole stack works: Lightning is the **interoperability bus**. Most Bitcoin layers can be reached over Lightning, either natively or through a provider, and Lightning's HTLCs are hash-locked. That makes it the common medium a cross-layer trade can be routed through, even when the two layers involved know nothing about each other.
+
+## The layers KaleidoSwap connects
+
+| Layer | What it is | What you hold | Status |
+|-------|------------|---------------|--------|
+| **Bitcoin L1** | The base chain | UTXOs | Live |
+| **Lightning** | Payment channels on Bitcoin | Channel balances in BTC | Live |
+| **RGB on Lightning** | Client-validated assets inside Lightning channels | RGB assets (USDT, XAUT) plus BTC in the same channel | Live on test networks; mainnet-proven |
+| **RGB on Bitcoin L1** | The same assets anchored directly to UTXOs, no channels | RGB assets on UTXOs | Live, node-less |
+| **Spark** | A statechain-based layer for fast, low-fee transfers | Spark tokens, USDB | Live |
+| **Arkade** | Off-chain Bitcoin transactions using virtual UTXOs (VTXOs) | VTXO balances | Live |
+| **Liquid** | A federated Bitcoin sidechain | Liquid assets, including USDt | Live |
+| **Taproot Assets** | A Lightning-compatible token layer | — | In progress |
+| **Fedimint** | Federated e-cash | — | Planned |
+| **Cashu** | Chaumian e-cash mint | Ecash tokens | Planned |
 
 <Note>
-KaleidoSwap currently supports **Signet (MutinyNet)** for testing. Bitcoin mainnet support is coming soon.
+  Support differs per client. The Desktop App drives a full RGB Lightning Node, while the Browser Extension covers Spark, Arkade, Liquid, and node-less RGB-L1 from a single seed. See [Architecture](/whats-kaleidoswap/architecture#client-architecture) for the per-client breakdown.
 </Note>
 
-## Lightning Network
+## Asset overlays: RGB
 
-The Lightning Network is a second-layer protocol that enables instant, low-cost payments through a network of payment channels. KaleidoSwap uses Lightning for:
+RGB is a client-validated smart contract system built on top of Bitcoin (see the [official RGB protocol documentation](https://docs.rgb.info) for the full specification). Unlike account-based smart contract platforms, RGB keeps contract logic and state **off-chain**, using Bitcoin transactions only as cryptographic commitments. That gives it:
 
-- **Instant settlement** — Swaps settle in milliseconds, not blocks
-- **Low fees** — Transaction costs measured in satoshis
-- **RGB asset transfers** — RGB assets can ride on Lightning channels, enabling off-chain asset swaps
-- **Channel-based liquidity** — Users open channels to allocate capacity for trading
+- **Privacy** — asset balances and transfers are not visible on the blockchain
+- **Scalability** — no chain bloat from token transfers
+- **Bitcoin security** — asset state is anchored to Bitcoin's proof-of-work
+- **Programmability** — all four RGB interfaces supported: NIA fungible tokens (USDT, XAUT), IFA, UDA, and CFA
 
-Payment channels are opened between your node and a peer (or an LSP). Once open, you can send and receive BTC and RGB assets through the channel without waiting for on-chain confirmations.
+RGB is an *overlay*, not a layer of its own: the same asset can sit on a Bitcoin UTXO or ride inside a Lightning channel. Riding inside a channel is what makes RGB assets tradable at Lightning speed, and what powered [the first ever RGB asset swap on Lightning mainnet](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd), executed by KaleidoSwap in 2025.
 
-## RGB Protocol
+## How a swap works
 
-RGB is a client-validated smart contract system built on top of Bitcoin (see the [official RGB protocol documentation](https://docs.rgb.info) for the full specification). Unlike Ethereum-style smart contracts, RGB keeps contract logic and state **off-chain** while using Bitcoin transactions as cryptographic commitments. This means:
+KaleidoSwap uses a **Request for Quote (RFQ)** model rather than an automated market maker. You ask for a price, a market maker answers, and you decide whether to take it.
 
-- **Privacy** — Asset balances and transfers are not visible on the blockchain
-- **Scalability** — No blockchain bloat from token transfers
-- **Bitcoin security** — Asset state is anchored to Bitcoin's proof-of-work
-- **Programmability** — RGB NIA fungible tokens (like USDT, XAUT) and future asset interfaces
+<Steps>
+  <Step title="Request a quote">
+    Your client streams live prices for a pair from the maker. Each quote carries an `rfq_id` and an expiry.
+  </Step>
 
-In KaleidoSwap, RGB assets are issued, transferred, and swapped using this protocol — both on-chain and over Lightning channels. This stack powered [the first ever RGB asset swap on Lightning mainnet](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd), executed by KaleidoSwap in 2025.
+  <Step title="Lock the rate">
+    Taking a quote locks the rate and returns the swap parameters, including a `payment_hash` — the hash both legs will be locked to.
+  </Step>
 
-## Lightning Service Providers (LSPs)
+  <Step title="Lock both legs">
+    Each side commits its asset to a contract that pays out only against the preimage of that hash, and refunds automatically after a deadline. Nothing has moved irreversibly yet.
+  </Step>
 
-LSPs are nodes that provide channel liquidity and routing services. Instead of manually finding peers and managing channel capacity, you can connect to an LSP that:
+  <Step title="Reveal">
+    The preimage is revealed to claim the first leg. Because both legs are locked to the same hash, revealing it also unlocks the second.
+  </Step>
 
-- **Opens channels on demand** — Request inbound liquidity when you need it
-- **Routes payments** — Ensures your transactions reach their destination
-- **Supports LSPS1** — KaleidoSwap implements the Lightning Service Provider Specification for standardized channel ordering
-- **Facilitates Swaps** — Enables atomic swaps between Bitcoin and RGB assets
+  <Step title="Settle or refund">
+    Both sides receive what they traded for. If either side stalls, the timelocks expire and both sides get their own funds back — never a partial trade.
+  </Step>
+</Steps>
 
-<CardGroup cols={2}>
-  <Card title="Architecture Deep Dive" icon="sitemap" href="/whats-kaleidoswap/architecture">
-    See how these technologies fit together in KaleidoSwap's architecture
-  </Card>
-  <Card title="Glossary" icon="book" href="/whats-kaleidoswap/glossary">
-    Look up terms related to Bitcoin, Lightning, RGB, and trading
-  </Card>
-</CardGroup>
+For the wire-level detail — endpoints, the `swapstring`, and the sequence diagram — see [Atomic Swap Protocol](/api-reference/swap-protocol).
+
+## Where atomicity holds
+
+Atomicity is a property of the layers a trade touches. Two things decide it, and they are independent: whether the layer has a native hashlock, and whose guarantee enforces it.
+
+- **Enforced by Bitcoin consensus.** Bitcoin L1, Lightning, and RGB on Lightning. The hashlock needs no one's cooperation, so neither side can walk away with both assets.
+- **Enforced within a layer's own trust model.** Spark exposes HTLCs, Arkade builds VHTLCs from Tapscript, and Liquid inherits Bitcoin Script. The hashlock is real, but it carries that layer's assumptions (an operator set, a server signature, a federation) so the leg is atomic within the layer, not below it.
+- **Provider-mediated.** No native hashlock at all: a service bridges the leg, you trust it for the duration, and the trade is not atomic end to end.
+
+KaleidoSwap's shipped atomic path is BTC ↔ RGB assets over Lightning. Other routes run through supported venues and are labelled as such in the apps. Extending native hash-locked settlement to more layers is active work; on Spark, Arkade, and Liquid the constraint is our implementation, not a missing primitive.
+
+## Liquidity: LSPs and market makers
+
+A hash-locked trade still needs someone on the other side, with the right asset, in the right place.
+
+**Lightning Service Providers (LSPs)** solve the placement problem. Rather than hunting for peers and sizing channels yourself, you connect to an LSP that:
+
+- **Opens channels on demand** — order inbound liquidity when you need it, optionally pre-loaded with an RGB asset
+- **Routes payments** — allowing your transactions to reach their destination
+- **Implements LSPS1** — the standard channel-ordering interface, which KaleidoSwap extends to RGB assets
+- **Facilitates swaps** — acting as the counterparty that locks the other leg
+
+**Market makers** solve the pricing problem: they publish quotes into the RFQ engine and earn the spread plus routing fees. Today the KaleidoSwap LSP bootstraps this liquidity itself; external makers compete on the same interface from 2027, which is what turns a single counterparty into a market.
+
+## Networks
+
+| Network | Purpose | Status |
+|---------|---------|--------|
+| **Regtest** | Local development against a private chain | Available |
+| **Signet** | Shared test network, no real value at risk | Available |
+| **Mutinynet** | A Signet variant with fast, predictable block times for Lightning testing | Available |
+| **Mainnet** | Real funds | Experimental in the Browser Extension |
+
+<Warning>
+  Mainnet support in the Extension is experimental and the SDK targets test networks. Swaps can fail or get stuck. Use test networks unless you accept the risk of losing funds.
+</Warning>

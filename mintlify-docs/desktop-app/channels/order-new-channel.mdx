@@ -1,6 +1,6 @@
 ---
 title: Order New Channel
-description: "Order an inbound Lightning channel from an LSP in the KaleidoSwap Desktop App — channel size, RGB asset options, payment, and delivery"
+description: "Order an inbound Lightning channel from an LSP in the KaleidoSwap Desktop App, covering channel size, Bitcoin L2 asset options, payment, and delivery"
 ---
 
 This guide explains how to purchase a new Lightning Network channel with outbound liquidity from a KaleidoSwap LSP (Lightning Service Provider). This is particularly useful for users who want to quickly start trading new assets on the platform.
@@ -19,7 +19,7 @@ First, after going to the **"Buy a New Channel"** functionality from the left ve
 1. Enter the LSP URL or select the default KaleidoSwap LSP.
 2. The LSP connection string will be displayed.
 3. Confirm the connection to proceed.
-![Connecting to a Lightning Service Provider in the Desktop App](/images/desktop-app/12_connect_lsp.png)
+![Connecting to a Lightning Service Provider in the Desktop App](/assets/images/desktop-app/12_connect_lsp.png)
 
 
 ## Step 2: Configure Channel Order
@@ -30,15 +30,15 @@ First, after going to the **"Buy a New Channel"** functionality from the left ve
 - 1 week (1,008 blocks)
 - 1 month (4,320 blocks)
 - 6 months (25,920 blocks)
-![LSP channel order form with capacity options](/images/desktop-app/13_channel_order.png)
+![LSP channel order form with capacity options](/assets/images/desktop-app/13_channel_order.png)
 
 4. [Optional] Request an RGB Asset in your channel by enabling the "Add Asset" option and selecting the asset you want. You will then need to specify the amount of that asset you want the LSP to commit. Note that currently RGB assets are provided on the LSP side only.
 
-![Channel order form with RGB asset selection](/images/desktop-app/14_channel_order_assets.png)
+![Channel order form with RGB asset selection](/assets/images/desktop-app/14_channel_order_assets.png)
 
 ## Step 3: Make Payment
 
-In order to proceed with the channel opening, you will need to execute the payment. You will pay for:
+To proceed with the channel opening, you will need to execute the payment. You will pay for:
 - Your outbound liquidity, i.e. the funds that you will have immediately available to spend.
 - The LSP service fee, which is different for each provider. Below you can find the fee structure of the default KaleidoSwap LSP.
 
@@ -54,7 +54,7 @@ When using KaleidoSwap LSP:
   - Total fee: 53,200 sats.
   ```
 
-You can choose to pay for your channel onchain or via the Lightning Network, either using the funds already present in your KaleidoSwap wallet or from a different one.
+You can choose to pay for your channel on-chain or via the Lightning Network, either using the funds already present in your KaleidoSwap wallet or from a different one.
 
 ### Lightning Payment
 - Scan the QR code or copy the Lightning invoice.
@@ -68,7 +68,7 @@ You can choose to pay for your channel onchain or via the Lightning Network, eit
 - Send Bitcoin to the provided address either using an external wallet or the KaleidoSwap wallet funds (if available) by selecting the "Pay with wallet funds" checkbox.
 - Include the exact amount shown.
 - Wait for blockchain confirmations.
-![Channel order payment screen with Lightning invoice](/images/desktop-app/15_pay_the_channel.png)
+![Channel order payment screen with Lightning invoice](/assets/images/desktop-app/15_pay_the_channel.png)
 
 ## Step 4: Channel Opening
 
@@ -125,3 +125,9 @@ For assistance:
 ---
 
 *Next: [Asset Swaps](/desktop-app/trading/asset-swaps)*
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

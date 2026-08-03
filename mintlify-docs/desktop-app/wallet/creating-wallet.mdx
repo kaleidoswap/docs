@@ -1,28 +1,28 @@
 ---
 title: Creating a New Wallet
-description: "Create a new wallet in the KaleidoSwap Desktop App — generate your mnemonic, set a password, and back up your keys safely"
+description: "Create a new wallet in the KaleidoSwap Desktop App by generating your mnemonic, setting a password, and backing up your keys safely"
 ---
 
 When you first launch the app, you'll need to choose the kind of node you want to connect your wallet to. You have two options: either to use a remote node or a Local one. The first option requires you to connect to an already running RGB Lightning Node, while the second automatically initialize one on the device you are using and stores data on it. In this guide we will show the flow for the local node option since it is the easiest way to start testing the KaleidoSwap app.
 
-![KaleidoSwap Desktop App start screen with node connection options](/images/desktop-app/0_home.png)
+![KaleidoSwap Desktop App start screen with node connection options](/assets/images/desktop-app/0_home.png)
 
 ## Create New Wallet
 
 To start the creation process, you first need to select "Create New Wallet" option:
 
-![Create New Wallet option in the KaleidoSwap Desktop App](/images/desktop-app/1_create_new_wallet.png)
+![Create New Wallet option in the KaleidoSwap Desktop App](/assets/images/desktop-app/1_create_new_wallet.png)
 
 Then, you will need proceed with the following steps:
 
 1. **Assign a name** to your new account and **select the network** you want to use. The network selector offers Regtest (and its Local, Docker and Bitfinex variants), Signet, Mutinynet and Testnet as testing environments. Mainnet is not yet selectable.
-![Wallet creation step 1: account name and network selection](/images/desktop-app/2_creation_step1.png)
+![Wallet creation step 1: account name and network selection](/assets/images/desktop-app/2_creation_step1.png)
 2. **Set a Secure Password**: Enter a strong password to protect your wallet and then click on "Initialize Node". This will trigger the initialization of your node on your machine. 
-![Wallet creation step 2: setting a secure password and initializing the node](/images/desktop-app/3_creation_step2.png)
+![Wallet creation step 2: setting a secure password and initializing the node](/assets/images/desktop-app/3_creation_step2.png)
 3. **Backup**: After the node has been initialized, write down the mnemonic phrase provided and store it securely.
-![Wallet creation step 3: mnemonic backup phrase to write down](/images/desktop-app/4_creation_step3.png)
+![Wallet creation step 3: mnemonic backup phrase to write down](/assets/images/desktop-app/4_creation_step3.png)
 4. **Verify** recovery phrase: you will be asked to enter back your recovery seed for security purposes.
-![Wallet creation step 4: recovery phrase verification](/images/desktop-app/5_creation_step4.png)
+![Wallet creation step 4: recovery phrase verification](/assets/images/desktop-app/5_creation_step4.png)
 
 After that, some moments will be required to unlock your new local node and you will then land to the home page of KaleidoSwap, ready to start operating with it!
 
@@ -38,4 +38,10 @@ If instead of creating a new account you need to select an existing one, you can
 
 Please note that unlocking your node could take a while due to a current limitation experienced in the RGB Lightning Network code.
 
-![KaleidoSwap home screen with saved accounts in the left menu](/images/desktop-app/6_home_with_account.png)
+![KaleidoSwap home screen with saved accounts in the left menu](/assets/images/desktop-app/6_home_with_account.png)
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

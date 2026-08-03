@@ -1,7 +1,7 @@
 ---
-title: "Extension Wallet Features"
-sidebarTitle: "Wallet Features"
-description: "Manage accounts, assets, deposits, withdrawals, and activity in the KaleidoSwap Extension — a full Bitcoin wallet in your browser"
+title: "Wallet"
+sidebarTitle: "Wallet"
+description: "Manage accounts, assets, deposits, withdrawals, and activity in the KaleidoSwap Extension, a full Bitcoin wallet that runs in your browser"
 ---
 
 ## Accounts
@@ -18,7 +18,7 @@ The KaleidoSwap Extension derives multiple protocol accounts from one recovery p
 
 ## Asset Management
 
-<img src="/images/kaleidoswap-extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Viewing Balances
 
@@ -49,6 +49,8 @@ Tap any asset to view details:
 | **Account** | Protocol account that owns the asset |
 | **Spendable Balance** | Amount available for the selected route |
 | **Network Badges** | Where the asset can be used, such as Spark, Arkade, Liquid, RGB-L1, or RGB-LN |
+
+<img src="/assets/images/extension/19-asset-detail.png" alt="Asset detail view for an RGB asset showing asset ID, ticker, precision, account, protocol, layer, and on-chain versus Lightning balances" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## Sending Payments
 
@@ -91,11 +93,13 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 </Steps>
 
+<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, amount in sats, fee rate options, and the suggested route across Spark and Arkade" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Receiving Payments
 
 Generate invoices and addresses to receive supported assets across Spark, Arkade, Liquid, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
 
-<img src="/images/kaleidoswap-extension/09-deposit.png" alt="KaleidoSwap deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Receive Tabs
 
@@ -132,6 +136,8 @@ Available receive methods depend on the selected asset and connected account:
   </Step>
 </Steps>
 
+<img src="/assets/images/extension/15-receive-generated.png" alt="Receive BTC screen with a QR code, destination account tabs for RLN, Spark, Arkade, and Liquid, and the generated Arkade and on-chain boarding addresses" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Deposit and Withdraw
 
 ### Deposit
@@ -152,6 +158,8 @@ Withdraw sends from the selected account to a detected destination:
 3. Enter the amount
 4. Review the suggested route and confirm
 
+<img src="/assets/images/extension/16-withdraw-form.png" alt="Withdraw screen listing every destination format it accepts: Lightning, Bitcoin, Spark, Liquid, Arkade, RGB, and cross-chain USDC or USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 For withdrawals from Spark to external chains (EVM networks, Solana, and more), see [Bridge](/extensions/kaleidoswap-extension/bridge).
 
 ## Activity History
@@ -164,6 +172,8 @@ View all your transactions in the **Activity** tab:
 - Each entry shows: type, amount, status, carrier network, and timestamp
 - Filter by transaction type or status
 
+<img src="/assets/images/extension/17-activity-list.png" alt="Activity tab listing received transactions with amount and timestamp, filtered by all, on-chain, or Lightning" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ### Transaction Details
 
 Click any transaction to see:
@@ -173,19 +183,13 @@ Click any transaction to see:
 - Carrier and status
 - Timestamp
 
-## KaleidoSwap Handle
-
-You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from Settings. The handle checks availability live as you type, links to your wallet for receiving Lightning payments, and is automatically re-linked when you restore the wallet.
-
-## Full-Tab View
-
-The wallet normally opens in the browser side panel (or a toolbar popup). For a larger workspace, use **Settings > Open in Full Tab** to open the wallet as a full browser tab.
+<img src="/assets/images/extension/18-transaction-detail.png" alt="Expanded transaction detail showing payment hash, date, carrier network, and completed status" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## Settings
 
 Access settings from the gear icon or bottom navigation.
 
-<img src="/images/kaleidoswap-extension/11-settings.png" alt="KaleidoSwap settings" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/11-settings.png" alt="KaleidoSwap settings" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Accounts
 
@@ -194,6 +198,14 @@ Access settings from the gear icon or bottom navigation.
 - **Liquid** - Network selection and the Esplora/waterfalls sync endpoint (a fast default is provided; you can supply your own)
 - **RGB-L1** - Network selection plus the Esplora indexer and RGB proxy endpoints for the node-less account
 - **RGB & Lightning** - Optional RLN account (direct URL or NWC), available through experimental settings
+
+<img src="/assets/images/extension/22-settings-accounts.png" alt="Settings Accounts section with Spark, Arkade, RGB, and Liquid each showing a connected status" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### KaleidoSwap Handle
+
+You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from Settings. The handle checks availability live as you type, links to your wallet for receiving Lightning payments, and is automatically re-linked when you restore the wallet.
+
+<img src="/assets/images/extension/20-handle-claim.png" alt="Claim your address screen with a name field, the kaleidoswap.me suffix, and a live availability check" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Nostr
 
@@ -206,6 +218,14 @@ Access settings from the gear icon or bottom navigation.
 Never share your Nostr private key (nsec). Anyone with this key can sign events and act as you.
 </Warning>
 
+### Security
+
+- **Change Password** - Update your wallet password
+- **Passkey Login** - Register or remove a passkey (WebAuthn) for unlocking the wallet
+- **Backup Wallet** - Reveal the recovery phrase after password confirmation, publish an encrypted Nostr settings backup, and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
+
+<img src="/assets/images/extension/23-backup-wallet.png" alt="Backup Wallet screen requiring the password before decrypting the recovery phrase, with a warning and a summary of what the backup covers" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ### Preferences
 
 | Setting | Options |
@@ -216,13 +236,19 @@ Never share your Nostr private key (nsec). Anyone with this key can sign events 
 | **Theme** | Dark mode |
 | **Auto-lock Timeout** | 1 minute to 1 hour, or never |
 
-### Security
+### Full-Tab View
 
-- **Change Password** - Update your wallet password
-- **Passkey Login** - Register or remove a passkey (WebAuthn) for unlocking the wallet
-- **Backup Wallet** - Reveal the recovery phrase after password confirmation, publish an encrypted Nostr settings backup, and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
+The wallet normally opens in the browser side panel (or a toolbar popup). For a larger workspace, use **Settings > Open in Full Tab** to open the wallet as a full browser tab.
+
+<img src="/assets/images/extension/21-full-tab-view.png" alt="The wallet running as a full browser tab instead of the side panel, showing the unlock screen at full width" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### About
 
 - Extension version and build information
 - Links to documentation, GitHub, and support
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

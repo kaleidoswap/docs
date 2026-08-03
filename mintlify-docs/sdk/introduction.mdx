@@ -1,10 +1,10 @@
 ---
-title: "RGB Lightning SDK"
+title: "Multi-Protocol Bitcoin Swap SDK"
 sidebarTitle: "Overview"
-description: "Build Bitcoin wallets and trading apps with the RGB Lightning SDK — TypeScript and Python clients for non-custodial atomic swaps on Lightning"
+description: "Build Bitcoin wallets and trading apps with the KaleidoSDK, which ships TypeScript and Python clients for non-custodial atomic swaps across Bitcoin Layers"
 ---
 
-The RGB Lightning SDK (`kaleido-sdk`) lets wallet builders integrate non-custodial atomic swaps across Bitcoin, Lightning, and RGB. It powers the [KaleidoSwap non-custodial DEX](https://kaleidoswap.com) and ships in TypeScript and Python.
+The KaleidoSDK (`kaleido-sdk`) lets wallet builders integrate non-custodial atomic swaps across Bitcoin, Lightning, and RGB. It powers the [KaleidoSwap non-custodial DEX](https://kaleidoswap.com) and ships in TypeScript and Python.
 
 ## Official SDKs
 
@@ -14,30 +14,17 @@ KaleidoSwap provides official SDKs for both TypeScript and Python. Both are stan
 
 Both SDKs share the same API design and are built independently:
 
-![KaleidoSDK Architecture](/assets/images/sdk-architecture.png)
+![KaleidoSDK Architecture](/assets/images/overview/sdk-architecture.png)
 
-Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, orders, swaps) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
+Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, atomic swaps, LSPS1 channel orders) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
 
-### Key Benefits
+## Two API Surfaces
 
-- **Type Safety**: Auto-generated types from OpenAPI specs in both languages
-- **Consistent API**: Identical structure across TypeScript and Python
-- **Sub-client Design**: Organized access via `client.maker` and `client.rln`
-- **WebSocket Support**: Real-time quote streaming with automatic reconnection
-
-## What is KaleidoSwap?
-
-KaleidoSwap is a decentralized exchange protocol for Bitcoin and RGB assets. It enables trading of digital assets through order-based swaps on the Lightning Network and on-chain Bitcoin transactions.
-
-### SDK Dual Purpose
-
-Our SDK serves two primary functions:
-
-**Maker API Integration** (`client.maker`)
+**Maker API** (`client.maker`)
 
 Connect to KaleidoSwap's maker APIs for:
 - Getting quotes for asset pairs
-- Creating and managing swap orders
+- Initializing and executing HTLC atomic swaps
 - Streaming real-time quotes via WebSocket
 - LSPS1 channel ordering
 
@@ -49,32 +36,17 @@ Direct interaction with RGB Lightning Nodes for:
 - Invoice creation and payment
 - Node-to-node swap coordination
 
+For what KaleidoSwap is as a protocol, see [What's KaleidoSwap](/whats-kaleidoswap/introduction).
+
 ## Key Features
 
 - **Sub-client Architecture**: Organized API access via `client.maker` and `client.rln`
-- **Type Safety**: Full TypeScript types and Python Pydantic models
+- **Type Safety**: Auto-generated types from OpenAPI specs — full TypeScript types and Python Pydantic models
+- **Consistent API**: Identical structure across TypeScript and Python
 - **WebSocket Support**: Real-time quote streaming with automatic reconnection
 - **Error Handling**: Comprehensive exception hierarchy across both SDKs
-- **Dual API Support**: Seamlessly work with both Maker APIs and RLN node operations
 - **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
-- **Order-Based Swaps**: Create swap orders, pay deposits, and track execution
-
-## Get Started
-
-<CardGroup cols={2}>
-  <Card title="Getting Started" icon="rocket" href="/sdk/getting-started">
-    Install the SDK, configure your client, and make your first API call
-  </Card>
-  <Card title="Examples" icon="file-code" href="/sdk/examples">
-    End-to-end code for market data, swaps, WebSocket streaming, and node ops
-  </Card>
-  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
-    Full method reference for MakerClient and RlnClient
-  </Card>
-  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
-    Understand atomic vs. order-based swap models before integrating
-  </Card>
-</CardGroup>
+- **Atomic Swaps**: HTLC-based swaps with no trust in the maker
 
 ## Support
 

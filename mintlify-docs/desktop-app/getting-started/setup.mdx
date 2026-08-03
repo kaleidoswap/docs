@@ -1,0 +1,75 @@
+---
+title: "KaleidoSwap Desktop App: Getting Started"
+sidebarTitle: "Getting Started"
+description: "Set up the KaleidoSwap Desktop App: what you need before you start, and the order to install, connect a node, create a wallet, and place a first swap"
+---
+
+This is the path from a fresh install to a first swap. Each step links to the guide that covers it in full, so nothing here repeats what those guides already explain.
+
+## Before You Start
+
+To trade on the Desktop App you will need:
+
+| Requirement | Details |
+|-------------|---------|
+| **Bitcoin** | At least ~1M sats (0.01 BTC) recommended to fund a channel and cover fees |
+| **LSP connection** | A Lightning Service Provider to open a channel through (the default LSP is pre-configured) |
+| **RGB assets** | Allocated inside your channel when you open it, or obtained via swap |
+
+If you just want to explore the app without trading, you can install it and create a wallet without any funds first.
+
+<Note>
+  The network is fixed when an account is created and cannot be changed afterwards, so create a separate account per network. Regtest, Signet, Mutinynet, and Testnet are selectable today; Mainnet is not yet.
+</Note>
+
+## Setup Path
+
+<Steps>
+  <Step title="Install the app">
+    Download a signed binary for your platform, or build from source. Verify the GPG signature before running it.
+
+    [Installation](/desktop-app/getting-started/installation) · [Verify Binary Downloads](/desktop-app/getting-started/verify-binaries)
+  </Step>
+
+  <Step title="Decide where your node runs">
+    The app needs an RGB Lightning Node. Run one locally for full control, or host it on a server and connect over the network. You can make this choice now or let account creation start a local node for you.
+
+    [Node Hosting](/desktop-app/getting-started/node-hosting)
+  </Step>
+
+  <Step title="Create an account">
+    Name the account, pick its network, and generate a wallet. Save the recovery phrase offline — it is the only way back into the funds.
+
+    [Creating a New Wallet](/desktop-app/wallet/creating-wallet) · [Initializing the Mnemonic](/desktop-app/wallet/initializing-mnemonic)
+  </Step>
+
+  <Step title="Unlock and let the node sync">
+    Unlocking starts the node and syncs it to the chain. The first sync is the slowest one.
+
+    [Unlocking Your Wallet](/desktop-app/wallet/unlocking-wallet)
+  </Step>
+
+  <Step title="Fund the wallet">
+    Deposit BTC on-chain. To receive RGB assets you also need a colored UTXO, which the app can create for you during the deposit.
+
+    [Deposits](/desktop-app/wallet/deposits)
+  </Step>
+
+  <Step title="Get a channel">
+    Trading happens over Lightning, so you need a channel with liquidity. Open one with a peer directly, or buy one from an LSP with RGB assets already allocated inside it.
+
+    [Opening a Channel](/desktop-app/channels/opening-channel) · [Order a New Channel](/desktop-app/channels/order-new-channel)
+  </Step>
+
+  <Step title="Make your first swap">
+    Request a quote for a pair and settle it as an atomic swap. Either both legs complete, or neither does.
+
+    [Asset Swaps](/desktop-app/trading/asset-swaps)
+  </Step>
+</Steps>
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

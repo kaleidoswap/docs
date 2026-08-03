@@ -1,7 +1,7 @@
 ---
 title: "SDK Error Handling"
 sidebarTitle: "Error Handling"
-description: "Handle Kaleido SDK errors with the exception hierarchy — error types, retry patterns, and debugging tips for reliable integrations"
+description: "Handle KaleidoSDK errors with the exception hierarchy, covering error types, retry patterns, and debugging tips for reliable integrations"
 ---
 
 ## Error Hierarchy
@@ -279,7 +279,7 @@ from kaleido_sdk import (
     PairQuoteRequest,
     SwapRequest,
 )
-import time
+import asyncio
 
 try:
     quote = await client.maker.get_quote(PairQuoteRequest(...))
@@ -292,7 +292,7 @@ except InsufficientBalanceError as e:
 except ValidationError as e:
     print(f"Invalid request: {e}")
 except RateLimitError as e:
-    time.sleep(e.retry_after or 5)
+    await asyncio.sleep(e.retry_after or 5)
 except NotFoundError:
     print("Resource not found")
 except TimeoutError:
@@ -334,20 +334,21 @@ const pairs = await withRetry(() => client.maker.listPairs());
 ```
 
 ```python Python
-import time
+import asyncio
 
-def with_retry(fn, max_retries=3):
+async def with_retry(fn, max_retries=3):
     for attempt in range(max_retries):
         try:
-            return fn()
+            return await fn()
         except KaleidoError as e:
             if e.is_retryable() and attempt < max_retries - 1:
                 delay = 2 ** attempt
-                time.sleep(delay)
+                await asyncio.sleep(delay)
                 continue
             raise
+    raise RuntimeError("Max retries exceeded")
 
-pairs = with_retry(lambda: client.maker.list_pairs())
+pairs = await with_retry(lambda: client.maker.list_pairs())
 ```
 </CodeGroup>
 
@@ -355,12 +356,14 @@ pairs = with_retry(lambda: client.maker.list_pairs())
 
 The SDK automatically maps HTTP errors to typed exceptions using `mapHttpError` / `map_http_error`:
 
-| HTTP Status | Error Class |
-|------------|-------------|
-| 400, 422 | `ValidationError` |
-| 404 | `NotFoundError` |
-| 408, 504 | `TimeoutError` |
-| 429 | `RateLimitError` |
-| 500, 502, 503 | `APIError` |
-| Other 4xx | `APIError` |
-| Network failure | `NetworkError` |
+| HTTP Status | Error Class | Retryable |
+|------------|-------------|-----------|
+| 400, 422 | `ValidationError` | No — the request itself is wrong |
+| 404 | `NotFoundError` | No |
+| 408, 504 | `TimeoutError` | Yes, always |
+| 429 | `RateLimitError` | Yes, after `retryAfter` / `retry_after` |
+| 500, 502, 503 | `APIError` | Yes — a server-side fault may clear |
+| Other 4xx | `APIError` | No |
+| Network failure | `NetworkError` | Yes, always |
+
+Rather than hardcoding this table in your own retry logic, call `isRetryable()` / `is_retryable()` — it encodes exactly these rules and stays correct as the mapping evolves.

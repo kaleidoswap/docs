@@ -1,13 +1,11 @@
 ---
 title: 'Maker API Compatibility'
-description: "Which Kaleido SDK versions work with which Maker API versions — compatibility matrix and upgrade notes"
+description: "How KaleidoSDK versions track the Maker API, with the endpoint groups the SDK exposes through client.maker and how to reach them"
 ---
 
 ## Compatibility
 
-**SDK v0.1.15** is compatible with the **latest Maker API** version.
-
-The SDK automatically supports the most recent Maker API release. Always keep your SDK and Maker API updated to ensure full compatibility and access to the latest features.
+The SDK tracks the **latest Maker API** release: there is no version pairing to manage on this side. Keep both up to date to stay on supported endpoints and get new features as they ship.
 
 <Note>
 To check the current Maker API version and updates, refer to the [Maker API changelog](https://github.com/kaleidoswap/maker-api/releases) or your API documentation.
@@ -21,8 +19,11 @@ The Maker API provides the following endpoint groups:
 |---|---|---|
 | **Market** | `/api/v1/market/` | Asset listings, trading pairs, quote requests, fee estimates |
 | **Swaps (Atomic)** | `/api/v1/swaps/` | HTLC-based atomic swap initialization, execution, and status tracking |
-| **Swap Orders** | `/api/v1/swap-orders/` | Order-based swap management for web and light clients |
 | **LSPS1** | `/api/v1/lsps1/` | Channel ordering, liquidity provisioning, and Lightning channel setup |
+
+<Note>
+The order-based swap endpoints (`/api/v1/swaps/orders/*`) were retired, and the matching SDK methods were removed in **0.1.13**. Use the atomic swap flow instead — see [How to Swap](/sdk/how-to-swap).
+</Note>
 
 ## Using the Maker API
 

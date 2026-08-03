@@ -1,0 +1,218 @@
+---
+title: "AI Tools Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Fix common KaleidoSwap AI tool problems, covering MCP connection failures, missing tools, node errors, seed configuration, and failed atomic swaps"
+---
+
+## MCP Connection Issues
+
+<AccordionGroup>
+  <Accordion title="The server does not appear in my MCP client" icon="plug-circle-xmark">
+    **Symptoms**: The tools are absent, or the host lists the server as failed.
+
+    **Solutions**:
+    1. **Build first.** The focused servers run from `dist/`, which does not exist until `npm run build` has succeeded.
+    2. **Use an absolute path.** `args` must point at the full path to `dist/index.js`, not a relative one. The host does not run from your project directory.
+    3. **Restart the host.** MCP hosts read their config at startup, so a running client will not pick up a new server.
+    4. **Check the JSON.** A trailing comma or an unquoted key silently invalidates the whole config in most hosts.
+  </Accordion>
+
+  <Accordion title="Server starts then exits immediately" icon="circle-xmark">
+    **Symptoms**: The host reports the process died on launch.
+
+    **Cause**: A required environment variable is missing. `WDK_SEED` is the only mandatory one, and the process refuses to start without it.
+
+    **Solutions**:
+    1. Confirm `WDK_SEED` is set in the `env` block of the host config, not in your shell (the host does not inherit your shell environment).
+    2. Verify the mnemonic is a valid BIP-39 phrase with words separated by single spaces.
+    3. Run the server by hand with the same env vars to see the error directly:
+       ```bash
+       WDK_SEED="your twelve word seed phrase" node dist/index.js
+       ```
+  </Accordion>
+
+  <Accordion title="401 Unauthorized in HTTP mode" icon="ban">
+    **Symptoms**: Streamable HTTP requests are rejected.
+
+    **Cause**: `MCP_AUTH_TOKEN` is set on the server, so a bearer token is required on every request.
+
+    **Solutions**:
+    1. Send `Authorization: Bearer <token>` with the exact value of `MCP_AUTH_TOKEN`.
+    2. If you did not intend to require auth, unset `MCP_AUTH_TOKEN` and restart. Only do that on a loopback interface.
+  </Accordion>
+
+  <Accordion title="Some tool prefixes are missing" icon="wrench">
+    **Symptoms**: `spark_*` tools work but `wdk_*` or `kaleidoswap_*` do not, or vice versa.
+
+    **Cause**: You are connected to a focused server rather than the gateway. Each focused server exposes only its own domain.
+
+    **Solutions**:
+    1. Use `kaleido-mcp` to get every prefix over one connection.
+    2. Or add each focused server to the host config separately.
+  </Accordion>
+</AccordionGroup>
+
+## Node and Wallet Errors
+
+<AccordionGroup>
+  <Accordion title="Connection refused on wdk_* tools" icon="link-slash">
+    **Symptoms**: Wallet or channel tools fail while market data tools still work.
+
+    **Cause**: No RGB Lightning Node is reachable at `RLN_NODE_URL`, which defaults to `http://localhost:3001`.
+
+    **Solutions**:
+    1. Start a node. The quickest route is the CLI:
+       ```bash
+       kaleido setup --mode local --create-node --defaults
+       ```
+    2. Verify it answers:
+       ```bash
+       curl http://localhost:3001/nodeinfo
+       ```
+    3. If the node runs elsewhere, set `RLN_NODE_URL` to that address in the host config.
+    4. See [Node Environments](/cli/node-environments) for the Docker-backed setup.
+  </Accordion>
+
+  <Accordion title="The node is running but locked" icon="lock">
+    **Symptoms**: The node responds, but wallet calls fail with an unlock or password error.
+
+    **Cause**: An RGB Lightning Node must be unlocked after start before it will serve wallet operations.
+
+    **Solutions**:
+    1. Unlock through the CLI, or use the `kaleido_node_unlock` tool exposed by `kaleido-mcp`.
+    2. Expect a wait: unlocking syncs the node before it becomes fully accessible.
+  </Accordion>
+
+  <Accordion title="KaleidoCLI not found" icon="terminal">
+    **Symptoms**: KaleidoAgent in `skill` mode, or the `kaleido_node_*` tools, fail to execute.
+
+    **Cause**: The binary is not on `PATH` where the process can see it.
+
+    **Solutions**:
+    1. Confirm it resolves: `kaleido --version`
+    2. Set `KALEIDO_BIN` to the absolute path of the binary in the server or agent config.
+    3. Install it per [CLI Getting Started](/cli/getting-started) if it is missing.
+  </Accordion>
+
+  <Accordion title="Balances read zero when funds exist" icon="wallet">
+    **Symptoms**: Tools return empty balances for a wallet you know is funded.
+
+    **Solutions**:
+    1. **Check the network.** `SPARK_NETWORK` and the node's own network must match where the funds are. A Regtest seed shows nothing on mainnet.
+    2. **Confirm the seed.** A different mnemonic derives a different wallet, not an empty one.
+    3. **Wait for sync.** A node that has just unlocked may not have caught up to the chain tip.
+    4. **Distinguish on-chain from Lightning.** `wdk_get_balances` separates vanilla and colored UTXOs from the Lightning balance, and an asset in a channel is not an on-chain balance.
+  </Accordion>
+</AccordionGroup>
+
+## Swap Failures
+
+<AccordionGroup>
+  <Accordion title="Quote expired before execution" icon="hourglass-end">
+    **Symptoms**: An `rfq_id` is rejected when you try to use it.
+
+    **Cause**: Quotes carry a short expiry, and an LLM turn plus a confirmation prompt can outlast it.
+
+    **Solutions**:
+    1. Re-quote immediately before initiating, rather than reusing an earlier `rfq_id`.
+    2. Reduce the number of steps between quote and execution in your prompt or skill.
+  </Accordion>
+
+  <Accordion title="Atomic swap fails or stalls" icon="arrows-rotate">
+    **Symptoms**: `kaleidoswap_atomic_execute` errors, or the status never leaves pending.
+
+    **Cause**: An atomic swap needs both the DEX tools and the wallet tools, in order, plus channel liquidity on your side.
+
+    **Solutions**:
+    1. Confirm the sequence ran fully: init on the DEX, `wdk_atomic_taker` to whitelist the HTLC on your node, then execute. See the [cross-server sequence](/ai-tools/mcp-servers#atomic-swap-across-servers).
+    2. Check the asset is actually **in a channel**. On-chain balance alone cannot settle a Lightning swap.
+    3. Poll `kaleidoswap_atomic_status` by `payment_hash` for the real state.
+    4. If either side stalls, the timelocks expire and both sides recover their own funds. That is the designed outcome, not a lost swap.
+  </Accordion>
+
+  <Accordion title="Amounts are wrong by orders of magnitude" icon="calculator">
+    **Symptoms**: A swap quotes or executes for far more or less than intended.
+
+    **Cause**: Tools take **raw amounts** in the asset's smallest unit, and assets have different precision. USDT commonly uses 6 decimals while BTC amounts are in satoshis.
+
+    **Solutions**:
+    1. Read `kaleidoswap_get_assets` for each asset's precision before constructing an amount.
+    2. Have the model state the raw amount and the display amount in its confirmation, so a mismatch is visible before you approve.
+  </Accordion>
+</AccordionGroup>
+
+## KaleidoAgent Issues
+
+<AccordionGroup>
+  <Accordion title="The agent decides but never trades" icon="ghost">
+    **Symptoms**: Loops run and report intended trades, but nothing executes.
+
+    **Cause**: `portfolio.dry_run` is `true`. This is the default and is intentional.
+
+    **Solution**: Set it to `false` only once the dry-run decisions have looked correct across several runs.
+  </Accordion>
+
+  <Accordion title="Trading stopped on its own" icon="hand">
+    **Symptoms**: The agent was executing, then stopped submitting swaps.
+
+    **Cause**: A risk limit tripped. Most often `stop_loss_btc_sats`, which halts all trading below its BTC threshold, or `min_btc_reserve_sats`.
+
+    **Solutions**:
+    1. Read `GET /status` for balances and recent runs.
+    2. Compare them against the limits in `agent.config.json`.
+    3. Fund the wallet or adjust the threshold deliberately, rather than removing the guard.
+  </Accordion>
+
+  <Accordion title="Rebalance never triggers" icon="scale-balanced">
+    **Symptoms**: The portfolio is off target but no swap is proposed.
+
+    **Cause**: Drift has not crossed `rebalance_threshold_pct`, which defaults to 5 percent.
+
+    **Solution**: Lower the threshold, or trigger a run by hand with `POST /run` and `{"task_id":"rebalance"}`.
+  </Accordion>
+
+  <Accordion title="Missing API key or wrong provider" icon="key">
+    **Symptoms**: The agent starts but reasoning calls fail.
+
+    **Solutions**:
+    1. Confirm `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` is set in `.env`.
+    2. Confirm `AGENT_PROVIDER` matches the key you actually provided.
+  </Accordion>
+</AccordionGroup>
+
+## Rate Limits and Data
+
+<AccordionGroup>
+  <Accordion title="Price tools return errors under load" icon="gauge-high">
+    **Symptoms**: `l402_get_price` or `l402_get_market_data` fail intermittently.
+
+    **Cause**: The free CoinGecko tier behind the public endpoints is rate limited.
+
+    **Solutions**:
+    1. Avoid calling price tools more than once every 30 seconds.
+    2. Use `l402_get_market_data` to batch several assets into one call instead of looping.
+    3. Set `MPP_GATEWAY_URL` to reach an authenticated MPP server if you need higher throughput.
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [FAQ](/ai-tools/faq) for questions rather than errors. For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Which surface and version (MCP server name, KaleidoAgent commit, or Desktop App version)
+2. The network you are on (Regtest, Signet, or mainnet)
+3. The tool name that failed and the error text
+4. Host and runtime versions (MCP client, Node.js)
+5. Your config with the seed and any keys removed
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

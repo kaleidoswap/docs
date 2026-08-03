@@ -1,7 +1,7 @@
 ---
-title: "Kaleido SDK Best Practices"
+title: "KaleidoSDK Best Practices"
 sidebarTitle: "Best Practices"
-description: "Guidelines for building production apps with the Kaleido SDK — error handling, retries, amount precision, and security"
+description: "Guidelines for building production apps with the KaleidoSDK, covering error handling, retries, amount precision, and security"
 ---
 
 ## Client Initialization
@@ -23,6 +23,7 @@ const client = KaleidoClient.create({
 
 ```python Python
 import os
+
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
@@ -56,6 +57,8 @@ export function getClient(): KaleidoClient {
 
 ```python Python
 # lib/kaleido.py
+import os
+
 from kaleido_sdk import KaleidoClient
 
 _client = None
@@ -74,7 +77,7 @@ def get_client() -> KaleidoClient:
 
 ### Always Handle Errors
 
-Wrap SDK calls in try/catch blocks and handle specific error types:
+Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Error Handling](/sdk/error-handling#comprehensive-error-handling) has the exhaustive version.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -113,21 +116,9 @@ except KaleidoError as e:
 
 ### Check Retryability
 
-Use `isRetryable()` before implementing retry logic:
+Never retry blindly. Every error exposes `isRetryable()` / `is_retryable()`, which already encodes which failures can succeed on a second attempt — use it instead of matching on status codes yourself.
 
-<CodeGroup>
-```typescript TypeScript
-if (error instanceof KaleidoError && error.isRetryable()) {
-  // Safe to retry: NetworkError, TimeoutError, 5xx errors, 429
-}
-```
-
-```python Python
-if isinstance(error, KaleidoError) and error.is_retryable():
-    # Safe to retry
-    pass
-```
-</CodeGroup>
+For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Error Handling](/sdk/error-handling#retry-patterns).
 
 ## Async Patterns
 
@@ -163,13 +154,15 @@ for (const result of results) {
 ### Python: Sequential with Error Recovery
 
 ```python
+from kaleido_sdk import KaleidoError
+
 results = {}
 for name, fn in [
     ("assets", lambda: client.maker.list_assets()),
     ("pairs", lambda: client.maker.list_pairs()),
 ]:
     try:
-        results[name] = fn()
+        results[name] = await fn()
     except KaleidoError as e:
         print(f"Failed to fetch {name}: {e}")
         results[name] = None
@@ -284,34 +277,9 @@ unsubscribe()
 
 ### Handle Reconnection
 
-Listen for reconnection events and update UI accordingly:
+The `WSClient` reconnects on its own with exponential backoff, so the work on your side is surfacing state to the user: show a "reconnecting" indicator on `disconnected`, re-request quotes on `connected`, and treat `maxReconnectExceeded` as a hard error rather than a transient blip.
 
-<CodeGroup>
-```typescript TypeScript
-const ws = client.maker.enableWebSocket(wsUrl);
-
-ws.on('disconnected', () => {
-  // Show "reconnecting" indicator
-});
-
-ws.on('connected', () => {
-  // Re-request quotes after reconnection
-  ws.requestQuote({ /* ... */ });
-});
-
-ws.on('maxReconnectExceeded', () => {
-  // Show "connection lost" error to user
-});
-```
-
-```python Python
-ws = client.maker.enable_websocket(ws_url)
-
-ws.on("disconnected", lambda: print("Reconnecting..."))
-ws.on("connected", lambda: ws.request_quote({...}))
-ws.on("max_reconnect_exceeded", lambda: print("Connection lost"))
-```
-</CodeGroup>
+For the event list and the reconnection configuration, see [WebSocket](/sdk/websocket#events).
 
 ## Security
 
@@ -364,6 +332,8 @@ Assets and trading pairs change infrequently. Cache them to reduce API calls:
 
 <CodeGroup>
 ```typescript TypeScript
+import type { ListPairsResponse } from 'kaleido-sdk';
+
 let cachedPairs: ListPairsResponse | null = null;
 let cacheTime = 0;
 
@@ -383,7 +353,7 @@ import time
 _cached_pairs = None
 _cache_time = 0
 
-def get_pairs():
+async def get_pairs():
     global _cached_pairs, _cache_time
     now = time.time()
     if _cached_pairs is None or now - _cache_time > 60:

@@ -1,0 +1,20 @@
+name: Check SDK version
+
+# Warns when the SDK version documented in mintlify-docs/snippets/versions.mdx
+# has drifted from the latest kaleido-sdk on npm. Reports on the PR only; it
+# never blocks a merge, because npm can legitimately be ahead of the docs.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-sdk-version:
+    name: Documented SDK version vs npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Compare documented version against npm
+        run: bash scripts/check-sdk-version.sh

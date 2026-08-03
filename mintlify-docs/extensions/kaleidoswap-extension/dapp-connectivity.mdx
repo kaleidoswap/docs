@@ -1,11 +1,11 @@
 ---
 title: DApp Connectivity
-description: "Connect the KaleidoSwap Extension to trusted DApps with the WebLN, WebBTC, and Nostr (NIP-07) providers — approval flow, permissions, and supported methods"
+description: "Connect the KaleidoSwap Extension to trusted DApps with the WebLN, WebBTC, and Nostr (NIP-07) providers, covering approval flow, permissions, and methods"
 ---
 
 ## Overview
 
-The KaleidoSwap Extension injects standard wallet providers into browser pages so DApps can interact with wallet capabilities after user approval. It follows the same provider conventions as other browser wallets (Alby-style), so most existing WebLN, WebBTC, and Nostr apps work without any KaleidoSwap-specific integration.
+The KaleidoSwap Extension injects standard wallet providers into browser pages so DApps can interact with wallet capabilities after user approval. It follows the same provider conventions as other browser wallets (e.g., Alby), so most existing WebLN, WebBTC, and Nostr apps work without any KaleidoSwap-specific integration.
 
 The extension injects:
 
@@ -107,6 +107,8 @@ Some DApps probe `window.bitcoin` (a Bitcoin Wallet Standard provider) instead o
 
 Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the confirmation prompt decodes the PSBT and shows the destinations, amounts, and network fee before you approve. If the amounts cannot be decoded from the PSBT, the prompt shows an explicit warning instead.
 
+<img src="/assets/images/extension/32-psbt-confirm.png" alt="PSBT signing confirmation decoding the transaction total, each output with its destination and amount, and the network fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Nostr Provider (NIP-07)
 
 The KaleidoSwap Extension injects a full **NIP-07** provider at `window.nostr`, so Nostr web apps can request the wallet's public key, sign events, and encrypt or decrypt direct messages. The Nostr identity is derived from the wallet recovery phrase (or an imported identity, when set).
@@ -141,6 +143,8 @@ window.addEventListener('nostr:ready', async () => {
 
 Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for Nostr apps that support [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) (nsecBunker). From **Settings > Nostr Connect**, generate a `bunker://` connection string and paste it into the client app; signing requests then travel over Nostr relays and are approved in the extension. Active NIP-46 sessions appear in Connected Apps, where they can be reviewed and revoked.
 
+<img src="/assets/images/extension/34-nostr-connect-bunker.png" alt="Nostr Connect remote signing screen with a listening status, the generated bunker connection string, and a revoke action" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Nostr Wallet Connect (NWC)
 
 The extension can also expose the wallet to external apps over **Nostr Wallet Connect**: pair an app by scanning the pairing QR code, then control what it can do with **amount-aware budgets**. Zap payments (NIP-57) made through NWC are validated and correlated with wallet activity.
@@ -149,7 +153,11 @@ The extension can also expose the wallet to external apps over **Nostr Wallet Co
 
 When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. Connected Nostr clients start from a "Reasonable" consent default (comparable to other NIP-07 wallets): routine, low-risk operations are allowed for a connected app, while payments and other sensitive actions still prompt.
 
+<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="Connection approval prompt showing the requesting site origin, the access it asks for, and the Reasonable consent default with Deny and Allow actions" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 **Settings > Connected Sites** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
+
+<img src="/assets/images/extension/33-connected-sites.png" alt="Connected Apps screen listing connected apps, Nostr Wallet Connect sessions, and a field to block a site" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Warning>
 Always review what a DApp is requesting before approving. Only approve payments, invoices, asset sends, and signing requests from sites you trust.
@@ -188,11 +196,8 @@ This keeps wallet-side actions explicit while still allowing DApps to use the Ka
 | **Lock when done** | Lock the KaleidoSwap Extension when you are finished using DApps |
 | **Limit exposure** | Only connect to trusted sites |
 
-## Supported DApps
+---
 
-The KaleidoSwap Extension's browser providers are designed for:
-
-- **WebLN apps** - Apps that use `window.webln` for Lightning invoices and payments
-- **WebBTC / Bitcoin apps** - Apps that use `window.webbtc` or `window.bitcoin` for on-chain addresses, PSBTs, and message signing
-- **Nostr apps** - Apps that use `window.nostr` (NIP-07) for identity and event signing
-- **Internal test pages** - Local pages that exercise wallet provider methods during development
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

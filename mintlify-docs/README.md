@@ -14,7 +14,9 @@ mintlify-docs/
 │   ├── python/                  # Python SDK docs (8 pages)
 │   └── typescript/              # TypeScript SDK docs (10 pages)
 ├── api-reference/               # API Reference (6 pages)
-├── assets/                      # Images, logos, icons
+├── assets/
+│   ├── images/                  # overview/, desktop-app/, extension/
+│   └── logos/                   # logo variants + favicon
 ├── openapi.json                 # Source for API auto-generation
 ├── README.md                    # Contributor guide
 └── RESTRUCTURING.md             # Migration summary
@@ -72,7 +74,7 @@ The documentation will be available at `http://localhost:3000`
 ### Web App (6 pages)
 ⚠️ Coming Soon placeholders
 - Covers introduction, getting started, wallet connection, trading UI, advanced features, and FAQ
-- Communicates timelines and directs users to the desktop app for now
+- Communicates timelines and directs users to the Desktop App for now
 
 ### Python SDK (8 pages)
 ✅ Complete – Production-ready with 50+ methods
@@ -108,14 +110,15 @@ The documentation will be available at `http://localhost:3000`
 
 ### Branding
 
-Update `mint.json` to customize:
+Update `docs.json` to customize:
 
 ```json
 {
   "name": "KaleidoSwap Documentation",
+  "favicon": "/assets/logos/kaleidoswap-favicon.ico",
   "logo": {
-    "dark": "/assets/logo-dark.svg",
-    "light": "/assets/logo-light.svg"
+    "dark": "/assets/logos/kaleidoswap-full-logo-horizontal.svg",
+    "light": "/assets/logos/kaleidoswap-full-logo-horizontal-onlight.svg"
   },
   "colors": {
     "primary": "#0D9373",

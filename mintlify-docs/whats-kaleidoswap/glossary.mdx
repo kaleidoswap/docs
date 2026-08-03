@@ -1,46 +1,54 @@
 ---
-title: "RGB & Lightning Glossary"
+title: "Bitcoin L2 & Lightning Glossary"
 sidebarTitle: "Glossary"
-description: "Key terms for Bitcoin and RGB trading — atomic swaps, HTLCs, Lightning channels, LSPs, and RGB schemas explained in plain language"
+description: "Key terms for trading across Bitcoin Layers, explaining atomic swaps, HTLCs, Lightning channels, LSPs, RGB, Spark, Arkade, Liquid, and Nostr connectivity"
 ---
 
-## RGB Protocol
+## Bitcoin & On-Chain
 
 <AccordionGroup>
-  <Accordion title="RGB Asset" icon="gem">
-    A digital asset created using the RGB protocol. RGB assets are client-validated smart contracts that leverage Bitcoin's security while maintaining scalability and privacy through off-chain validation.
+  <Accordion title="Satoshi (sat)" icon="bitcoin-sign">
+    The smallest unit of Bitcoin, equal to 0.00000001 BTC. All amounts in KaleidoSwap are denominated in satoshis.
   </Accordion>
 
-  <Accordion title="NIA (formerly RGB20)" icon="coins">
-    Non-Inflatable Asset — the RGB interface for fixed-supply fungible tokens, similar to ERC-20 on Ethereum. Used for creating and managing divisible assets like stablecoins or utility tokens. This is the asset type KaleidoSwap trades today.
+  <Accordion title="Millisatoshi (msat)" icon="coins">
+    One-thousandth of a satoshi, used for precise calculations in Lightning Network payments (not enforceable on-chain).
   </Accordion>
 
-  <Accordion title="IFA" icon="coins">
-    Inflatable Fungible Asset — the RGB interface for fungible tokens whose supply can be expanded or replaced by the issuer (mint/burn). Not currently supported by KaleidoSwap.
+  <Accordion title="UTXO (Unspent Transaction Output)" icon="cube">
+    A discrete chunk of Bitcoin that can be spent. RGB assets are anchored to specific UTXOs on the Bitcoin blockchain.
   </Accordion>
 
-  <Accordion title="UDA (formerly RGB21)" icon="image">
-    Unique Digital Asset — the RGB interface for non-fungible tokens (NFTs), comparable to ERC-721. Used for unique digital assets and collectibles. Not currently supported by KaleidoSwap.
+  <Accordion title="Confirmation" icon="check-double">
+    When a Bitcoin transaction is included in a block on the blockchain. More confirmations mean higher security against reorganization.
   </Accordion>
 
-  <Accordion title="CFA (formerly RGB25)" icon="layer-group">
-    Collectible Fungible Asset — the RGB interface for collectibles with rich media and metadata. Not currently supported by KaleidoSwap.
+  <Accordion title="Mempool" icon="inbox">
+    The pool of unconfirmed Bitcoin transactions waiting to be included in the next block.
   </Accordion>
 
-  <Accordion title="Asset ID" icon="fingerprint">
-    A unique identifier for an RGB asset, typically in the format `rgb:xxxxxx-xxxxxx-xxxxxx`. Each asset has a globally unique ID derived from its genesis transaction.
+  <Accordion title="Fee Rate" icon="gauge-high">
+    The cost per byte to include a transaction in a Bitcoin block, typically measured in satoshis per virtual byte (sat/vB).
   </Accordion>
 
-  <Accordion title="Client-Side Validation" icon="shield-check">
-    A core RGB concept where asset state and transaction history are validated by clients rather than being stored on the blockchain. This provides enhanced privacy and scalability.
+  <Accordion title="Esplora Indexer" icon="magnifying-glass">
+    A Bitcoin blockchain index service that wallets query for addresses, UTXOs, and transaction history instead of scanning the chain themselves. KaleidoSwap uses an Esplora endpoint for the node-less RGB-L1 account and for Liquid; a default is provided and you can supply your own.
   </Accordion>
 
-  <Accordion title="Consignment" icon="box">
-    A data package containing all necessary information to validate an RGB asset transfer, including proofs, history, and state transitions.
+  <Accordion title="Testnet" icon="flask">
+    A separate Bitcoin network used for testing, where coins have no real value.
   </Accordion>
 
-  <Accordion title="Schema" icon="sitemap">
-    The blueprint defining an RGB asset's properties, state transitions, and validation rules. Different interfaces (NIA, IFA, UDA, CFA — formerly RGB20/21/25) enable different asset types.
+  <Accordion title="Signet" icon="pen-nib">
+    A newer test network with more predictable block times, used for development and testing.
+  </Accordion>
+
+  <Accordion title="Mutinynet" icon="rocket">
+    A custom Bitcoin Signet with fast, predictable blocks and no competition for block space, used as the main public test network for KaleidoSwap. Selectable when [creating an account](/desktop-app/wallet/creating-wallet).
+  </Accordion>
+
+  <Accordion title="Regtest" icon="wrench">
+    Regression test mode allowing developers to create local private Bitcoin networks for testing.
   </Accordion>
 </AccordionGroup>
 
@@ -71,6 +79,14 @@ description: "Key terms for Bitcoin and RGB trading — atomic swaps, HTLCs, Lig
     The standard Lightning Network invoice format for requesting payments. Contains payment amount, recipient, and other metadata.
   </Accordion>
 
+  <Accordion title="Lightning Address" icon="at">
+    A human-readable payment identifier that looks like an email address (`user@domain.com`) and resolves to a Lightning invoice behind the scenes. Accepted as a withdrawal destination in the KaleidoSwap Extension.
+  </Accordion>
+
+  <Accordion title="LNURL" icon="link">
+    A set of protocols that let a Lightning wallet fetch payment details from a URL, enabling reusable payment links, withdrawals, and authentication. Supported by the Extension and exposed to DApps through WebLN.
+  </Accordion>
+
   <Accordion title="Keysend" icon="paper-plane">
     A Lightning payment method allowing spontaneous payments without requiring an invoice, used for pushing assets or funds.
   </Accordion>
@@ -79,12 +95,20 @@ description: "Key terms for Bitcoin and RGB trading — atomic swaps, HTLCs, Lig
     A conditional payment mechanism ensuring atomic transactions across Lightning channels using cryptographic hashes and time locks.
   </Accordion>
 
+  <Accordion title="Payment Hash & Preimage" icon="hashtag">
+    The preimage is the secret that unlocks an HTLC; the payment hash is its hash, published in the invoice or swap. Revealing the preimage claims the payment, which is what makes an atomic swap atomic — both legs settle with the same secret, or neither does. KaleidoSwap returns a `payment_hash` when a swap is initiated.
+  </Accordion>
+
   <Accordion title="Routing" icon="route">
     The process of finding a path through the Lightning Network to deliver a payment from sender to receiver.
   </Accordion>
+
+  <Accordion title="Cooperative Close vs Force Close" icon="door-closed">
+    Two ways to settle a channel on-chain. In a cooperative close both peers agree and sign the final state, which is cheap and confirms quickly. In a force close one side publishes the latest state unilaterally — used when the peer is unreachable or the channel is stuck — and funds stay time-locked until the delay expires. Recovering from a [channel backup](/desktop-app/channels/channel-backups) force-closes the channels it contains.
+  </Accordion>
 </AccordionGroup>
 
-## LSP (Lightning Service Provider)
+## LSP & Liquidity
 
 <AccordionGroup>
   <Accordion title="LSP (Lightning Service Provider)" icon="server">
@@ -103,24 +127,232 @@ description: "Key terms for Bitcoin and RGB trading — atomic swaps, HTLCs, Lig
     A request from a client to an LSP to open a Lightning channel with specific parameters like capacity and asset allocation.
   </Accordion>
 
-  <Accordion title="JIT Channel" icon="zap">
-    Just-In-Time channel opening where an LSP opens a channel on-demand when a user receives a payment, providing instant onboarding.
+  <Accordion title="Channel Order" icon="receipt">
+    The LSPS1 object that tracks a channel request through its lifecycle: created, paid, opened. Each order has an ID you can fetch, pay, or submit a rate decision against — `kaleido channel order create | get | pay | decide` in the [CLI](/cli/channels-lsp), and the **Buy Channel** tab in the Desktop App.
+  </Accordion>
+
+  <Accordion title="Market Maker" icon="chart-line">
+    An actor that continuously quotes both sides of a trading pair and supplies the liquidity swaps execute against. The KaleidoSwap LSP bootstraps this role today; external market makers join from 2027. Not to be confused with the maker of an individual swap, defined under Trading & Market.
   </Accordion>
 </AccordionGroup>
 
-## KaleidoSwap Specific
+## Bitcoin Layers & Assets
+
+<AccordionGroup>
+  <Accordion title="RGB Asset" icon="gem">
+    A digital asset created using the RGB protocol. RGB assets are client-validated smart contracts that leverage Bitcoin's security while maintaining scalability and privacy through off-chain validation.
+  </Accordion>
+
+  <Accordion title="RLN (RGB Lightning Node)" icon="server">
+    A Lightning node that understands RGB assets, so channels can carry BTC and RGB tokens at once. It holds your keys, manages channels, and validates contracts locally. The Desktop App connects to one for every wallet, channel, and payment operation; in the Extension it is an optional, experimental account. See [node hosting](/desktop-app/getting-started/node-hosting).
+  </Accordion>
+
+  <Accordion title="NIA (formerly RGB20)" icon="coins">
+    Non-Inflatable Asset — the RGB interface for fixed-supply fungible tokens, similar to ERC-20 on Ethereum. Used for creating and managing divisible assets like stablecoins or utility tokens. This is the asset type KaleidoSwap trades today.
+  </Accordion>
+
+  <Accordion title="IFA" icon="coins">
+    Inflatable Fungible Asset — the RGB interface for fungible tokens whose supply can be expanded or replaced by the issuer (mint/burn). Supported by KaleidoSwap.
+  </Accordion>
+
+  <Accordion title="UDA (formerly RGB21)" icon="image">
+    Unique Digital Asset — the RGB interface for non-fungible tokens (NFTs), comparable to ERC-721. Used for unique digital assets and collectibles. Supported by KaleidoSwap.
+  </Accordion>
+
+  <Accordion title="CFA (formerly RGB25)" icon="layer-group">
+    Collectible Fungible Asset — the RGB interface for collectibles with rich media and metadata. Supported by KaleidoSwap.
+  </Accordion>
+
+  <Accordion title="Asset ID" icon="fingerprint">
+    A unique identifier for an RGB asset, typically in the format `rgb:xxxxxx-xxxxxx-xxxxxx`. Each asset has a globally unique ID derived from its genesis transaction.
+  </Accordion>
+
+  <Accordion title="Client-Side Validation" icon="shield-check">
+    A core RGB concept where asset state and transaction history are validated by clients rather than being stored on the blockchain. This provides enhanced privacy and scalability.
+  </Accordion>
+
+  <Accordion title="Colored UTXO" icon="palette">
+    A Bitcoin UTXO that carries RGB asset state alongside its sats. You need at least one available colored UTXO to receive or trade RGB assets on-chain; the Desktop App can create one for you during a [deposit](/desktop-app/wallet/deposits) if you have a BTC balance. A UTXO with no asset state attached is sometimes called a vanilla UTXO.
+  </Accordion>
+
+  <Accordion title="Blinded UTXO" icon="eye-slash">
+    A receiving commitment that lets a sender transfer an RGB asset to you without learning which UTXO it lands on. It replaces the address in on-chain RGB transfers, so an RGB [withdrawal](/desktop-app/wallet/withdrawals) asks for a blinded UTXO where a BTC withdrawal asks for an address.
+  </Accordion>
+
+  <Accordion title="RGB Invoice" icon="file-invoice">
+    The payment request format for RGB transfers, starting with `rgb:`. It encodes the asset, the amount, and the blinded receive commitment. The node-less RGB-L1 account creates blinded invoices automatically; with RLN connected you can also receive RGB over Lightning.
+  </Accordion>
+
+  <Accordion title="RGB Proxy" icon="tower-broadcast">
+    A relay service that passes RGB consignments between sender and recipient, since RGB transfer data travels off-chain and never touches the blockchain. Configured alongside the node endpoint in the Desktop App and in the Extension's RGB-L1 settings.
+  </Accordion>
+
+  <Accordion title="Consignment" icon="box">
+    A data package containing all necessary information to validate an RGB asset transfer, including proofs, history, and state transitions.
+  </Accordion>
+
+  <Accordion title="Schema" icon="sitemap">
+    The blueprint defining an RGB asset's properties, state transitions, and validation rules. Different interfaces (NIA, IFA, UDA, CFA — formerly RGB20/21/25) enable different asset types.
+  </Accordion>
+
+  <Accordion title="Spark" icon="bolt-lightning">
+    A Bitcoin layer for BTC and native assets with Lightning send and receive. In the KaleidoSwap Extension it is a self-custodial account derived from your recovery phrase, and it also powers Flashnet swaps and the cross-chain bridge.
+  </Accordion>
+
+  <Accordion title="Flashnet" icon="network-wired">
+    A liquidity network on Spark. KaleidoSwap uses Flashnet routes as a swap venue, and Flashnet Orchestra as the routing service behind the cross-chain bridge.
+  </Accordion>
+
+  <Accordion title="Arkade" icon="alien-8bit">
+    A Bitcoin layer based on the Ark design, where funds are held as VTXOs (virtual UTXOs) rather than on-chain outputs. Moving in and out is called boarding and offboarding. Supported as an account in the Extension, with an optional rotating-address mode.
+  </Accordion>
+
+  <Accordion title="VTXO (Virtual UTXO)" icon="square-dashed">
+    The unit of value in Arkade. Funds are held as virtual outputs that move off-chain rather than as on-chain UTXOs, which is what makes Arkade transfers instant and cheap. A VTXO has a lifecycle: it is created when you board, maintained while the account is in use, and settled on-chain when you offboard. The Extension exposes VTXO and lifecycle settings under **Settings > Arkade**.
+  </Accordion>
+
+  <Accordion title="Liquid" icon="droplet">
+    A Bitcoin sidechain with confidential transactions, home to L-BTC and issued assets such as USDt. Supported in the Extension as a node-less, self-custodial account on mainnet by default.
+  </Accordion>
+
+  <Accordion title="L-BTC" icon="bitcoin-sign">
+    Liquid Bitcoin — BTC held on the Liquid network, backed one-to-one by bitcoin locked on the mainchain. It is the base asset of the Liquid account in the Extension, alongside issued assets such as USDt, and is counted separately from your Spark, Arkade, Bitcoin L1, and Lightning balances.
+  </Accordion>
+</AccordionGroup>
+
+## Trading & Market
+
+<AccordionGroup>
+  <Accordion title="Atomic Swap" icon="atom">
+    A trustless exchange of one asset for another that either completes entirely or fails entirely, with no possibility of partial execution.
+  </Accordion>
+
+  <Accordion title="Trading Pair" icon="scale-unbalanced">
+    A combination of two assets that can be traded against each other, e.g., BTC/USDT.
+  </Accordion>
+
+  <Accordion title="Base Asset" icon="b">
+    The first asset in a trading pair - what you're buying or selling.
+  </Accordion>
+
+  <Accordion title="Quote Asset" icon="q">
+    The second asset in a trading pair - what you're paying with or receiving.
+  </Accordion>
+
+  <Accordion title="Precision" icon="calculator">
+    The number of decimal places an asset supports. For example, USDT typically has 6 decimals of precision.
+  </Accordion>
+
+  <Accordion title="RFQ (Request for Quote)" icon="comment-dollar">
+    A request to get a price quote for swapping between two assets. Quotes are valid for a limited time.
+  </Accordion>
+
+  <Accordion title="Maker" icon="user-tie">
+    The party providing liquidity by creating a swap offer that others can accept.
+  </Accordion>
+
+  <Accordion title="Taker" icon="user">
+    The party consuming liquidity by accepting an existing swap offer.
+  </Accordion>
+
+  <Accordion title="Slippage" icon="arrow-trend-down">
+    The difference between expected price and actual execution price, typically due to market movement or liquidity constraints. You can set a maximum acceptable slippage per trade; the swap fails rather than executing at a worse rate.
+  </Accordion>
+
+  <Accordion title="Swap Venue" icon="store">
+    A source of quotes and liquidity a client can execute a swap against. The Extension can use KaleidoSwap maker pairs when RLN is connected, and Spark/Flashnet routes when Spark pools are available. At least one venue must be available to swap; venues are optional for basic wallet features.
+  </Accordion>
+
+  <Accordion title="Bridge (cross-chain)" icon="bridge">
+    Moving funds between a Bitcoin layer and an external chain — in the Extension, between your Spark account and networks such as Ethereum, Base, Solana, or Tron. Distinct from a swap, which exchanges one asset for another inside your wallet. Atomic swaps between Bitcoin Layers need no bridge at all. See [Bridge](/extensions/kaleidoswap-extension/bridge).
+  </Accordion>
+
+  <Accordion title="Swap Status" icon="list-check">
+    The current state of an atomic swap: Waiting, Pending, Succeeded, Expired, or Failed.
+  </Accordion>
+</AccordionGroup>
+
+## Wallet, Keys & Security
+
+<AccordionGroup>
+  <Accordion title="Recovery Phrase (BIP39 mnemonic)" icon="key">
+    The 12 or 24-word phrase that restores your entire wallet, also called a mnemonic or seed phrase. One recovery phrase derives every account: in the Extension it controls Spark, Arkade, Liquid, and RGB-L1 plus the default Nostr identity. Anyone who has it controls your funds, so keep it offline and never share it.
+  </Accordion>
+
+  <Accordion title="Public Key" icon="lock-open">
+    The public portion of a cryptographic key pair, safe to share. Used to receive payments and verify signatures.
+  </Accordion>
+
+  <Accordion title="Private Key" icon="lock">
+    The secret portion of a cryptographic key pair, never to be shared. Used to sign transactions and prove ownership.
+  </Accordion>
+
+  <Accordion title="Derivation Path" icon="code-branch">
+    A scheme for generating multiple keys from a single recovery phrase in a deterministic way.
+  </Accordion>
+
+  <Accordion title="Watch-Only Wallet" icon="eye">
+    A wallet that can view balances and transactions but cannot sign or send transactions.
+  </Accordion>
+
+  <Accordion title="Channel Backup" icon="floppy-disk">
+    A backup file containing essential data to recover Lightning channel funds in case of data loss.
+  </Accordion>
+
+  <Accordion title="VSS Backup" icon="cloud-arrow-up">
+    An encrypted cloud backup of RGB state for the node-less RGB-L1 account, written automatically on every receive alongside a local file backup. On re-import, onboarding offers to restore from it — never without your explicit consent. RLN state is recovered from the node's own backup material instead.
+  </Accordion>
+</AccordionGroup>
+
+## Connectivity & Identity
+
+<AccordionGroup>
+  <Accordion title="DApp" icon="window-maximize">
+    A web app that talks to your wallet through injected browser providers instead of asking for keys. The KaleidoSwap Extension exposes WebLN, WebBTC, and Nostr providers to pages you approve, and prompts you for anything sensitive. See [DApp connectivity](/extensions/kaleidoswap-extension/dapp-connectivity).
+  </Accordion>
+
+  <Accordion title="WebLN" icon="bolt">
+    The standard browser provider for Lightning, injected at `window.webln`. Lets an approved page request invoices, payments, message signing, keysend, and LNURL handling.
+  </Accordion>
+
+  <Accordion title="WebBTC" icon="bitcoin-sign">
+    The companion browser provider for on-chain Bitcoin, injected at `window.webbtc`, for address and transaction requests from approved pages.
+  </Accordion>
+
+  <Accordion title="Nostr" icon="feather">
+    An open protocol for signed messages relayed between servers, used for identity and social apps. The Extension derives a Nostr identity from your recovery phrase, or imports one you already have.
+  </Accordion>
+
+  <Accordion title="npub / nsec" icon="id-card">
+    The two halves of a Nostr identity: `npub1…` is your public key, safe to share; `nsec1…` is your private key. Anyone holding your nsec can sign events and act as you — never share it.
+  </Accordion>
+
+  <Accordion title="NIP-07" icon="signature">
+    The standard for in-page Nostr signing, injected at `window.nostr`. An approved page can request your public key, have events signed, and encrypt or decrypt direct messages without ever seeing your key.
+  </Accordion>
+
+  <Accordion title="NIP-46 (Nostr Connect)" icon="tower-broadcast">
+    Remote signing for Nostr apps that cannot use an in-page provider. The Extension generates a `bunker://` connection string you paste into the app; signing requests then travel over relays and are approved in the extension.
+  </Accordion>
+
+  <Accordion title="NWC (Nostr Wallet Connect)" icon="plug">
+    NIP-47 — a way to let an external app control a wallet over Nostr relays, paired with a `nostr+walletconnect://` string or QR code and constrained by amount-aware budgets. Also used to reach a remote RGB Lightning Node so the node itself stays private.
+  </Accordion>
+
+  <Accordion title="Zap (NIP-57)" icon="bolt">
+    A Lightning payment published as a Nostr event, typically as a tip on a note. Zaps made through NWC are validated and correlated with wallet activity.
+  </Accordion>
+</AccordionGroup>
+
+## KaleidoSwap Platform
 
 <AccordionGroup>
   <Accordion title="RGB-LSP" icon="palette">
     A Lightning Service Provider that supports RGB assets in payment channels, enabling instant RGB asset transfers over Lightning.
   </Accordion>
 
-  <Accordion title="Atomic Swap" icon="atom">
-    A trustless exchange of one asset for another that either completes entirely or fails entirely, with no possibility of partial execution.
-  </Accordion>
-
-  <Accordion title="RFQ (Request for Quote)" icon="comment-dollar">
-    A request to get a price quote for swapping between two assets. Quotes are valid for a limited time.
+  <Accordion title="Layer" icon="layer-group">
+    Which rail a side of a swap settles on. Each swap leg names an `asset_id` and a `layer`, so one trade can cross rails — `BTC_LN` to `RGB_LN`, for example. Market quotes accept `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN`.
   </Accordion>
 
   <Accordion title="Swapstring" icon="link">
@@ -138,109 +370,17 @@ description: "Key terms for Bitcoin and RGB trading — atomic swaps, HTLCs, Lig
   <Accordion title="Rate Decision" icon="scale-balanced">
     When market rates change significantly during order processing, users can choose to accept the new rate or request a refund.
   </Accordion>
-</AccordionGroup>
 
-## Bitcoin & On-Chain
-
-<AccordionGroup>
-  <Accordion title="Satoshi (sat)" icon="bitcoin-sign">
-    The smallest unit of Bitcoin, equal to 0.00000001 BTC. All amounts in KaleidoSwap are denominated in satoshis.
+  <Accordion title="swap-sdk & wallet-sdk" icon="code">
+    The two SDK surfaces every KaleidoSwap client is built on: `swap-sdk` for swap integration (TypeScript, Python, Rust) and `wallet-sdk` for wallet primitives (TypeScript). Third-party integrations use the same interfaces our own apps do. See the [SDK docs](/sdk/introduction).
   </Accordion>
 
-  <Accordion title="Millisatoshi (msat)" icon="coins">
-    One-thousandth of a satoshi, used for precise calculations in Lightning Network payments (not enforceable on-chain).
+  <Accordion title="KaleidoAgent" icon="robot">
+    An autonomous, non-custodial Bitcoin L2 agent that manages a Lightning and RGB portfolio, rebalances with atomic swaps, and buys channel liquidity on its own. Keys stay in the local wallet and RGB Lightning Node, and every trade settles as an atomic HTLC swap. See [KaleidoAgent](/ai-tools/kaleido-agent).
   </Accordion>
 
-  <Accordion title="UTXO (Unspent Transaction Output)" icon="cube">
-    A discrete chunk of Bitcoin that can be spent. RGB assets are anchored to specific UTXOs on the Bitcoin blockchain.
-  </Accordion>
-
-  <Accordion title="Confirmation" icon="check-double">
-    When a Bitcoin transaction is included in a block on the blockchain. More confirmations mean higher security against reorganization.
-  </Accordion>
-
-  <Accordion title="Mempool" icon="inbox">
-    The pool of unconfirmed Bitcoin transactions waiting to be included in the next block.
-  </Accordion>
-
-  <Accordion title="Fee Rate" icon="gauge-high">
-    The cost per byte to include a transaction in a Bitcoin block, typically measured in satoshis per virtual byte (sat/vB).
-  </Accordion>
-
-  <Accordion title="Testnet" icon="flask">
-    A separate Bitcoin network used for testing, where coins have no real value.
-  </Accordion>
-
-  <Accordion title="Signet" icon="pen-nib">
-    A newer test network with more predictable block times, used for development and testing.
-  </Accordion>
-
-  <Accordion title="Regtest" icon="wrench">
-    Regression test mode allowing developers to create local private Bitcoin networks for testing.
-  </Accordion>
-</AccordionGroup>
-
-## Wallet & Security
-
-<AccordionGroup>
-  <Accordion title="Mnemonic Seed" icon="key">
-    A 12 or 24-word phrase that can restore your entire wallet. Must be kept secure and private.
-  </Accordion>
-
-  <Accordion title="Public Key" icon="lock-open">
-    The public portion of a cryptographic key pair, safe to share. Used to receive payments and verify signatures.
-  </Accordion>
-
-  <Accordion title="Private Key" icon="lock">
-    The secret portion of a cryptographic key pair, never to be shared. Used to sign transactions and prove ownership.
-  </Accordion>
-
-  <Accordion title="Derivation Path" icon="code-branch">
-    A scheme for generating multiple keys from a single mnemonic seed in a deterministic way.
-  </Accordion>
-
-  <Accordion title="Watch-Only Wallet" icon="eye">
-    A wallet that can view balances and transactions but cannot sign or send transactions.
-  </Accordion>
-
-  <Accordion title="Channel Backup" icon="floppy-disk">
-    A backup file containing essential data to recover Lightning channel funds in case of data loss.
-  </Accordion>
-</AccordionGroup>
-
-## Trading & Market
-
-<AccordionGroup>
-  <Accordion title="Trading Pair" icon="scale-unbalanced">
-    A combination of two assets that can be traded against each other, e.g., BTC/USDT.
-  </Accordion>
-
-  <Accordion title="Base Asset" icon="b">
-    The first asset in a trading pair - what you're buying or selling.
-  </Accordion>
-
-  <Accordion title="Quote Asset" icon="q">
-    The second asset in a trading pair - what you're paying with or receiving.
-  </Accordion>
-
-  <Accordion title="Precision" icon="calculator">
-    The number of decimal places an asset supports. For example, USDT typically has 6 decimals of precision.
-  </Accordion>
-
-  <Accordion title="Maker" icon="user-tie">
-    The party providing liquidity by creating a swap offer that others can accept.
-  </Accordion>
-
-  <Accordion title="Taker" icon="user">
-    The party consuming liquidity by accepting an existing swap offer.
-  </Accordion>
-
-  <Accordion title="Slippage" icon="arrow-trend-down">
-    The difference between expected price and actual execution price, typically due to market movement or liquidity constraints.
-  </Accordion>
-
-  <Accordion title="Swap Status" icon="list-check">
-    The current state of an atomic swap: Waiting, Pending, Succeeded, Expired, or Failed.
+  <Accordion title="KaleidoMind" icon="brain">
+    The reasoning and tool-calling engine behind agentic KaleidoSwap wallets. The model runs on your device, or on a desktop you explicitly pair, and drives Spark, RGB Lightning, Arkade, and Liquid from one tool contract by chat or voice. See [KaleidoMind](/ai-tools/kaleido-mind).
   </Accordion>
 </AccordionGroup>
 

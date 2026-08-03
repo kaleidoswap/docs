@@ -1,0 +1,107 @@
+---
+title: "KaleidoSDK FAQ"
+sidebarTitle: "FAQ"
+description: "Common questions about the KaleidoSDK, covering language choice, the maker and RLN sub-clients, custody, networks, versioning, amounts, and browser use"
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="TypeScript or Python — which should I use?" icon="code">
+    Whichever matches your stack. Both are standalone implementations that generate their types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs), so the API shape, the sub-clients, and the error hierarchy are identical across the two. Every example in these docs shows both.
+
+    Runtime requirements: **Node.js 18+** for TypeScript, **Python 3.10+** for Python. A Rust core is in progress.
+  </Accordion>
+
+  <Accordion title="What is the difference between client.maker and client.rln?" icon="code-compare">
+    They are the two halves of a swap, and most flows use both.
+
+    | Sub-client | Talks to | Covers |
+    |------------|----------|--------|
+    | `client.maker` | The KaleidoSwap maker | Quotes, RFQ streaming, atomic swap init and execute, LSPS1 channel orders |
+    | `client.rln` | Your own RGB Lightning Node | Wallet and RGB assets, channels, invoices, swap whitelisting |
+
+    A typical atomic swap quotes and initialises through `client.maker`, whitelists the `swapstring` on `client.rln`, then executes back through `client.maker`. See [How to Swap](/sdk/how-to-swap).
+  </Accordion>
+
+  <Accordion title="Do I need to run an RGB Lightning Node?" icon="server">
+    **For the atomic swap path, yes.** The taker's node is what holds the keys, whitelists the `swapstring`, and routes the HTLC. That is precisely why the maker never takes custody — there is no step where it could.
+
+    You can run the node locally or point the SDK at a remote one you control. See [Node Hosting](/desktop-app/getting-started/node-hosting) for the deployment options.
+  </Accordion>
+
+  <Accordion title="Does the SDK hold keys or take custody?" icon="key">
+    **No.** The SDK is a typed client over two HTTP APIs. Keys live in the RGB Lightning Node you point it at, and signing happens there. Nothing in the SDK can move funds that your node has not authorised.
+  </Accordion>
+
+  <Accordion title="Which networks can I build against?" icon="network-wired">
+    Regtest and Signet (MutinyNet) are live today; mainnet is coming soon.
+
+    - **Regtest** — `https://api.regtest.kaleidoswap.com`, instant blocks, best for unit tests
+    - **Signet** — `https://api.signet.kaleidoswap.com`, realistic conditions, best before mainnet
+
+    Pass these as `baseUrl` / `base_url`; the SDK appends `/api/v1` itself. Full list in [Available Environments](/sdk/getting-started#available-environments).
+  </Accordion>
+
+  <Accordion title="How do I know which SDK version works with which API?" icon="check-double">
+    Two separate compatibility surfaces:
+
+    - [Maker API Compatibility](/sdk/maker-api-compatibility) — the SDK tracks the latest Maker API release, so there is no version pairing to manage
+    - [RLN API Compatibility](/sdk/rln-api-compatibility) — the SDK is generated against a specific RGB Lightning Node API version
+
+    Both need to line up. If a call fails with an unexpected shape rather than an error, a version mismatch is the first thing to check.
+  </Accordion>
+
+  <Accordion title="Why are my amounts off by orders of magnitude?" icon="calculator">
+    The API works in **raw integer amounts**, not decimals. An asset's precision decides the conversion, and it differs per asset — BTC and USDT do not share one.
+
+    Use the helpers rather than doing the arithmetic yourself:
+
+    ```typescript
+    import { parseRawAmount } from 'kaleido-sdk';
+
+    const sats = parseRawAmount(0.001, 8);   // 100000
+    const usdt = parseRawAmount(10.50, 2);   // 1050
+    ```
+
+    See [Utilities](/sdk/utilities) for the full set, including asset mapping.
+  </Accordion>
+
+  <Accordion title="Do I have to use WebSocket?" icon="bolt">
+    No. WebSocket is for **streaming live quotes** with automatic reconnection, which matters if you are showing a moving price or reacting to one. A single quote over REST is enough for a one-off swap.
+
+    See [WebSocket](/sdk/websocket) for the streaming API.
+  </Accordion>
+
+  <Accordion title="Can I call the SDK directly from a browser?" icon="globe">
+    Not against the maker API. CORS is disabled on most endpoints, so a browser-based app needs its own backend to proxy the calls. Keep the SDK server-side and expose only what your frontend needs.
+  </Accordion>
+
+  <Accordion title="How should I handle errors and retries?" icon="triangle-exclamation">
+    Every SDK exception extends `KaleidoError`, so catching that one type covers the whole hierarchy. Each error exposes `isRetryable()` / `is_retryable()`, which tells you whether retrying is safe — do not retry blindly, since some failures will never succeed on a second attempt.
+
+    See [Error Handling](/sdk/error-handling) for the full hierarchy and the retry-with-backoff pattern, and [Best Practices](/sdk/best-practices) for how it fits a production client.
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [Troubleshooting](/sdk/troubleshooting) for errors rather than questions. For anything else, report a problem through your preferred channel from the options below, including:
+
+1. SDK version (`getVersion()` / `get_version()`)
+2. Language and runtime version (Node.js / Python)
+3. Error message and stack trace
+4. Minimal code to reproduce
+5. Environment (Regtest / Signet / Mainnet)
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

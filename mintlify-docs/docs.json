@@ -261,12 +261,18 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Guides",
-            "icon": "book",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
               "api-reference/introduction",
+              "api-reference/getting-started"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
               "api-reference/swap-protocol",
-              "api-reference/getting-started",
               "api-reference/error-handling"
             ]
           },

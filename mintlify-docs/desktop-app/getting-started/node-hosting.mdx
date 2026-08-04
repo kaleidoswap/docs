@@ -334,48 +334,6 @@ When hosting your own node:
 3. **Backups**: Regularly backup your node's data directory
 4. **Updates**: Keep all components updated to patch security vulnerabilities
 
-## Troubleshooting
-
-### Common Issues
-
-**Node won't start**
-- Check if Bitcoin Core is running and accessible
-- Verify the indexer connection is working
-- Ensure the RGB proxy server is running
-
-**Cannot connect from KaleidoSwap**
-- Check firewall settings
-- Verify the node URL is correct
-- Ensure the node is running and unencrypted
-
-**Synchronization problems**
-- Bitcoin Core might still be syncing
-- The indexer might be behind the blockchain
-- For Mutinynet, make sure you're using the correct signet seed nodes
-
-**Mutinynet-specific issues**
-- Ensure you're using the custom Bitcoin build with Mutinynet support
-- Check that your electrs instance is configured for Signet
-- Verify the `NETWORK=signet` environment variable is set
-- For connection issues, verify Mutinynet seeds are correctly configured
-- If transactions aren't confirming, check the [Mutinynet Explorer](https://mutinynet.com/) for network status
-
-## Getting Help
-
-If you encounter issues:
-
-1. Check the [GitHub repository](https://github.com/RGB-Tools/rgb-lightning-node) for known issues
-2. Visit the [KaleidoSwap Telegram](https://t.me/kaleidoswap) for community support
-3. Open an issue on the GitHub repository with detailed information about your problem
-
-## Additional Resources
-
-- [RGB Protocol Documentation](https://docs.rgb.info)
-- [RGB Lightning Node Repository](https://github.com/RGB-Tools/rgb-lightning-node)
-- [Mutinynet Explorer](https://mutinynet.com/)
-- [Mutinynet Faucet](https://faucet.mutinynet.com/)
-- [Mutinynet Documentation](https://github.com/MutinyWallet/mutiny-net)
-
 ---
 
 <Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">

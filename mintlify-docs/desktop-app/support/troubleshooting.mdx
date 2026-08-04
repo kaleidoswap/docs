@@ -64,6 +64,42 @@ Fixes for the problems Desktop App users hit most often. For installation, node 
     2. Or use a professionally managed option like [ThunderStack](/desktop-app/getting-started/node-hosting#option-3-hosted-provider-thunderstack)
     3. Trading and wallet features work the same way over a remote connection — only local node hosting is affected
   </Accordion>
+
+  <Accordion title="My self-hosted node won't start" icon="server">
+    **Symptoms**: The node exits during startup, or the Desktop App cannot reach its API.
+
+    **Checks**:
+    1. Confirm Bitcoin Core is running and that the configured RPC host, port, username, and password are reachable from the node
+    2. Confirm the configured indexer and RGB proxy endpoints are online
+    3. Review the node logs for the first startup error, then restart after correcting the related connection setting
+  </Accordion>
+
+  <Accordion title="Cannot connect the Desktop App to my remote node" icon="plug-circle-xmark">
+    **Symptoms**: The app reports that the remote node is unreachable or stays disconnected.
+
+    **Checks**:
+    1. Verify the node URL in **Settings > Node Connection** and confirm the node is running and unlocked
+    2. Make sure the server firewall allows the node API port (default: `3001`) and Lightning peer traffic on `9735`
+    3. If you use a VPN, reverse proxy, or tunnel, confirm it forwards traffic to the same address and port configured in the app
+  </Accordion>
+
+  <Accordion title="My node is stuck synchronizing" icon="arrows-rotate">
+    **Symptoms**: The node remains in a syncing state and wallet or channel actions are unavailable.
+
+    **Checks**:
+    1. Allow Bitcoin Core to finish synchronizing before retrying
+    2. Check that the configured Electrum or Esplora indexer is caught up with the selected network
+    3. Verify the node, Bitcoin backend, and indexer all use the same network
+  </Accordion>
+
+  <Accordion title="Mutinynet node or transactions are not working" icon="triangle-exclamation">
+    **Symptoms**: A Signet node cannot connect, or transactions do not confirm on Mutinynet.
+
+    **Checks**:
+    1. Use a Bitcoin build and Electrs configuration that support Mutinynet/Signet
+    2. Confirm the node is configured with `NETWORK=signet` and the correct Mutinynet seed nodes
+    3. Check the [Mutinynet Explorer](https://mutinynet.com/) for network status and transaction confirmation
+  </Accordion>
 </AccordionGroup>
 
 ## Get Help

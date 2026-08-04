@@ -6,102 +6,93 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Content images
-
-   Slightly rounded corners with a soft shadow beneath, so screenshots and
-   diagrams read as raised off the page instead of bleeding into it.
-
-   Scoped to `main img` on purpose:
-     - icons render as inline <svg>, so they are untouched
-     - the navbar and footer logos live outside <main>, so they keep their
-       flat treatment
-
-   `main img.rounded` is listed as well to out-specify Tailwind's `.rounded`
-   utility (0.25rem), which Mintlify puts on every Markdown image. Without it
-   the class would win over `main img` and the radius would stay at 4px.
+   Universal Content Images — Drop Shadow & Centering
    -------------------------------------------------------------------------- */
 
 main img,
 main img.rounded {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 0.5rem;
   box-shadow:
-    0 2px 3px rgb(0 0 0 / 0.07),
-    0 6px 16px rgb(0 0 0 / 0.13);
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
 }
 
-/* On a dark surface a black shadow all but disappears, so it is deepened.
-   No hairline ring here: the framed screenshots below already carry a light
-   edge of their own, and adding one read as a double border. */
 .dark main img,
 .dark main img.rounded {
+  border-radius: 0.5rem;
   box-shadow:
-    0 2px 5px rgb(0 0 0 / 0.36),
-    0 10px 24px rgb(0 0 0 / 0.52);
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
 }
 
 /* --------------------------------------------------------------------------
-   Extension screenshots
+   Desktop App screenshots
 
-   These are narrow captures (400x800 native, rendered at ~360px) with no
-   shadow of their own, so at the shared value they read lighter than the
-   Desktop screenshots sitting next to a baked-in window shadow. Given a
-   stronger shadow to bring the two closer.
+   Screenshot-only paragraphs stay transparent and inherit their horizontal
+   position from the surrounding content. An image in a nested list is thus
+   indented by exactly the same amount as that list's text, without adding a
+   separate white card or an arbitrary offset.
+   -------------------------------------------------------------------------- */
+
+main :is(p, figure):has(img[src*="/desktop-app/"]) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Mintlify can wrap Markdown images in a link or an element used for image
+   expansion. Clear that generated surface as well, while leaving the image's
+   own radius and shadow intact. */
+main :is(p, figure) :is(a, div, span):has(img[src*="/desktop-app/"]) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+main img[src*="/desktop-app/"] {
+  display: block;
+  margin: 1.5rem auto;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  width: min(100%, 800px);
+  max-width: 800px;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
+}
+
+.dark main img[src*="/desktop-app/"] {
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
+}
+
+/* --------------------------------------------------------------------------
+   Extension Screenshots
    -------------------------------------------------------------------------- */
 
 main img[src*="/extension/"] {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 360px;
+  height: auto;
+  border-radius: 0.5rem;
   box-shadow:
-    0 3px 6px rgb(0 0 0 / 0.11),
-    0 10px 26px rgb(0 0 0 / 0.22);
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
 }
 
 .dark main img[src*="/extension/"] {
   box-shadow:
-    0 3px 7px rgb(0 0 0 / 0.46),
-    0 14px 34px rgb(0 0 0 / 0.66);
-}
-
-/* --------------------------------------------------------------------------
-   Screenshots that already carry their own frame
-
-   These Desktop captures were taken with the OS window shadow, so the PNG has
-   a fully transparent margin of roughly 35–45px and the window's own rounded
-   corners and shadow are baked into the pixels.
-
-   Because a CSS radius and shadow apply to the element's bounding box, they
-   would land out in that transparent margin — well outside the visible window
-   edge — and read as a second frame around the first. So these get neither.
-
-   Verified by sampling corner alpha on every image under assets/images: only
-   these ten are transparent-margined. Everything in extension/ and overview/
-   is opaque and takes the treatment above cleanly.
-
-   If you add a screenshot captured with its window shadow, add it here too.
-   -------------------------------------------------------------------------- */
-
-main img:is(
-  [src$="/0_home.png"],
-  [src$="/1_create_new_wallet.png"],
-  [src$="/2_creation_step1.png"],
-  [src$="/3_creation_step2.png"],
-  [src$="/4_creation_step3.png"],
-  [src$="/5_creation_step4.png"],
-  [src$="/6_home_with_account.png"],
-  [src$="/7_unlock_wallet.png"],
-  [src$="/8_unlocking_animation.png"],
-  [src$="/16_peer_connection.png"]
-),
-main img.rounded:is(
-  [src$="/0_home.png"],
-  [src$="/1_create_new_wallet.png"],
-  [src$="/2_creation_step1.png"],
-  [src$="/3_creation_step2.png"],
-  [src$="/4_creation_step3.png"],
-  [src$="/5_creation_step4.png"],
-  [src$="/6_home_with_account.png"],
-  [src$="/7_unlock_wallet.png"],
-  [src$="/8_unlocking_animation.png"],
-  [src$="/16_peer_connection.png"]
-) {
-  border-radius: 0;
-  box-shadow: none;
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
 }

@@ -1,7 +1,7 @@
 ---
 title: "KaleidoSDK Examples"
 sidebarTitle: "Examples"
-description: "Working KaleidoSDK code examples for quotes, atomic swaps, channel orders, and node operations in TypeScript and Python"
+description: "Working KaleidoSDK code examples in TypeScript and Python, covering market data queries and live quote streaming over WebSocket"
 ---
 
 ## Market Data
@@ -73,6 +73,8 @@ setTimeout(() => stop(), 10000);
 ```
 
 ```python Python
+import asyncio
+
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
@@ -89,44 +91,14 @@ stop = await client.maker.stream_quotes_by_ticker(
     poll_interval=2.0,
 )
 
+await asyncio.sleep(10)
 stop()
 ```
 </CodeGroup>
 
-## RLN Operations
+## Node Operations
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  nodeUrl: 'http://localhost:3001',
-});
-
-if (client.hasNode()) {
-  const nodeInfo = await client.rln.getNodeInfo();
-  const balance = await client.rln.getBtcBalance();
-
-  console.log(nodeInfo.pubkey);
-  console.log(balance);
-}
-```
-
-```python Python
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    node_url="http://localhost:3001"
-)
-
-if client.has_node():
-    node_info = await client.rln.get_node_info()
-    balance = await client.rln.get_btc_balance()
-
-    print(node_info.pubkey)
-    print(balance)
-```
-</CodeGroup>
+For the `client.rln` entry point — the `hasNode()` guard and the first node calls — see [Getting Started](/sdk/getting-started#node-configuration-checks). Every available method is listed in the [Client Reference](/sdk/api-reference#rlnclient-clientrln).
 
 ## Next Steps
 

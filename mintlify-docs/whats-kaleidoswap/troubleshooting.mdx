@@ -29,7 +29,7 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
     4. Check system requirements:
        - 4GB RAM minimum
        - 500MB free disk space
-       - Modern OS version (macOS 10.15+, Windows 10+, Ubuntu 20.04+)
+       - Supported OS version (macOS 12+, Windows 10+ 64-bit, Ubuntu 22.04+)
   </Accordion>
 
   <Accordion title="Binary verification fails" icon="shield-xmark">
@@ -238,7 +238,7 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
     **Symptoms**: Swap doesn't complete or expires.
 
     **Solutions**:
-    1. **Quote expiration**: RFQ quotes are valid for limited time (typically 60-300 seconds)
+    1. **Quote expiration**: RFQ quotes are short-lived — about 60 seconds by default, and each quote carries its own `expires_at`
        - Complete swap before expiration
        - Request new quote if expired
 
@@ -459,7 +459,7 @@ The cases below are specific to how the closed beta is installed and how its acc
     **Symptoms**: Using RFQ ID returns error about expiration.
 
     **Solutions**:
-    1. **Check expires_at**: Quotes typically valid for 60-300 seconds
+    1. **Check expires_at**: Quotes are valid for about 60 seconds by default; always read the quote's own `expires_at` rather than assuming a fixed window
     2. **Request new quote**: Call `/api/v1/market/quote` again
     3. **Faster integration**: Minimize time between quote and order creation
     4. **Use expiration time**: Build UI countdown showing time remaining

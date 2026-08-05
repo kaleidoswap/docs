@@ -20,14 +20,14 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
   <Accordion title="Server starts then exits immediately" icon="circle-xmark">
     **Symptoms**: The host reports the process died on launch.
 
-    **Cause**: A required environment variable is missing. `WDK_SEED` is the only mandatory one, and the process refuses to start without it.
+    **Cause**: A required environment variable is missing. The standalone `wdk-wallet-spark-mcp` refuses to start without `WDK_SPARK_SEED`. `kaleido-mcp` is more forgiving: without `WDK_SEED` it still boots, logs a warning, and disables the Spark tools.
 
     **Solutions**:
-    1. Confirm `WDK_SEED` is set in the `env` block of the host config, not in your shell (the host does not inherit your shell environment).
+    1. Confirm the seed variable is set in the `env` block of the host config, not in your shell (the host does not inherit your shell environment).
     2. Verify the mnemonic is a valid BIP-39 phrase with words separated by single spaces.
     3. Run the server by hand with the same env vars to see the error directly:
        ```bash
-       WDK_SEED="your twelve word seed phrase" node dist/index.js
+       WDK_SPARK_SEED="your twelve word seed phrase" node dist/index.js
        ```
   </Accordion>
 
@@ -191,7 +191,6 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
     **Solutions**:
     1. Avoid calling price tools more than once every 30 seconds.
     2. Use `l402_get_market_data` to batch several assets into one call instead of looping.
-    3. Set `MPP_GATEWAY_URL` to reach an authenticated MPP server if you need higher throughput.
   </Accordion>
 </AccordionGroup>
 

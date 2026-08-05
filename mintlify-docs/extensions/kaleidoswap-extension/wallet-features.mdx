@@ -132,7 +132,7 @@ Available receive methods depend on the selected asset and connected account:
   <Step title="Share">
     - **Copy** the invoice/address to clipboard
     - **Show QR** for the sender to scan
-    - Lightning invoices show an **expiration countdown**
+    - Expired Lightning invoices are **flagged** and can be regenerated
   </Step>
 </Steps>
 
@@ -210,7 +210,7 @@ You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from Se
 ### Nostr
 
 - **Nostr Account** - View your public key (npub), view/export the session private key when available, and re-derive or import your identity
-- **Connected Sites** - Review every site and app connected to the wallet and revoke individual capabilities
+- **Connected Apps** - Review every site and app connected to the wallet and revoke individual capabilities
 - **Nostr Connect (NIP-46)** - Generate a `bunker://` connection string so external Nostr apps can request signatures remotely
 - **Nostr Wallet Connect** - Pair external apps to the wallet over NWC with a QR code, and set amount-aware budgets
 
@@ -222,19 +222,22 @@ Never share your Nostr private key (nsec). Anyone with this key can sign events 
 
 - **Change Password** - Update your wallet password
 - **Passkey Login** - Register or remove a passkey (WebAuthn) for unlocking the wallet
-- **Backup Wallet** - Reveal the recovery phrase after password confirmation, publish an encrypted Nostr settings backup, and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
+- **Auto-lock Timeout** - Set the inactivity timeout, from 1 minute to 1 hour, or never
+- **Backup Wallet** - Reveal the recovery phrase after password confirmation and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
 
 <img src="/assets/images/extension/23-backup-wallet.png" alt="Backup Wallet screen requiring the password before decrypting the recovery phrase, with a warning and a summary of what the backup covers" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-### Preferences
+### App
+
+Display preferences are inline pickers on the main Settings page:
 
 | Setting | Options |
 |---------|---------|
-| **Currency** | USD, EUR, GBP, JPY, CHF, CAD, CNY, KRW |
+| **Bitcoin Unit** | Sats, BTC, or ₿ only |
+| **Fiat Currency** | USD, EUR, GBP, JPY, CHF, CAD, CNY, KRW |
 | **Language** | English, Spanish, French, German, Portuguese, Japanese, Italian, Korean, Chinese |
-| **Bitcoin units** | sats, BTC, mBTC, or fiat display modes |
-| **Theme** | Dark mode |
-| **Auto-lock Timeout** | 1 minute to 1 hour, or never |
+
+The auto-lock timeout lives under **Settings > Security**.
 
 ### Full-Tab View
 

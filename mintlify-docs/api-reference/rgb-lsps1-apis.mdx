@@ -27,12 +27,14 @@ These endpoints are used by the KaleidoSwap Desktop App when you open a channel 
 Retrieve information about the RGB Lightning Service Provider, including available assets, liquidity options, and channel configurations.
 
 ### Response Structure
+- **`lsp_connection_url`**: The LSP node's connection URI (`pubkey@host:port`) — connect to this peer before ordering a channel.
 - **`options`**: Configuration settings for orders and channels.
 - **`assets`**: List of assets managed by the LSP.
 
 ### Example Response
 ```json
 {
+  "lsp_connection_url": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706@lsp.signet.kaleidoswap.com:9735",
   "options": {
     "min_required_channel_confirmations": 0,
     "min_funding_confirms_within_blocks": 0,
@@ -67,6 +69,61 @@ Retrieve information about the RGB Lightning Service Provider, including availab
 
 ---
 
+## Get Network Information
+
+### Endpoint
+**`GET /api/v1/lsps1/network_info`**
+
+### Description
+Retrieve the LSP node's current blockchain height and network. Safe to poll and cache.
+
+### Example Response
+```json
+{
+  "network": "Signet",
+  "height": 805434
+}
+```
+
+---
+
+## Estimate Fees
+
+### Endpoint
+
+`POST /api/v1/lsps1/estimate_fees`
+
+### Description
+
+Estimate the fees for a channel order without creating one. When the client is purchasing assets (`client_asset_amount > 0`), a fresh `rfq_id` from `/market/quote` is required so the asset price can be folded into the total.
+
+### Request Body
+
+| Field                            | Type    | Description                                                |
+|----------------------------------|---------|------------------------------------------------------------|
+| `lsp_balance_sat`                | Integer | Balance in satoshis for the LSP side of the channel.       |
+| `client_balance_sat`             | Integer | Balance in satoshis for the client side of the channel.    |
+| `channel_expiry_blocks`          | Integer | Number of blocks after which the channel expires.          |
+| `token` (optional)               | String  | Discount or referral token.                                |
+| `asset_id` (optional)            | String  | ID of the RGB asset for the channel.                       |
+| `lsp_asset_amount` (optional)    | Integer | Amount of RGB asset for the LSP side.                      |
+| `client_asset_amount` (optional) | Integer | Amount of RGB asset for the client side.                   |
+| `rfq_id` (optional)              | String  | Quote ID — required when `client_asset_amount > 0`.        |
+
+### Example Response
+```json
+{
+  "setup_fee": 1000,
+  "capacity_fee": 1500,
+  "duration_fee": 500,
+  "total_fee": 3000,
+  "applied_discount": null,
+  "discount_code": null
+}
+```
+
+---
+
 ## Create Order
 
 ### Endpoint
@@ -87,10 +144,14 @@ Create a new order for a channel with the RGB Lightning Service Provider.
 | `required_channel_confirmations` | Integer | Number of confirmations required for the channel.          |
 | `funding_confirms_within_blocks` | Integer | Number of blocks within which funding should be confirmed. |
 | `channel_expiry_blocks`          | Integer | Number of blocks after which the channel expires.          |
+| `token` (optional)               | String  | Discount or referral token applied to the order fees.      |
+| `refund_onchain_address` (optional) | String | On-chain address to refund the payment to if the order fails or is declined. |
 | `announce_channel`               | Boolean | Whether to announce the channel publicly.                  |
 | `asset_id` (optional)            | String  | ID of the RGB asset for the channel.                       |
 | `lsp_asset_amount` (optional)    | Integer | Amount of RGB asset for the LSP side.                      |
 | `client_asset_amount` (optional) | Integer | Amount of RGB asset for the client side.                   |
+| `rfq_id` (optional)              | String  | Quote ID from `/market/quote`. **Required when `client_asset_amount > 0`** — the client is purchasing assets, so a fresh quote must back the order. |
+| `email` (optional)               | String  | Email address for order notifications.                     |
 
 ### Example Request
 
@@ -105,7 +166,10 @@ Create a new order for a channel with the RGB Lightning Service Provider.
   "announce_channel": true,
   "asset_id": "rgb:$i4cFKwt-2C5LZ3X-l$kOTGN-O6l1AOP-aP9COyn-7IeBkEM",
   "lsp_asset_amount": 5000,
-  "client_asset_amount": 2500
+  "client_asset_amount": 2500,
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "refund_onchain_address": "tb1qexampleaddress0000000000000000000000000",
+  "email": "ops@example.com"
 }
 ```
 
@@ -122,14 +186,17 @@ Create a new order for a channel with the RGB Lightning Service Provider.
 | `channel_expiry_blocks`           | Integer          | The number of blocks after which the channel expires.          |
 | `token`                           | String / Null    | The token associated with the order (if provided).             |
 | `created_at`                      | String date-time | Timestamp of order creation.                                   |
-| `expires_at`                      | String date-time | Timestamp when the order expires.                              |
 | `announce_channel`                | Boolean          | Whether the channel will be announced publicly.                |
-| `order_state`                     | String           | Current state of the order (e.g., "CREATED").                  |
-| `payment`                         | Object           | Payment details including fees, invoice or on-chain address.   |
-| `channel` (optional)              | Object / Null    | Channel details if the channel has been created.               |
+| `order_state`                     | String           | Current state of the order: `CREATED`, `CHANNEL_OPENING`, `COMPLETED`, `FAILED`, or `PENDING_RATE_DECISION`. |
+| `payment`                         | Object           | Payment details including fees, invoice or on-chain address. Payment expiries live in `payment.bolt11.expires_at` and `payment.onchain.expires_at` — there is no top-level `expires_at`. |
+| `channel` (optional)              | Object / Null    | Channel details if the channel has been created (its expiry is `channel.expires_at`). |
 | `asset_id` (optional)             | String / Null    | The ID of the RGB asset for the channel.                       |
 | `lsp_asset_amount` (optional)     | Integer / Null   | The amount of RGB asset for the LSP side.                      |
 | `client_asset_amount`  (optional) | Integer / Null   | The amount of RGB asset for the client side.                   |
+| `rfq_id` (optional)               | String / Null    | The quote ID the order was created against.                    |
+| `asset_price_sat` (optional)      | Integer / Null   | BTC price (in satoshis) paid for `client_asset_amount`.        |
+| `failure_reason` (optional)       | String / Null    | Reason the order failed, when `order_state` is `FAILED`.       |
+| `access_token`                    | String           | **Per-order token required for `get_order` and `rate_decision`. Returned only here at creation — store it with the order ID.** |
 
 ### Example Response
 
@@ -165,10 +232,14 @@ Create a new order for a channel with the RGB Lightning Service Provider.
       "refund_onchain_address": "string"
     }
   },
-  "channel": {},
+  "channel": null,
   "asset_id": "string",
   "lsp_asset_amount": 0,
-  "client_asset_amount": 0
+  "client_asset_amount": 0,
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "asset_price_sat": 0,
+  "failure_reason": null,
+  "access_token": "ord_live_3rCkP9dG7mN4"
 }
 ```
 ---
@@ -180,22 +251,66 @@ Create a new order for a channel with the RGB Lightning Service Provider.
 `POST /api/v1/lsps1/get_order`
 
 ### Description
-Retrieve information about an existing order.
+Retrieve information about an existing order. This endpoint is safe to poll.
 
 ### Request Body
-| Field      |  Type    | Description                     |
-|------------|----------|---------------------------------|
-| `order_id` |  String  | Unique identifier of the order. |
+| Field          |  Type    | Description                                              |
+|----------------|----------|----------------------------------------------------------|
+| `order_id`     |  String  | Unique identifier of the order.                          |
+| `access_token` |  String  | The per-order access token returned by `create_order`.   |
 
 ### Example Request
 ```json
 {
-  "order_id": "550e8400-e29b-41d4-a716-446655440000"
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "access_token": "ord_live_3rCkP9dG7mN4"
+}
+```
+
+An invalid `access_token` returns a `400` error; an unknown `order_id` returns a `404`.
+
+### Example Response
+The response structure is identical to the `create_order` endpoint.
+
+---
+
+## Rate Decision
+
+### Endpoint
+
+`POST /api/v1/lsps1/rate_decision`
+
+### Description
+
+Resolve a repricing event on an asset-backed order. If the market rate moves significantly before the payment settles, the LSP moves the order into the `PENDING_RATE_DECISION` state instead of opening the channel. The client must then either accept the new rate (the order proceeds with fresh pricing) or decline it (a refund is initiated to the `refund_onchain_address`).
+
+### Request Body
+| Field             |  Type    | Description                                                       |
+|-------------------|----------|-------------------------------------------------------------------|
+| `order_id`        |  String  | Unique identifier of the order.                                   |
+| `access_token`    |  String  | The per-order access token returned by `create_order`.            |
+| `accept_new_rate` |  Boolean | `true` to accept the new rate, `false` to request a refund.       |
+
+### Example Request
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "access_token": "ord_live_3rCkP9dG7mN4",
+  "accept_new_rate": true
 }
 ```
 
 ### Example Response
-The response structure is identical to the `create_order` endpoint.
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "decision_accepted": true,
+  "message": "Rate accepted. Order will proceed with current market rate.",
+  "refund_txid": null
+}
+```
+
+Calling this endpoint on an order that is not in the `PENDING_RATE_DECISION` state returns a `400` error. When a refund is requested and processed, `refund_txid` carries the on-chain transaction ID.
 
 ---
 

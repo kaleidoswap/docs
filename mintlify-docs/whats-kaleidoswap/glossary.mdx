@@ -352,7 +352,7 @@ description: "Key terms for trading across Bitcoin Layers, explaining atomic swa
   </Accordion>
 
   <Accordion title="Layer" icon="layer-group">
-    Which rail a side of a swap settles on. Each swap leg names an `asset_id` and a `layer`, so one trade can cross rails — `BTC_LN` to `RGB_LN`, for example. Market quotes accept `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN`.
+    Which rail a side of a swap settles on. Each swap leg names an `asset_id` and a `layer`, so one trade can cross rails — `BTC_LN` to `RGB_LN`, for example. Market quotes accept `BTC_LN`, `RGB_LN`, and `BTC_L1` (`BTC_ONCHAIN` is a legacy alias).
   </Accordion>
 
   <Accordion title="Swapstring" icon="link">
@@ -371,8 +371,8 @@ description: "Key terms for trading across Bitcoin Layers, explaining atomic swa
     When market rates change significantly during order processing, users can choose to accept the new rate or request a refund.
   </Accordion>
 
-  <Accordion title="swap-sdk & wallet-sdk" icon="code">
-    The two SDK surfaces every KaleidoSwap client is built on: `swap-sdk` for swap integration (TypeScript, Python, Rust) and `wallet-sdk` for wallet primitives (TypeScript). Third-party integrations use the same interfaces our own apps do. See the [SDK docs](/sdk/introduction).
+  <Accordion title="kaleido-sdk & wallet-engine" icon="code">
+    The two SDK surfaces every KaleidoSwap client is built on: `kaleido-sdk` for swap integration (TypeScript and Python, on npm and PyPI, with a Rust core in progress) and `@kaleidorg/wallet-engine` for wallet primitives (TypeScript). Third-party integrations use the same interfaces our own apps do. See the [SDK docs](/sdk/introduction).
   </Accordion>
 
   <Accordion title="KaleidoAgent" icon="robot">

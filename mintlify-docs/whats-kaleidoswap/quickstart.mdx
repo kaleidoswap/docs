@@ -119,7 +119,7 @@ description: "Set up KaleidoSwap and make your first non-custodial swap in minut
     Deposit BTC or assets into a connected account:
 
     1. Click "Deposit" on the dashboard
-    2. Choose an account route: Spark, Arkade, Liquid, or RGB-L1
+    2. Choose a route: Bitcoin on-chain, Lightning, Spark, Arkade, Liquid, or RGB
     3. Copy the address or invoice and send funds from your exchange or another wallet
     4. Wait for confirmation (instant on Spark/Arkade, block-time on-chain)
   </Step>
@@ -128,7 +128,7 @@ description: "Set up KaleidoSwap and make your first non-custodial swap in minut
     Swaps need a compatible venue connected:
 
     - Spark pools become available once your Spark account is funded
-    - For RGB swaps, connect an RGB Lightning Node from "Settings" → "RGB" (direct URL or Nostr Wallet Connect)
+    - For RGB swaps, connect an RGB Lightning Node from "Settings" → "Accounts" → "RGB" (direct URL or Nostr Wallet Connect)
   </Step>
 
   <Step title="Make Your First Swap">
@@ -228,20 +228,19 @@ console.log(`Quote received:`, quote);
 <CodeGroup>
 
 ```bash Get Trading Pairs
-curl https://api.signet.kaleidoswap.com/api/v1/pairs
+curl https://api.signet.kaleidoswap.com/api/v1/market/pairs
 ```
 
 ```bash Get Asset List
-curl https://api.signet.kaleidoswap.com/api/v1/assets
+curl https://api.signet.kaleidoswap.com/api/v1/market/assets
 ```
 
 ```bash Request Quote
-curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
+curl -X POST https://api.signet.kaleidoswap.com/api/v1/market/quote \
   -H "Content-Type: application/json" \
   -d '{
-    "from_asset": "BTC",
-    "to_asset": "USDT",
-    "from_amount": 100000
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
   }'
 ```
 
@@ -259,7 +258,7 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
   <Tab title="Signet">
     **API URL**: `https://api.signet.kaleidoswap.com/api/v1`
 
-    **WebSocket**: `wss://api.signet.kaleidoswap.com/ws/{client_id}`
+    **WebSocket**: `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}`
 
     - Bitcoin Signet (MutinyNet) — public testnet with realistic conditions
     - Recommended for integration testing before mainnet
@@ -269,7 +268,7 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
   <Tab title="Regtest">
     **API URL**: `https://api.regtest.kaleidoswap.com/api/v1`
 
-    **WebSocket**: `wss://api.regtest.kaleidoswap.com/ws/{client_id}`
+    **WebSocket**: `wss://api.regtest.kaleidoswap.com/api/v1/market/ws/{client_id}`
 
     - Local regtest network — instant block generation, full control
     - Best for rapid development and unit testing

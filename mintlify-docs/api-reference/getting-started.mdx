@@ -32,21 +32,21 @@ The mainnet environment is the production-ready endpoint for live transactions. 
 ## Authentication
 
 ### Current State
-The KaleidoSwap API currently does not require any authentication to use its endpoints. This makes it easy to start testing and integrating with the API immediately.
+Anonymous requests are still served, so you can start testing and integrating with the API immediately. Bearer API keys (`Authorization: Bearer <token>`) are already accepted and attributed today.
 
-### Future Plans
-Authentication mechanisms may be introduced in upcoming versions to enhance security and provide access control for advanced features.
+### Enforcement Rollout
+API-key enforcement is being rolled out gradually. Once enabled, requests without a valid key will receive `401` responses — integrations should start sending an API key now. See the [Overview](/api-reference/introduction#authentication) for details.
 
 ---
 
 ## Request Format
 
 ### HTTP Methods
-The API supports the following HTTP methods:
+The API uses the following HTTP methods:
 - **GET:** Retrieve data.
 - **POST:** Submit data or perform an action.
-- **PUT:** Create or update a resource on the server.
-- **DELETE:** Delete a resource on the server.
+
+Real-time quote streaming uses a **WebSocket** endpoint — see the [Swap Protocol](/api-reference/swap-protocol).
 
 ### Headers
 Ensure that your `POST` HTTP requests include the following headers:
@@ -61,12 +61,19 @@ curl -X 'POST' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-  "pair_id": "string",
-  "from_asset": "string",
-  "from_amount": 0,
-  "to_asset": "string"
+  "from_asset": {
+    "asset_id": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "layer": "RGB_LN"
+  }
 }'
 ```
+
+Each leg specifies an `asset_id`, a settlement `layer` (e.g. `BTC_LN`, `RGB_LN`, `BTC_L1`, `RGB_L1`), and optionally an `amount` in the asset's smallest unit — exactly one of the two legs must carry the amount.
 ---
 
 ## Response Format
@@ -78,18 +85,34 @@ All responses from the KaleidoSwap API are in JSON format for ease of parsing. A
 ## Example Response
 ```json
 {
-  "rfq_id": "string",
-  "pair_id": "string",
-  "from_asset": "string",
-  "to_asset": "string",
-  "from_amount": 0,
-  "to_amount": 0,
-  "price": 0,
-  "fee": 0,
-  "fee_rate": 0,
-  "price_precision": 0,
-  "timestamp": 0,
-  "expires_at": 0
+  "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+  "from_asset": {
+    "asset_id": "BTC",
+    "name": "Bitcoin",
+    "ticker": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000,
+    "precision": 8
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "layer": "RGB_LN",
+    "amount": 875000,
+    "precision": 6
+  },
+  "price": 59507000000,
+  "fee": {
+    "base_fee": 1000,
+    "variable_fee": 250,
+    "fee_rate": 0.0001,
+    "final_fee": 1250,
+    "fee_asset": "BTC",
+    "fee_asset_precision": 8
+  },
+  "timestamp": 1715896356,
+  "expires_at": 1715896416
 }
 ```
 ---
@@ -104,11 +127,12 @@ The version number is reflected in the base URL, as in `https://api.signet.kalei
 ---
 
 ## Rate Limiting
-To ensure a fair usage policy, the API may enforce rate limits. Currently:
-- **Requests per minute (RPM)**: 60
-- **Burst requests**: Allowed up to 10 in quick succession
+To ensure a fair usage policy, the API enforces rate limits. The defaults are:
+- **Per IP**: 600 requests per minute
+- **Per endpoint**: 300 requests per minute
+- **Global**: 1000 requests per minute
 
-Rate limits may vary between the testnet and mainnet environments.
+These limits are configurable per deployment, so they may vary between environments. Every response includes `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers; requests over the limit receive a `429 Too Many Requests` response.
 
 ---
 

@@ -19,6 +19,11 @@ A skill is a self-contained `SKILL.md` file loaded at runtime. It scopes which t
 | `kaleidoswap` | KaleidoSwap DEX reference: quotes, atomic swaps, REST orders, open positions |
 | `mpp` | Access to HTTP 402-gated APIs over Lightning |
 | `node-manager` | RGB Lightning Node lifecycle, wallet unlock, channel and balance inspection |
+| `portfolio-loop` | Scheduled portfolio rebalancer: measures drift against targets, executes the minimum atomic swap, folds in DCA |
+| `node-loop` | Scheduled node-health monitor: channel liquidity audit, stuck RGB transfer flush, LSPS1 auto-purchase below threshold |
+| `bitrefill` | Gift cards, mobile top-ups, and eSIMs through Bitrefill, payable over Lightning |
+
+`portfolio-loop`, `node-loop`, and `bitrefill` are the skills enabled by default in `agent.config.json`.
 
 Each file is published under [`skills/` in the kaleido-agent repository](https://github.com/kaleidoswap/kaleido-agent/tree/main/skills), and can be read or downloaded from the [AI Tools product page](https://kaleidoswap.com/products/ai-tools#skills).
 

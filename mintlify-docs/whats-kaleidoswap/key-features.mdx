@@ -55,7 +55,7 @@ KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a r
     
     - Access from multiple devices
     - Managed infrastructure options
-    - Connect via REST, gRPC, or WebSocket
+    - Connect via the node's REST API
   </Tab>
 </Tabs>
 
@@ -76,11 +76,11 @@ KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a r
     - Balance tracking per asset
   </Accordion>
 
-  <Accordion title="Automated Backups" icon="cloud-arrow-up">
-    - Encrypted channel backups
-    - Automatic backup scheduling
-    - Cloud or local storage
-    - One-click restore
+  <Accordion title="Encrypted Backups" icon="cloud-arrow-up">
+    - Backups created after node state changes
+    - Exported manually as an encrypted file
+    - Store the file on local disk or your own external storage
+    - Restore with your mnemonic plus the backup file
   </Accordion>
 
   <Accordion title="Monitoring & Alerts" icon="bell">
@@ -197,7 +197,6 @@ Leverage the Lightning Network for high-performance trading.
 - **Public Channels**: Participate in routing, earn fees
 - **Private Channels**: Direct payments only, more privacy
 - **Anchor Channels**: Use anchor outputs for security
-- **Zero Reserve**: Spend full channel capacity
 
 #### Managing Liquidity
 
@@ -292,7 +291,7 @@ KaleidoSwap is built on the principle of "Your Keys, Your Coins".
   - Always verify binary signatures before installation
   - Store your mnemonic phrase securely offline
   - Use strong, unique passwords
-  - Enable automatic backups
+  - Export a fresh backup after channel changes
   - Keep your software updated
 </Warning>
 
@@ -360,7 +359,7 @@ KaleidoSwap is built on the principle of "Your Keys, Your Coins".
   </Card>
 
   <Card title="Multi-Platform" icon="desktop">
-    Desktop App available for macOS, Windows, and Linux. Extension available on all browsers.
+    Desktop App available for macOS, Windows, and Linux. Extension available for Chromium-based browsers in an invite-only closed beta.
   </Card>
 </CardGroup>
 

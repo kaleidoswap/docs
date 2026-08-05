@@ -4,11 +4,11 @@ sidebarTitle: "Overview"
 description: "The KaleidoSwap Bitcoin swap API provides REST endpoints for atomic swaps, market data, and Lightning channel orders on a multi-protocol Bitcoin DEX"
 ---
 
-The RGB Lightning DEX API allows interaction with an RGB Lightning Service Provider (RGB-LSP) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
+The RGB Lightning DEX API allows interaction with an RGB Lightning Service Provider (RGB-LSP) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients request live quotes for trading pairs and initiate swaps against them. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
 
 ### Key Features
 - **RGB LSPS1 (Lightning Service Provider Specification) Support**: Liquidity services and swap functionalities.
-- **Real-time Market Data**: WebSocket-based subscription for price updates.
+- **Real-time Market Data**: WebSocket request/response quote streaming (`quote_request`/`quote_response`).
 - **Swap Protocol**: Taker-maker model for initiating and executing swaps.
 - **Asset and Trading Pair Management**: Comprehensive API for fetching supported assets and pairs.
 
@@ -23,9 +23,9 @@ The KaleidoSwap API is split into two distinct services:
 | Sub-API | Base Path | Purpose |
 |---------|-----------|---------|
 | **Maker API** | `/api/v1/` | Market data, quotes, swap orders, and LSPS1 channel operations |
-| **RLN API** | `/rln/v1/` | RGB Lightning Node operations — wallet, channels, and payments |
+| **RLN API** | node root (e.g. `http://<node>:3001/`) | RGB Lightning Node operations — wallet, channels, and payments |
 
-The **Maker API** is publicly accessible and handles all trading and liquidity operations. The **RLN API** connects to your own RGB Lightning Node and requires a running node instance.
+The **Maker API** is publicly accessible and handles all trading and liquidity operations. The **RLN API** is the REST API served directly at the root of your own RGB Lightning Node (e.g. `http://<node>:3001/nodeinfo`) and requires a running node instance.
 
 ### Which API do I need?
 
@@ -35,7 +35,7 @@ The **Maker API** is publicly accessible and handles all trading and liquidity o
 | Get a price quote for a swap | Maker API | [Market APIs](/api-reference/market-apis) |
 | Initiate or track an atomic swap | Maker API | [Swap APIs](/api-reference/swap-apis) |
 | Order a Lightning channel from an LSP | Maker API | [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) |
-| Stream real-time prices | Maker API (WebSocket) | [Swap Protocol](/api-reference/swap-protocol) |
+| Request live quotes over WebSocket | Maker API (WebSocket) | [Swap Protocol](/api-reference/swap-protocol) |
 | Check wallet balance or node info | RLN API | Requires your own node |
 | Send/receive BTC or RGB assets | RLN API | Requires your own node |
 | Open or close Lightning channels | RLN API | Requires your own node |
@@ -48,15 +48,15 @@ The **Maker API** is publicly accessible and handles all trading and liquidity o
 
 ## Authentication
 
-**Current state**: No authentication is required for most Maker API endpoints. Public market data (assets, pairs, quotes) and swap creation are open.
+**Current state**: Anonymous access works for all Maker API endpoints. Bearer API keys (`Authorization: Bearer <token>`) are already **accepted and attributed** today — keys carry scopes such as `quote:read` (market data and quotes) and `swap:execute` (swap init/execute) — but enforcement is rolling out gradually, so requests without a key are still served. The API playground is pre-configured with bearer auth.
 
-**Planned**: Bearer token authentication (`Authorization: Bearer <token>`) will be introduced for rate-limited or permissioned endpoints in a future release. The API playground is pre-configured with bearer auth for when it is required.
+**Rolling out**: Once enforcement is enabled, requests with a missing or invalid key will receive `401` responses. Integrations should start sending an API key now to be ready.
 
 ---
 
 ## Base Response Format
 
-All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Errors use one of two envelopes.
+All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Errors use one of three envelopes.
 
 **Application errors** (invalid parameters, missing resources, conflicts, rate limits, server errors) return a structured envelope:
 
@@ -83,15 +83,27 @@ All API responses follow a consistent JSON structure. Successful responses retur
 }
 ```
 
+**Legacy errors**: a few endpoints still return some `400` responses as a bare detail object, without `error_code` or `request_id` — for example an unsupported route on `/market/quote` or a malformed `pair_ticker` filter on `/market/pairs`:
+
+```json
+{
+  "detail": "Route not supported for this pair. From: BTC_LN, To: RGB_LN"
+}
+```
+
 HTTP status codes follow standard conventions:
 
 | Status | Meaning |
 |--------|---------|
 | `200` | Success |
 | `400` | Bad request — invalid parameters |
+| `401` | Unauthorized — missing or invalid API key (once enforcement is enabled) |
+| `403` | Forbidden — key not allowed from this origin |
 | `404` | Resource not found |
 | `422` | Unprocessable entity — validation error |
+| `429` | Too many requests — rate limit exceeded |
 | `500` | Internal server error |
+| `503` | Service unavailable — maker or LSP node temporarily unreachable |
 
 See [Error Handling](/api-reference/error-handling) for a complete list of error codes.
 

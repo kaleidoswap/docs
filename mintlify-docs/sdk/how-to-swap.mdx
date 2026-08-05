@@ -79,7 +79,7 @@ The `rfq_id` on the response is what ties the next step to this price. Quotes ex
 
 ## Step 2: Initialize the Swap
 
-Lock the swap with the maker against that quote. This returns the `swapstring` and the `payment_hash` you need for every remaining step.
+Lock the swap with the maker against that quote. This returns the `swapstring` and the `payment_hash` you need for every remaining step, plus the `access_token` that authorizes status polling — it is only returned here, so store it alongside the payment hash.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -91,7 +91,7 @@ const swap = await client.maker.initSwap({
   to_amount: quote.to_asset.amount,
 });
 
-// swap.swapstring, swap.payment_hash
+// swap.swapstring, swap.payment_hash, swap.access_token
 ```
 
 ```python Python
@@ -103,7 +103,7 @@ swap = await client.maker.init_swap(SwapRequest(
     to_amount=quote.to_asset.amount,
 ))
 
-# swap.swapstring, swap.payment_hash
+# swap.swapstring, swap.payment_hash, swap.access_token
 ```
 </CodeGroup>
 
@@ -159,12 +159,13 @@ print(f"Swap executed. Status: {execution.status}")
 
 ## Step 5: Track Settlement
 
-`executeSwap` returning is not the same as the swap having settled. Poll the status by `payment_hash` until it reaches a terminal state.
+`executeSwap` returning is not the same as the swap having settled. Poll the status by `payment_hash`, passing the `access_token` from `initSwap`, until it reaches a terminal state.
 
 <CodeGroup>
 ```typescript TypeScript
 const status = await client.maker.getAtomicSwapStatus({
   payment_hash: swap.payment_hash,
+  access_token: swap.access_token,
 });
 
 console.log(status.swap?.status);
@@ -173,6 +174,7 @@ console.log(status.swap?.status);
 ```python Python
 status = await client.maker.get_atomic_swap_status(SwapStatusRequest(
     payment_hash=swap.payment_hash,
+    access_token=swap.access_token,
 ))
 
 print(status.swap.status if status.swap else None)

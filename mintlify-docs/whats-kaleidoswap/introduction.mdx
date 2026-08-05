@@ -16,7 +16,7 @@ Its vertically integrated stack spans end-user applications such as the Desktop 
 
 <CardGroup cols={2}>
   <Card title="Multi-Protocol" icon="layer-group">
-    Hold, spend, and swap assets across all Bitcoin Layers with instant atomic settlement
+    Hold, spend, and swap assets across Bitcoin Layers. BTC ↔ RGB swaps settle atomically over Lightning; other routes run through supported venues
   </Card>
 
   <Card title="Non-Custodial" icon="shield-check">
@@ -24,7 +24,7 @@ Its vertically integrated stack spans end-user applications such as the Desktop 
   </Card>
 
   <Card title="Open Source" icon="code-branch">
-    Fully open source with MIT license. Inspect the code, contribute, or build your own integration
+    The desktop app, SDKs, CLI, wallet engine, and AI tooling are MIT-licensed. Inspect the code, contribute, or build your own integration
   </Card>
 
   <Card title="Multi-Platform" icon="desktop">
@@ -41,7 +41,7 @@ Its vertically integrated stack spans end-user applications such as the Desktop 
 The stack is vertically integrated: a single SDK powers every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocols, and the same liquidity.
 
 - **Clients & integrators** — Desktop, Extension, Mobile, and Web App, alongside third-party wallets, neobanks, payment processors, and AI agents building on the same interfaces.
-- **Integration layer** — `swap-sdk` for swap integration (TypeScript, Python, Rust) and `wallet-sdk` for wallet primitives (TypeScript). [Start with the SDK →](/sdk/introduction)
+- **Integration layer** — `kaleido-sdk` for swap integration (TypeScript and Python, with a Rust core in progress) and `@kaleidorg/wallet-engine` for wallet primitives (TypeScript). [Start with the SDK →](/sdk/introduction)
 - **Protocols** — Bitcoin on-chain and Lightning, plus the Bitcoin Layer protocols swaps can settle on. [How it works →](/whats-kaleidoswap/background)
 - **Liquidity layer** — the KaleidoSwap LSP bootstraps liquidity today; external market makers join from 2027.
 - **Intelligence layer** — KaleidoMind, the self-hosted AI brain (QVAC runtime, Skills and MCP libraries, fine-tuned models), and KaleidoAgent, an autonomous trading agent that runs against a local model or Claude and OpenAI. [Explore AI Tools →](/ai-tools/introduction)
@@ -109,7 +109,7 @@ Build on KaleidoSwap with our SDKs, APIs, and AI Tools:
   </Step>
 
   <Step title="Create a client">
-    Point `KaleidoClient.create()` at a regtest, signet, or mainnet endpoint.
+    Point `KaleidoClient.create()` at a regtest or signet endpoint — mainnet is coming soon.
     [Client Reference →](/sdk/api-reference)
   </Step>
 

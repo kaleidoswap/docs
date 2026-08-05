@@ -55,8 +55,8 @@ It manages a Lightning and RGB wallet, executes atomic HTLC swaps on the Kaleido
 
 | Mode | How it works | When to use |
 |------|-------------|-------------|
-| `skill` _(default)_ | `SKILL.md` files load as the system prompt, and the agent calls a single `run_kaleido_command` tool that shells out to KaleidoCLI. Nanobot manages all MCP connections directly | Lightweight, no direct MCP connection from Node.js |
-| `mcp` | Node.js connects to [MCP servers](/ai-tools/mcp-servers) directly via `McpManager` and calls their tools inline (`AgentRunner`, Claude/OpenAI API turns) | Debugging, or setups needing fine-grained tool control from Node.js |
+| `skill` _(default)_ | `SKILL.md` files load as the system prompt, and Nanobot manages the MCP servers directly: `kaleido` (the unified `kaleido-mcp`) for wallet, DEX, and payment tools, plus `kaleido_control` for local agent control | Lightweight, no direct MCP connection from Node.js |
+| `mcp` | Node.js connects to [MCP servers](/ai-tools/mcp-servers) directly via `McpManager` and calls their tools inline | Debugging, or setups needing fine-grained tool control from Node.js |
 
 ## MCP Server Wiring
 
@@ -120,11 +120,12 @@ Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/getting-started) in `$PATH
     ```
   </Step>
   <Step title="Set the API key">
-    ```bash
-    cp .env.example .env
-    ```
+    Create a `.env` file in the repository root with `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. Use `AGENT_PROVIDER` to pick between `anthropic` and `openai`:
 
-    Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `.env`. Use `AGENT_PROVIDER` to pick between `anthropic` and `openai`.
+    ```bash
+    ANTHROPIC_API_KEY=sk-ant-...
+    AGENT_PROVIDER=anthropic
+    ```
   </Step>
   <Step title="Configure the wallet and portfolio">
     Edit `agent.config.json`:
@@ -143,7 +144,7 @@ Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/getting-started) in `$PATH
     npm start
     ```
 
-    The dashboard serves on `http://localhost:5173` and the local status API on `http://localhost:4242`. Use `npm run daemon:start` to run it as a background process instead.
+    `npm start` runs the agent and its local status API on `http://localhost:4242`. The dashboard is served separately: run `npm run dev:webapp` (or `npm run start:webapp` for the built webapp) to serve it on `http://localhost:5173`. Use `npm run daemon:start` to run the agent as a background process instead.
   </Step>
 </Steps>
 

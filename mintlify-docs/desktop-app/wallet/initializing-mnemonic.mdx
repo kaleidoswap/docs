@@ -7,7 +7,7 @@ description: "Restore or initialize a wallet from a mnemonic backup in the Kalei
 
 A **mnemonic phrase** (also called a seed phrase or recovery phrase) is a sequence of 12 words that encodes your wallet's private key. It is the single most important piece of information associated with your wallet — anyone who has it can fully reconstruct your wallet and access all your funds.
 
-KaleidoSwap generates a mnemonic when you create a new wallet. You must back it up before proceeding. If you lose access to your device or forget your password, the mnemonic is the **only** way to recover your funds.
+KaleidoSwap generates a mnemonic when you create a new wallet. You must back it up before proceeding. In-app recovery on a new device uses your encrypted [backup file](/desktop-app/channels/channel-backups), but the mnemonic remains the ultimate backup of your wallet keys — without it, and without a backup file, your funds cannot be recovered.
 
 <Warning>
   **Back up your mnemonic phrase immediately.** Write it down on paper and store it somewhere safe and offline. If you lose your mnemonic and cannot access your device, your funds are permanently unrecoverable. KaleidoSwap has no way to retrieve it for you.
@@ -44,9 +44,9 @@ If you lose your mnemonic **and** can no longer access the device where the wall
 
 If you still have access to your device and remember your password, the app will continue to work normally. The mnemonic is only needed when restoring to a new device or after reinstallation.
 
-## Importing an Existing Mnemonic
+## Restoring an Existing Wallet
 
-If you already have a 12-word mnemonic from a previous wallet, you can import it during the wallet setup flow by choosing **Import Existing Wallet** instead of creating a new one.
+Importing a wallet directly from a 12-word mnemonic is not currently supported. To recover an existing wallet, choose **Restore Wallet** during the setup flow and provide your encrypted [backup file](/desktop-app/channels/channel-backups) along with the node password used to create it. Keep your mnemonic backed up regardless — it remains the root of your wallet keys.
 
 ---
 

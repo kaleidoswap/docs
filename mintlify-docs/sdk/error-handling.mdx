@@ -6,12 +6,13 @@ description: "Handle KaleidoSDK errors with the exception hierarchy, covering er
 
 ## Error Hierarchy
 
-Both SDKs share the same error class hierarchy. All errors extend from `KaleidoError`:
+Both SDKs share a nearly identical error class hierarchy. All errors extend from `KaleidoError`:
 
 ```
 KaleidoError (base)
 ├── APIError (HTTP 400-599)
-│   └── RateLimitError (HTTP 429)
+│   └── RateLimitError (HTTP 429, TypeScript only)
+├── RateLimitError (HTTP 429, Python — extends KaleidoError directly)
 ├── NetworkError (connectivity issues)
 ├── ValidationError (HTTP 400, 422)
 ├── TimeoutError (HTTP 408, 504)
@@ -23,6 +24,8 @@ KaleidoError (base)
 ├── QuoteExpiredError (quote expired)
 └── InsufficientBalanceError (not enough funds)
 ```
+
+One divergence to be aware of: in TypeScript `RateLimitError` extends `APIError`, while in Python it extends `KaleidoError` directly — a Python `except APIError` handler will not catch rate-limit errors.
 
 ## Base Error: KaleidoError
 
@@ -85,7 +88,7 @@ from kaleido_sdk import APIError
 
 ### RateLimitError
 
-Raised when rate limit is exceeded (HTTP 429). Extends `APIError`.
+Raised when rate limit is exceeded (HTTP 429). Extends `APIError` in TypeScript; in Python it extends `KaleidoError` directly.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -162,16 +165,16 @@ from kaleido_sdk import SwapError
 
 ### NodeNotConfiguredError
 
-Raised when an RLN node operation is attempted without a configured `nodeUrl`.
+Raised by the Python SDK when an RLN node operation is attempted without a configured `node_url`. TypeScript instead throws `ConfigError` ("Node API not configured. Provide \"nodeUrl\" when creating the client.") when a `client.rln.*` method is called without `nodeUrl`.
 
 <CodeGroup>
 ```typescript TypeScript
-import { NodeNotConfiguredError } from 'kaleido-sdk';
+import { ConfigError } from 'kaleido-sdk';
 
 try {
   await client.rln.getNodeInfo();
 } catch (error) {
-  if (error instanceof NodeNotConfiguredError) {
+  if (error instanceof ConfigError) {
     console.log('Configure nodeUrl to use RLN operations');
   }
 }
@@ -198,7 +201,7 @@ Raised when a balance is insufficient for the requested operation.
 <CodeGroup>
 ```typescript TypeScript
 import { InsufficientBalanceError } from 'kaleido-sdk';
-// Properties: requiredAmount: bigint, availableAmount: bigint, asset?: string
+// Properties: requiredAmount: number, availableAmount: number, asset?: string
 
 try { /* ... */ } catch (error) {
   if (error instanceof InsufficientBalanceError) {
@@ -230,7 +233,7 @@ import {
   TimeoutError,
   NotFoundError,
   QuoteExpiredError,
-  NodeNotConfiguredError,
+  ConfigError,
   InsufficientBalanceError,
   RateLimitError,
 } from 'kaleido-sdk';
@@ -254,7 +257,7 @@ try {
     console.log('Request timed out, retrying...');
   } else if (error instanceof NetworkError) {
     console.log('Network issue, check connectivity');
-  } else if (error instanceof NodeNotConfiguredError) {
+  } else if (error instanceof ConfigError) {
     console.log('Node not configured');
   } else if (error instanceof APIError) {
     console.log(`API error (${error.statusCode}): ${error.message}`);
@@ -361,7 +364,7 @@ The SDK automatically maps HTTP errors to typed exceptions using `mapHttpError` 
 | 400, 422 | `ValidationError` | No — the request itself is wrong |
 | 404 | `NotFoundError` | No |
 | 408, 504 | `TimeoutError` | Yes, always |
-| 429 | `RateLimitError` | Yes, after `retryAfter` / `retry_after` |
+| 429 | `RateLimitError` | TypeScript: yes, after `retryAfter`. Python: `is_retryable()` returns `False` — back off using `retry_after` yourself |
 | 500, 502, 503 | `APIError` | Yes — a server-side fault may clear |
 | Other 4xx | `APIError` | No |
 | Network failure | `NetworkError` | Yes, always |

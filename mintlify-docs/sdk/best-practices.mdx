@@ -293,17 +293,15 @@ Always validate amounts and addresses before sending to the API:
 
 <CodeGroup>
 ```typescript TypeScript
-// Validate amount is within limits
+// Validate amount is within the layer's trading limits
 const pairs = await client.maker.listPairs();
 const pair = pairs.pairs.find(p =>
-  p.base_asset_ticker === 'BTC' && p.quote_asset_ticker === 'USDT'
+  p.base.ticker === 'BTC' && p.quote.ticker === 'USDT'
 );
 
-if (pair?.routes?.[0]) {
-  const route = pair.routes[0];
-  if (amount < route.min_from_amount || amount > route.max_from_amount) {
-    throw new Error(`Amount must be between ${route.min_from_amount} and ${route.max_from_amount}`);
-  }
+const limits = pair?.base.endpoints?.find(e => e.layer === 'BTC_LN');
+if (limits && (amount < limits.min_amount || amount > limits.max_amount)) {
+  throw new Error(`Amount must be between ${limits.min_amount} and ${limits.max_amount}`);
 }
 ```
 
@@ -311,18 +309,23 @@ if (pair?.routes?.[0]) {
 pairs = await client.maker.list_pairs()
 pair = next(
     (p for p in pairs.pairs
-     if p.base_asset_ticker == "BTC" and p.quote_asset_ticker == "USDT"),
+     if p.base.ticker == "BTC" and p.quote.ticker == "USDT"),
     None
 )
 
-if pair and pair.routes:
-    route = pair.routes[0]
-    if amount < route.min_from_amount or amount > route.max_from_amount:
-        raise ValueError(
-            f"Amount must be between {route.min_from_amount} and {route.max_from_amount}"
-        )
+limits = next(
+    (e for e in (pair.base.endpoints or []) if e.layer == "BTC_LN"),
+    None,
+) if pair else None
+
+if limits and not (limits.min_amount <= amount <= limits.max_amount):
+    raise ValueError(
+        f"Amount must be between {limits.min_amount} and {limits.max_amount}"
+    )
 ```
 </CodeGroup>
+
+Order-size limits live on each asset's `endpoints` list (`TradingLimits` per layer); `pair.routes` only tells you which `from_layer -> to_layer` combinations exist.
 
 ## Performance
 
@@ -332,9 +335,9 @@ Assets and trading pairs change infrequently. Cache them to reduce API calls:
 
 <CodeGroup>
 ```typescript TypeScript
-import type { ListPairsResponse } from 'kaleido-sdk';
+import type { TradingPairsResponse } from 'kaleido-sdk';
 
-let cachedPairs: ListPairsResponse | null = null;
+let cachedPairs: TradingPairsResponse | null = null;
 let cacheTime = 0;
 
 async function getPairs() {

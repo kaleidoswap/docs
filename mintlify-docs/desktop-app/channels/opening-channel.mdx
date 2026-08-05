@@ -9,7 +9,7 @@ KaleidoSwap allows you to use the Lightning Network both by itself and with RGB 
 
 The following is the procedure that will allow you to open a LN channel on your node. As mentioned in step 4, you can open it with or without adding a RGB asset on top of it.
 
-1. Click either on **"Create New Channel"** on the left vertical menu or on **"Open Channel"** in the high end of the Dashboard.
+1. Open the **Channels** section and select the **"Open Channel"** tab.
 2. **Select a Peer** either by inserting the node ID or public key of the peer or by selecting a suggested node. <img src="/assets/images/desktop-app/16_peer_connection.png" alt="Peer selection with node ID field and suggested Lightning nodes" width={1332} height={757} />
 3. Specify the amount of Bitcoin to allocate to the channel. This will represent the total capacity of the channel. <img src="/assets/images/desktop-app/17_channel_amount.png" alt="Channel capacity selection with Bitcoin amount input" width={954} height={870} />
 4. [Optional] **Add RGB Assets** by doing the following: 
@@ -30,15 +30,15 @@ The following is the high-level flow required to operate with a newly-opened cha
 
 1. **Confirmation**: The app will display a confirmation screen with the channel details.
 2. **Funding Transaction**: The funding transaction will be broadcast to the Bitcoin network.
-3. **Waiting Period**: Wait for the required number of confirmations (typically 3).
+3. **Waiting Period**: Wait for the required number of confirmations (around 6 blocks, roughly an hour on mainnet).
 4. **Channel Active**: Once confirmed, your channel will be ready for use.
 
 ## Important Notes
 
 - Minimum channel size: 50,000 SATs
-- Required confirmations: 3 blocks
+- Required confirmations: around 6 blocks
 - Channel capacity cannot be changed after opening
-- RGB assets can be added later through additional transactions
+- RGB assets cannot be added to a channel after opening — include them when creating the channel
 - Keep your node online during the opening process
 
 ---

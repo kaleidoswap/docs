@@ -9,7 +9,7 @@ The Swap APIs implement the **atomic swap protocol** used by the KaleidoSwap Des
 
 To use these endpoints you need:
 - A running **RGB Lightning Node (RLN)** to whitelist and route the HTLC.
-- A **WebSocket connection** to the maker for live price streaming and `rfq_id` generation.
+- A **WebSocket connection** to the maker (or the REST `/market/quote` endpoint) for live quotes and `rfq_id` generation.
 
 See the [Market APIs](/api-reference/market-apis) for quotes and asset data, and the [Swap Protocol](/api-reference/swap-protocol) for a full walkthrough of the atomic swap flow.
 
@@ -23,111 +23,111 @@ See the [Market APIs](/api-reference/market-apis) for quotes and asset data, and
 **`GET /api/v1/swaps/nodeinfo`**
 
 ### Description
-Retrieve information about the RGB Lightning Node, such as its identifier, alias, and current state.
+Retrieve the public identity of the maker's RGB Lightning Node — its pubkey, the network it runs on, and the current block height. This endpoint is safe to poll.
 
 ### Response Structure
-- **`node_id`**: The unique identifier of the node.
-- **`alias`**: The human-readable name of the node.
-- **`color`**: The color code associated with the node.
-- **`num_peers`**: Number of peers connected to the node.
-- **`num_channels`**: Number of active channels.
+- **`pubkey`**: The public key of the maker node.
+- **`network`**: The Bitcoin network the node runs on (e.g., `Signet`, `Regtest`, `Mainnet`).
 - **`block_height`**: Current blockchain height the node is synced to.
-- **`synced_to_chain`**: Boolean indicating if the node is fully synced to the blockchain.
 
 ### Example Response
 ```json
 {
-  "node_id": "03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad",
-  "alias": "RGB-LSP-Node",
-  "color": "#000000",
-  "num_peers": 5,
-  "num_channels": 10,
-  "block_height": 700000,
-  "synced_to_chain": true
+  "pubkey": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706",
+  "network": "Signet",
+  "block_height": 805434
 }
 ```
 ---
 
-## Real-time Price Updates
+## Real-time Quotes over WebSocket
 ### WebSocket Endpoint
 
 | Environment | URL |
 |-------------|-----|
-| **Regtest** | `wss://api.regtest.kaleidoswap.com/ws/{client_id}` |
-| **Signet** | `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
-| **Mainnet** | `wss://api.kaleidoswap.com/ws/{client_id}` *(coming soon)* |
+| **Regtest** | `wss://api.regtest.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **Mainnet** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *(coming soon)* |
 
 ### Description
-Establish a WebSocket connection to subscribe to real-time price updates for specific trading pairs.
+Establish a WebSocket connection to request live quotes from the maker. The protocol is request/response: the client sends a message and the server replies to that message. There is no subscription mechanism — to keep a price fresh, send a new `quote_request` whenever you need an updated quote.
 
 ### Connection
 - Replace `{client_id}` with a unique identifier for your client.
 
-### Subscription Format
-To subscribe to a trading pair, send a JSON message with the following format:
+### Message Format
+Only two actions are supported:
+
+- **`ping`** — heartbeat; the server replies with a `pong`.
+- **`quote_request`** — request a quote for a swap between two assets.
+
+To request a quote, send a JSON message with the following format:
 
 ```json
 {
-  "action": "subscribe",
-  "pair": "BTC/USDT"
+  "action": "quote_request",
+  "from_asset": "BTC",
+  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+  "from_amount": 1500000
 }
 ```
 
-To unsubscribe from a trading pair:
-
-```json
-{
-  "action": "unsubscribe",
-  "pair": "BTC/USDT"
-}
-```
+- **`from_asset`** / **`to_asset`** (required): Asset identifiers — a ticker like `BTC` or an RGB contract ID.
+- **`from_amount`** / **`to_amount`**: Amount in the asset's **raw smallest unit**. Provide exactly one of the two — `from_amount` for a forward quote, `to_amount` for a reverse quote.
+- **`from_layer`** / **`to_layer`** (optional): Explicit settlement layers (e.g., `BTC_LN`, `RGB_LN`). If omitted, the pair's default route is used.
 
 ### Response Format
-Price updates are streamed as JSON objects:
+The server replies to each `quote_request` with a `quote_response` message carrying the full quote (the same shape as the REST `POST /api/v1/market/quote` response) in `data`:
 
-- `action`: The action performed (e.g., `price_update`).
-- `data`: The details of the price update.
-
-### Example Response
 ```json
 {
-  "action": "price_update",
+  "action": "quote_response",
   "data": {
     "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
-    "price_buy": 59507000000,
-    "price_sell": 59508000000,
-    "fee_base": 100,
-    "fee_rate": 0.1,
-    "price_precision": 6,
-    "base_precision": 11,
-    "pair": "BTC/USDT",
-    "timestamp": 1630296243,
-    "expires_at": 1630296248
+    "from_asset": {
+      "asset_id": "BTC",
+      "name": "Bitcoin",
+      "ticker": "BTC",
+      "layer": "BTC_LN",
+      "amount": 1500000,
+      "precision": 8
+    },
+    "to_asset": {
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+      "name": "Tether USD",
+      "ticker": "USDT",
+      "layer": "RGB_LN",
+      "amount": 875000,
+      "precision": 6
+    },
+    "price": 59507000000,
+    "fee": {
+      "base_fee": 1000,
+      "variable_fee": 250,
+      "fee_rate": 0.0001,
+      "final_fee": 1250,
+      "fee_asset": "BTC",
+      "fee_asset_precision": 8
+    },
+    "timestamp": 1715896356,
+    "expires_at": 1715896416
   }
 }
 ```
 
 ### Field Descriptions
 
-- **`rfq_id`**: The `request_for_quotation_id`, a unique identifier generated by the maker. This ID is crucial for initiating swaps and must be passed in the `init` endpoint.
-- **`price_buy`**: The buy price for the trading pair.
-- **`price_sell`**: The sell price for the trading pair.
-- **`price_precision`**: The number of decimal places to which the price is quoted, relevant to the quote asset. For example, if `price_precision` is `6` for the BTC/USDT pair, it indicates that the USDT is quoted to six decimal places.
-- **`base_precision`**: The number of decimal places to which the base asset is quoted. For example, `base_precision` is `11` for the BTC/USDT pair, since BTC amounts are denominated in millisatoshis (1 BTC = 100,000,000,000 msat).
-- **`pair`**: The trading pair, such as BTC/USDT.
-- **`timestamp`**: The timestamp when the price update was generated in unix time.
-- **`expires_at`**: The timestamp when the `rfqId` will expire in unix time.
-
-### Price Precision Note
-
-- Prices provided in the response do not reflect the precision of the base asset. For instance, in a BTC/USDT pair, the base asset (BTC) is always denominated in millisatoshis, and the quote asset (USDT) price precision is found in the update. For example, a `price_buy` of `59507000000` unit for a size of `100000000` sats (1 BTC) corresponds to `59507` USDT, considering the `price_precision` of `6`.
+- **`rfq_id`**: The `request_for_quotation_id`, a unique identifier generated by the maker for this quote. This ID is crucial for initiating swaps and must be passed to the `init` endpoint before `expires_at`.
+- **`from_asset`** / **`to_asset`**: Complete leg specifications with `asset_id`, `name`, `ticker`, `layer`, `amount` (smallest unit), and `precision`.
+- **`price`**: Price of 1 whole unit of `from_asset` expressed in the smallest unit of `to_asset`.
+- **`fee`**: Fee breakdown — `base_fee`, `variable_fee`, `fee_rate`, `final_fee`, plus the asset (`fee_asset`) and precision (`fee_asset_precision`) the fee is denominated in.
+- **`timestamp`**: When the quote was generated (unix time).
+- **`expires_at`**: When the `rfq_id` expires (unix time).
 
 ### Additional Notes:
 
-- The server validates the requested pair against the list of available pairs. If an invalid pair is requested, the subscription will be ignored.
-- When BTC is in a pair, it is always denominated in millisatoshis (msat) with a precision of `11` (1 BTC = 100,000,000,000 msat).
-- Clients can subscribe to multiple pairs by sending multiple subscription messages.
-- The WebSocket connection will remain open until the client disconnects or a network error occurs.
+- Failed requests (unknown pair, unsupported route, invalid amounts) return a message with an `error` field instead of a `quote_response`.
+- The WebSocket connection remains open until the client disconnects or a network error occurs; send periodic `ping` messages to keep it healthy.
 
 ---
 
@@ -138,12 +138,12 @@ Price updates are streamed as JSON objects:
 `POST /api/v1/swaps/init`
 
 ### Description
-Initiate a swap based on the price update received via WebSocket. This endpoint locks the price and prepares the swap for execution.
+Initiate a swap based on a fresh quote. This endpoint locks the price and prepares the swap for execution.
 
 ### Request Body
 | Field                      |  Type    | Description                           |
 |----------------------------|----------|---------------------------------------|
-| `rfq_id` |  String  | The ID of the price update received via WebSocket.  |
+| `rfq_id` |  String  | The quote ID from a WebSocket `quote_response` message or the REST `POST /api/v1/market/quote` endpoint.  |
 | `from_asset`               |  String  | The RGB asset ID to swap from.        |
 | `from_amount`              |  Integer | The amount of the asset to swap from.* |
 | `to_asset`                 |  String  | The RGB asset ID to swap to.          |
@@ -165,12 +165,14 @@ Initiate a swap based on the price update received via WebSocket. This endpoint 
 ### Response Structure
 - `swapstring`: A string representation of the swap to be executed.
 - `payment_hash`: The payment hash associated with the swap.
+- `access_token`: Per-swap token required to poll `/swaps/atomic/status`. It is returned only once here at initiation — store it alongside the payment hash.
 
 ### Example Response
 ```json
 {
   "swapstring": "1000000/btc/587770/rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB/be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
-  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e"
+  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
+  "access_token": "ord_live_3rCkP9dG7mN4"
 }
 ```
 
@@ -225,17 +227,19 @@ Execute the swap after it has been initiated and validated.
 `POST /api/v1/swaps/atomic/status`
 
 ### Description
-Retrieve the current status of an atomic swap using the associated `payment_hash`.
+Retrieve the current status of an atomic swap using the associated `payment_hash` and the per-swap `access_token` returned by `/swaps/init`.
 
 ### Request Body
 | Field          | Type   | Description                                            |
 |----------------|--------|--------------------------------------------------------|
 | `payment_hash` | String | The payment hash of the swap whose status to retrieve. |
+| `access_token` | String | The per-swap access token returned by `/swaps/init`.   |
 
 ### Example Request
 ```json
 {
-  "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664"
+  "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664",
+  "access_token": "ord_live_3rCkP9dG7mN4"
 }
 ```
 
@@ -282,6 +286,7 @@ Retrieve the current status of an atomic swap using the associated `payment_hash
 
 - The `status` field provides real-time updates on the swap's progress.
 - Ensure that the `payment_hash` provided is accurate to retrieve the correct swap status.
+- A missing or invalid `access_token` returns a uniform `404 Swap not found`, so the endpoint cannot be used to probe for existing payment hashes.
 - Time-related fields are in Unix timestamp format.
 - The `SwapStatus` field in the `Swap` object can have one of the following values:
   - **`Waiting`**: The swap is awaiting initiation.

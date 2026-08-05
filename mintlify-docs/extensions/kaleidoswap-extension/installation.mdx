@@ -21,15 +21,37 @@ The KaleidoSwap Extension is built as a Manifest V3 web extension. The first clo
 
 ### Closed Beta Zip (Developer Mode)
 
-The first KaleidoSwap Extension release is an invite-only closed beta. There is no browser-store listing yet, and the extension source repository is not public yet. Invited testers receive a private Drive link from the KaleidoSwap team with the beta zip, checksum, and release notes.
+The first KaleidoSwap Extension release is an invite-only closed beta. There is no browser-store listing yet, and the extension source repository is not public yet. Invited testers receive a personal download link from the KaleidoSwap team, of the form `https://kaleidoswap.com/dl?t=...`. It always serves the latest beta build, so keep the email — the same link works for every update.
 
 <Warning>
-Only install beta archives shared through the official KaleidoSwap invite or support channel. Do not install forwarded archives from unverified sources.
+Only install beta archives shared through the official KaleidoSwap invite or support channel. Do not install forwarded archives from unverified sources. Your download link is personal to you; treat it as private.
 </Warning>
 
 <Steps>
   <Step title="Download the Beta Zip">
-    Open the private Drive link from your beta invite and download the latest KaleidoSwap Extension zip archive. If a checksum is provided, verify it before installing.
+    Open the download link from your beta invite. It serves the current build as a zip archive.
+  </Step>
+
+  <Step title="Verify What You Downloaded">
+    The published checksum and the maintainer's detached signature are available on the same link:
+
+    ```bash
+    # SHA-256 checksum of the current build
+    curl -s "https://kaleidoswap.com/dl?t=YOUR_TOKEN&file=sha256"
+    ```
+
+    Compare it against the archive you downloaded:
+
+    ```bash
+    shasum -a 256 kaleidoswap-extension-beta-latest.zip
+    ```
+
+    To check the signature as well, fetch it with `&file=asc` and verify against the KaleidoSwap release signing key (`696F19C9DA0ADBE8B38E5346E007BFF05941433B`):
+
+    ```bash
+    curl -s "https://kaleidoswap.com/dl?t=YOUR_TOKEN&file=asc" -o kaleidoswap-extension.zip.asc
+    gpg --verify kaleidoswap-extension.zip.asc kaleidoswap-extension-beta-latest.zip
+    ```
   </Step>
 
   <Step title="Extract the Archive">
@@ -45,7 +67,7 @@ Only install beta archives shared through the official KaleidoSwap invite or sup
   </Step>
 
   <Step title="Load Unpacked">
-    Click **Load unpacked** and select the extracted folder that contains `manifest.json`. If the archive contains a `dist` folder, select `dist`.
+    Click **Load unpacked** and select the extracted folder that contains `manifest.json`.
   </Step>
 
   <Step title="Pin the Extension">
@@ -61,7 +83,7 @@ Only install beta archives shared through the official KaleidoSwap invite or sup
 | **Source build** | Not available until the extension source is opened |
 
 <Note>
-Closed beta testers should install only the zip provided through the private Drive link. Source-build instructions will be added when the extension repository is made public.
+Closed beta testers should install only the zip served by their personal download link. Source-build instructions will be added when the extension repository is made public.
 </Note>
 
 ## First Launch
@@ -85,13 +107,14 @@ The KaleidoSwap Extension requests the following Chrome extension permissions:
 | Permission | Purpose |
 |-----------|---------|
 | **Storage** | Store encrypted wallet data, preferences, and account configuration locally |
-| **Active Tab** | Support browser-page wallet interactions |
-| **Scripting** | Inject DApp bridge scripts |
 | **Tabs** | Coordinate approval and confirmation windows |
 | **Alarms** | Run scheduled wallet/session tasks |
 | **Notifications** | Notify the user about wallet events where supported |
 | **Clipboard Read** | Read pasted invoices, addresses, and connection strings |
 | **Side Panel** | Open the wallet in the browser side panel |
+| **Declarative Net Request (with host access)** | Adjust request headers on the wallet's own API calls to already-permitted hosts |
+
+The manifest also declares `host_permissions` for the specific endpoints the wallet talks to: KaleidoSwap services, block explorers and indexers, the RGB proxy, Spark/Flashnet, Arkade, and price APIs.
 
 <Note>
 The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect.
@@ -99,7 +122,9 @@ The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local
 
 ## Updating
 
-Closed beta builds do not auto-update through a browser store. When a new beta is available, download the latest zip from the private Drive link, extract it, then return to `chrome://extensions` and click **Reload** on the KaleidoSwap Extension card. If you extracted the new build into a different folder, remove the old unpacked extension and load the new folder.
+Closed beta builds do not auto-update through a browser store. When a new beta is available, open your download link again — it always serves the current build — extract it, then return to `chrome://extensions` and click **Reload** on the KaleidoSwap Extension card. If you extracted the new build into a different folder, remove the old unpacked extension and load the new folder.
+
+Because beta builds ship a fixed extension ID (`mmldlmkphefjjbpbajnhnkbiahiabiog`), your accounts, balances and settings carry over across updates. Keep your recovery phrase to hand regardless.
 
 ## Uninstalling
 

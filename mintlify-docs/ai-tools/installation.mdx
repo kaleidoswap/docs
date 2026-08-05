@@ -8,7 +8,7 @@ Each AI surface installs independently. Pick the one that matches what you are b
 
 | Surface | Install path | Prerequisites |
 |---------|-------------|---------------|
-| **[MCP servers](/ai-tools/mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 18+, an MCP host |
+| **[MCP servers](/ai-tools/mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 20+, an MCP host |
 | **[KaleidoAgent](/ai-tools/kaleido-agent)** | Clone and build from source | Node.js 20+, KaleidoCLI, Nanobot, an LLM API key |
 | **[KaleidoMind](/ai-tools/kaleido-mind)** | Ships inside the Desktop App, or build the repo for development | Desktop App, or pnpm and the QVAC SDK |
 
@@ -24,7 +24,7 @@ Each AI surface installs independently. Pick the one that matches what you are b
 npx -y kaleido-mcp
 ```
 
-Two per-wallet servers, `wdk-wallet-mcp` and `wdk-wallet-spark-mcp`, remain standalone rather than folded into the gateway and build from source:
+Three per-wallet servers, `wdk-wallet-mcp`, `wdk-wallet-spark-mcp`, and `wdk-wallet-liquid-mcp`, remain standalone rather than folded into the gateway and build from source:
 
 ```bash
 git clone https://github.com/kaleidoswap/wdk-wallet-mcp.git

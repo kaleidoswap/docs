@@ -49,23 +49,16 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
 
     **Solutions**:
     1. Check the log files:
-       - macOS: `~/Library/Application Support/KaleidoSwap/logs/`
-       - Windows: `%APPDATA%/KaleidoSwap/logs/`
-       - Linux: `~/.config/KaleidoSwap/logs/`
+       - macOS: `~/Library/Logs/com.kaleidoswap.dev/`
+       - Windows: `%APPDATA%\com.kaleidoswap.dev\logs`
+       - Linux: `~/.local/share/com.kaleidoswap.dev/logs`
 
     2. Common causes:
        - **Corrupted configuration**: Delete the config file and restart
-       - **Port conflict**: Another app is using the required ports (9735, 9736)
+       - **Port conflict**: Another app is using the required ports (9735, 3001)
        - **Missing dependencies**: Reinstall the application
 
-    3. Try running with debug logging:
-       ```bash
-       # macOS/Linux
-       ./kaleidoswap-desktop --debug
-
-       # Windows
-       kaleidoswap-desktop.exe --debug
-       ```
+    3. If the crash persists, attach the most recent log file from the directory above when contacting support or opening a GitHub issue.
   </Accordion>
 </AccordionGroup>
 
@@ -87,7 +80,7 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
     3. **Firewall/VPN issues**
        - Disable VPN temporarily to test
        - Allow KaleidoSwap through your firewall
-       - Required ports: 9735 (P2P), 9736 (RPC)
+       - Required ports: 9735 (Lightning P2P), 3001 (node API)
 
     4. **Check LSP status**
        - Visit the LSP's status page or contact support
@@ -231,7 +224,6 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
 
     3. **Manual retry**:
        - Use "Retry Delivery" button if available
-       - API endpoint: `/api/v1/lsps1/retry_delivery`
 
     4. **Failed delivery**:
        - Contact LSP support with Order ID
@@ -279,7 +271,7 @@ description: "Fix common KaleidoSwap issues across the Desktop App, Browser Exte
        - Total fee shown in quote
 
     3. **Precision confusion**:
-       - BTC uses 11 decimals (millisats)
+       - BTC uses 8 decimals
        - USDT typically uses 6 decimals
        - Check asset precision in glossary
 
@@ -340,7 +332,7 @@ The cases below are specific to how the closed beta is installed and how its acc
     **Explanation**: The node-less **RGB-L1** account and the **RLN** account are *mutually exclusive* backings for RGB assets. Connecting RLN replaces the node-less backing, so you are looking at a different account — the RGB-L1 state has not been lost.
 
     **Solutions**:
-    1. Disconnect RLN in **Settings > Networks** to return to the node-less RGB-L1 backing.
+    1. Disconnect RLN in **Settings > Accounts > RGB** to return to the node-less RGB-L1 backing.
     2. Decide which backing you want: node-less for RGB on Bitcoin L1, RLN for RGB **Lightning channels** and maker-based swaps.
     3. Before switching, make sure the backing you are leaving is backed up — RGB-L1 to its cloud (VSS) and local backups, RLN to the node's own backup material.
   </Accordion>

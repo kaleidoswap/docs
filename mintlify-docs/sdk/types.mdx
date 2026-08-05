@@ -33,6 +33,7 @@ const config: KaleidoConfig = {
 - `baseUrl?`
 - `nodeUrl?`
 - `apiKey?`
+- `nodeApiKey?`
 - `timeout?`
 - `logLevel?`
 - `logger?`
@@ -61,21 +62,21 @@ client = KaleidoClient.create(
 <CodeGroup>
 ```typescript TypeScript
 import type {
-  Asset,
+  AssetResponseModel,
   PairQuoteRequest,
   PairQuoteResponse,
-  TradingPair,
+  TradingPairResponseModel,
 } from 'kaleido-sdk';
 import { Layer } from 'kaleido-sdk';
 ```
 
 ```python Python
 from kaleido_sdk import (
-    Asset,
+    AssetResponseModel,
     Layer,
     PairQuoteRequest,
     PairQuoteResponse,
-    TradingPair,
+    TradingPairResponseModel,
 )
 ```
 </CodeGroup>

@@ -8,7 +8,7 @@ description: "Common questions about the KaleidoSDK, covering language choice, t
 
 <AccordionGroup>
   <Accordion title="TypeScript or Python — which should I use?" icon="code">
-    Whichever matches your stack. Both are standalone implementations that generate their types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs), so the API shape, the sub-clients, and the error hierarchy are identical across the two. Every example in these docs shows both.
+    Whichever matches your stack. Both are standalone implementations that generate their types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs), so the API shape, the sub-clients, and the error hierarchy are nearly identical across the two — the few divergences (rate-limit handling, the missing-node error) are called out in [Error Handling](/sdk/error-handling). Every example in these docs shows both.
 
     Runtime requirements: **Node.js 18+** for TypeScript, **Python 3.10+** for Python. A Rust core is in progress.
   </Accordion>

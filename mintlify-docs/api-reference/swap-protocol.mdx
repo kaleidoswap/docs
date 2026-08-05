@@ -18,12 +18,13 @@ The Desktop App uses **Hash Time-Locked Contracts (HTLCs)** to execute swaps ato
 
 ### How It Works
 
-1. The taker streams a live price from the maker over WebSocket (receives an `rfq_id` with each quote).
-2. The taker calls `POST /api/v1/swaps/init` — the maker locks the exchange rate and returns a `swapstring` and `payment_hash`.
+1. The taker requests live quotes from the maker over WebSocket (each `quote_response` carries an `rfq_id`).
+2. The taker calls `POST /api/v1/swaps/init` — the maker locks the exchange rate and returns a `swapstring`, a `payment_hash`, and an `access_token`. The `access_token` is returned only once — store it alongside the payment hash, as it is required to poll the swap status later.
 3. The taker's RGB Lightning Node whitelists the `swapstring` (authorising it to route through the node).
 4. The taker calls `POST /api/v1/swaps/execute` — the maker initiates the HTLC.
 5. The Lightning Network routes the HTLC: the maker reveals the preimage to claim BTC, which simultaneously releases the RGB asset to the taker.
 6. If either party fails to complete within the HTLC timeout, both sides' funds are returned automatically.
+7. The taker polls `POST /api/v1/swaps/atomic/status` with the `payment_hash` **and** the `access_token` from step 2. A missing or invalid token yields a uniform `404 Swap not found`.
 
 ### Sequence Diagram
 
@@ -36,7 +37,8 @@ Taker Client                         Maker (RGB-LSP)                   Taker RLN
      |                                      |                                 |
      |──── POST /api/v1/swaps/init ────────>|                                 |
      |       (rfq_id, from, to, amounts)    |                                 |
-     |<─── { swapstring, payment_hash } ────|                                 |
+     |<─── { swapstring, payment_hash,      |                                 |
+     |       access_token } ─────────────── |                                 |
      |                                      |                                 |
      |──── whitelist_swap(swapstring) ──────────────────────────────────────>|
      |<─── swap whitelisted ───────────────────────────────────────────────  |
@@ -48,6 +50,7 @@ Taker Client                         Maker (RGB-LSP)                   Taker RLN
      |          ← HTLC resolves atomically on Lightning Network →             |
      |                                      |                                 |
      |── POST /api/v1/swaps/atomic/status ─>|                                 |
+     |       (payment_hash, access_token)   |                                 |
      |<─── { status: "Succeeded" } ─────── |                                 |
 ```
 
@@ -55,18 +58,18 @@ Taker Client                         Maker (RGB-LSP)                   Taker RLN
 
 | Step | Endpoint |
 |------|----------|
-| Stream prices | WebSocket `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
+| Request quotes | WebSocket `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
 | Lock rate | `POST /api/v1/swaps/init` |
 | Execute swap | `POST /api/v1/swaps/execute` |
-| Check status | `POST /api/v1/swaps/atomic/status` |
+| Check status | `POST /api/v1/swaps/atomic/status` (requires `access_token` from init) |
 
 ### WebSocket Environments
 
 | Environment | URL |
 |-------------|-----|
-| **Regtest** | `wss://api.regtest.kaleidoswap.com/ws/{client_id}` |
-| **Signet** | `wss://api.signet.kaleidoswap.com/ws/{client_id}` |
-| **Mainnet** | `wss://api.kaleidoswap.com/ws/{client_id}` *(coming soon)* |
+| **Regtest** | `wss://api.regtest.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **Mainnet** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *(coming soon)* |
 
 Replace `{client_id}` with a unique identifier for your session.
 
@@ -84,7 +87,7 @@ const client = KaleidoClient.create({
 });
 
 // Stream a live quote
-client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client');
 
 const unsubscribe = await client.maker.streamQuotesByTicker(
   'BTC', 'USDT', 100000,
@@ -111,7 +114,7 @@ client = KaleidoClient.create(
 )
 
 # Stream a live quote and initiate a swap
-client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client")
 # See sdk/examples for full atomic swap flow
 ```
 </CodeGroup>

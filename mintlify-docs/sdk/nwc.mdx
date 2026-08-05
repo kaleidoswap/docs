@@ -71,9 +71,9 @@ If you already use the [`RlnClient`](/sdk/api-reference) against an HTTP `nodeUr
 transport for NWC instead — same client surface, routed over Nostr:
 
 ```ts
-import { createNwcRlnClient } from 'kaleido-sdk/nwc';
+import { NWCClient, createNwcRlnClient } from 'kaleido-sdk/nwc';
 
-const rln = createNwcRlnClient(connectionUri);
+const rln = createNwcRlnClient(new NWCClient(connectionUri));
 const info = await rln.getNodeInfo();
 const channels = await rln.listChannels();
 ```

@@ -1,0 +1,135 @@
+---
+title: "KaleidoSwap Desktop App Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Fix failed trades, wallet restore, and LSP connection problems in the KaleidoSwap Desktop App, with step-by-step checks and links to the full support guide."
+---
+
+Fixes for the problems Desktop App users hit most often. For installation, node sync, channel, and swap issues across every KaleidoSwap surface, see the [full troubleshooting guide](/whats-kaleidoswap/troubleshooting).
+
+## Trading
+
+<AccordionGroup>
+  <Accordion title="What should I do if a trade fails?" icon="arrows-rotate">
+    **Symptoms**: An atomic swap does not complete.
+
+    **Solutions**:
+    1. Check your channel liquidity
+    2. Verify the RGB asset details
+    3. Ensure your node is properly synced
+    4. Contact support if issues persist
+  </Accordion>
+
+  <Accordion title="Can't type the channel capacity I want" icon="sliders">
+    **Symptoms**: The Channel Capacity field rejects manual input, or only accepts values that start with "50000".
+
+    **Cause**: 50,000 sats is the minimum channel capacity, and the field validates against that floor as you type.
+
+    **Solution**: Select the field's contents and retype the full number in one go, rather than editing digit by digit — for example, select all and type `500000` instead of trying to change the leading digits of an existing value. Any amount is accepted as long as it is 50,000 sats or higher.
+  </Accordion>
+</AccordionGroup>
+
+## Wallet
+
+<AccordionGroup>
+  <Accordion title="How do I restore my wallet?" icon="wallet">
+    To restore your wallet:
+    1. Use the backup file you created
+    2. Decrypt the backup file with your password
+    3. Wait for the node to sync
+  </Accordion>
+</AccordionGroup>
+
+## Connectivity
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to an LSP" icon="link-slash">
+    **Symptoms**: Error messages about LSP connection, or unable to open channels.
+
+    **Solutions**:
+    1. Check your internet connection is stable
+    2. Verify the LSP URL — default is `https://api.signet.kaleidoswap.com`, under Settings → LSP Configuration
+    3. Check firewall/VPN settings; required ports are 9735 (P2P) and 9736 (RPC)
+    4. Visit the LSP's status page, or switch to a different LSP if available
+
+    See the [full troubleshooting guide](/whats-kaleidoswap/troubleshooting) for more connection issues, including node configuration and channel capacity problems.
+  </Accordion>
+
+  <Accordion title="RGB Lightning Node isn't available locally on Windows" icon="ban">
+    **Symptoms**: No option to run a local node on Windows, or local node setup fails.
+
+    **Cause**: The RGB Lightning Node integration is not yet fully supported natively on Windows.
+
+    **Solutions**:
+    1. Connect to a **remote node** instead — self-host on Linux or macOS, or run it in a Docker container and connect to it remotely. See [Node Hosting](/desktop-app/getting-started/node-hosting) for both options
+    2. Or use a professionally managed option like [ThunderStack](/desktop-app/getting-started/node-hosting#option-3-hosted-provider-thunderstack)
+    3. Trading and wallet features work the same way over a remote connection — only local node hosting is affected
+  </Accordion>
+
+  <Accordion title="My self-hosted node won't start" icon="server">
+    **Symptoms**: The node exits during startup, or the Desktop App cannot reach its API.
+
+    **Checks**:
+    1. Confirm Bitcoin Core is running and that the configured RPC host, port, username, and password are reachable from the node
+    2. Confirm the configured indexer and RGB proxy endpoints are online
+    3. Review the node logs for the first startup error, then restart after correcting the related connection setting
+  </Accordion>
+
+  <Accordion title="Cannot connect the Desktop App to my remote node" icon="plug-circle-xmark">
+    **Symptoms**: The app reports that the remote node is unreachable or stays disconnected.
+
+    **Checks**:
+    1. Verify the node URL in **Settings > Node Connection** and confirm the node is running and unlocked
+    2. Make sure the server firewall allows the node API port (default: `3001`) and Lightning peer traffic on `9735`
+    3. If you use a VPN, reverse proxy, or tunnel, confirm it forwards traffic to the same address and port configured in the app
+  </Accordion>
+
+  <Accordion title="My node is stuck synchronizing" icon="arrows-rotate">
+    **Symptoms**: The node remains in a syncing state and wallet or channel actions are unavailable.
+
+    **Checks**:
+    1. Allow Bitcoin Core to finish synchronizing before retrying
+    2. Check that the configured Electrum or Esplora indexer is caught up with the selected network
+    3. Verify the node, Bitcoin backend, and indexer all use the same network
+  </Accordion>
+
+  <Accordion title="Mutinynet node or transactions are not working" icon="triangle-exclamation">
+    **Symptoms**: A Signet node cannot connect, or transactions do not confirm on Mutinynet.
+
+    **Checks**:
+    1. Use a Bitcoin build and Electrs configuration that support Mutinynet/Signet
+    2. Confirm the node is configured with `NETWORK=signet` and the correct Mutinynet seed nodes
+    3. Check the [Mutinynet Explorer](https://mutinynet.com/) for network status and transaction confirmation
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [FAQ](/desktop-app/support/faq) for questions rather than errors. For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Your OS and version (macOS, Windows, or Linux)
+2. KaleidoSwap Desktop App version
+3. Node type (local or remote) and version
+4. Steps to reproduce
+5. Error messages or screenshots
+6. Log files:
+   - macOS: `~/Library/Application Support/KaleidoSwap/logs/`
+   - Windows: `%APPDATA%/KaleidoSwap/logs/`
+   - Linux: `~/.config/KaleidoSwap/logs/`
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/desktop-app">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

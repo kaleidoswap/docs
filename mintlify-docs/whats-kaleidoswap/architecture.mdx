@@ -1,265 +1,195 @@
 ---
-title: Architecture Overview
-description: Understanding KaleidoSwap's decentralized architecture
+title: "KaleidoSwap Architecture"
+sidebarTitle: "Architecture"
+description: "How the KaleidoSwap stack fits together, with one SDK behind every client, protocol adapters for Bitcoin Layers, an RFQ liquidity layer, and no custody."
 ---
 
-KaleidoSwap operates on a decentralized architecture that combines the power of RGB Protocol with the scalability of the Lightning Network.
+KaleidoSwap is vertically integrated: a single SDK powers every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocol adapters, and the same liquidity. Adding a protocol once makes it available everywhere; adding a client costs no new protocol work.
 
-## Core Components
+This page walks the stack from the top down. For the protocols themselves and why hash-locked contracts make cross-layer trades possible, start with [How It Works](/whats-kaleidoswap/background). For the broader multi-protocol thesis behind this design, read [Solving Bitcoin's L2 liquidity problem](https://kaleidoswap.medium.com/solving-bitcoins-l2-liquidity-problem-kaleidoswap-s-multi-protocol-dex-layer-0725b26f8de4).
+
+## The stack
+
+| Layer | What lives there |
+|-------|------------------|
+| **Clients & integrators** | Desktop App, Browser Extension, Mobile, Web App, CLI — plus third-party wallets, neobanks, payment processors, and AI agents |
+| **Integration layer** | `kaleido-sdk` for swaps and market data; `wallet-engine` for wallet primitives across protocols |
+| **Protocol layer** | One adapter per Bitcoin Layer, behind a single contract |
+| **Liquidity layer** | The RFQ engine, the KaleidoSwap LSP today, external market makers from 2027 |
+| **Intelligence layer** | KaleidoMind for local reasoning, KaleidoAgent for autonomous execution |
+| **Settlement** | Bitcoin — where every layer above anchors |
+
+Everything above the settlement line is open source and inspectable on [GitHub](https://github.com/kaleidoswap).
+
+## Integration layer
+
+Two packages sit between an application and the protocols. Both are consumed by our own clients on exactly the same terms as by an external integrator.
 
 <CardGroup cols={2}>
-  <Card title="RGB Protocol" icon="layer-group">
-    Client-validated smart contracts on Bitcoin enabling scalable and private asset issuance
+  <Card title="kaleido-sdk" icon="code" href="/sdk/introduction">
+    Swap integration: quotes, pairs, RFQ streaming, swap execution, LSPS1 channel orders, and direct RGB Lightning Node access. TypeScript and Python today, with a Rust core in progress.
   </Card>
 
-  <Card title="Lightning Network" icon="bolt">
-    Second-layer payment protocol providing instant, low-cost transactions
-  </Card>
-
-  <Card title="LSP Integration" icon="server">
-    Lightning Service Providers offering liquidity and channel management services
-  </Card>
-
-  <Card title="Desktop Client" icon="desktop">
-    Secure, user-friendly interface with full key control
+  <Card title="wallet-engine" icon="wallet" href="https://github.com/kaleidoswap/wallet-engine">
+    Headless multi-protocol wallet core: protocol adapters, a cross-protocol router, unified receive, and lite/advanced disclosure. TypeScript, runs on browser, React Native, and Node hosts.
   </Card>
 </CardGroup>
 
-## System Architecture
+`kaleido-sdk` exposes two sub-clients — `client.maker` for the market side and `client.rln` for node operations — and generates its types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs) that the backend serves, so TypeScript and Python never drift apart.
 
-![KaleidoSwap System Architecture](/assets/images/architecture-overview.png)
+![Abstract diagram of a code editor connecting to a TypeScript path and a Python path, each linking to a lightning-bolt and gear icon, both flowing down into a cloud service and a server rack](/assets/images/overview/sdk-architecture.png)
 
-The platform connects to RGB Lightning Nodes and Lightning Service Providers, all anchored to the Bitcoin blockchain for final settlement.
+## Protocol layer
 
-## RGB Protocol
+Every Bitcoin Layer ships its own SDK, address formats, and quirks: channel liquidity here, boarding transactions there, static receive addresses somewhere else. Left unmanaged, that becomes a protocol check on every screen of every app.
 
-### RGB Protocol Overview
+Instead, each protocol implements **one adapter contract**: connect, list assets and transactions, create and decode invoices, send, receive, and optionally quote and execute swaps. Differences between protocols live as **data** in a capability manifest, not as branches in application code. The router and the UI read that manifest and never special-case a protocol by name.
 
-RGB enables scalable and confidential smart contracts on Bitcoin using client-side validation. For a detailed explanation of how RGB works, see [How RGB Works](/whats-kaleidoswap/background#rgb-protocol).
+The practical consequences:
 
-**Key Architectural Features**:
-- **Client-Side Validation**: Contract state is validated by the recipient, not globally
-- **Scalability**: No blockchain bloat - contracts are off-chain
-- **Privacy**: Transaction details are only known to involved parties
-- **Bitcoin Security**: Anchored to Bitcoin blockchain for security
+- **Adding a protocol touches one adapter** and one manifest entry — never another protocol's path.
+- **Clients call one API**, never a protocol SDK directly, so behaviour is consistent across Desktop, Extension, and Mobile.
+- **The router picks the rail.** Given a destination — a Lightning invoice, a Bitcoin address, an RGB invoice, a Liquid address — it resolves which protocols can pay it and which is best.
+- **One receive QR** can carry several protocols at once, so any wallet can pay it while KaleidoSwap wallets read the richer parameters.
 
-### RGB Asset Types
+## Swap engine
+
+Swaps use a **Request for Quote** model settled by hash-locked contracts. The maker prices the trade; Lightning carries it; the shared preimage makes it atomic.
+
+![Diagram of desktop, browser, and extension clients connecting to an RGB Lightning Node and a Lightning Service Provider, both linked to a chain of hash-locked blocks representing Bitcoin settlement](/assets/images/overview/architecture-overview.png)
+
+On the shipped BTC ↔ RGB path, the flow is:
+
+1. The taker streams quotes from the maker over WebSocket and receives an `rfq_id` with each one.
+2. `POST /api/v1/swaps/init` locks the rate and returns a `swapstring` and a `payment_hash`.
+3. The taker's RGB Lightning Node whitelists the `swapstring`, authorising it to route through the node.
+4. `POST /api/v1/swaps/execute` starts the HTLC.
+5. Lightning routes it: the maker reveals the preimage to claim one leg, which simultaneously releases the other.
+6. If either side stalls, the timelocks expire and both sides recover their own funds.
+
+The taker's node is the one holding keys and validating state throughout — the maker never takes custody. Full endpoint reference and sequence diagram: [Atomic Swap Protocol](/api-reference/swap-protocol).
 
 <Note>
-  RGB interfaces were previously known by their schema numbers (RGB20, RGB21, RGB25). The current RGB standard names them **NIA**, **UDA**, **CFA**, and **IFA**.
+  Atomicity depends on both layers having a native hashlock. See [Where atomicity holds](/whats-kaleidoswap/background#where-atomicity-holds) for what that rules in and out today.
 </Note>
 
-<Tabs>
-  <Tab title="NIA - Fungible Assets">
-    **NIA** (Non-Inflatable Asset, formerly RGB20) tokens are fixed-supply fungible assets similar to ERC-20 on Ethereum.
+## Liquidity layer
 
-    **Use Cases**:
-    - Stablecoins (USDT, USDC)
-    - Tokenized commodities
-    - Loyalty points
-    - Currency tokens
+### Lightning Service Providers
 
-    **Properties**:
-    - Divisible
-    - Interchangeable
-    - Fixed supply (non-inflatable)
-  </Tab>
+LSPs make Lightning usable without manual channel operations. In the architecture they:
 
-  <Tab title="IFA - Inflatable Assets">
-    <Note>
-      IFA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
-    </Note>
+- **Provide liquidity** — open channels with inbound capacity, optionally pre-loaded with an RGB asset
+- **Route payments** — find paths for both payments and swap legs
+- **Act as counterparty** — locking the other leg of a swap
 
-    **IFA** (Inflatable Fungible Asset) tokens are fungible assets whose supply can be increased or decreased by the issuer (e.g. mint/burn).
+### RGB-LSPS1
 
-    **Use Cases**:
-    - Stablecoins with managed supply
-    - Re-issuable utility tokens
+KaleidoSwap implements the RGB Lightning Service Provider Specification, extending the standard LSPS1 channel-ordering flow to assets:
 
-    **Properties**:
-    - Divisible
-    - Interchangeable
-    - Variable supply (issuer-controlled inflation/replacement)
-  </Tab>
+- **Standardised interface** — one API shape for LSP interactions
+- **Asset allocation** — specify RGB assets when ordering a channel
+- **Swap support** — atomic swap coordination built into the same surface
+- **Fee transparency** — costs stated before you commit
 
-  <Tab title="UDA - NFTs">
-    <Note>
-      UDA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
-    </Note>
+See [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) for the endpoints.
 
-    **UDA** (Unique Digital Asset, formerly RGB21) tokens are non-fungible, unique digital assets.
+### Market makers
 
-    **Use Cases**:
-    - Digital art
-    - Collectibles
-    - Identity tokens
-    - Certificates
+The RFQ engine is designed for competition on the maker side. Today the KaleidoSwap LSP bootstraps liquidity itself. From 2027, external market makers connect through the same interface and compete on spread.
 
-    **Properties**:
-    - Unique
-    - Non-divisible
-    - Provably scarce
-  </Tab>
+## Intelligence layer
 
-  <Tab title="CFA - Collectibles">
-    <Note>
-      CFA assets are **not currently supported** by KaleidoSwap. KaleidoSwap operates exclusively with NIA fungible tokens at this time.
-    </Note>
+The AI surfaces are clients of the same stack. They call the same tools a human interface calls, with the same confirmation gates.
 
-    **CFA** (Collectible Fungible Asset, formerly RGB25) provides collectible asset functionality with richer media and metadata.
+<CardGroup cols={2}>
+  <Card title="KaleidoMind" icon="brain" href="/ai-tools/kaleido-mind">
+    Local-first reasoning and tool-calling engine. Inference runs on-device; every fund-moving tool requires explicit confirmation, which the model cannot bypass.
+  </Card>
 
-    **Use Cases**:
-    - Collectible series
-    - Media-backed assets
-    - Multi-edition items
+  <Card title="KaleidoAgent" icon="robot" href="/ai-tools/kaleido-agent">
+    Autonomous agent for portfolio and node management. Runs against a local model or a hosted one, and never takes custody.
+  </Card>
+</CardGroup>
 
-    **Properties**:
-    - Fungible within a collection
-    - Rich metadata/media
-    - Advanced state management
-  </Tab>
-</Tabs>
+## Client architecture
 
-## Lightning Network Integration
+### Non-custodial design
 
-### Why Lightning?
+Everything that touches keys runs on your device. Clients hold or drive the wallet locally, validate state themselves, and talk to makers and LSPs only over the network interfaces above. No third party has access to your funds at any point in a swap.
 
-The Lightning Network provides the scalability layer for instant, low-cost RGB asset transfers. See [Concepts: Lightning Network](/whats-kaleidoswap/background#lightning-network) for more details.
+- **Your keys, your coins** — private keys never leave your device
+- **Encrypted storage** — sensitive data encrypted at rest with your password
+- **No custody** — makers and LSPs are counterparties, never custodians
+- **Client-side validation** — you validate RGB state yourself rather than trusting a server
 
-**Integration Benefits**:
-- **Instant Settlement**: Transactions complete in milliseconds
-- **Low Fees**: Fraction of on-chain costs
-- **Security**: Backed by Bitcoin's security model
-- **Scalability**: Millions of transactions per second
+### Protocol coverage per client
 
-### How It Works
+| Client | Protocols | Wallet model |
+|--------|-----------|--------------|
+| **[Desktop App](/desktop-app/getting-started/introduction)** | Bitcoin L1, Lightning, RGB on Lightning | Drives a full RGB Lightning Node — local, Docker, or remote |
+| **[Browser Extension](/extensions/introduction)** | Bitcoin L1, Lightning, Spark, Arkade, Liquid, node-less RGB-L1, optional RGB Lightning Node | One recovery phrase derives every protocol account |
+| **[CLI](/cli/introduction)** | Bitcoin L1, Lightning, RGB on Lightning | One-command local node via Docker |
 
-1. **Payment Channels**: Users open bidirectional payment channels
-2. **Off-Chain Transactions**: Multiple transfers happen off-chain
-3. **Channel State**: Only final state is settled on Bitcoin blockchain
-4. **Routing**: Payments route through network of channels
+### Component layers
 
-### RGB on Lightning
+Inside a client the separation is the same regardless of platform:
 
-KaleidoSwap extends the Lightning Network to support RGB assets alongside native BTC:
+1. **UI layer** — the interface, per platform
+2. **Business logic** — state management and workflow orchestration
+3. **Protocol layer** — `wallet-engine` adapters and the cross-protocol router
+4. **Network layer** — node RPC, maker APIs, LSP integration, P2P connections
 
-- **Transfer USDT instantly** through Lightning channels
-- **Trade assets atomically** via HTLC-based atomic swaps
-- **Multi-asset channels** supporting BTC + NIA tokens simultaneously
-
-## Lightning Service Providers (LSPs)
-
-### LSP Integration
-
-Lightning Service Providers (LSPs) are critical for onboarding users to the Lightning Network without requiring them to manage complex channel operations manually.
-
-**LSP Functions in Architecture**:
-- **Liquidity Provision**: Opening channels with users to provide inbound capacity
-- **Routing**: Finding optimal paths for payments
-- **Swap Facilitation**: Enabling atomic swaps between assets
-
-### RGB LSPS1 Specification
-
-KaleidoSwap implements the RGB Lightning Service Provider Specification (RGB-LSPS1):
-
-- **Standardized Interface**: Common API for LSP interactions
-- **Asset Allocation**: Specify RGB assets when opening channels
-- **Swap Support**: Built-in atomic swap functionality
-- **Fee Transparency**: Clear fee structure for all operations
-
-## Desktop Client Architecture
-
-### Non-Custodial Design
-
-Everything runs on your device. The desktop application communicates directly with your RGB Lightning Node, which manages keys locally, controls channels, and validates contracts. No third party ever has access to your funds.
-
-**Security Principles**:
-- **Your Keys, Your Coins**: Private keys never leave your device
-- **Encrypted Storage**: All sensitive data encrypted locally
-- **No Custody**: No third party can access your funds
-- **Client Validation**: You validate all RGB contracts
-
-### Component Layers
-
-1. **UI Layer**: React-based desktop interface
-2. **Business Logic**: State management and workflow orchestration
-3. **Node Interface**: Communication with RGB Lightning node
-4. **Network Layer**: P2P connections and LSP integration
-
-## Data Flow
-
-### Atomic Swap Process
-
-![Atomic Swap Flow](/assets/images/atomic-swap-flow.png)
-
-The atomic swap uses Hash Time-Locked Contracts (HTLCs) to ensure trustless execution:
-
-1. **Request Quote** — Taker requests a price for the asset pair
-2. **Init Swap** — Taker initiates the swap, creating an HTLC
-3. **Lock Assets** — Both sides lock their assets (BTC and RGB) in HTLCs
-4. **Reveal & Claim** — The secret is revealed, allowing both parties to claim
-5. **Complete** — Both parties receive their swapped assets atomically
-
-## Security Model
-
-### Multi-Layer Security
+## Security model
 
 <Steps>
-  <Step title="Bitcoin Base Layer">
-    Final settlement and security anchoring on Bitcoin blockchain
+  <Step title="Bitcoin base layer">
+    Final settlement and security anchoring on the Bitcoin blockchain
   </Step>
 
-  <Step title="Lightning Layer">
-    HTLC-based atomic swaps ensuring trustless execution
+  <Step title="Layer protocols">
+    Hash-locked contracts and timelocks, so a failed swap refunds rather than half-executes
   </Step>
 
-  <Step title="RGB Layer">
-    Client-side validation preventing double-spending
+  <Step title="Asset overlay">
+    Client-side validation of RGB state, preventing invalid or double-spent transfers
   </Step>
 
-  <Step title="Application Layer">
-    Encrypted storage and secure key management
+  <Step title="Application layer">
+    Local key management, encrypted storage, and explicit confirmation before any spend
   </Step>
 </Steps>
 
-### Trustless Trading
+### What trustless means here
 
-- **No Counterparty Risk**: Atomic swaps execute atomically or fail completely
-- **No Custodians**: Users maintain control of their keys and assets
-- **No Trust Required**: Cryptographic guarantees, not trust in intermediaries
+- **No counterparty risk** — on atomic paths the swap completes on both sides or neither
+- **No custodians** — you keep your keys and your assets throughout
+- **Cryptographic guarantees** — enforced by timelocks and preimages
 
-## Scalability
+## Settlement characteristics
 
-### Transaction Throughput
+Different layers make different trade-offs, which is why the stack uses several. There is no layer that is fastest, cheapest, and most final at once.
 
-| Layer | Throughput | Finality | Cost |
-|-------|------------|----------|------|
-| Bitcoin On-Chain | ~7 TPS | 10-60 min | High |
-| Lightning Network | Millions TPS | Instant | Very Low |
-| RGB Contracts | Unlimited | Client-side | Minimal |
+| Layer | Settles as | Native hashlock | Finality | Typical cost |
+|-------|-----------|-----------------|----------|--------------|
+| **Bitcoin L1** | An on-chain transaction | Yes (Bitcoin consensus) | 10–60 minutes | Prevailing fee rate |
+| **Lightning** | A channel state update | Yes (Bitcoin consensus) | Seconds | Satoshis |
+| **RGB** | A commitment inside a Bitcoin transaction or channel update | Yes (Bitcoin consensus), on Lightning | Follows the layer it rides on | Included in the anchor |
+| **Spark** | A statechain key-share rotation; the on-chain UTXO never moves | Yes (layer trust model) | Sub-second, once operators delete the old key shares | Free in-network; Bitcoin fees on entry and exit |
+| **Arkade** | A VTXO transfer, batched on-chain via a commitment transaction | Yes (layer trust model) | Instant preconfirmation, Bitcoin finality at batch settlement | Amortised across the batch |
+| **Liquid** | A federated sidechain transaction | Yes (layer trust model) | ~2 minutes, at two confirmations | From 0.1 sat/vB, paid in L-BTC |
 
-### Why This Matters
+Lightning is where trading happens because it settles in seconds at negligible cost; Bitcoin L1 is where positions come to rest. The hashlock column is what decides whether a leg can be atomic, and under whose guarantee — see [Where atomicity holds](/whats-kaleidoswap/background#where-atomicity-holds).
 
-- **Mass Adoption**: Can scale to billions of users
-- **Micro-Transactions**: Economically viable even for tiny amounts
-- **Real-Time Trading**: No waiting for blockchain confirmations
+## RGB asset interfaces
 
-## Next Steps
+RGB defines several asset interfaces, previously known by their schema numbers. As of Desktop App v0.5.0, KaleidoSwap supports all four across wallet and trading.
 
-<CardGroup cols={3}>
-  <Card title="Key Features" icon="star" href="/whats-kaleidoswap/key-features">
-    Explore core features and capabilities
-  </Card>
+| Interface | Formerly | What it is | Supported |
+|-----------|----------|------------|-----------|
+| **NIA** | RGB20 | Non-Inflatable Asset — fixed-supply fungible tokens, used for stablecoins like USDT and XAUT | Yes |
+| **IFA** | — | Inflatable Fungible Asset — fungible tokens the issuer can mint or burn | Yes |
+| **UDA** | RGB21 | Unique Digital Asset — non-fungible, one-of-a-kind assets | Yes |
+| **CFA** | RGB25 | Collectible Fungible Asset — collectibles with richer media and metadata | Yes |
 
-  <Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/introduction">
-    Atomic swaps with full node control
-  </Card>
-
-  <Card title="SDK" icon="code" href="/sdk/introduction">
-    Build with our TypeScript or Python SDKs
-  </Card>
-
-  <Card title="API Reference" icon="book" href="/api-reference/introduction">
-    REST API and swap protocol details
-  </Card>
-</CardGroup>
+Definitions for each term are in the [Glossary](/whats-kaleidoswap/glossary#bitcoin-layers-%26-assets).

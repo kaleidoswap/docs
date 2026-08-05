@@ -1,0 +1,88 @@
+---
+title: "AI Tools: Installation"
+sidebarTitle: "Installation"
+description: "Install the KaleidoSwap AI tools, covering the MCP server gateway, KaleidoAgent, and the on-device KaleidoMind engine, with prerequisites for each"
+---
+
+Each AI surface installs independently. Pick the one that matches what you are building, or install the MCP gateway first since it is the smallest step to a working tool call.
+
+| Surface | Install path | Prerequisites |
+|---------|-------------|---------------|
+| **[MCP servers](/ai-tools/mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 18+, an MCP host |
+| **[KaleidoAgent](/ai-tools/kaleido-agent)** | Clone and build from source | Node.js 20+, KaleidoCLI, Nanobot, an LLM API key |
+| **[KaleidoMind](/ai-tools/kaleido-mind)** | Ships inside the Desktop App, or build the repo for development | Desktop App, or pnpm and the QVAC SDK |
+
+<Warning>
+  Every surface here signs with a real BIP-39 mnemonic or drives a live node. Start on test networks, keep `dry_run` enabled until a setup is verified, and never put a mainnet seed in a file you commit or share.
+</Warning>
+
+## MCP Servers
+
+`kaleido-mcp` is the fastest path to a working tool call, published to npm with no local build required:
+
+```bash
+npx -y kaleido-mcp
+```
+
+Two per-wallet servers, `wdk-wallet-mcp` and `wdk-wallet-spark-mcp`, remain standalone rather than folded into the gateway and build from source:
+
+```bash
+git clone https://github.com/kaleidoswap/wdk-wallet-mcp.git
+cd wdk-wallet-mcp
+npm install
+npm run build
+node dist/index.js
+```
+
+<Note>
+  `kaleidoswap-mcp` and `l402-gateway-mcp` are archived, their own READMEs point integrators at `kaleido-mcp` instead. Do not clone or build them for a new setup.
+</Note>
+
+Full environment variable reference, stdio vs. HTTP transport, the tool surface, and client config JSON for every server live on the [MCP Servers page](/ai-tools/mcp-servers#installation-&-configuration).
+
+## KaleidoAgent
+
+Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/getting-started) in `$PATH`, the [Nanobot](https://nanobot.dev) runtime, and an Anthropic or OpenAI API key.
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-agent.git
+cd kaleido-agent
+npm run install:all
+```
+
+From there, setting the API key, configuring the wallet in `agent.config.json`, and starting the dashboard are covered step by step on the [KaleidoAgent page](/ai-tools/kaleido-agent#run-it), along with the container deployment option.
+
+## KaleidoMind
+
+KaleidoMind is an engine embedded in a host application rather than a standalone install.
+
+### Through the Desktop App
+
+The fastest path. The [Desktop App](/desktop-app/getting-started/installation) bundles the engine as in-app chat, manages the on-device model lifecycle, and can act as the paired inference peer a phone delegates to. Switch it on from **Settings > Capabilities** by selecting **Node + Mind** or **Only Mind**.
+
+<Note>
+  KaleidoMind depends on a local AI runtime and may not be available on Windows yet. Every trading and node feature works without it, so run the app in **Only Node** mode if Mind is unavailable on your platform.
+</Note>
+
+### From source, for development
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-mind.git
+cd kaleido-mind
+pnpm install && pnpm -r build
+```
+
+The CLI in `apps/cli` handles on-device model management and runs the agent directly:
+
+```bash
+cd apps/cli
+npx tsx src/index.ts setup     # guided first run: pick and pull a model
+npx tsx src/index.ts run "what's my balance?"
+npx tsx src/index.ts skills    # list installed skills
+```
+
+To exercise the engine against a model without a phone, use the playground from the repository root:
+
+```bash
+pnpm play "pay bob 3 eur"
+```

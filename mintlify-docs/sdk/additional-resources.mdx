@@ -1,0 +1,86 @@
+---
+title: "KaleidoSDK: Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Links for KaleidoSDK builders — published packages, OpenAPI specifications, node and RGB protocol references, test networks, and support channels"
+---
+
+## Packages & Source
+
+<CardGroup cols={2}>
+  <Card title="npm — kaleido-sdk" icon="npm" href="https://www.npmjs.com/package/kaleido-sdk">
+    The published TypeScript package. `npm install kaleido-sdk`
+  </Card>
+
+  <Card title="PyPI — kaleido-sdk" icon="python" href="https://pypi.org/project/kaleido-sdk/">
+    The published Python package. `pip install kaleido-sdk`
+  </Card>
+
+  <Card title="SDK Source" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    Source, releases, and issue tracking for both language implementations.
+  </Card>
+
+  <Card title="OpenAPI Specifications" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    The specs both SDKs generate their API types from, which is what keeps request and response shapes identical across the two languages.
+  </Card>
+</CardGroup>
+
+## Protocol References
+
+<CardGroup cols={2}>
+  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
+    The atomic HTLC flow the SDK drives, endpoint by endpoint, with the sequence diagram.
+  </Card>
+
+  <Card title="RGB LSPS1 APIs" icon="server" href="/api-reference/rgb-lsps1-apis">
+    The channel-ordering interface behind `client.maker` LSPS1 calls.
+  </Card>
+
+  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    The node `client.rln` talks to. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
+  </Card>
+
+  <Card title="RGB Protocol Documentation" icon="gem" href="https://docs.rgb.info">
+    Client-side validation, asset interfaces, and the specification itself.
+  </Card>
+</CardGroup>
+
+## Development & Testing
+
+Build against a test network before mainnet. Both environments are live and need no API key.
+
+Pass these to `baseUrl` / `base_url` as shown — the SDK appends the `/api/v1` path itself.
+
+| Environment | Base URL | Best for |
+|-------------|----------|----------|
+| **Regtest** | `https://api.regtest.kaleidoswap.com` | Unit tests and rapid iteration, instant blocks |
+| **Signet (MutinyNet)** | `https://api.signet.kaleidoswap.com` | Integration testing under realistic conditions |
+
+<CardGroup cols={2}>
+  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
+    Get Signet Bitcoin to fund a node and open test channels.
+  </Card>
+
+  <Card title="API Getting Started" icon="rocket" href="/api-reference/getting-started">
+    Base URLs, authentication, request format, and rate limits.
+  </Card>
+</CardGroup>
+
+## Community & Support
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
+    Report a bug or request a feature against the SDK.
+  </Card>
+
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community and the team.
+  </Card>
+
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+
+  <Card title="FAQ" icon="circle-question" href="/sdk/faq">
+    Language choice, sub-clients, custody, versioning, and amounts.
+  </Card>
+</CardGroup>

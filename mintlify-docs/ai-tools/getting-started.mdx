@@ -1,0 +1,123 @@
+---
+title: "AI Tools: Getting Started"
+sidebarTitle: "Getting Started"
+description: "Connect an AI agent to Bitcoin, from a first read-only tool call on a test network through to a verified quote before you enable live execution"
+---
+
+This is the path from an installed tool to a verified swap. It goes read-only first, then quoting, then execution, because every step after the first one moves real value.
+
+## Before You Start
+
+| Requirement | Details |
+|-------------|---------|
+| **A test network** | Regtest or Signet. Never a first run on mainnet |
+| **A wallet seed** | A throwaway BIP-39 mnemonic for the test network, set as `WDK_SEED` |
+| **A node** | Only for the `wdk_*` tools and atomic swaps. Spark tools need just a seed, market data needs nothing |
+| **An MCP host or LLM key** | Claude Desktop or another MCP client, or an Anthropic/OpenAI key for KaleidoAgent |
+
+If you have not installed anything yet, start with [Installation](/ai-tools/installation).
+
+## Pick a Surface
+
+| If you want to | Start with |
+|----------------|-----------|
+| Add Bitcoin tools to Claude Desktop or your own MCP client | [MCP Servers](/ai-tools/mcp-servers) |
+| Let an agent run a portfolio unattended | [KaleidoAgent](/ai-tools/kaleido-agent) |
+| Talk to a wallet by chat or voice, on-device | [KaleidoMind](/ai-tools/kaleido-mind) |
+| Change agent behavior without touching code | [Skills](/ai-tools/skills) |
+
+## First Run: MCP Servers
+
+<Steps>
+  <Step title="Add the gateway to your host">
+    Drop the `kaleido-mcp` block into your MCP host's config, pointing `KALEIDOSWAP_API_URL` at a test environment and `SPARK_NETWORK` at `REGTEST`. The full JSON is on the [MCP Servers page](/ai-tools/mcp-servers#client-configuration).
+  </Step>
+
+  <Step title="Restart the host">
+    MCP hosts read their config at startup. A running client will not pick up a new server until you restart it.
+  </Step>
+
+  <Step title="Call a read-only tool">
+    Start with something that cannot move funds. Ask for market data, which needs no seed and no node:
+
+    ```
+    What is the current Bitcoin price and the Fear and Greed index?
+    ```
+
+    That exercises `l402_get_price` and `l402_get_sentiment`. If it answers, the connection works.
+  </Step>
+
+  <Step title="Check the wallet is wired">
+    Now confirm the wallet tools resolve:
+
+    ```
+    Show me my Spark balance and my Spark address.
+    ```
+
+    This calls `spark_get_balance` and `spark_get_address`. An error here is a seed or network problem, not a connection problem.
+  </Step>
+
+  <Step title="Quote before you trade">
+    Ask for a price without placing anything:
+
+    ```
+    Quote 100000 sats of BTC into USDT. Do not place an order.
+    ```
+
+    `kaleidoswap_get_quote` returns an `rfq_id`, raw amounts, the fee, and an expiry. Read the raw amounts carefully: they are in the asset's smallest unit, not display units.
+  </Step>
+
+  <Step title="Execute only once the quote looks right">
+    An atomic swap needs the DEX tools and the wallet tools together, and the node must hold the asset in a channel. The [cross-server sequence](/ai-tools/mcp-servers#atomic-swap-across-servers) shows each call in order.
+  </Step>
+</Steps>
+
+## First Run: KaleidoAgent
+
+<Steps>
+  <Step title="Keep dry run enabled">
+    `portfolio.dry_run` defaults to `true` in `agent.config.json`. Leave it there. The agent will reason, decide, and report a trade without submitting it.
+  </Step>
+
+  <Step title="Start the agent">
+    ```bash
+    npm start
+    ```
+
+    Open `http://localhost:5173` for the dashboard.
+  </Step>
+
+  <Step title="Trigger a loop by hand">
+    Rather than waiting on the schedule, ask the status API to run one:
+
+    ```bash
+    curl -X POST http://localhost:4242/run \
+      -H 'Content-Type: application/json' \
+      -d '{"task_id":"rebalance"}'
+    ```
+
+    Then read `GET /status` to see the decision, the balances it saw, and the token cost.
+  </Step>
+
+  <Step title="Review the risk limits">
+    Confirm `max_swap_usd`, `min_btc_reserve_sats`, and `stop_loss_btc_sats` match what you are willing to lose on a test network. These are checked before any swap is submitted.
+  </Step>
+
+  <Step title="Only then disable dry run">
+    Set `portfolio.dry_run` to `false` when the dry-run decisions have looked correct across several runs.
+  </Step>
+</Steps>
+
+## What Confirmation Looks Like
+
+The two agent surfaces gate spending differently, and it is worth knowing which one you are relying on.
+
+| Surface | Gate |
+|---------|------|
+| **KaleidoMind** | Structural. Every fund-moving tool is marked `requiresConfirmation`, so the engine pauses for the host's confirmation sheet. The model cannot bypass it |
+| **KaleidoAgent** | Policy. `dry_run` plus the risk limits in `agent.config.json`, checked before submission |
+| **MCP servers in a generic host** | Whatever your host provides. Most MCP clients prompt per tool call, but that is the client's behaviour, not the server's |
+
+<Warning>
+  A generic MCP host is the least protected path. If your client auto-approves tool calls, an LLM can spend from the configured wallet without asking you. Use a test network seed until you know how your client handles approvals.
+</Warning>

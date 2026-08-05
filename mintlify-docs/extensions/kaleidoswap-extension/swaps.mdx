@@ -1,13 +1,14 @@
 ---
-title: Swaps
-description: Swap assets directly within the KaleidoSwap Extension
+title: "Swaps"
+sidebarTitle: "Swaps"
+description: "Swap assets directly in the KaleidoSwap Extension by requesting a quote, executing, and tracking your swap across supported networks"
 ---
 
 ## Overview
 
 The KaleidoSwap Extension includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
 
-<img src="/images/kaleidoswap-extension/10-swap.png" alt="KaleidoSwap swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/10-swap.png" alt="KaleidoSwap swap screen" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
 Swaps exchange one asset for another inside your wallet. To move funds between Spark and external chains (EVM networks, Solana, and more), use the [Bridge](/extensions/kaleidoswap-extension/bridge) instead.
@@ -67,6 +68,8 @@ The amount input is gated by your **spendable** balance for the selected source 
   </Step>
 </Steps>
 
+<img src="/assets/images/extension/24-swap-review.png" alt="Swap Review screen showing pay and receive amounts, provider, rate, fee, quote ID, and expiry above the Confirm Swap button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## Real-Time Quotes
 
 When you enter an amount, the KaleidoSwap Extension fetches a quote from the active venue:
@@ -97,6 +100,8 @@ After confirming, the swap progresses through several stages:
 | **Completed** | The swap is done and you have received the asset |
 | **Failed** | Something went wrong -- check the logs for details |
 
+<img src="/assets/images/extension/25-swap-status.png" alt="Swap in progress with a three step tracker for requesting, atomic swap, and completing, showing the pair being exchanged" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 <Note>
 If no compatible venue or pair is available, the KaleidoSwap Extension shows an empty state instead of a quote. Wallet features such as deposits, withdrawals, balances, and settings still work.
 </Note>
@@ -116,3 +121,9 @@ If no compatible venue or pair is available, the KaleidoSwap Extension shows an 
     If a swap fails, the status screen shows detailed logs that can help diagnose the issue.
   </Accordion>
 </AccordionGroup>
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

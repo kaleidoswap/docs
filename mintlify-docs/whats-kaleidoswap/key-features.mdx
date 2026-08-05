@@ -1,31 +1,32 @@
 ---
-title: Key Features
-description: Core capabilities and features of KaleidoSwap
+title: "KaleidoSwap Key Features"
+sidebarTitle: "Key Features"
+description: "KaleidoSwap enables self-custodial wallet, built-in RGB Lightning node, local-AI brain, autonomous agent, cross-protocol atomic swaps, and multi-asset support"
 ---
 
 ## Core Capabilities
 
 <CardGroup cols={2}>
-  <Card title="RGB Lightning Node Management" icon="server">
-    Run your own RGB Lightning node or connect to existing ones
+  <Card title="Multi-Asset Management" icon="server">
+    Run your own multi-asset Lightning node or connect to existing ones.
   </Card>
 
-  <Card title="RGB Asset Trading" icon="coins">
-    Trade RGB NIA assets instantly on the Lightning Network
+  <Card title="Multi-Protocol Trading" icon="coins">
+    Trade Bitcoin L2 assets instantly on the Lightning Network.
   </Card>
 
   <Card title="Lightning Integration" icon="bolt">
-    Fast, low-cost transactions through payment channels
+    Fast, low-cost transactions through payment channels.
   </Card>
 
   <Card title="Security First" icon="shield-check">
-    Non-custodial architecture with encrypted backups
+    Non-custodial architecture with encrypted backups.
   </Card>
 </CardGroup>
 
 ---
 
-## 🚀 RGB Lightning Node Management
+## Multi-Asset Management
 
 ### Full Node Control
 
@@ -42,8 +43,8 @@ KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a r
     - No reliance on third parties
 
     ```bash
-    # Start your RGB Lightning node
-    kaleidoswap-node start
+    # Set up and start your RGB Lightning node
+    kaleido setup --mode local --create-node --defaults
     ```
   </Tab>
 
@@ -68,7 +69,7 @@ KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a r
     - Set channel policies
   </Accordion>
 
-  <Accordion title="Asset Allocation" icon="layer-group">
+  <Accordion title="Asset Allocation (RGB Lightning)" icon="layer-group">
     - Allocate RGB assets to channels
     - Multi-asset channel support
     - Asset-specific routing
@@ -92,7 +93,7 @@ KaleidoSwap allows you to run a self-hosted RGB Lightning Node or connect to a r
 
 ---
 
-## 💱 RGB Asset Trading
+## Multi-Protocol Trading
 
 ### Atomic Swaps
 
@@ -101,41 +102,54 @@ Execute trustless, instant asset swaps without intermediaries.
 **Supported Swap Types**:
 
 <CardGroup cols={3}>
-  <Card title="Lightning to Lightning" icon="bolt">
-    **Instant RGB Asset Swaps**
+  <Card title="Lightning to Lightning RGB Asset Swaps" icon="bolt">
     Swap RGB assets (like USDT) directly for BTC through Lightning channels.
   </Card>
 
-  <Card title="On-Chain to Lightning" icon="arrow-right-arrow-left">
-    **Liquidity Management**
+  <Card title="On-Chain to Lightning Liquidity Management" icon="arrow-right-arrow-left">
     Open channels with your on-chain funds for instant trading.
   </Card>
 
-  <Card title="Lightning to On-Chain" icon="bitcoin">
-    **Settlement**
-    Move assets from Lightning channels back to the Bitcoin blockchain for cold storage.
+  <Card title="Lightning to On-Chain Settlement" icon="bitcoin">
+    Move assets from Lightning channels back on-chain for cold storage.
   </Card>
 </CardGroup>
 
 ### Trading Features
 
-<Steps>
-  <Step title="Real-Time Quotes">
-    Get live market rates for asset pairs with price impact calculations
-  </Step>
+<AccordionGroup>
+  <Accordion title="Multiple Order Types" icon="list-check">
+    - **Market Maker** — automated quotes filled instantly against liquidity providers
+    - **Manual Swaps** — pick the counterparty and rate yourself for a single trade
+    - **DCA** — scheduled recurring buys or sells to average into a position over time
+    - **Limit Orders** — set a target rate and execute only when the market reaches it
+  </Accordion>
 
-  <Step title="Slippage Protection">
-    Configure maximum acceptable slippage for trades
-  </Step>
+  <Accordion title="Real-Time Quotes" icon="chart-line">
+    - Live market rates for every trading pair
+    - Estimated receive amount before you confirm
+    - Exchange rate and fees shown on each quote
+    - Price impact calculated per trade
+  </Accordion>
 
-  <Step title="Order History">
-    Track all your swaps with detailed execution data
-  </Step>
+  <Accordion title="Slippage Protection" icon="shield-halved">
+    - Set a maximum acceptable slippage per trade
+    - Swaps abort if the rate moves beyond your limit
+    - Time-limited quotes, confirmed before they expire
+  </Accordion>
 
-  <Step title="Multiple LSP Support">
-    Connect to multiple liquidity providers for best rates
-  </Step>
-</Steps>
+  <Accordion title="Order History" icon="clock-rotate-left">
+    - Full swap history in the **History** tab
+    - Detailed execution data per swap
+    - Records for reconciliation and accounting
+  </Accordion>
+
+  <Accordion title="Multiple LSP Support" icon="handshake">
+    - Connect to multiple liquidity providers
+    - Compare rates across market makers
+    - Pick the maker yourself on manual swaps
+  </Accordion>
+</AccordionGroup>
 
 
 
@@ -145,7 +159,7 @@ Execute trustless, instant asset swaps without intermediaries.
 
 ---
 
-## ⚡ Lightning Network Integration
+## Lightning Network Integration
 
 ### Fast & Low-Cost Transactions
 
@@ -161,7 +175,7 @@ Leverage the Lightning Network for high-performance trading.
   </Card>
 
   <Card title="High Throughput" icon="gauge-high">
-    Execute millions of transactions per second without blockchain bottlenecks.
+    Execute transactions without blockchain bottlenecks or block space limits.
   </Card>
 
   <Card title="Privacy Enhanced" icon="user-shield">
@@ -173,11 +187,11 @@ Leverage the Lightning Network for high-performance trading.
 
 #### Opening Channels
 
-1. **Select LSP or Peer**
-2. **Choose Channel Capacity**
-3. **Allocate RGB Assets** (optional)
-4. **Set Channel Parameters**
-5. **Confirm and Open**
+1. Select LSP or Peer
+2. Choose Channel Capacity
+3. Allocate RGB Assets (optional)
+4. Set Channel Parameters
+5. Confirm and Open
 
 **Channel Options**:
 - **Public Channels**: Participate in routing, earn fees
@@ -218,23 +232,23 @@ Leverage the Lightning Network for high-performance trading.
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 ### Non-Custodial Architecture
 
 KaleidoSwap is built on the principle of "Your Keys, Your Coins".
 
 <Check>
-  ✓ **Private keys never leave your device**
+  Private keys never leave your device
 </Check>
 <Check>
-  ✓ **No third-party access to funds**
+  No third-party access to funds
 </Check>
 <Check>
-  ✓ **Complete control over transactions**
+  Complete control over transactions
 </Check>
 <Check>
-  ✓ **Trustless trading protocol via atomic swaps**
+  Trustless trading protocol via atomic swaps
 </Check>
 
 ### Secure Key Management
@@ -245,29 +259,31 @@ KaleidoSwap is built on the principle of "Your Keys, Your Coins".
     - AES-256 Encryption
     - Password Protection
     - Mnemonic Backup
-- **Hardware Wallet Support (Soon)**
-    - Ledger
-    - Trezor
+- **Hardware Wallet Support (Coming Soon)**
 
 ### Channel Backups
 
-<Steps>
-  <Step title="Automatic Backups">
-    Channels are automatically backed up after every state change
-  </Step>
+<AccordionGroup>
+  <Accordion title="Automatic Backups" icon="arrows-rotate">
+    - Channels are backed up after every state change
+    - Each backup reflects the channel state at the time it was created
+  </Accordion>
 
-  <Step title="Encrypted Storage">
-    Backups are encrypted with your password before storage
-  </Step>
+  <Accordion title="Encrypted Storage" icon="lock">
+    - Backup file encrypted with your node password
+    - Same password required to decrypt it on restore
+  </Accordion>
 
-  <Step title="Multiple Locations">
-    Save backups locally and to cloud storage for redundancy
-  </Step>
+  <Accordion title="Multiple Locations" icon="hard-drive">
+    - Save to local disk, external drive, or encrypted cloud storage
+    - Keep redundant copies you can still access later
+  </Accordion>
 
-  <Step title="Easy Restore">
-    Restore channels with mnemonic phrase + backup file
-  </Step>
-</Steps>
+  <Accordion title="Easy Restore" icon="rotate-left">
+    - Restore with your mnemonic phrase plus the backup file
+    - Node force-closes the channels listed in the backup
+  </Accordion>
+</AccordionGroup>
 
 ### Security Best Practices
 
@@ -282,75 +298,71 @@ KaleidoSwap is built on the principle of "Your Keys, Your Coins".
 
 ---
 
-## 🎯 Additional Features
+## AI Features
+
+### Autonomous Agents
+
+<Card title="KaleidoAgent" icon="robot" href="/ai-tools/kaleido-agent">
+  AI portfolio manager and wallet operator. Monitors allocations and manages assets, without ever taking custody.
+</Card>
+
+### Local AI
+
+<Card title="KaleidoMind" icon="brain" href="/ai-tools/kaleido-mind">
+  On-device AI assistant. Get a quote, build a payment, find a contact, or make a swap in plain language.
+</Card>
+
+### AI Tooling
+
+<AccordionGroup>
+  <Accordion title="MCP Servers" icon="server">
+    Typed tool surfaces for wallets, the DEX, and payment-gated APIs, usable from any MCP-compatible client
+  </Accordion>
+
+  <Accordion title="Skills" icon="sparkles">
+    `SKILL.md` playbooks that scope which tools an agent can reach and carry the execution plan
+  </Accordion>
+
+  <Accordion title="Machine Payments" icon="bolt">
+    Agents pay for HTTP 402-gated data APIs over Lightning without an API key or signup
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Additional Features
 
 ### User Interface
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
+  <Card title="Single Seed" icon="key">
+    All Bitcoin Layers balances from a single 12-word seed instead of juggling separate wallets.
+  </Card>
+
+  <Card title="Translations" icon="language">
+    The interface is available in English, Spanish, Italian, German, French, Chinese, Japanese, and Korean.
+  </Card>
+
   <Card title="Intuitive Design" icon="paintbrush">
-    Clean, modern interface designed for both beginners and power users
-  </Card>
-
-  <Card title="Dark Mode" icon="moon">
-    Easy on the eyes with beautiful dark theme support
-  </Card>
-
-  <Card title="Multi-Platform" icon="desktop">
-    Available for macOS, Windows, and Linux
-  </Card>
-
-  <Card title="Real-Time Updates" icon="arrows-rotate">
-    Live balance updates, market data, and notifications
+    Clean, modern interface designed for both beginners and power users, with dark and light theme supported.
   </Card>
 </CardGroup>
 
-### Developer Tools
+### Platform Extras
 
-For developers building on KaleidoSwap:
+<CardGroup cols={3}>
+  <Card title="Docker Node Backend" icon="docker">
+    Spin up your RGB Lightning node in a container. One setup, no dependency headaches.
+  </Card>
 
-<Tabs>
-  <Tab title="Python SDK">
-    ```python
-    from kaleido_sdk import KaleidoClient
+  <Card title="Background Node" icon="gauge">
+    Run with tray controls and keep your node syncing while the app is minimized.
+  </Card>
 
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com"
-    )
-    pairs = client.maker.list_pairs()
-    quote = client.maker.get_quote({
-        "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-        "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-    })
-    ```
-
-    [Explore Python SDK →](/sdk/introduction)
-  </Tab>
-
-  <Tab title="TypeScript SDK">
-    ```typescript
-    import { KaleidoClient } from 'kaleido-sdk';
-
-    const client = KaleidoClient.create({
-      baseUrl: 'https://api.signet.kaleidoswap.com'
-    });
-    const pairs = await client.maker.listPairs();
-    const quote = await client.maker.getQuote({
-      from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
-      to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-    });
-    ```
-
-    [Explore TypeScript SDK →](/sdk/introduction)
-  </Tab>
-
-  <Tab title="REST API">
-    ```bash
-    curl https://api.signet.kaleidoswap.com/api/v1/market/pairs
-    ```
-
-    [Explore API Reference →](/api-reference/introduction)
-  </Tab>
-</Tabs>
+  <Card title="Multi-Platform" icon="desktop">
+    Desktop App available for macOS, Windows, and Linux. Extension available on all browsers.
+  </Card>
+</CardGroup>
 
 ### Advanced Features
 
@@ -359,7 +371,7 @@ For developers building on KaleidoSwap:
     Real-time market data and quote updates via WebSocket connections
   </Accordion>
 
-  <Accordion title="Multi-Asset Channels" icon="layer-group">
+  <Accordion title="Multi-Asset Channels (RGB Lightning)" icon="layer-group">
     Allocate multiple RGB assets to a single Lightning channel
   </Accordion>
 
@@ -374,11 +386,29 @@ For developers building on KaleidoSwap:
   <Accordion title="Invoice Management" icon="file-invoice">
     Create, track, and manage Lightning invoices
   </Accordion>
-
-  <Accordion title="Transaction History" icon="clock-rotate-left">
-    Complete history of all swaps, payments, and channel operations
-  </Accordion>
 </AccordionGroup>
+
+### Developer Tools
+
+For developers building on KaleidoSwap:
+
+<CardGroup cols={2}>
+  <Card title="SDK" icon="code" href="/sdk/introduction">
+    Full SDK reference, examples, and best practices.
+  </Card>
+
+  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
+    REST endpoints and swap protocol details.
+  </Card>
+
+  <Card title="CLI" icon="terminal" href="/cli/introduction">
+    Run local nodes, swaps, and channel flows from the terminal.
+  </Card>
+
+  <Card title="AI Tools" icon="sparkles" href="/ai-tools/introduction">
+    MCP servers for wallet operations and Skills files for specific behaviors.
+  </Card>
+</CardGroup>
 
 ---
 
@@ -386,16 +416,9 @@ For developers building on KaleidoSwap:
 
 <Info>
   **Upcoming Features**:
-  - Mobile app (iOS & Android)
+  - Web App & Mobile App (iOS & Android)
   - Hardware wallet integration
-  - Advanced trading features (limit orders, DCA)
   - Multi-signature wallet support
-  - More RGB asset types (UDA NFTs, CFA collectibles, IFA inflatable assets)
+  - Intent-based and P2P trading engines
 
 </Info>
-
-## Get Started
-
-<Card title="Desktop App" icon="download" href="/desktop-app/getting-started/installation">
-  Install KaleidoSwap and start trading with atomic swaps
-</Card>

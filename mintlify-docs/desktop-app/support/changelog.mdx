@@ -1,0 +1,121 @@
+---
+title: "KaleidoSwap Desktop App Changelog"
+sidebarTitle: "Changelog"
+description: "KaleidoSwap Desktop App version history: new features, changes, and fixes shipped in each release for macOS, Windows, and Linux, from the latest build back to alpha."
+---
+
+## v0.5.0 (Current)
+
+**Released:** 21 June 2026
+
+**Platforms:** macOS (Apple Silicon and Intel), Windows (x64), Linux (AppImage, deb, rpm)
+
+<Warning>
+KaleidoMind is an early preview. Expect rough edges and changing behavior between releases. Always review the confirmation details before approving a spend.
+</Warning>
+
+### Added
+
+- **KaleidoMind**, an on-device AI agent. Chat with your wallet and node locally, run a full atomic swap or buy a channel from a single confirmation, and schedule autonomy tasks with risk limits and a dry-run default.
+- Windows (x64) support for KaleidoMind, alongside macOS and Linux.
+- Change Password from Settings, and a one-click Docker regtest connect preset.
+- Korean translation.
+
+### Changed
+
+- The buy-channel flow honors your configured LSP or maker instead of resetting to the network default, and shows the connected LSP throughout the order steps.
+- Redesigned deposit, withdraw, and history surfaces, rebuilt on Tailwind v4 with kaleido-ui design tokens.
+- Maker and LSP configuration consolidated in Settings.
+- All RGB asset schemas (NIA, CFA, UDA, IFA) are now visible across wallet and trading.
+
+### Fixed
+
+- Faster node reconnection. A locked remote node is reported as locked instead of an authentication failure.
+- Asset precision of `0` is respected, and empty or failed channel orders are no longer written to history.
+
+## v0.4.0
+
+**Released:** 16 April 2026
+
+### Added
+
+- **Docker node backend.** Run the RGB Lightning Node in a container from the app, with automatic image pull, container lifecycle management, and health monitoring.
+- **Limit orders** and **dollar-cost averaging**, both with local persistence and scheduler-driven execution.
+- Reverse quotes, enabling two-way RFQ trading.
+- BIP21 deposit URIs, automatic port-conflict resolution, and tray plus background-running controls for the local node.
+
+### Changed
+
+- Trading page split into separate market-maker and limit-order views, with parallelized initialization for faster loads.
+- Migrated to KaleidoSDK v0.1.0.
+- Broader language coverage across trading, wallet history, setup, and channel management.
+
+### Fixed
+
+- Light mode disabled to prevent rendering inconsistencies, leaving dark mode as the only supported theme.
+- Unlock retry timeout raised from roughly 3 minutes to roughly 1 hour, so slow-syncing nodes no longer report false "maximum attempts reached" errors.
+- Security updates to `rustls-webpki` and `tar`.
+
+## v0.3.2
+
+**Released:** 10 November 2025
+
+### Added
+
+- Sending RGB assets to witness recipients, with a Bitcoin amount field for the witness UTXO and a 512 sat minimum.
+- WebView2 bootstrapper embedded in the Windows installer.
+
+### Changed
+
+- Stronger validation and error handling for RGB invoice assignment in the deposit and withdrawal flows.
+
+## v0.3.1
+
+**Released:** 3 November 2025
+
+### Added
+
+- Mnemonic viewer, to reveal your recovery phrase from inside the app behind security warnings and an explicit confirmation.
+- NSIS configuration for the Windows installer.
+
+### Fixed
+
+- Missing amount parameter when sending RGB assets on-chain.
+- Crashes during withdrawal when assignments were null or undefined.
+
+## v0.3.0
+
+**Released:** 20 October 2025
+
+### Added
+
+- Buying an asset directly in a channel, with the channel set up automatically as part of the purchase.
+- Real-time setup, capacity, and duration fee estimates for channel orders.
+- Order detail view with asset delivery status, delivery retry, and order flow restart.
+- Privacy mode for RGB invoices, switching between blinded UTXOs and standard on-chain addresses.
+
+### Changed
+
+- macOS builds signed with an Apple certificate, removing installation security warnings.
+- Trading from an on-chain balance when no channel is available, with a prompt to create one.
+
+## v0.2.0
+
+**Released:** 23 July 2025 (alpha)
+
+### Added
+
+- Channel closure confirmation, address validation, and connected-peer selection.
+- Asset selection with precision management, plus asset conflict validation on trades.
+- WebSocket service with a message queue and retry logic.
+
+### Fixed
+
+- Max sendable amount in the buy-channel flow.
+- Windows manifest integration and the MSVC build process.
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

@@ -1,19 +1,20 @@
 ---
-title: Swap Protocol
-description: How KaleidoSwap atomic swaps work — trustless HTLC swaps over the Lightning Network
+title: "Atomic Swap Protocol"
+sidebarTitle: "Swap Protocol"
+description: "How KaleidoSwap swaps work under the hood, covering atomic HTLC swaps over the Lightning Network, with flow diagrams and code examples"
 ---
 
 KaleidoSwap executes swaps atomically using the client's RGB Lightning Node:
 
 | Model | Used by | Trust required | Settlement |
 |-------|---------|----------------|------------|
-| **Atomic swap** | Desktop app, SDK, node integrations | None — cryptographic guarantee | HTLC on Lightning Network |
+| **Atomic swap** | Desktop App, SDK, node integrations | None — cryptographic guarantee | HTLC on Lightning Network |
 
 ---
 
 ## Atomic Swaps
 
-The desktop app uses **Hash Time-Locked Contracts (HTLCs)** to execute swaps atomically over the Lightning Network. Both sides lock their assets simultaneously — either the full swap completes or both sides get their funds back. There is no counterparty risk.
+The Desktop App uses **Hash Time-Locked Contracts (HTLCs)** to execute swaps atomically over the Lightning Network. Both sides lock their assets simultaneously — either the full swap completes or both sides get their funds back. There is no counterparty risk. This is the same mechanism behind [the first ever RGB asset swap on Lightning mainnet](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd).
 
 ### How It Works
 

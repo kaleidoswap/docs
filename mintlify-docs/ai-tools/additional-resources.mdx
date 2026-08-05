@@ -1,0 +1,90 @@
+---
+title: "AI Tools: Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Links for the KaleidoSwap AI tools, covering source repositories, protocol specifications for MCP and Lightning-paid APIs, and support channels"
+---
+
+## Source Repositories
+
+Every AI surface is open source under the [KaleidoSwap organisation](https://github.com/kaleidoswap).
+
+<CardGroup cols={2}>
+  <Card title="kaleido-agent" icon="robot" href="https://github.com/kaleidoswap/kaleido-agent">
+    The autonomous agent, its dashboard and status API, and the `skills/` directory every loop loads from.
+  </Card>
+  <Card title="kaleido-mind" icon="brain" href="https://github.com/kaleidoswap/kaleido-mind">
+    The on-device engine: tiered funnel, recipe engine, tool contract, memory and retrieval, and the eval harness.
+  </Card>
+  <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
+    The gateway that composes every domain behind one connection. Published to npm.
+  </Card>
+  <Card title="Rate" icon="mobile" href="https://github.com/kaleidoswap/Rate">
+    The React Native mobile wallet that hosts KaleidoMind with voice control.
+  </Card>
+</CardGroup>
+
+### Focused MCP servers
+
+| Repository | Tool prefix | Domain |
+|-----------|-------------|--------|
+| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node wallet, channels, atomic swap taker |
+| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark wallet, Lightning, token transfers, BTC bridge |
+| [kaleidoswap-mcp](https://github.com/kaleidoswap/kaleidoswap-mcp) | `kaleidoswap_*` | DEX quotes, orders, atomic HTLC swaps, LSPS1 |
+| [l402-gateway-mcp](https://github.com/kaleidoswap/l402-gateway-mcp) | `mpp_*`, `l402_*` | Market data and payment-gated HTTP resources |
+
+## Protocol Specifications
+
+<CardGroup cols={2}>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    The tool protocol every KaleidoSwap MCP server implements.
+  </Card>
+  <Card title="RGB Protocol" icon="gem" href="https://docs.rgb.info">
+    Client-side validation and asset interfaces behind the RGB tools.
+  </Card>
+  <Card title="RGB Lightning Node" icon="bolt" href="https://github.com/RGB-Tools/rgb-lightning-node">
+    The node the `wdk_*` tools drive, with its own OpenAPI reference.
+  </Card>
+  <Card title="QVAC SDK" icon="microchip" href="https://www.npmjs.com/package/@qvac/sdk">
+    The on-device inference runtime KaleidoMind uses for LLM, embeddings, speech to text, and text to speech.
+  </Card>
+</CardGroup>
+
+## KaleidoSwap References
+
+Reading these first makes the agent tooling considerably easier to reason about, since the tools are thin wrappers over them.
+
+<CardGroup cols={2}>
+  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
+    How the atomic HTLC flow settles, which is what the swap tools orchestrate.
+  </Card>
+  <Card title="RGB LSPS1 APIs" icon="code" href="/api-reference/rgb-lsps1-apis">
+    The channel-ordering endpoints behind `kaleidoswap_lsp_*`.
+  </Card>
+  <Card title="CLI" icon="terminal" href="/cli/introduction">
+    The binary KaleidoAgent shells out to, and the source of the node lifecycle tools.
+  </Card>
+  <Card title="SDK" icon="code" href="/sdk/introduction">
+    Call the swap infrastructure directly from TypeScript or Python, skipping the agent layer.
+  </Card>
+</CardGroup>
+
+## Product and Community
+
+<CardGroup cols={2}>
+  <Card title="AI Tools product page" icon="sparkles" href="https://kaleidoswap.com/products/ai-tools">
+    Product overview, plus readable and downloadable copies of each skill.
+  </Card>
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    Community support and discussion.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap">
+    Issues, pull requests, and the full source.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>
+
+<Note>
+  When reporting a problem with an AI surface, include the tool name that failed, the network you are on, and your config with the seed and any API keys removed. See [Troubleshooting](/ai-tools/troubleshooting) first.
+</Note>

@@ -1,0 +1,16 @@
+{/*
+  Single source of truth for version numbers stated in prose across the docs.
+
+  Update here, not in the pages. `scripts/check-sdk-version.sh` compares
+  sdkVersion against the latest kaleido-sdk published on npm and warns on a
+  PR if they have drifted.
+
+  Do not hardcode these numbers in a page — import them:
+
+    import { sdkVersion } from "/snippets/versions.mdx";
+
+    **SDK v{sdkVersion}** is generated against ...
+*/}
+
+export const sdkVersion = "0.1.15";
+export const rlnApiVersion = "0.8.0";

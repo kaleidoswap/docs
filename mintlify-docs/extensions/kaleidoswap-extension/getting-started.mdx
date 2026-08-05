@@ -1,13 +1,14 @@
 ---
-title: Getting Started
-description: Create or import a KaleidoSwap Extension wallet and choose your network accounts
+title: "KaleidoSwap Extension: Getting Started"
+sidebarTitle: "Getting Started"
+description: "Create or import a wallet in the KaleidoSwap Extension, choose your networks, and set up Spark, Arkade, and Liquid accounts in minutes"
 ---
 
 ## Onboarding
 
 When you first open the KaleidoSwap Extension, the onboarding flow guides you through initial setup.
 
-<img src="/images/kaleidoswap-extension/01-welcome.png" alt="KaleidoSwap Extension welcome screen" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap Extension welcome screen" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Steps>
   <Step title="Welcome">
@@ -51,23 +52,25 @@ When you first open the KaleidoSwap Extension, the onboarding flow guides you th
   </Step>
 </Steps>
 
-<img src="/images/kaleidoswap-extension/02-password.png" alt="KaleidoSwap Extension password step" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/02-password.png" alt="KaleidoSwap Extension password step" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
 When restoring a wallet, always use the **BIP39 recovery phrase**, not a Nostr key. An imported Nostr key only replaces the Nostr identity; it does not control funds.
 </Note>
 
+<img src="/assets/images/extension/12-restore-backup-consent.png" alt="Cloud backup found prompt offering to restore encrypted RGB state from the VSS backup server, with a Skip for now option" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
 ## RGB Accounts
 
 ### Node-less RGB (RGB-L1)
 
-The default RGB backing runs RGB on Bitcoin L1 entirely inside the extension (WebAssembly) — no node required. It connects to mainnet by default through an Esplora indexer (a default is provided; you can supply your own in **Settings > RGB-L1**), auto-creates blinded receive invoices, manages UTXOs for you, and backs up RGB state to encrypted cloud (VSS) and local file backups.
+The default RGB backing runs RGB on Bitcoin L1 entirely inside the extension (WebAssembly), no node required. It connects to mainnet by default through an Esplora indexer (a default is provided; you can supply your own in **Settings > RGB-L1**), auto-creates blinded receive invoices, manages UTXOs for you, and backs up RGB state to encrypted cloud (VSS) and local file backups.
 
 ### RGB Lightning Node
 
 RLN is optional and experimental. Connect it if you want RGB Lightning channels, RGB invoices over Lightning, or maker-based RGB swaps.
 
-<img src="/images/kaleidoswap-extension/04-rln-optional.png" alt="KaleidoSwap Extension RLN opt-in" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/04-rln-optional.png" alt="KaleidoSwap Extension RLN opt-in" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 The extension can reach your RLN over two transports:
 
@@ -76,7 +79,7 @@ The extension can reach your RLN over two transports:
 
 Both transports share the same maker URL for RGB swaps.
 
-<img src="/images/kaleidoswap-extension/05-rln-connect.png" alt="KaleidoSwap Extension RLN connection form" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/05-rln-connect.png" alt="KaleidoSwap Extension RLN connection form" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
 RGB Lightning is shown as an experimental test-network feature in onboarding. You can skip it and connect later from Settings. Connecting an RLN node replaces the node-less RGB-L1 backing.
@@ -86,7 +89,7 @@ RGB Lightning is shown as an experimental test-network feature in onboarding. Yo
 
 After setup, the dashboard shows account status and assets across the connected protocols.
 
-<img src="/images/kaleidoswap-extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Account Status
 
@@ -120,6 +123,17 @@ Assets with the same ticker across backings are merged into one dashboard row, a
 
 The KaleidoSwap Extension automatically locks after a period of inactivity. When locked, the extension requires your password (or passkey, if registered) before it decrypts the mnemonic in memory again.
 
+<img src="/assets/images/extension/13-lock-screen.png" alt="Welcome Back lock screen with Unlock with Passkey as the primary action and an Unlock with password fallback" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### Unlocking
+
+When the extension is locked, you'll see the **Welcome Back** screen shown above.
+
+- **With passkey** - if you registered one, tap **Unlock with Passkey** and confirm with your device's biometrics or security key
+- **With password** - enter your password and select **Unlock**
+
+If you forget your password, KaleidoSwap cannot recover it - see [Troubleshooting](/extensions/kaleidoswap-extension/troubleshooting) for recovery steps.
+
 ### Manual Lock
 
 Use **Settings > Lock Wallet** to lock immediately.
@@ -128,21 +142,10 @@ Use **Settings > Lock Wallet** to lock immediately.
 
 Go to **Settings > Preferences** to adjust the auto-lock timeout (from 1 minute to 1 hour, or never) and Bitcoin unit display.
 
-<img src="/images/kaleidoswap-extension/06-wallet-ready.png" alt="KaleidoSwap Extension ready" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/06-wallet-ready.png" alt="KaleidoSwap Extension ready" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-## Next Steps
+---
 
-<CardGroup cols={2}>
-  <Card title="Wallet Features" icon="wallet" href="/extensions/kaleidoswap-extension/wallet-features">
-    Send, receive, and manage assets
-  </Card>
-  <Card title="Swaps" icon="arrows-rotate" href="/extensions/kaleidoswap-extension/swaps">
-    Swap assets within the extension
-  </Card>
-  <Card title="Bridge" icon="bridge" href="/extensions/kaleidoswap-extension/bridge">
-    Bridge between Spark and external chains
-  </Card>
-  <Card title="DApp Connectivity" icon="plug" href="/extensions/kaleidoswap-extension/dapp-connectivity">
-    Use the KaleidoSwap Extension with trusted DApps and Nostr
-  </Card>
-</CardGroup>
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

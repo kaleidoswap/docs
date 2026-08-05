@@ -1,35 +1,34 @@
 ---
-title: Welcome to KaleidoSwap
-description: Trade RGB assets on the Lightning Network — desktop, browser, and beyond
+title: "KaleidoSwap: Bitcoin DEX on Lightning"
+sidebarTitle: "Welcome"
+description: "Non-custodial decentralized exchange powering atomic swaps across Bitcoin Layers, settled over the Lightning Network. Built for trustless, sovereign trading."
 ---
 
-![KaleidoSwap — Trade RGB assets on Lightning](/assets/images/hero-banner.png)
+![Abstract KaleidoSwap emblem: a faceted purple and green gem mark surrounded by lightning bolts and coin icons over a dark circuit-board background](/assets/images/overview/hero-banner.png)
 
-KaleidoSwap is an open-source platform for trading RGB assets on the Lightning Network. Use the **desktop application** for full node control and atomic swaps.
+KaleidoSwap is building the liquidity layer for Bitcoin-native atomic swaps, enabling anyone to exchange Bitcoin-based assets freely, privately, and without intermediaries.
 
-<Card title="Desktop App" icon="desktop" href="/desktop-app/getting-started/installation">
-  Full-featured trading with atomic swaps, node management, and channel control
-</Card>
+Its vertically integrated stack spans end-user applications such as the Desktop App and the Browser Extension, a multi-language SDK, AI tools for autonomous AI agents and local AI brains, and market-maker software.
 
 ---
 
 ## Why KaleidoSwap?
 
 <CardGroup cols={2}>
-  <Card title="RGB on Lightning" icon="bolt">
-    Trade RGB assets (USDT, XAUT, and more) with instant settlement on the Lightning Network — powered by atomic swaps on the desktop app
+  <Card title="Multi-Protocol" icon="layer-group">
+    Hold, spend, and swap assets across all Bitcoin Layers with instant atomic settlement
   </Card>
 
   <Card title="Non-Custodial" icon="shield-check">
-    Your keys, your coins. No accounts, no intermediaries — just connect your wallet or run your own node
+    Your keys, your coins. No accounts, no intermediaries. Just connect your wallet or run your own node
   </Card>
 
   <Card title="Open Source" icon="code-branch">
-    Fully open-source with MIT license. Inspect the code, contribute, or build your own integration
+    Fully open source with MIT license. Inspect the code, contribute, or build your own integration
   </Card>
 
-  <Card title="Multi-Platform" icon="layer-group">
-    Available for macOS, Windows, and Linux
+  <Card title="Multi-Platform" icon="desktop">
+    Desktop App available for macOS, Windows, and Linux. Extension available in the browser
   </Card>
 </CardGroup>
 
@@ -37,41 +36,25 @@ KaleidoSwap is an open-source platform for trading RGB assets on the Lightning N
 
 ## Platform Overview
 
-![KaleidoSwap Platform — Desktop, Web, Extension](/assets/images/platform-overview.png)
+![KaleidoSwap platform diagram: Desktop, Extension, Mobile, and Web App clients connecting through the swap-sdk and wallet-sdk integration layer to Bitcoin, Lightning, and Layer 2 protocol icons, the KaleidoSwap LSP and market makers, and the KaleidoMind and KaleidoAgent intelligence layer](/assets/images/overview/kaleidoswap-platform-overview.jpg)
 
-| | Desktop App |
-|--|-------------|
-| **Swap Model** | Atomic swaps |
-| **Node** | Self-hosted or remote |
-| **Wallet** | Built-in |
-| **Best For** | Power users, node operators |
-| **Install** | [Download](/desktop-app/getting-started/installation) |
+The stack is vertically integrated: a single SDK powers every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocols, and the same liquidity.
 
----
+- **Clients & integrators** — Desktop, Extension, Mobile, and Web App, alongside third-party wallets, neobanks, payment processors, and AI agents building on the same interfaces.
+- **Integration layer** — `swap-sdk` for swap integration (TypeScript, Python, Rust) and `wallet-sdk` for wallet primitives (TypeScript). [Start with the SDK →](/sdk/introduction)
+- **Protocols** — Bitcoin on-chain and Lightning, plus the Bitcoin Layer protocols swaps can settle on. [How it works →](/whats-kaleidoswap/background)
+- **Liquidity layer** — the KaleidoSwap LSP bootstraps liquidity today; external market makers join from 2027.
+- **Intelligence layer** — KaleidoMind, the self-hosted AI brain (QVAC runtime, Skills and MCP libraries, fine-tuned models), and KaleidoAgent, an autonomous trading agent that runs against a local model or Claude and OpenAI. [Explore AI Tools →](/ai-tools/introduction)
 
-## How It Works
-
-![KaleidoSwap — RGB assets on Lightning Network](/assets/images/how-it-works.png)
-
-KaleidoSwap combines three technologies to enable fast, private, and scalable asset trading:
-
-<AccordionGroup>
-  <Accordion title="RGB Protocol" icon="layer-group">
-    Client-validated smart contracts on Bitcoin. Assets use client-side validation to keep data off-chain while anchoring to Bitcoin for security — no blockchain bloat, full privacy.
-  </Accordion>
-
-  <Accordion title="Lightning Network" icon="bolt">
-    Second-layer payment channels for instant, low-cost transactions. Swaps settle in milliseconds with fees measured in satoshis.
-  </Accordion>
-
-  <Accordion title="Lightning Service Providers" icon="server">
-    LSPs provide channel liquidity and routing. Connect to an LSP and start trading without managing infrastructure.
-  </Accordion>
-</AccordionGroup>
+Components marked LIVE are in production today; the rest are on the 2026 roadmap.
 
 ---
 
-## Getting Started
+## For Traders
+
+Trade from your own wallet with our apps and extensions:
+
+### Getting Started
 
 <Steps>
   <Step title="Install the app">
@@ -95,33 +78,51 @@ KaleidoSwap combines three technologies to enable fast, private, and scalable as
   </Step>
 </Steps>
 
----
-
-## Documentation
+### Guides
 
 <CardGroup cols={3}>
-  <Card title="Learn" icon="book-open" href="/whats-kaleidoswap/architecture">
-    Architecture, key concepts, and how everything fits together
-  </Card>
-
-  <Card title="SDK" icon="code" href="/sdk/introduction">
-    TypeScript and Python SDKs for building on KaleidoSwap
-  </Card>
-
-  <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
-    REST API docs with interactive playground
-  </Card>
-
   <Card title="Desktop Guide" icon="desktop" href="/desktop-app/getting-started/introduction">
-    Full desktop app docs: nodes, wallets, channels, and trading
+    Nodes, wallets, channels, and trading
+  </Card>
+
+  <Card title="Extensions" icon="puzzle-piece" href="/extensions/introduction">
+    Multi-layer wallet, swaps, and DApp connectivity
+  </Card>
+
+  <Card title="AI Tools" icon="sparkles" href="/ai-tools/introduction">
+    Autonomous agent for portfolio management and local-AI brain
   </Card>
 </CardGroup>
 
 ---
 
-## For Developers
+## For Builders
 
-Build on KaleidoSwap with our SDKs and APIs:
+Build on KaleidoSwap with our SDKs, APIs, and AI Tools:
+
+### Getting Started
+
+<Steps>
+  <Step title="Install the SDK">
+    `npm install kaleido-sdk` for TypeScript, `pip install kaleido-sdk` for Python.
+    [Installation Guide →](/sdk/getting-started)
+  </Step>
+
+  <Step title="Create a client">
+    Point `KaleidoClient.create()` at a regtest, signet, or mainnet endpoint.
+    [Client Reference →](/sdk/api-reference)
+  </Step>
+
+  <Step title="Request a quote">
+    Fetch trading pairs and live quotes from the maker.
+    [Market APIs →](/api-reference/market-apis)
+  </Step>
+
+  <Step title="Execute a swap">
+    Run your first non-custodial atomic swap end to end.
+    [How to Swap →](/sdk/how-to-swap)
+  </Step>
+</Steps>
 
 <CodeGroup>
 ```typescript TypeScript
@@ -159,13 +160,23 @@ quote = client.maker.get_quote({
 ```
 </CodeGroup>
 
+### Guides
+
 <CardGroup cols={2}>
-  <Card title="SDK Docs" icon="code" href="/sdk/introduction">
+  <Card title="SDK" icon="code" href="/sdk/introduction">
     Full SDK reference, examples, and best practices
   </Card>
 
   <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
     REST endpoints and swap protocol details
+  </Card>
+
+  <Card title="CLI" icon="terminal" href="/cli/introduction">
+    Run local nodes, swaps, and channel flows from the terminal
+  </Card>
+
+  <Card title="AI Tools" icon="sparkles" href="/ai-tools/introduction">
+    MCP servers for wallet operations and Skills files for specific behaviors
   </Card>
 </CardGroup>
 
@@ -187,4 +198,4 @@ quote = client.maker.get_quote({
   </Card>
 </CardGroup>
 
-KaleidoSwap is open-source software licensed under the [MIT License](https://github.com/kaleidoswap/desktop-app/blob/main/LICENSE).
+KaleidoSwap is open source software licensed under the [MIT License](https://github.com/kaleidoswap/desktop-app/blob/main/LICENSE).

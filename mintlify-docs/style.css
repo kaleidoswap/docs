@@ -1,0 +1,98 @@
+/* ==========================================================================
+   KaleidoSwap documentation — custom styles
+
+   Mintlify picks up any .css file in the docs root automatically; there is
+   nothing to declare in docs.json.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Universal Content Images — Drop Shadow & Centering
+   -------------------------------------------------------------------------- */
+
+main img,
+main img.rounded {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
+}
+
+.dark main img,
+.dark main img.rounded {
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
+}
+
+/* --------------------------------------------------------------------------
+   Desktop App screenshots
+
+   Screenshot-only paragraphs stay transparent and inherit their horizontal
+   position from the surrounding content. An image in a nested list is thus
+   indented by exactly the same amount as that list's text, without adding a
+   separate white card or an arbitrary offset.
+   -------------------------------------------------------------------------- */
+
+main :is(p, figure):has(img[src*="/desktop-app/"]) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Mintlify can wrap Markdown images in a link or an element used for image
+   expansion. Clear that generated surface as well, while leaving the image's
+   own radius and shadow intact. */
+main :is(p, figure) :is(a, div, span):has(img[src*="/desktop-app/"]) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+main img[src*="/desktop-app/"] {
+  display: block;
+  margin: 1.5rem auto;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  width: min(100%, 800px);
+  max-width: 800px;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
+}
+
+.dark main img[src*="/desktop-app/"] {
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
+}
+
+/* --------------------------------------------------------------------------
+   Extension Screenshots
+   -------------------------------------------------------------------------- */
+
+main img[src*="/extension/"] {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 360px;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.12),
+    0 12px 28px -4px rgb(0 0 0 / 0.18);
+}
+
+.dark main img[src*="/extension/"] {
+  box-shadow:
+    0 4px 8px -1px rgb(0 0 0 / 0.45),
+    0 14px 34px -4px rgb(0 0 0 / 0.65);
+}

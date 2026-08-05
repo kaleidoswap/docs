@@ -1,0 +1,305 @@
+---
+title: "Bitcoin MCP Servers for Wallets, Swaps, and Paid APIs"
+sidebarTitle: "MCP Servers"
+description: "Typed Model Context Protocol tools for Bitcoin wallets, the KaleidoSwap DEX, and Lightning-paid APIs, covering the server list, tool surface, and client setup"
+---
+
+KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, a single unified server, plus two per-wallet servers that remain standalone.
+
+## Why One Server
+
+Several focused, single-domain MCP servers existed early on: a KaleidoSwap DEX server, an MPP/L402 payment server, per-wallet servers for RLN and Spark. The DEX and payment servers have since been consolidated into `kaleido-mcp`, which re-exposes the same tool contracts under one connection:
+
+<CardGroup cols={2}>
+  <Card title="One connection" icon="plug">
+    An agent host configures a single MCP server instead of wiring up four or five.
+  </Card>
+  <Card title="Same tool names" icon="fingerprint">
+    Tool contracts (`kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`) are unchanged from the original focused servers, nothing to relearn.
+  </Card>
+  <Card title="One place to maintain" icon="wrench">
+    Bug fixes and new tools land in one repo instead of being duplicated across several.
+  </Card>
+  <Card title="Actively maintained" icon="check">
+    The standalone `kaleidoswap-mcp` and `l402-gateway-mcp` repos are archived. `kaleido-mcp` is where ongoing work happens.
+  </Card>
+</CardGroup>
+
+## Available Servers
+
+| Server | Tool prefix | Covers |
+|--------|-------------|--------|
+| [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp) | `kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`, `kaleido_node_*` | The unified gateway. Every domain below, in one connection |
+| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node wallet: balances, RGB and BOLT11 invoices, payments, channels, atomic swap taker |
+| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark wallet: balances, Lightning receive and pay, token transfers, BTC bridge deposits and withdrawals |
+
+<Note>
+  `kaleido-mcp` is a composition layer and is meant to stay thin. Domain logic belongs in the focused servers it wraps, not reimplemented in the gateway. Legacy `rln_*` and generic `get_*` market aliases remain in place for migration.
+</Note>
+
+### Retired Servers
+
+These repos are archived. Their own READMEs point to `kaleido-mcp` and say they receive no further updates:
+
+| Repo | Superseded by |
+|------|---------------|
+| `kaleidoswap-mcp` | `kaleidoswap_*` tools in kaleido-mcp |
+| `l402-gateway-mcp` | `mpp_*` / `l402_*` tools in kaleido-mcp |
+| `kaleido-node-mcp` | Node-lifecycle tools ported as `kaleido_node_*`; the wallet, asset, channel, payment, market, and swap tools that repo also had were dropped in favor of the SDK-backed tools already in kaleido-mcp |
+
+If you have an integration still pointing at `kaleidoswap-mcp` or `l402-gateway-mcp` directly, point it at `kaleido-mcp` instead. The tool names and arguments did not change.
+
+## Installation & Configuration
+
+`kaleido-mcp` is published to npm, so the fastest path needs no local build:
+
+```bash
+npx -y kaleido-mcp
+```
+
+In practice an MCP host runs this for you, point its config at the command (see [Client Configuration](#client-configuration) below). For development, or to run a specific commit, build from source instead:
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-mcp
+cd kaleido-mcp
+npm install
+npm run build
+```
+
+Either way, the server reads the same environment variables and speaks stdio by default:
+
+```bash
+# stdio (Claude Desktop, KaleidoAgent, ...)
+WDK_SEED="word1 word2 ..." node dist/index.js
+
+# HTTP transport
+PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
+```
+
+| Env var | Required | Description |
+|---------|----------|--------------|
+| `WDK_SEED` | Yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. The server still boots without it, the Spark tools are just disabled |
+| `SPARK_NETWORK` | No | `MAINNET` or `REGTEST` |
+| `SPARK_SCAN_API_KEY` | No | SparkScan API key |
+| `SPARK_USDT_TOKEN` | No | Default Spark token identifier |
+| `RLN_NODE_URL` | No | RLN daemon URL, default `http://localhost:3001` |
+| `KALEIDOSWAP_API_URL` | No | KaleidoSwap API URL, default `https://api.kaleidoswap.com` |
+| `KALEIDO_BIN` | No | Path to the `kaleido` binary, for the node lifecycle tools |
+| `PORT` | No | Enable Streamable HTTP transport instead of stdio |
+| `MCP_AUTH_TOKEN` | No | Bearer token for HTTP mode |
+
+### Legacy Aliases
+
+Some tools are still reachable under older names (`rln_*` for `wdk_*`, generic `get_*` for the `l402_get_*` market tools) for backward compatibility with earlier integrations. New integrations should use the canonical `wdk_*` / `l402_*` names.
+
+## Tool Surface by Domain
+
+All tools below are served by `kaleido-mcp` over a single connection. Tools marked with a 🔒 icon in the underlying tool contract require host-side confirmation before executing (spend-moving actions); see each host's own confirmation UX.
+
+<AccordionGroup>
+  <Accordion title="Spark L2 wallet (spark_*)">
+    WDK built-in tools (via `@tetherto/wdk-mcp-toolkit`, scoped to the `spark` chain): `getAddress`, `getBalance`, `sendTransaction`, `transfer`, `getTokenBalance`, `quoteSendTransaction`, `quoteTransfer`, `getFeeRates`, `sign`, `verify`.
+
+    Custom Spark tools, on top of the built-ins:
+
+    | Tool | Purpose |
+    |------|---------|
+    | `spark_get_balance` | Spark L2 wallet balance in satoshis (fee-free transfers) |
+    | `spark_get_address` | Spark L2 address for receiving sats or tokens |
+    | `spark_get_token_balance` | Balance of a Spark token (e.g. USDT) by token identifier |
+    | `spark_get_deposit_address` | Bitcoin L1 address to bridge BTC into the Spark L2 wallet |
+    | `spark_create_lightning_invoice` | BOLT11 invoice to receive BTC into Spark via Lightning |
+    | `spark_pay_lightning_invoice` 🔒 | Pay a BOLT11 invoice from the Spark wallet |
+    | `spark_quote_lightning_payment` | Estimate the Lightning routing fee before paying |
+    | `spark_send_sats` 🔒 | Send satoshis to another Spark L2 address (fee-free) |
+    | `spark_transfer_token` 🔒 | Transfer a Spark token (e.g. USDT) to another address (fee-free) |
+    | `spark_quote_withdraw` | Fee quote for a cooperative-exit withdrawal to Bitcoin L1 |
+    | `spark_withdraw` 🔒 | Withdraw BTC from Spark L2 to a Bitcoin L1 address |
+    | `spark_get_transfers` | Recent Spark L2 transfer history |
+    | `spark_create_sats_invoice` | Spark invoice (`spark1...`) to receive BTC sats |
+    | `spark_create_tokens_invoice` | Spark invoice (`spark1...`) to receive tokens |
+    | `spark_pay_spark_invoice` 🔒 | Pay one or more Spark invoices |
+    | `spark_get_spark_invoices` | Query status of one or more Spark invoices |
+    | `spark_mpp_pay` 🔒 | Pay an MPP Lightning challenge from the Spark wallet |
+
+    Configured with `WDK_SPARK_SEED` on the standalone `wdk-wallet-spark-mcp` server, plus optional `SPARK_NETWORK`, `SPARK_SCAN_API_KEY`, and `SPARK_USDT_TOKEN`.
+  </Accordion>
+
+  <Accordion title="RLN, RGB Lightning Node (wdk_*, alias rln_*)">
+    | Tool | Purpose |
+    |------|---------|
+    | `wdk_get_node_info` | Node identity: pubkey, channel count, Lightning balance, peers |
+    | `wdk_get_balances` | BTC on-chain (vanilla and colored UTXOs) and Lightning balance |
+    | `wdk_get_asset_balance` | Balance of a specific RGB asset (USDT, XAUT) by `asset_id` |
+    | `wdk_list_assets` | All RGB assets held by the node (NIA, UDA, CFA schemas) |
+    | `wdk_get_address` | On-chain BTC address for receiving deposits |
+    | `wdk_create_rgb_invoice` | Create an RGB invoice to receive an RGB asset |
+    | `wdk_create_ln_invoice` | Create a BOLT11 invoice to receive BTC via Lightning |
+    | `wdk_pay_invoice` 🔒 | Pay a BOLT11 Lightning invoice |
+    | `wdk_send_btc` 🔒 | Send BTC on-chain |
+    | `wdk_send_asset` 🔒 | Send an RGB asset (USDT/XAUT) on-chain |
+    | `wdk_list_channels` | All Lightning channels: capacity, balance, usability, RGB allocation |
+    | `wdk_connect_peer` | Connect to a Lightning peer (`pubkey@host:port`), required before an LSPS1 channel purchase |
+    | `wdk_open_channel` 🔒 | Open a Lightning channel, optionally with RGB asset allocation |
+    | `wdk_close_channel` 🔒 | Close a Lightning channel (`force=true` only for unresponsive peers) |
+    | `wdk_get_channel_id` | Resolve a `temporary_channel_id` to the permanent `channel_id` |
+    | `wdk_list_payments` | Recent Lightning payments, sent and received |
+    | `wdk_refresh_transfers` | Sync pending RGB asset transfers, call after a KaleidoSwap order fills |
+    | `wdk_atomic_taker` 🔒 | Step 2 of an atomic HTLC swap, whitelist the incoming HTLC |
+    | `wdk_list_swaps` | List all atomic swaps on the node, maker and taker sides |
+    | `wdk_get_swap` | Atomic swap status by `payment_hash` |
+    | `wdk_mpp_pay` 🔒 | Pay an MPP Lightning challenge from the RLN wallet |
+
+    Requires a running [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) reachable at `RLN_NODE_URL`, default `http://localhost:3001`.
+  </Accordion>
+
+  <Accordion title="KaleidoSwap DEX (kaleidoswap_*)">
+    | Tool | Purpose |
+    |------|---------|
+    | `kaleidoswap_get_assets` | Tradeable assets: ticker, name, precision, RGB protocol ID |
+    | `kaleidoswap_get_pairs` | Tradeable pairs with available layer routes |
+    | `kaleidoswap_get_quote` | Price quote for a swap, returns output amount, price, fee, `rfq_id` |
+    | `kaleidoswap_get_spreads` | Quotes across every route for a pair, to compare or find arbitrage |
+    | `kaleidoswap_place_order` | Place a REST swap order, returns a `deposit_address` |
+    | `kaleidoswap_get_order_status` | Poll order status until `FILLED`, `FAILED`, `EXPIRED`, or `CANCELLED` |
+    | `kaleidoswap_get_open_orders` | Orders placed in this session with last known status |
+    | `kaleidoswap_cancel_order` | Mark an order cancelled in the local session tracker |
+    | `kaleidoswap_get_position` | Session trading stats: fill rate, volume by asset |
+    | `kaleidoswap_atomic_init` | Step 1 of an atomic swap, returns `swapstring` and `payment_hash` |
+    | `kaleidoswap_atomic_execute` 🔒 | Step 3, confirm execution after `wdk_atomic_taker` whitelists the HTLC |
+    | `kaleidoswap_atomic_status` | Poll atomic swap status by `payment_hash` |
+    | `kaleidoswap_lsp_get_info` | LSP peer connection info and channel capacity limits |
+    | `kaleidoswap_lsp_estimate_fees` | Estimate LSPS1 channel opening fees before committing |
+    | `kaleidoswap_lsp_create_order` 🔒 | Request a new Lightning channel (LSPS1), returns a BOLT11 invoice |
+    | `kaleidoswap_lsp_get_order` | Poll LSPS1 channel order status |
+    | `kaleidoswap_lsp_quote_asset_channel` | Quote a new channel pre-loaded with an RGB asset (USDT, XAUT) |
+    | `kaleidoswap_lsp_create_asset_channel` 🔒 | Order a new asset-preloaded channel from the LSP |
+
+    Configured with `KALEIDOSWAP_API_URL`. See the [Swap Protocol](/api-reference/swap-protocol) and [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) references for the underlying endpoints.
+  </Accordion>
+
+  <Accordion title="MPP / L402 payments (mpp_*, l402_*)">
+    | Tool | Purpose |
+    |------|---------|
+    | `mpp_request_challenge` | Probe an MPP-protected URL, parse an HTTP 402 into invoice + `challenge_id` |
+    | `mpp_submit_credential` | Submit a payment credential (after `wdk_mpp_pay` / `spark_mpp_pay`) to access the resource |
+    | `mpp_parse_challenge_header` | Parse a raw `WWW-Authenticate` header without an HTTP request |
+    | `l402_request_challenge` | Legacy L402 challenge for a premium endpoint, BOLT11 invoice plus macaroon |
+    | `l402_fetch_resource` | Fetch an L402-gated resource after paying the invoice |
+
+    Set `MPP_GATEWAY_URL` to reach an authenticated MPP server. Omit it to stay on the free public endpoints.
+  </Accordion>
+
+  <Accordion title="Market data (l402_get_*, alias get_*)">
+    WDK built-in pricing tools (Bitfinex): `getCurrentPrice`, `getHistoricalPrice`.
+
+    | Tool | Purpose |
+    |------|---------|
+    | `l402_get_price` | Spot price and 24h stats for one asset |
+    | `l402_get_market_data` | Batch prices for several assets in one call |
+    | `l402_get_ohlcv` | OHLCV candles with period change percentage |
+    | `l402_get_sentiment` | Fear and Greed index, 0 to 100, with a trading signal |
+
+    Uses free public APIs (CoinGecko, alternative.me) with no configuration required. The free CoinGecko tier is rate limited, so avoid calling price tools more than once every 30 seconds.
+  </Accordion>
+
+  <Accordion title="Node lifecycle (kaleido_node_*)">
+    Shells out to a local `kaleido` binary, so an agent can bring a node up and unlock it rather than requiring one to already be running. See [Node Environments](/cli/node-environments) for the CLI-native equivalent of these operations.
+
+    | Tool | Purpose |
+    |------|---------|
+    | `kaleido_node_list` | List all kaleido node environments and their node URLs |
+    | `kaleido_node_up` | Start Docker containers for a named environment |
+    | `kaleido_node_stop` | Stop running containers, data preserved |
+    | `kaleido_node_down` | Stop and remove containers and networks, volumes preserved |
+    | `kaleido_node_ps` | Docker container status for a named environment |
+    | `kaleido_node_status` | RLN node health check |
+    | `kaleido_node_info` | Detailed node and network info from the active RLN node |
+    | `kaleido_node_use` | Set the active node URL in kaleido config |
+    | `kaleido_node_init` | Initialise the RLN wallet for the first time |
+    | `kaleido_node_unlock` | Unlock the RLN wallet after a restart |
+    | `kaleido_node_lock` | Lock the RLN wallet |
+  </Accordion>
+</AccordionGroup>
+
+## Client Configuration
+
+Add a server to an MCP host such as Claude Desktop. `npx` works for the published gateway; the standalone wallet servers run from a local build.
+
+<Warning>
+  These configuration files hold a real BIP-39 mnemonic in plain text. Start on test networks and never commit or share a config containing a mainnet seed.
+</Warning>
+
+<CodeGroup>
+```json kaleido-mcp
+{
+  "mcpServers": {
+    "kaleido": {
+      "command": "npx",
+      "args": ["-y", "kaleido-mcp"],
+      "env": {
+        "WDK_SEED": "your twelve word seed phrase",
+        "SPARK_NETWORK": "REGTEST",
+        "RLN_NODE_URL": "http://localhost:3001",
+        "KALEIDOSWAP_API_URL": "https://api.kaleidoswap.com"
+      }
+    }
+  }
+}
+```
+
+```json wdk-wallet-mcp
+{
+  "mcpServers": {
+    "wdk_wallet": {
+      "command": "node",
+      "args": ["/path/to/wdk-wallet-mcp/dist/index.js"],
+      "env": {
+        "RLN_NODE_URL": "http://localhost:3001"
+      }
+    }
+  }
+}
+```
+
+```json wdk-wallet-spark-mcp
+{
+  "mcpServers": {
+    "wdk_wallet_spark": {
+      "command": "node",
+      "args": ["/path/to/wdk-wallet-spark-mcp/dist/index.js"],
+      "env": {
+        "WDK_SPARK_SEED": "your twelve word seed phrase",
+        "SPARK_NETWORK": "REGTEST"
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+## Atomic Swap Across Servers
+
+An atomic swap needs the DEX tools and the wallet tools together. `kaleido-mcp` speaks to the maker via its `kaleidoswap_*` tools and drives the taker node via its `wdk_*` tools. Nothing is custodied at any step, and the HTLC settles on Lightning.
+
+```
+kaleidoswap_get_quote        → rfq_id + raw amounts
+kaleidoswap_atomic_init      → swapstring + payment_hash
+wdk_atomic_taker             → whitelist the HTLC on the node
+wdk_get_node_info            → taker_pubkey
+kaleidoswap_atomic_execute   → trigger HTLC settlement
+kaleidoswap_atomic_status    → poll until Succeeded
+```
+
+Every step above runs through the same `kaleido-mcp` connection, since both prefixes are available at once.
+
+## Paid API Access
+
+The Machine Payments Protocol flow lets an agent buy access to a gated resource without an API key or a signup, paying the invoice over Lightning.
+
+```
+mpp_request_challenge(url)          → challenge { invoice, challenge_id }
+wdk_mpp_pay(invoice, challenge_id)  → payment credential
+mpp_submit_credential(url, cred)    → { ok, data, receipt }
+```
+

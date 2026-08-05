@@ -1,0 +1,115 @@
+---
+title: "AI Tools FAQ"
+sidebarTitle: "FAQ"
+description: "Common questions about the KaleidoSwap AI tools, covering custody, seed handling, model choice, networks, costs, and which surface fits which job"
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Are the AI tools custodial?">
+    **No.** Keys stay in the local WDK wallet and in the RGB Lightning Node you point the tools at. Trades settle as atomic HTLC swaps on Lightning, so the maker is a counterparty to the trade and never a holder of your funds.
+
+    What changes with AI is not custody, it is *who initiates a spend*. That is what the confirmation gates and risk limits exist for.
+  </Accordion>
+
+  <Accordion title="Does the language model see my seed phrase?">
+    The mnemonic is passed to the server process as an environment variable (`WDK_SEED`) or read from `agent.config.json`. Signing happens inside that process. The model calls tools and receives their results, so the seed is not part of the prompt or the tool output.
+
+    That is not the same as the seed being safe. Anything with read access to the config file or the process environment has your mnemonic, which is why a mainnet seed does not belong in a file you commit or share.
+  </Accordion>
+
+  <Accordion title="Which surface should I use?">
+    | If you want to | Use |
+    |----------------|-----|
+    | Add Bitcoin tools to an existing MCP client | [MCP servers](/ai-tools/mcp-servers) |
+    | Run a portfolio unattended | [KaleidoAgent](/ai-tools/kaleido-agent) |
+    | Chat or talk to a wallet, on-device | [KaleidoMind](/ai-tools/kaleido-mind) |
+    | Change agent behaviour without code | [Skills](/ai-tools/skills) |
+  </Accordion>
+
+  <Accordion title="Do I need to run a node?">
+    It depends on which tools you call.
+
+    - **No node needed** for market data (`l402_*`) or the Spark wallet (`spark_*`), which only needs a seed.
+    - **A node is required** for the RGB Lightning Node tools (`wdk_*`) and for atomic swaps, since the taker side of the HTLC runs on your node.
+
+    The [KaleidoCLI](/cli/getting-started) can provision a Docker-backed node, and `kaleido-mcp` exposes `kaleido_node_*` tools that drive that lifecycle for you.
+  </Accordion>
+
+  <Accordion title="Which model do these tools use?">
+    It varies by surface:
+
+    - **KaleidoAgent** reasons with a hosted model, Claude or OpenAI, selected with `AGENT_PROVIDER`.
+    - **KaleidoMind** runs the model **on the device** through the QVAC SDK, locally or on a desktop you explicitly paired. Its tiered funnel means most requests never reach the model at all.
+    - **MCP servers** are model-agnostic. Whatever model your MCP host runs is the one calling the tools.
+  </Accordion>
+
+  <Accordion title="Can I run this on mainnet?">
+    The tools can reach mainnet, but treat it as the last step rather than the first. Start on Regtest or Signet with a throwaway seed, keep `dry_run` enabled on KaleidoAgent until the dry-run decisions look correct, and only then switch networks.
+
+    Note that the different surfaces carry different maturity: KaleidoAgent and the MCP servers drive live funds directly, and an LLM making a wrong tool call is a real failure mode.
+  </Accordion>
+
+  <Accordion title="What does it cost to run?">
+    Three separate cost lines:
+
+    - **LLM tokens** for hosted models. KaleidoAgent reports token cost per run in `GET /status`.
+    - **Zero inference cost** for KaleidoMind, since the model runs on your own hardware.
+    - **Bitcoin fees** in every case: routing fees on Lightning, on-chain fees when a channel opens or closes, and the maker's spread on a swap.
+  </Accordion>
+
+  <Accordion title="How do I stop an agent from spending?">
+    Several independent controls, and it is worth using more than one:
+
+    | Control | Effect |
+    |---------|--------|
+    | `dry_run` | Simulates the decision without executing |
+    | `max_swap_usd` | Caps a single trade |
+    | `stop_loss_btc_sats` | Halts all trading below a BTC threshold |
+    | `min_btc_reserve_sats` | Keeps a floor across the node and Spark |
+    | `max_concurrent_orders` | Caps simultaneous open orders |
+
+    On KaleidoMind the equivalent is structural rather than configured: fund-moving tools are marked `requiresConfirmation` and pause for the host's confirmation sheet.
+  </Accordion>
+
+  <Accordion title="Can an agent pay for an API without an API key?">
+    Yes. That is what the Machine Payments Protocol tools cover. The agent probes a gated URL, receives an HTTP 402 challenge with a Lightning invoice, pays it, and submits the credential to get the data plus a receipt. No signup and no API key. The flow is on the [MCP Servers page](/ai-tools/mcp-servers#paid-api-access).
+  </Accordion>
+
+  <Accordion title="What is the difference between a skill and an MCP server?">
+    An **MCP server** provides the tools: typed, callable operations against a wallet, the DEX, or a node.
+
+    A **skill** is a `SKILL.md` playbook that scopes *which* of those tools the model may reach and carries the execution plan. Changing a skill changes behaviour without touching runtime code. One is capability, the other is policy plus plan.
+  </Accordion>
+
+  <Accordion title="Is any of this open source?">
+    Yes. Every repository is public under [github.com/kaleidoswap](https://github.com/kaleidoswap): the MCP servers, KaleidoAgent, KaleidoMind, and the skills themselves. See [Additional Resources](/ai-tools/additional-resources) for the direct links.
+  </Accordion>
+
+  <Accordion title="Can I use these tools with the Desktop App or the Extension?">
+    The Desktop App hosts KaleidoMind directly, as in-app chat and as a namespaced MCP and CLI surface, switchable from **Settings > Capabilities**. The Browser Extension ships its own built-in conversational agent for wallet operations. The standalone MCP servers are for external hosts such as Claude Desktop or your own client.
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [Troubleshooting](/ai-tools/troubleshooting) for errors rather than questions. For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Which surface and version (MCP server name, KaleidoAgent commit, or Desktop App version)
+2. The network you are on (Regtest, Signet, or mainnet)
+3. The tool name that failed and the error text
+4. Host and runtime versions (MCP client, Node.js)
+5. Your config with the seed and any keys removed
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

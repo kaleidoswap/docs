@@ -1,6 +1,7 @@
 ---
-title: 'WebSocket'
-description: 'Real-time quote streaming via WebSocket'
+title: "WebSocket Quote Streaming"
+sidebarTitle: "WebSocket"
+description: "Stream real-time swap quotes over WebSocket with the KaleidoSDK, covering subscriptions, message formats, and reconnection handling"
 ---
 
 ## Overview
@@ -28,6 +29,10 @@ ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-clien
 
 The URL includes a client ID for session tracking. The `enableWebSocket` method returns a `WSClient` instance.
 
+<Note>
+The examples on this page use Signet. Match the WebSocket URL to the environment your `baseUrl` points at — Regtest is the SDK default, at `wss://api.regtest.kaleidoswap.com/ws/{id}`. See [Available Environments](/sdk/getting-started#available-environments).
+</Note>
+
 ## High-Level API
 
 ### `streamQuotesByTicker` / `stream_quotes_by_ticker`
@@ -45,7 +50,8 @@ const unsubscribe = await client.maker.streamQuotesByTicker(
   },
   {                // options (optional)
     preferredFromLayer: 'BTC_LN',
-    preferredToLayer: 'RGB_LN'
+    preferredToLayer: 'RGB_LN',
+    pollInterval: 3000
   }
 );
 
@@ -62,13 +68,22 @@ unsubscribe = await client.maker.stream_quotes_by_ticker(
     amount=100000,
     on_update=lambda quote: print(f"Price: {quote.price}, RFQ: {quote.rfq_id}"),
     preferred_from_layer=Layer.BTC_LN,
-    preferred_to_layer=Layer.RGB_LN
+    preferred_to_layer=Layer.RGB_LN,
+    poll_interval=3.0,
 )
 
 # Stop streaming when done
 unsubscribe()
 ```
 </CodeGroup>
+
+Options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `preferredFromLayer` / `preferred_from_layer` | `Layer` | Pin the source layer instead of letting route discovery pick |
+| `preferredToLayer` / `preferred_to_layer` | `Layer` | Pin the destination layer |
+| `pollInterval` / `poll_interval` | number | Time between quote requests. TypeScript takes milliseconds (default `2000`), Python takes seconds |
 
 ### `streamQuotes` / `stream_quotes`
 
@@ -294,7 +309,7 @@ The WebSocket uses a JSON message protocol:
 | `from_amount` | number | Source amount |
 | `to_amount` | number | Destination amount |
 | `price` | number | Exchange rate |
-| `rfq_id` | string | Request-for-quote ID (use to create orders) |
+| `rfq_id` | string | Request-for-quote ID (pass to `initSwap`) |
 | `price_precision` | number | Price decimal precision |
 | `timestamp` | number | Server timestamp |
 | `expires_at` | number | Quote expiry timestamp |

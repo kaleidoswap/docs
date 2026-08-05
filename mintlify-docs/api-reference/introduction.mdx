@@ -1,6 +1,7 @@
 ---
-title: Introduction
-description: Overview of the KaleidoSwap API for RGB Lightning DEX operations, swap protocol, and market data
+title: "Overview"
+sidebarTitle: "Overview"
+description: "The KaleidoSwap Bitcoin swap API provides REST endpoints for atomic swaps, market data, and Lightning channel orders on a multi-protocol Bitcoin DEX"
 ---
 
 The RGB Lightning DEX API allows interaction with an RGB Lightning Service Provider (RGB-LSP) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients can subscribe to trading pairs, receive real-time price updates, and initiate swaps. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
@@ -104,7 +105,7 @@ Rate limits apply to all API endpoints. Requests that exceed the limit receive a
 
 ## Using the SDK
 
-Instead of calling the REST API directly, you can use the official KaleidoSwap SDKs that wrap these endpoints with type safety and convenience methods:
+Instead of calling the REST API directly, you can use the official KaleidoSDK libraries that wrap these endpoints with type safety and convenience methods:
 
 <CardGroup cols={2}>
   <Card title="TypeScript SDK" icon="js" href="/sdk/introduction">

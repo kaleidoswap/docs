@@ -1,22 +1,16 @@
 ---
-title: Extensions Overview
-description: Browser extensions for the KaleidoSwap ecosystem
+title: "KaleidoSwap Browser Extensions"
+sidebarTitle: "Overview"
+description: "Browser extensions for the KaleidoSwap ecosystem, offering a multi-layer Bitcoin wallet for Spark, Arkade, and Liquid with built-in atomic swaps"
 ---
-
-## KaleidoSwap Browser Extensions
 
 KaleidoSwap browser extensions bring wallet management, protocol accounts, swaps, and DApp connectivity directly into the browser. They provide a persistent wallet surface for balances, transfers, wallet approval requests, and protocol actions from the toolbar.
 
-<CardGroup cols={2}>
-  <Card title="KaleidoSwap Extension" icon="wallet" href="/extensions/kaleidoswap-extension/introduction">
-    A multi-network Bitcoin wallet extension for Spark, Arkade, Liquid, RGB, Nostr signing, browser-based swaps, and a cross-chain bridge.
-  </Card>
-  <Card title="Browser Wallet Surface" icon="puzzle-piece">
-    Use a persistent side panel, popup, or full-tab view for balances, transfers, swaps, and trusted DApp approvals.
-  </Card>
-</CardGroup>
+## What is the KaleidoSwap Extension?
 
-## Why Use an Extension?
+The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its layers. It gives users one wallet surface for Spark, Arkade, Liquid, RGB on Bitcoin L1, an optional RGB Lightning Node (RLN), swaps, a cross-chain bridge, Nostr identity, and DApp connectivity.
+
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap Extension dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 | Capability | What the KaleidoSwap Extension Adds |
 |------------|-------------------------------------|
@@ -27,24 +21,74 @@ KaleidoSwap browser extensions bring wallet management, protocol accounts, swaps
 | **Swaps** | In-extension swap surface when a supported venue is connected |
 | **Bridge** | Move funds between Spark and external chains |
 
-## Available Extensions
+## Key Features
 
-### KaleidoSwap Extension
+### Wallet Management
 
-The KaleidoSwap Extension is a browser wallet purpose-built for Bitcoin and its layers. The current closed beta is distributed to invited testers as a private Developer Mode zip, before browser-store listings and the public source release. It starts from one recovery phrase and derives Spark, Arkade, Liquid, node-less RGB-L1, and Nostr identity state, with RGB Lightning Node support available as an experimental opt-in.
+- Create or import a wallet from a 12 or 24-word recovery phrase
+- Derive Spark, Arkade, Liquid, RGB-L1, and Nostr identity state from the same phrase
+- Opt into an RGB Lightning Node when you want RGB Lightning channels and maker-based RGB swaps
+- View BTC by account and layer: Spark, Arkade, Liquid, Bitcoin L1, and Lightning/RLN
+- Filter assets by protocol account and network, and hide assets you don't want on the dashboard
+- Open the wallet in the side panel, a popup, or a full browser tab
 
-<img src="/images/kaleidoswap-extension/08-dashboard.png" alt="KaleidoSwap Extension dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+### Send and Receive
 
-- **Wallet management** - View BTC and assets across Spark, Arkade, Liquid, RGB-L1, and optional RGB Lightning Node accounts.
-- **Multi-route transfers** - Deposit and withdraw through Spark, Arkade, Liquid, Lightning, Bitcoin addresses, RGB invoices, and compatible account routes.
-- **Built-in swaps** - Use KaleidoSwap maker pairs and Spark/Flashnet routes when a supported venue is connected.
-- **Cross-chain bridge** - Bridge funds between Spark and external chains such as EVM networks and Solana.
-- **DApp connectivity** - Inject standard `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07) providers for trusted DApps, with NIP-46 remote signing.
-- **Browser approvals** - Review supported payment, invoice, and asset requests from trusted DApps without leaving the browser.
+- **Send** to Bitcoin addresses, Lightning invoices, Lightning addresses, LNURL-pay, Spark addresses, Arkade routes, Liquid addresses and `liquidnetwork:` URIs, and RGB invoices where supported
+- **Receive** through Spark, Arkade, Liquid, Bitcoin on-chain, Lightning, or RGB invoice flows depending on the selected account and asset
+- QR code generation for easy sharing
+- Auto-detection of destination type and compatible route
 
-<Card title="Get Started with the KaleidoSwap Extension" icon="rocket" href="/extensions/kaleidoswap-extension/getting-started">
-  Set up the KaleidoSwap Extension and start managing your Bitcoin assets
-</Card>
+### Asset Swaps and Bridge
+
+- Fetch KaleidoSwap maker pairs when RLN is connected
+- Use Spark/Flashnet venues when Spark pools are available
+- Review quote output, fee, expiry, and venue before execution; quotes honor your slippage tolerance
+- Bridge funds between Spark and external chains (EVM networks, Solana, and more) with persistent order tracking
+
+### DApp Connectivity
+
+- **WebLN provider** (`window.webln`) for node info, invoices, payments, keysend, and LNURL
+- **WebBTC provider** (`window.webbtc`) for on-chain addresses, PSBT signing, and broadcasting
+- **Nostr provider** (`window.nostr`) implementing NIP-07 event signing and encryption, derived from the recovery phrase or an imported identity
+- **NIP-46 remote signing** (`bunker://`) and **Nostr Wallet Connect** for external apps
+- Permission prompts for sensitive DApp operations, with a Connected Sites manager for per-capability review and revocation
+
+### Security
+
+- Argon2id-derived password hash and a separate Argon2id-derived AES-GCM encryption key
+- Master mnemonic encrypted in `chrome.storage.local`; decrypted only in memory while unlocked
+- Optional passkey (WebAuthn) unlock alongside the password
+- PSBT confirmations decode and display destinations, amounts, and the network fee before you sign
+- Auto-lock timeout configurable from Preferences
+
+## Architecture
+
+The KaleidoSwap Extension uses a multi-protocol adapter architecture:
+
+| Protocol | Status | Description |
+|----------|--------|-------------|
+| **Spark** | Implemented | Native Spark wallet, Spark BTC, Spark assets, Lightning send/receive, Flashnet routes, and the cross-chain bridge |
+| **Arkade** | Implemented | Arkade BTC, Arkade-native assets, boarding/offboarding, VTXO lifecycle settings, and an optional rotating-address (HD) mode |
+| **Liquid** | Implemented | L-BTC and Liquid assets (such as USDt) — node-less and self-custodial, synced through an Esplora/waterfalls endpoint |
+| **RGB-L1** | Implemented | Node-less RGB on Bitcoin L1 running fully in WebAssembly, with cloud (VSS) and local file backup |
+| **RGB Lightning** | Experimental opt-in | RGB Lightning Node (direct URL or Nostr Wallet Connect), RGB Lightning channels, and maker-based RGB swaps |
+
+<Note>
+The RGB-L1 and RGB Lightning Node backings are mutually exclusive: RGB assets live either in the node-less on-chain account or on your RLN node, not both at once.
+</Note>
+
+The background service worker owns protocol adapter lifecycle and message routing. The popup is a React wallet interface, while the content and injected scripts bridge web pages to the background service worker for DApp requests.
+
+## How It Works
+
+![KaleidoSwap Extension Architecture](/assets/images/overview/kaleidoswap-extension.png)
+
+- The **extension UI** runs in the browser side panel, a popup, or a full tab
+- The **background service worker** manages protocol adapters and cross-context messaging
+- **Spark, Arkade, Liquid, and RGB-L1** are derived from the wallet recovery phrase
+- **RGB Lightning Node** is optional and currently presented as an experimental feature
+- **DApp connectivity** is handled through content scripts that inject `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07)
 
 ## Everyday Wallet Flow
 
@@ -54,3 +98,9 @@ The KaleidoSwap Extension keeps wallet actions close to the browser:
 2. **Review balances** - Check BTC, Spark, Arkade, Liquid, and RGB asset state
 3. **Move funds** - Deposit, withdraw, swap, or bridge from the extension
 4. **Approve requests** - Confirm trusted DApp actions only after reviewing the details
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

@@ -1,12 +1,13 @@
 ---
-title: 'Troubleshooting'
-description: 'Common issues and solutions'
+title: "KaleidoSDK Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Diagnose common KaleidoSDK issues such as connection failures, version mismatches, and swap errors, with step-by-step solutions"
 ---
 
 ## Installation Issues
 
 <AccordionGroup>
-  <Accordion title="npm install fails (TypeScript)">
+  <Accordion title="npm install fails (TypeScript)" icon="box">
     **Symptoms:** `npm install kaleido-sdk` fails with errors
 
     **Solutions:**
@@ -16,7 +17,7 @@ description: 'Common issues and solutions'
     4. Try with a different package manager: `pnpm add kaleido-sdk`
   </Accordion>
 
-  <Accordion title="pip install fails (Python)">
+  <Accordion title="pip install fails (Python)" icon="cube">
     **Symptoms:** `pip install kaleido-sdk` fails
 
     **Solutions:**
@@ -26,11 +27,11 @@ description: 'Common issues and solutions'
     4. Try: `pip install kaleido-sdk --no-cache-dir`
   </Accordion>
 
-  <Accordion title="Module not found after installation">
+  <Accordion title="Module not found after installation" icon="magnifying-glass">
     **Symptoms:** `Cannot find module 'kaleido-sdk'` or `ModuleNotFoundError`
 
     **Solutions:**
-    - **TypeScript:** Check your `tsconfig.json` has `"moduleResolution": "node"` or `"bundler"`
+    - **TypeScript:** The SDK is ESM-only, so `tsconfig.json` needs `"moduleResolution": "bundler"`, `"node16"`, or `"nodenext"`. The legacy `"node"` setting ignores the package's `exports` field and will not resolve it
     - **Python:** Verify you are in the correct virtual environment
     - Verify the package is installed: `npm list kaleido-sdk` or `pip show kaleido-sdk`
   </Accordion>
@@ -39,7 +40,7 @@ description: 'Common issues and solutions'
 ## Runtime Errors
 
 <AccordionGroup>
-  <Accordion title="NetworkError: Connection refused">
+  <Accordion title="NetworkError: Connection refused" icon="link-slash">
     **Symptoms:** `NetworkError` when making API calls
 
     **Causes:**
@@ -54,7 +55,7 @@ description: 'Common issues and solutions'
     4. If behind a firewall, ensure outbound HTTPS is allowed
   </Accordion>
 
-  <Accordion title="NodeNotConfiguredError">
+  <Accordion title="NodeNotConfiguredError" icon="server">
     **Symptoms:** `NodeNotConfiguredError` when calling `client.rln.*` methods
 
     **Cause:** No `nodeUrl` / `node_url` was provided when creating the client.
@@ -80,18 +81,18 @@ description: 'Common issues and solutions'
     Always check `client.hasNode()` / `client.has_node()` before calling RLN methods.
   </Accordion>
 
-  <Accordion title="QuoteExpiredError">
-    **Symptoms:** `QuoteExpiredError` when creating a swap order
+  <Accordion title="QuoteExpiredError" icon="hourglass-end">
+    **Symptoms:** `QuoteExpiredError` when calling `initSwap` / `init_swap` with an `rfq_id`
 
     **Cause:** The quote's `expires_at` time has passed.
 
     **Solutions:**
-    1. Get a fresh quote immediately before creating the order
+    1. Get a fresh quote immediately before calling `initSwap` — do not reuse an `rfq_id` across user think-time
     2. Use WebSocket streaming for always-current quotes
-    3. Reduce the time between getting a quote and creating the order
+    3. Whitelist and execute promptly; the whole init → whitelist → execute sequence runs against one quote
   </Accordion>
 
-  <Accordion title="ValidationError: Invalid amount">
+  <Accordion title="ValidationError: Invalid amount" icon="calculator">
     **Symptoms:** `ValidationError` with amount-related message
 
     **Causes:**
@@ -100,28 +101,12 @@ description: 'Common issues and solutions'
     - Negative or zero amount
 
     **Solutions:**
-    1. Check min/max limits from `listPairs` response
-    2. Ensure you are sending raw amounts (use `parseRawAmount` / `parse_raw_amount`)
+    1. Check min/max limits from the `listPairs` response
+    2. Ensure you are sending raw amounts, not display amounts — convert with `parseRawAmount` / `parse_raw_amount` from [Utilities](/sdk/utilities)
     3. Validate amounts before sending
-
-    <CodeGroup>
-    ```typescript TypeScript
-    import { parseRawAmount } from 'kaleido-sdk';
-
-    // Convert 0.001 BTC to satoshis (100000)
-    const amount = parseRawAmount(0.001, 8);
-    ```
-
-    ```python Python
-    from kaleido_sdk import parse_raw_amount
-
-    # Convert 0.001 BTC to satoshis (100000)
-    amount = parse_raw_amount(0.001, 8)
-    ```
-    </CodeGroup>
   </Accordion>
 
-  <Accordion title="APIError: 401 Unauthorized">
+  <Accordion title="APIError: 401 Unauthorized" icon="ban">
     **Symptoms:** `APIError` with status 401
 
     **Cause:** Invalid or missing API key.
@@ -132,7 +117,7 @@ description: 'Common issues and solutions'
     3. Some endpoints may not require an API key -- check the [API Reference](/sdk/api-reference)
   </Accordion>
 
-  <Accordion title="TimeoutError">
+  <Accordion title="TimeoutError" icon="clock">
     **Symptoms:** `TimeoutError` on API calls
 
     **Causes:**
@@ -143,14 +128,77 @@ description: 'Common issues and solutions'
     **Solutions:**
     1. Increase the timeout: `timeout: 60` (seconds)
     2. Check network connectivity
-    3. Implement retry logic using `error.isRetryable()`
+    3. Implement retry logic using `error.isRetryable()` — see [Error Handling](/sdk/error-handling#retry-patterns)
+  </Accordion>
+
+  <Accordion title="RateLimitError: 429 Too Many Requests" icon="gauge-high">
+    **Symptoms:** `RateLimitError` on repeated calls, typically while polling quotes
+
+    **Cause:** Too many requests in the rate-limit window.
+
+    **Solutions:**
+    1. Back off and retry — `RateLimitError` is retryable; honour any `retry_after` the response carries
+    2. Stream quotes over WebSocket instead of polling `getQuote` in a loop
+    3. Cache `listAssets` / `listPairs` rather than refetching them per operation
+  </Accordion>
+</AccordionGroup>
+
+## Swap Issues
+
+<AccordionGroup>
+  <Accordion title="SwapError on execute: swapstring not whitelisted" icon="triangle-exclamation">
+    **Symptoms:** `initSwap` succeeds, but `executeSwap` / `execute_swap` fails with `SwapError`
+
+    **Cause:** The `swapstring` returned by `initSwap` was never whitelisted on your own node, so the taker side cannot honour the HTLC.
+
+    **Solution:** The three steps must run in order, and the whitelist step is on `client.rln`, not `client.maker`:
+
+    1. `client.maker.initSwap(...)` → returns `swapstring`
+    2. `client.rln.whitelistSwap(swapstring)` → your node accepts the swap
+    3. `client.maker.executeSwap(...)` → the maker settles it
+
+    See [How to Swap](/sdk/how-to-swap) for the full sequence.
+  </Accordion>
+
+  <Accordion title="InsufficientBalanceError" icon="wallet">
+    **Symptoms:** `InsufficientBalanceError` on init or execute
+
+    **Causes:**
+    - Not enough outbound capacity on the channel for the leg you are sending
+    - The dust reserve is not available on top of the swap amount
+    - Balance is on-chain rather than in a channel
+
+    **Solutions:**
+    1. Check `client.rln.listChannels()` for outbound capacity on the right asset, not just total balance
+    2. Confirm the amount is within the pair's min/max from `listPairs`
+    3. If capacity is short, order more inbound or outbound liquidity via LSPS1
+  </Accordion>
+
+  <Accordion title="Swap stuck in a pending state" icon="clock-rotate-left">
+    **Symptoms:** `executeSwap` returned, but the assets have not arrived
+
+    **Solutions:**
+    1. Poll `client.maker.getAtomicSwapStatus(...)` / `get_atomic_swap_status(...)` rather than assuming execute is terminal
+    2. Call `client.rln.refreshTransfers()` / `refresh_transfers()` to advance pending RGB transfers
+    3. Check `client.rln.listSwaps()` for the node's own view of the swap
+  </Accordion>
+
+  <Accordion title="Version mismatch: unexpected response shape" icon="code-compare">
+    **Symptoms:** A call fails on parsing (Pydantic `ValidationError`, or a TypeScript field that is unexpectedly `undefined`) rather than returning a clean SDK error
+
+    **Cause:** The SDK and the API it is talking to were generated against different spec versions. This is most common on the node side, where the RLN version is yours to control.
+
+    **Solutions:**
+    1. Compare your node's version against the one your SDK release targets — see [RLN API Compatibility](/sdk/rln-api-compatibility)
+    2. Upgrade the SDK: `npm install kaleido-sdk@latest` or `pip install --upgrade kaleido-sdk`
+    3. Check the [Changelog](/sdk/changelog) for breaking changes between your version and the current one — several releases added now-required request fields
   </Accordion>
 </AccordionGroup>
 
 ## WebSocket Issues
 
 <AccordionGroup>
-  <Accordion title="WebSocket not connecting">
+  <Accordion title="WebSocket not connecting" icon="plug-circle-xmark">
     **Symptoms:** `connected` event never fires, or `WebSocketError`
 
     **Solutions:**
@@ -160,7 +208,7 @@ description: 'Common issues and solutions'
     4. Try with a different client ID in the URL
   </Accordion>
 
-  <Accordion title="No quotes received">
+  <Accordion title="No quotes received" icon="signal-slash">
     **Symptoms:** `quoteResponse` / `quote_response` event never fires
 
     **Solutions:**
@@ -170,7 +218,7 @@ description: 'Common issues and solutions'
     4. Verify the connection is established (check `connected` event)
   </Accordion>
 
-  <Accordion title="Frequent disconnections">
+  <Accordion title="Frequent disconnections" icon="arrows-rotate">
     **Symptoms:** WebSocket disconnects and reconnects frequently
 
     **Solutions:**
@@ -201,7 +249,7 @@ description: 'Common issues and solutions'
 ## TypeScript-Specific Issues
 
 <AccordionGroup>
-  <Accordion title="Type errors with OpenAPI types">
+  <Accordion title="Type errors with OpenAPI types" icon="code">
     **Symptoms:** TypeScript compiler errors about incompatible types
 
     **Solutions:**
@@ -213,7 +261,7 @@ description: 'Common issues and solutions'
     3. If using strict mode, you may need to handle `undefined` explicitly
   </Accordion>
 
-  <Accordion title="ESM / CommonJS issues">
+  <Accordion title="ESM / CommonJS issues" icon="file-code">
     **Symptoms:** `ERR_REQUIRE_ESM` or import syntax errors
 
     **Solutions:**
@@ -227,7 +275,7 @@ description: 'Common issues and solutions'
 ## Python-Specific Issues
 
 <AccordionGroup>
-  <Accordion title="Pydantic validation errors">
+  <Accordion title="Pydantic validation errors" icon="circle-exclamation">
     **Symptoms:** `ValidationError` from Pydantic when parsing API responses
 
     **Solutions:**
@@ -236,7 +284,7 @@ description: 'Common issues and solutions'
     3. The API may have been updated -- try updating the SDK: `pip install --upgrade kaleido-sdk`
   </Accordion>
 
-  <Accordion title="httpx connection errors">
+  <Accordion title="httpx connection errors" icon="network-wired">
     **Symptoms:** `httpx.ConnectError` or similar
 
     **Solutions:**
@@ -319,26 +367,24 @@ if client.has_node():
 ```
 </CodeGroup>
 
-## Getting Help
+## Get Help
 
-<CardGroup cols={2}>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
-    Report bugs or request features
-  </Card>
-  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
-    Get help from the community
-  </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues
-  </Card>
-  <Card title="API Reference" icon="book" href="/sdk/api-reference">
-    Complete method documentation
-  </Card>
-</CardGroup>
+Check the [FAQ](/sdk/faq) for questions rather than errors. For anything else, report a problem through your preferred channel from the options below, including:
 
-When reporting issues, include:
 1. SDK version (`getVersion()` / `get_version()`)
 2. Language and runtime version (Node.js / Python)
 3. Error message and stack trace
 4. Minimal code to reproduce
 5. Environment (Regtest / Signet / Mainnet)
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

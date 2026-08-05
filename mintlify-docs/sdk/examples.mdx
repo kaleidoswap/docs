@@ -1,6 +1,7 @@
 ---
-title: 'Examples'
-description: 'Common integration examples for the Kaleido SDK'
+title: "KaleidoSDK Examples"
+sidebarTitle: "Examples"
+description: "Working KaleidoSDK code examples in TypeScript and Python, covering market data queries and live quote streaming over WebSocket"
 ---
 
 ## Market Data
@@ -44,99 +45,9 @@ for pair in pairs.pairs[:5]:
 ```
 </CodeGroup>
 
-## Request a Quote
+## Atomic Swaps
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create();
-
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
-});
-
-console.log(`RFQ ID: ${quote.rfq_id}`);
-console.log(`Price: ${quote.price}`);
-console.log(`From: ${quote.from_asset.amount} ${quote.from_asset.ticker}`);
-console.log(`To: ${quote.to_asset.amount} ${quote.to_asset.ticker}`);
-```
-
-```python Python
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
-
-client = KaleidoClient.create()
-
-quote = await client.maker.get_quote(
-    PairQuoteRequest(
-        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
-        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-    )
-)
-
-print(f"RFQ ID: {quote.rfq_id}")
-print(f"Price: {quote.price}")
-print(f"From: {quote.from_asset.amount} {quote.from_asset.ticker}")
-print(f"To: {quote.to_asset.amount} {quote.to_asset.ticker}")
-```
-</CodeGroup>
-
-## Atomic Swap Initialization
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
-
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 4100000 },
-  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
-});
-
-const swap = await client.maker.initSwap({
-  rfq_id: quote.rfq_id,
-  from_asset: quote.from_asset.asset_id,
-  from_amount: quote.from_asset.amount,
-  to_asset: quote.to_asset.asset_id,
-  to_amount: quote.to_asset.amount,
-});
-
-console.log(swap.payment_hash);
-console.log(swap.swapstring);
-```
-
-```python Python
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput, SwapRequest
-
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com"
-)
-
-quote = await client.maker.get_quote(
-    PairQuoteRequest(
-        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=4_100_000),
-        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-    )
-)
-
-swap = await client.maker.init_swap(
-    SwapRequest(
-        rfq_id=quote.rfq_id,
-        from_asset=quote.from_asset.asset_id,
-        from_amount=quote.from_asset.amount,
-        to_asset=quote.to_asset.asset_id,
-        to_amount=quote.to_asset.amount,
-    )
-)
-
-print(swap.payment_hash)
-print(swap.swapstring)
-```
-</CodeGroup>
+A swap is a five-step sequence — quote, init, whitelist on your node, execute, then track settlement — and stopping after `initSwap` leaves a locked swap that never executes. The complete flow in both languages is on [How to Swap](/sdk/how-to-swap).
 
 ## WebSocket Streaming
 
@@ -162,6 +73,8 @@ setTimeout(() => stop(), 10000);
 ```
 
 ```python Python
+import asyncio
+
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
@@ -178,63 +91,28 @@ stop = await client.maker.stream_quotes_by_ticker(
     poll_interval=2.0,
 )
 
+await asyncio.sleep(10)
 stop()
 ```
 </CodeGroup>
 
-## RLN Operations
+## Node Operations
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+For the `client.rln` entry point — the `hasNode()` guard and the first node calls — see [Getting Started](/sdk/getting-started#node-configuration-checks). Every available method is listed in the [Client Reference](/sdk/api-reference#rlnclient-clientrln).
 
-const client = KaleidoClient.create({
-  nodeUrl: 'http://localhost:3001',
-});
+## Next Steps
 
-if (client.hasNode()) {
-  const nodeInfo = await client.rln.getNodeInfo();
-  const balance = await client.rln.getBtcBalance();
-
-  console.log(nodeInfo.pubkey);
-  console.log(balance);
-}
-```
-
-```python Python
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    node_url="http://localhost:3001"
-)
-
-if client.has_node():
-    node_info = await client.rln.get_node_info()
-    balance = await client.rln.get_btc_balance()
-
-    print(node_info.pubkey)
-    print(balance)
-```
-</CodeGroup>
-
-## Utilities
-
-<CodeGroup>
-```typescript TypeScript
-import { parseRawAmount, toDisplayAmount, getSdkName, getVersion } from 'kaleido-sdk';
-
-console.log(parseRawAmount(0.001, 8));  // 100000
-console.log(toDisplayAmount(100000, 8)); // 0.001
-console.log(getSdkName());              // "kaleido-sdk"
-console.log(getVersion());              // "0.1.15"
-```
-
-```python Python
-from kaleido_sdk import parse_raw_amount, to_display_amount, get_sdk_name, get_version
-
-print(parse_raw_amount(0.001, 8))   # 100000
-print(to_display_amount(100000, 8)) # 0.001
-print(get_sdk_name())               # "kaleido-sdk"
-print(get_version())                # "0.1.15"
-```
-</CodeGroup>
+<CardGroup cols={2}>
+  <Card title="How to Swap" icon="arrows-rotate" href="/sdk/how-to-swap">
+    The complete atomic swap sequence: init, whitelist, execute, status.
+  </Card>
+  <Card title="WebSocket" icon="tower-broadcast" href="/sdk/websocket">
+    Streaming options, events, and the low-level `WSClient`.
+  </Card>
+  <Card title="Utilities" icon="calculator" href="/sdk/utilities">
+    Amount conversion, precision handling, and asset pair mapping.
+  </Card>
+  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
+    Every method on `client.maker` and `client.rln`.
+  </Card>
+</CardGroup>

@@ -1,13 +1,10 @@
 ---
-title: Changelog
-description: SDK and API version history for KaleidoSwap
+title: "KaleidoSDK Changelog"
+sidebarTitle: "Changelog"
+description: "KaleidoSDK version history, listing new features, breaking changes, and RLN and Maker API compatibility notes for each release"
 ---
 
-<Note>
-  This changelog covers the KaleidoSwap SDK (`kaleido-sdk`) and the Maker API (`/api/v1`). For desktop app releases, see the [GitHub releases page](https://github.com/kaleidoswap/desktop-app/releases).
-</Note>
-
-## SDK v0.1.15 — Current
+## SDK v0.1.15 (Current)
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 
@@ -104,6 +101,10 @@ If your RGB Lightning Node still runs **v0.7.1**, stay on SDK **0.1.13** — the
 
 **Compatible APIs:** Latest Maker API and Latest RLN API
 
+<Note>
+This entry describes the surface as it shipped in 0.1.5. The order-based swap methods and `waitForSwapCompletion` listed below were later removed in **0.1.13** — see that entry for the migration path.
+</Note>
+
 ### What's included
 
 #### Maker API Client (`client.maker`)
@@ -137,37 +138,15 @@ Full RGB Lightning Node operations for wallet management, Lightning channels, an
 
 ---
 
-## API v1 — Current
+## API v1
 
 **Status:** Stable. No breaking changes planned for v1.
 
-### Maker API endpoints
-
-| Endpoint group | Base path | Description |
-|----------------|-----------|-------------|
-| Market | `/api/v1/market/` | Assets, pairs, quotes, fee estimates |
-| Swaps (atomic) | `/api/v1/swaps/` | HTLC swap init, execute, status — used by desktop app |
-| Swap orders | `/api/v1/swap-orders/` | Order-based swaps — used by web app |
-| LSPS1 | `/api/v1/lsps1/` | Channel ordering and liquidity |
-
-### RLN API endpoints
-
-Provided by the RGB Lightning Node directly at `nodeUrl`. Includes wallet, BTC, RGB assets, channels, invoices, payments, and swap coordination.
-
----
-
-## Live Environments
-
-| Environment | API URL | WebSocket URL | Status |
-|-------------|---------|---------------|--------|
-| **Regtest** | `https://api.regtest.kaleidoswap.com` | `wss://api.regtest.kaleidoswap.com/ws/{id}` | Live |
-| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/ws/{id}` | Live |
-| **Mainnet** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/ws/{id}` | Coming soon |
+For the Maker API endpoint groups see [Maker API Compatibility](/sdk/maker-api-compatibility), and for the node-side surface see [RLN API Compatibility](/sdk/rln-api-compatibility). Live environments and their WebSocket URLs are listed in [Getting Started](/sdk/getting-started#available-environments).
 
 ---
 
 ## Roadmap
 
-- **Atomic order-based swaps** — order-based swaps (currently used by the web app) will be upgraded to use the same HTLC atomic model as the desktop app, removing the trust requirement for web users.
 - **Mainnet launch** — production environment for real BTC and RGB assets.
 - **Additional Layer support** — Spark, Arkade, and Liquid protocol adapters in the KaleidoSwap Extension.

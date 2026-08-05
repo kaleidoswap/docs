@@ -1,16 +1,17 @@
 ---
-title: 'Getting Started'
-description: 'Install and configure the Kaleido SDK for TypeScript or Python'
+title: "Getting Started with the KaleidoSDK"
+sidebarTitle: "Getting Started"
+description: "Install and configure the KaleidoSDK for TypeScript or Python, covering clients, endpoints, and your first swap quote in minutes"
 ---
 
-## Version Compatibility
+`kaleido-sdk` (TypeScript) and `kaleido_sdk` (Python) are generated from the same Maker API and RGB Lightning Node specs, then wrapped with handwritten clients:
 
-The current SDK implementation in `kaleido-sdk` (TypeScript) and `kaleido_sdk` (Python) is `v0.1.15`.
-
-Both SDKs are generated from the same Maker API and RGB Lightning Node specs, then wrapped with handwritten clients for:
-
-- `client.maker` for Kaleidoswap market, swap, and LSPS1 endpoints
+- `client.maker` for KaleidoSwap market, swap, and LSPS1 endpoints
 - `client.rln` for RGB Lightning Node wallet, channel, payment, and swap endpoints
+
+<Note>
+  For which SDK version works with which API, see [Maker API Compatibility](/sdk/maker-api-compatibility) and [RLN API Compatibility](/sdk/rln-api-compatibility).
+</Note>
 
 ## Installation
 
@@ -162,13 +163,14 @@ client = KaleidoClient.create(
 
 ## Available Environments
 
-Common Maker API endpoints used in this repo:
+Pass the API URL as `baseUrl` / `base_url`; the SDK appends the `/api/v1` path itself. No API key is required on the test networks.
 
-| Environment | API URL |
-|-------------|---------|
-| Regtest | `https://api.regtest.kaleidoswap.com` |
-| Signet / staging | `https://api.staging.kaleidoswap.com` |
-| Signet | `https://api.signet.kaleidoswap.com` |
+| Environment | API URL | WebSocket URL | Status |
+|-------------|---------|---------------|--------|
+| **Regtest** | `https://api.regtest.kaleidoswap.com` | `wss://api.regtest.kaleidoswap.com/ws/{id}` | Live (default) |
+| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/ws/{id}` | Live |
+| **Staging** | `https://api.staging.kaleidoswap.com` | `wss://api.staging.kaleidoswap.com/ws/{id}` | Signet-backed pre-release |
+| **Mainnet** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/ws/{id}` | Coming soon |
 
 ## Sub-Client Architecture
 

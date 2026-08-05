@@ -7,7 +7,7 @@
     "light": "#07C983",
     "dark": "#0D9373"
   },
-  "favicon": "/assets/favicon.png",
+  "favicon": "/assets/logos/kaleidoswap-favicon.ico",
   "navigation": {
     "tabs": [
       {
@@ -15,7 +15,7 @@
         "groups": [
           {
             "group": "Introduction",
-            "icon": "sparkles",
+            "icon": "flag",
             "pages": [
               "whats-kaleidoswap/introduction",
               "whats-kaleidoswap/quickstart",
@@ -23,8 +23,8 @@
             ]
           },
           {
-            "group": "Architecture & Background",
-            "icon": "hashtag",
+            "group": "System Design",
+            "icon": "diagram-project",
             "pages": [
               "whats-kaleidoswap/architecture",
               "whats-kaleidoswap/background"
@@ -44,29 +44,30 @@
         "tab": "Desktop App",
         "groups": [
           {
-            "group": "Tutorial: First Steps",
-            "icon": "rocket",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
               "desktop-app/getting-started/introduction",
               "desktop-app/getting-started/installation",
               "desktop-app/getting-started/verify-binaries",
+              "desktop-app/getting-started/setup"
+            ]
+          },
+          {
+            "group": "Wallet Operations",
+            "icon": "wallet",
+            "pages": [
               "desktop-app/wallet/creating-wallet",
               "desktop-app/wallet/unlocking-wallet",
+              "desktop-app/wallet/initializing-mnemonic",
+              "desktop-app/wallet/deposits",
+              "desktop-app/wallet/withdrawals",
               "desktop-app/trading/asset-swaps"
             ]
           },
           {
-            "group": "How-To: Wallet Operations",
-            "icon": "wallet",
-            "pages": [
-              "desktop-app/wallet/initializing-mnemonic",
-              "desktop-app/wallet/deposits",
-              "desktop-app/wallet/withdrawals"
-            ]
-          },
-          {
-            "group": "How-To: Channel Management",
-            "icon": "git-branch",
+            "group": "Channel Management",
+            "icon": "code-branch",
             "pages": [
               "desktop-app/channels/opening-channel",
               "desktop-app/channels/order-new-channel",
@@ -75,24 +76,28 @@
             ]
           },
           {
-            "group": "How-To: Settings",
-            "icon": "sliders",
+            "group": "KaleidoMind",
+            "icon": "brain",
             "pages": [
-              "desktop-app/support/settings"
+              "desktop-app/kaleidomind/chat",
+              "desktop-app/kaleidomind/brain"
             ]
           },
           {
-            "group": "Advanced Setup",
-            "icon": "server",
+            "group": "Configuration",
+            "icon": "sliders",
             "pages": [
+              "desktop-app/support/settings",
               "desktop-app/getting-started/node-hosting"
             ]
           },
           {
             "group": "Reference",
-            "icon": "life-buoy",
+            "icon": "book",
             "pages": [
+              "desktop-app/support/changelog",
               "desktop-app/support/faq",
+              "desktop-app/support/troubleshooting",
               "desktop-app/support/additional-resources"
             ]
           }
@@ -102,24 +107,64 @@
         "tab": "Extensions",
         "groups": [
           {
-            "group": "Overview",
-            "icon": "puzzle-piece",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
-              "extensions/introduction"
+              "extensions/introduction",
+              "extensions/kaleidoswap-extension/installation",
+              "extensions/kaleidoswap-extension/getting-started"
             ]
           },
           {
-            "group": "KaleidoSwap Extension",
-            "icon": "wallet",
+            "group": "Features",
+            "icon": "star",
             "pages": [
-              "extensions/kaleidoswap-extension/introduction",
-              "extensions/kaleidoswap-extension/installation",
-              "extensions/kaleidoswap-extension/getting-started",
               "extensions/kaleidoswap-extension/wallet-features",
               "extensions/kaleidoswap-extension/swaps",
               "extensions/kaleidoswap-extension/bridge",
-              "extensions/kaleidoswap-extension/dapp-connectivity",
-              "extensions/kaleidoswap-extension/faq"
+              "extensions/kaleidoswap-extension/dapp-connectivity"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "book",
+            "pages": [
+              "extensions/kaleidoswap-extension/faq",
+              "extensions/kaleidoswap-extension/troubleshooting",
+              "extensions/kaleidoswap-extension/additional-resources"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "AI Tools",
+        "groups": [
+          {
+            "group": "Introduction",
+            "icon": "flag",
+            "pages": [
+              "ai-tools/introduction",
+              "ai-tools/installation",
+              "ai-tools/getting-started"
+            ]
+          },
+          {
+            "group": "Tools",
+            "icon": "toolbox",
+            "pages": [
+              "ai-tools/kaleido-mind",
+              "ai-tools/kaleido-agent",
+              "ai-tools/mcp-servers",
+              "ai-tools/skills"
+            ]
+          },
+          {
+            "group": "Reference",
+            "icon": "book",
+            "pages": [
+              "ai-tools/faq",
+              "ai-tools/troubleshooting",
+              "ai-tools/additional-resources"
             ]
           }
         ]
@@ -128,12 +173,11 @@
         "tab": "SDK",
         "groups": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
               "sdk/introduction",
-              "sdk/getting-started",
-              "sdk/changelog"
+              "sdk/getting-started"
             ]
           },
           {
@@ -165,11 +209,14 @@
             ]
           },
           {
-            "group": "Troubleshooting & Utilities",
-            "icon": "wrench",
+            "group": "Reference",
+            "icon": "book",
             "pages": [
+              "sdk/changelog",
+              "sdk/utilities",
+              "sdk/faq",
               "sdk/troubleshooting",
-              "sdk/utilities"
+              "sdk/additional-resources"
             ]
           }
         ]
@@ -178,8 +225,8 @@
         "tab": "CLI",
         "groups": [
           {
-            "group": "Overview",
-            "icon": "terminal",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
               "cli/introduction",
               "cli/getting-started"
@@ -214,12 +261,18 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Guides",
-            "icon": "book",
+            "group": "Introduction",
+            "icon": "flag",
             "pages": [
               "api-reference/introduction",
+              "api-reference/getting-started"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
               "api-reference/swap-protocol",
-              "api-reference/getting-started",
               "api-reference/error-handling"
             ]
           },
@@ -239,9 +292,19 @@
     "global": {
       "anchors": [
         {
+          "anchor": "Access Extension Beta",
+          "href": "https://kaleidoswap.com/products/extension/beta",
+          "icon": "puzzle-piece"
+        },
+        {
           "anchor": "Download Desktop App",
           "href": "https://github.com/kaleidoswap/desktop-app/releases",
           "icon": "download"
+        },
+        {
+          "anchor": "Website",
+          "href": "https://kaleidoswap.com",
+          "icon": "globe"
         },
         {
           "anchor": "GitHub",
@@ -252,8 +315,8 @@
     }
   },
   "logo": {
-    "light": "/assets/logo-light.svg",
-    "dark": "/assets/logo-dark.svg"
+    "light": "/assets/logos/kaleidoswap-full-logo-horizontal-onlight.svg",
+    "dark": "/assets/logos/kaleidoswap-full-logo-horizontal.svg"
   },
   "api": {
     "playground": {
@@ -270,13 +333,13 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:support@kaleidoswap.com"
+        "href": "https://docs.google.com/forms/d/e/1FAIpQLSewf4-AJZxuoI878-TRex91kRH04l-9s5XC51UHW6140xXKVA/viewform"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "App Dashboard",
-      "href": "https://app.kaleidoswap.com"
+      "label": "Download the Apps",
+      "href": "https://kaleidoswap.com/products"
     }
   },
   "footer": {

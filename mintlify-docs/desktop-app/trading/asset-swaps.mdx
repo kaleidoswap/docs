@@ -1,9 +1,9 @@
 ---
-title: Asset Swaps
-description: Step-by-step instructions for performing an asset swap in the KaleidoSwap Desktop App
+title: Swap Assets
+description: "Swap bitcoin and Bitcoin L2 assets in the KaleidoSwap Desktop App by requesting quotes, executing trustless atomic swaps, and tracking status"
 ---
 
-Asset swaps let you exchange one asset for another through the KaleidoSwap platform. The desktop app uses **atomic swaps** — both sides of the trade execute simultaneously, so neither party can cheat.
+Asset swaps let you exchange one asset for another through the KaleidoSwap platform. The Desktop App uses **atomic swaps** — both sides of the trade execute simultaneously, so neither party can cheat.
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ Before you can swap, make sure you have:
   </Step>
 </Steps>
 
-![Trading Page](/images/desktop-app/19_trading_page.png)
+![KaleidoSwap Desktop App trading page with asset pair selection and swap quote](/assets/images/desktop-app/19_trading_page.png)
 
 ## Trading Modes
 
@@ -45,7 +45,12 @@ The **Trading** section groups several ways to trade, each on its own tab:
 - **Market Maker** — Trade against a connected market maker's live quotes. Swaps execute atomically at the maker's current rate. This is the default and the flow described above.
 - **Manual Swaps** — Request and confirm individual swaps yourself, choosing the maker and reviewing each quote before executing.
 - **DCA** — Automate BTC accumulation with fixed-interval buys or downside price triggers. Each successful execution converts a fixed amount into BTC.
+
+![DCA trading interface](/assets/images/desktop-app/24_dca.png)
+
 - **Limit Orders** — Set a target price for a trading pair; when the market reaches your price, the swap executes automatically.
+
+![Limit Order trading interface](/assets/images/desktop-app/25_limit-order.png)
 - **Nostr P2P** *(coming soon)* — Peer-to-peer trading over Nostr, trading directly with other users without relying on a centralized maker.
 
 ## Supported Trading Pairs
@@ -78,3 +83,9 @@ View your past swaps in the **"History"** tab for record-keeping and reconciliat
     Atomic swaps on Lightning should settle in seconds. If a swap appears stuck, check your node's connection status in Settings. Restarting the app may help if the connection was interrupted.
   </Accordion>
 </AccordionGroup>
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

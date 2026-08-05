@@ -1,6 +1,7 @@
 ---
-title: Installation
-description: Install or load the KaleidoSwap Extension
+title: "KaleidoSwap Extension: Installation"
+sidebarTitle: "Installation"
+description: "Install the KaleidoSwap Extension in your browser, covering closed beta access, manual loading, and update steps"
 ---
 
 ## Browser Requirements
@@ -67,7 +68,7 @@ Closed beta testers should install only the zip provided through the private Dri
 
 After installation, clicking the KaleidoSwap icon in your toolbar opens the wallet in the browser **side panel** (on browsers that don't support the side panel API, it falls back to a toolbar popup). On first launch, you are guided through the **onboarding flow**:
 
-<img src="/images/kaleidoswap-extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto" }} />
+<img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 1. **Welcome screen** - Create a new wallet or import an existing phrase
 2. **Password setup** - Create a secure password to protect the local wallet
@@ -93,7 +94,7 @@ The KaleidoSwap Extension requests the following Chrome extension permissions:
 | **Side Panel** | Open the wallet in the browser side panel |
 
 <Note>
-The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect, such as Spark, Arkade, an optional RGB Lightning Node, price data, or swap venues.
+The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect.
 </Note>
 
 ## Updating
@@ -107,3 +108,9 @@ To remove the KaleidoSwap Extension, follow the instructions provided by your br
 <Warning>
 Uninstalling the extension removes all locally stored wallet data. Make sure you have backed up your recovery phrase and any RGB Lightning Node backup material before uninstalling.
 </Warning>
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

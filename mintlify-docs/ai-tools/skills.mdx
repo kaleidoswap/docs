@@ -1,0 +1,26 @@
+---
+title: "Skills Playbooks for AI Agents"
+sidebarTitle: "Skills"
+description: "SKILL.md playbooks that scope which tools an agent can reach and carry the execution plan, covering the skills shipped with KaleidoAgent and what each one does"
+---
+
+A skill is a self-contained `SKILL.md` file loaded at runtime. It scopes which tools the model can reach and carries the execution plan, so behavior changes without touching runtime code. [KaleidoAgent](/ai-tools/kaleido-agent) skills also support `!` bash injections, which run and inline their output before the prompt reaches the LLM.
+
+## Available skills
+
+| Skill | Purpose |
+|-------|---------|
+| `kaleidoagent` | Core behavior and the daily summary: portfolio snapshot, market data, trade history |
+| `portfolio-manager` | Drift detection to atomic swap execution, with the full risk checks |
+| `channel-manager` | Node health, RGB transfer flush, LSPS1 channel purchasing |
+| `dca` | Scheduled, price-aware purchases bounded by user-set caps |
+| `wallet-assistant` | Interactive balances, invoices, payments, and swaps over chat |
+| `cross-l2` | Asset moves between Spark, Lightning, and on-chain Bitcoin |
+| `kaleidoswap` | KaleidoSwap DEX reference: quotes, atomic swaps, REST orders, open positions |
+| `mpp` | Access to HTTP 402-gated APIs over Lightning |
+| `node-manager` | RGB Lightning Node lifecycle, wallet unlock, channel and balance inspection |
+
+Each file is published under [`skills/` in the kaleido-agent repository](https://github.com/kaleidoswap/kaleido-agent/tree/main/skills), and can be read or downloaded from the [AI Tools product page](https://kaleidoswap.com/products/ai-tools#skills).
+
+Skills can be listed, enabled, and disabled at runtime through the agent's `/skills` [status API endpoint](/ai-tools/kaleido-agent#status-api).
+

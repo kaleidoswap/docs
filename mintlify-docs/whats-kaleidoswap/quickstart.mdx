@@ -1,14 +1,19 @@
 ---
-title: Quickstart
-description: Get started with KaleidoSwap in minutes
+title: "KaleidoSwap Quickstart"
+sidebarTitle: "Quickstart"
+description: "Set up KaleidoSwap and make your first non-custodial swap in minutes. Install the app, fund your Lightning wallet, and trade Bitcoin L2 assets"
 ---
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Desktop App" icon="desktop" href="#desktop-app-quickstart">
     Atomic swaps via the desktop application
   </Card>
 
-  <Card title="Developer" icon="code" href="#developer-quickstart">
+  <Card title="Extension" icon="puzzle-piece" href="#extension-quickstart">
+    A wallet and swaps in your browser
+  </Card>
+
+  <Card title="SDK" icon="code" href="#sdk-quickstart">
     Integrate KaleidoSwap into your application
   </Card>
 </CardGroup>
@@ -81,7 +86,69 @@ description: Get started with KaleidoSwap in minutes
 
 ---
 
-## Developer Quickstart
+## Extension Quickstart
+
+<Steps>
+  <Step title="Install the Extension">
+    Download the latest closed beta zip from your invite, then load it into your browser:
+
+    1. Extract the zip archive
+    2. Open `chrome://extensions` and enable **Developer mode**
+    3. Click **Load unpacked** and select the extracted folder
+    4. Pin the KaleidoSwap icon to your toolbar
+
+    <Tip>
+      Full walkthrough, including checksum verification: [Installation Guide →](/extensions/kaleidoswap-extension/installation)
+    </Tip>
+  </Step>
+
+  <Step title="Create Wallet">
+    Open the extension and create a new wallet:
+
+    1. Choose "Create New Wallet"
+    2. Set a secure password
+    3. **Save your 12-word recovery phrase securely**
+    4. Optionally register a passkey and set up your Nostr identity
+
+    <Warning>
+      **Never share your recovery phrase!** Anyone with access to it can steal your funds.
+    </Warning>
+  </Step>
+
+  <Step title="Fund Your Wallet">
+    Deposit BTC or assets into a connected account:
+
+    1. Click "Deposit" on the dashboard
+    2. Choose an account route: Spark, Arkade, Liquid, or RGB-L1
+    3. Copy the address or invoice and send funds from your exchange or another wallet
+    4. Wait for confirmation (instant on Spark/Arkade, block-time on-chain)
+  </Step>
+
+  <Step title="Connect a Swap Venue">
+    Swaps need a compatible venue connected:
+
+    - Spark pools become available once your Spark account is funded
+    - For RGB swaps, connect an RGB Lightning Node from "Settings" → "RGB" (direct URL or Nostr Wallet Connect)
+  </Step>
+
+  <Step title="Make Your First Swap">
+    Execute a swap from the dashboard:
+
+    1. Click "Swap"
+    2. Select the **From** and **To** assets
+    3. Enter the amount and review the quote
+    4. Confirm the swap before the quote expires
+    5. Track status until it completes
+  </Step>
+</Steps>
+
+<Check>
+  **Congratulations!** You've completed your first swap in the KaleidoSwap Extension.
+</Check>
+
+---
+
+## SDK Quickstart
 
 ### Python SDK
 
@@ -216,25 +283,3 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/quotes \
     - **Coming soon**
   </Tab>
 </Tabs>
-
----
-
-## Next Steps
-
-<CardGroup cols={3}>
-  <Card title="Desktop App Guide" icon="book-open" href="/desktop-app/getting-started/introduction">
-    Advanced features: channels, backups, and more
-  </Card>
-
-  <Card title="SDK Examples" icon="code" href="/sdk/examples">
-    Real-world code examples for common workflows
-  </Card>
-
-  <Card title="API Documentation" icon="brackets-curly" href="/api-reference/introduction">
-    Deep dive into REST API endpoints
-  </Card>
-
-  <Card title="Join Community" icon="users" href="https://t.me/kaleidoswap">
-    Get help and connect with other users
-  </Card>
-</CardGroup>

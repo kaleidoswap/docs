@@ -1,6 +1,7 @@
 ---
-title: Troubleshooting Guide
-description: Common issues and solutions for KaleidoSwap Desktop App, API, and SDK
+title: "KaleidoSwap Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Fix common KaleidoSwap issues across the Desktop App, Browser Extension, API, and SDK, from connection errors and stuck swaps to channel problems and recovery"
 ---
 
 ## Desktop Application
@@ -288,7 +289,117 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
   </Accordion>
 </AccordionGroup>
 
-## API & Integration Issues
+<Note>
+  For failed trades, wallet restore, and LSP connection questions, see [Desktop App Troubleshooting](/desktop-app/support/troubleshooting).
+</Note>
+
+## Browser Extension
+
+The cases below are specific to how the closed beta is installed and how its accounts are backed.
+
+### Installation & Updates
+
+<AccordionGroup>
+  <Accordion title="Load unpacked fails, or the extension disappears later" icon="folder-open">
+    **Symptoms**: `chrome://extensions` rejects the folder, or a working extension stops loading after a while.
+
+    **Solutions**:
+    1. **Select the right folder**: Choose the folder that contains `manifest.json`. If the archive has a `dist` folder, select `dist`.
+    2. **Don't move or delete the extracted folder**: The browser loads the extension from that path every time. Moving it to another disk, renaming it, or clearing a Downloads folder breaks the install.
+    3. **Extract first**: Point the browser at the extracted folder, not at the zip.
+    4. **Re-add it**: Remove the broken card in `chrome://extensions` and load the folder again. Your wallet is not stored in that folder, so this does not touch your funds.
+  </Accordion>
+
+  <Accordion title="A new beta build doesn't take effect" icon="rotate">
+    **Symptoms**: You installed a newer zip but the extension still behaves like the old version.
+
+    **Solutions**:
+    1. Closed beta builds **do not auto-update** — there is no store listing to push them.
+    2. After extracting the new zip, go to `chrome://extensions` and click **Reload** on the KaleidoSwap card.
+    3. If you extracted into a **different folder**, remove the old unpacked extension and load the new folder instead — otherwise the browser keeps running the old one.
+    4. Confirm the version under **Settings > About**.
+  </Accordion>
+
+  <Accordion title="The extension won't install in my browser" icon="browser">
+    **Symptoms**: The beta zip cannot be loaded at all.
+
+    **Solutions**:
+    1. The closed beta targets **Chromium-based browsers**: Chrome, Brave, Edge, Opera.
+    2. **Firefox** is not part of the first closed beta unless a Firefox build is provided, and **Safari** is not supported yet.
+    3. **Developer mode** must be toggled on in `chrome://extensions` before **Load unpacked** appears.
+    4. Install only archives from the official invite or support channel — never a forwarded copy.
+  </Accordion>
+</AccordionGroup>
+
+### Accounts & Balances
+
+<AccordionGroup>
+  <Accordion title="RGB assets disappeared after connecting a node" icon="layer-group">
+    **Symptoms**: RGB balances were visible, then vanished once an RGB Lightning Node was connected.
+
+    **Explanation**: The node-less **RGB-L1** account and the **RLN** account are *mutually exclusive* backings for RGB assets. Connecting RLN replaces the node-less backing, so you are looking at a different account — the RGB-L1 state has not been lost.
+
+    **Solutions**:
+    1. Disconnect RLN in **Settings > Networks** to return to the node-less RGB-L1 backing.
+    2. Decide which backing you want: node-less for RGB on Bitcoin L1, RLN for RGB **Lightning channels** and maker-based swaps.
+    3. Before switching, make sure the backing you are leaving is backed up — RGB-L1 to its cloud (VSS) and local backups, RLN to the node's own backup material.
+  </Accordion>
+
+  <Accordion title="Restored wallet is missing its RGB state" icon="cloud-arrow-down">
+    **Symptoms**: Spark, Arkade, and Liquid balances came back after importing the recovery phrase, but RGB assets did not.
+
+    **Solutions**:
+    1. RGB-L1 state is **not** derived from the recovery phrase — it is restored from the encrypted cloud (VSS) backup, and only if you **explicitly consent** at that onboarding step. Skipping the prompt leaves the state behind.
+    2. Re-import the wallet and accept the restore prompt when it appears.
+    3. If you use RLN instead, RGB state must be recovered from the node's own backup material, not from the extension.
+  </Accordion>
+
+  <Accordion title="Imported a Nostr key and now funds are missing" icon="key">
+    **Symptoms**: You restored using an `nsec1…` key and the wallet is empty.
+
+    **Solutions**:
+    1. A Nostr key **does not control funds**. Importing one only replaces the Nostr identity.
+    2. Always restore with the **BIP39 recovery phrase** — it is what derives the Spark, Arkade, Liquid, and RGB-L1 accounts.
+    3. Re-import using the recovery phrase; you can import the Nostr key afterwards from Settings.
+  </Accordion>
+</AccordionGroup>
+
+### Swaps & Bridge
+
+<AccordionGroup>
+  <Accordion title="Cannot quote the full balance" icon="circle-minus">
+    **Symptoms**: The swap screen refuses an amount you appear to hold.
+
+    **Solutions**:
+    1. The amount input is gated by your **spendable** balance for the source asset, not the total balance, so you cannot quote more than the wallet can actually send.
+    2. On-chain sends also reserve the network fee — **Max** accounts for this automatically.
+    3. Check that the balance is on the account the selected route uses; balances are tracked per layer.
+  </Accordion>
+
+  <Accordion title="Swap fails instead of executing" icon="arrow-trend-down">
+    **Symptoms**: A quoted swap ends in failure rather than filling at a worse rate.
+
+    **Solutions**:
+    1. This is **slippage protection** working as intended: the minimum output is derived from your configured tolerance, and the swap fails rather than executing beyond it.
+    2. Re-quote — quotes expire, and the rate may have moved since.
+    3. Adjust your slippage tolerance if the market is genuinely volatile, or reduce the size.
+  </Accordion>
+
+  <Accordion title="A bridge order seems lost" icon="bridge">
+    **Symptoms**: You closed the extension mid-bridge and the order is no longer on screen.
+
+    **Solutions**:
+    1. Bridge orders are **saved locally as a session**. Reopening the bridge screen restores the pending order and resumes tracking, even after the service worker restarts.
+    2. Completed and failed orders show a final status with the relevant transaction references.
+    3. Deposits confirm on the source chain first — an order can sit in progress while that happens.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  For node connection, payment, and DApp provider problems, see [KaleidoSwap Extension Troubleshooting](/extensions/kaleidoswap-extension/troubleshooting).
+</Note>
+
+## API & Integration
 
 ### Authentication & Connection
 
@@ -385,27 +496,28 @@ description: Common issues and solutions for KaleidoSwap Desktop App, API, and S
   </Accordion>
 </AccordionGroup>
 
-## SDK-Specific Issues
+<Note>
+  For the full list of HTTP status codes, the error response format, and retry strategies, see [Error Handling](/api-reference/error-handling) in the API Reference.
+</Note>
 
-### Python SDK
+## SDK
 
-See the [SDK Error Handling](/sdk/error-handling) guide for language-specific troubleshooting.
+Both SDK guides cover TypeScript and Python side by side — every example shows both. Pick by what you need:
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/sdk/error-handling">
+    Which exceptions the SDK raises, how to catch them, retry patterns, and HTTP status mapping.
+  </Card>
+
+  <Card title="SDK Troubleshooting" icon="wrench" href="/sdk/troubleshooting">
+    Symptom-to-fix for install failures, connection errors, WebSocket problems, and language-specific gotchas.
+  </Card>
+</CardGroup>
 
 **Quick tips**:
-- Always use error handling with try/except blocks
-- Check `KaleidoSwapError` exception details
-- Enable debug logging for detailed request/response info
-- Verify Python version 3.8+ is installed
-
-### TypeScript SDK
-
-See the [SDK Troubleshooting](/sdk/troubleshooting) guide for comprehensive SDK-specific solutions.
-
-**Quick tips**:
-- Check TypeScript version compatibility (4.5+)
-- Verify all peer dependencies are installed
-- Use proper type assertions for responses
-- Enable verbose logging in development
+- Catch `KaleidoError` — every SDK exception extends it, and `isRetryable()` / `is_retryable()` tells you whether a retry is safe
+- Enable debug logging for full request and response detail
+- Check your runtime: Node.js 18+ / Python 3.10+
 
 ## General Best Practices
 
@@ -432,8 +544,8 @@ See the [SDK Troubleshooting](/sdk/troubleshooting) guide for comprehensive SDK-
 If these troubleshooting steps don't resolve your issue:
 
 <Steps>
-  <Step title="Check the FAQ">
-    Review the [Desktop App FAQ](/desktop-app/support/faq) for additional common questions.
+  <Step title="Check the FAQ for your surface">
+    Each product keeps its own reference: [Desktop App Troubleshooting](/desktop-app/support/troubleshooting), [KaleidoSwap Extension Troubleshooting](/extensions/kaleidoswap-extension/troubleshooting), [KaleidoSDK Troubleshooting](/sdk/troubleshooting), and [API Error Handling](/api-reference/error-handling).
   </Step>
 
   <Step title="Search Documentation">
@@ -441,14 +553,14 @@ If these troubleshooting steps don't resolve your issue:
   </Step>
 
   <Step title="Check GitHub Issues">
-    See if others have reported similar issues on [GitHub](https://github.com/kaleidoswap).
+    See if others have reported the same problem in the repository for the component you are running. All repositories live under the [KaleidoSwap organization](https://github.com/kaleidoswap).
   </Step>
 
   <Step title="Contact Support">
     Reach out via:
     - Email: [support@kaleidoswap.com](mailto:support@kaleidoswap.com)
     - Telegram: [https://t.me/kaleidoswap](https://t.me/kaleidoswap)
-    - GitHub Issues: [Report a bug](https://github.com/kaleidoswap/desktop-app/issues/new)
+    - GitHub Issues: open one in the repository that matches your setup, for example [Desktop App](https://github.com/kaleidoswap/desktop-app/issues/new), [KaleidoSDK](https://github.com/kaleidoswap/kaleido-sdk/issues/new), or [KaleidoCLI](https://github.com/kaleidoswap/kaleido-cli/issues/new).
   </Step>
 </Steps>
 

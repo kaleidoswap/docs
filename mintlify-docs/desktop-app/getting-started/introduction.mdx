@@ -1,6 +1,7 @@
 ---
-title: Desktop App Introduction
-description: Learn about the KaleidoSwap Desktop App for managing Bitcoin and RGB assets on Lightning Network
+title: "KaleidoSwap Desktop App"
+sidebarTitle: "Overview"
+description: "The KaleidoSwap Desktop App is a non-custodial wallet with built-in atomic swaps for managing bitcoin and Bitcoin L2 assets on Lightning"
 ---
 
 The KaleidoSwap Desktop App is a full-featured application for trading Bitcoin and RGB assets on the Lightning Network. It gives you complete control over your node, wallet, and channels.
@@ -22,40 +23,34 @@ The KaleidoSwap Desktop App is a full-featured application for trading Bitcoin a
   </Card>
 </CardGroup>
 
-## Getting Started
+## What the Desktop App Covers
 
-Follow these steps to set up the desktop app:
+| Area | What the Desktop App gives you |
+|------|-------------------------------|
+| **Node control** | Run an RGB Lightning Node on your machine, or point the app at a remote one you host |
+| **Wallet** | Create and unlock accounts, generate or restore a recovery phrase, hold BTC and RGB balances |
+| **Channels** | Open a channel with a peer directly, or order one from an LSP with RGB assets pre-allocated |
+| **Trading** | Request quotes and settle atomic swaps between BTC and RGB assets from your own node |
+| **Backups** | Export channel backups so channel funds stay recoverable after data loss |
+| **Settings** | Node endpoint, RGB proxy, and network configuration, per account |
 
-<Steps>
-  <Step title="Install the app">
-    Download the binary for your platform or build from source.
-    [Installation Guide](/desktop-app/getting-started/installation)
-  </Step>
-  <Step title="Set up your node">
-    Connect to a remote RGB Lightning Node or run one locally.
-    [Node Hosting Guide](/desktop-app/getting-started/node-hosting)
-  </Step>
-  <Step title="Create a wallet">
-    Generate a new wallet and securely save your recovery phrase.
-    [Wallet Setup](/desktop-app/wallet/creating-wallet)
-  </Step>
-  <Step title="Fund and trade">
-    Deposit BTC, open channels, and start swapping assets.
-    [Deposits](/desktop-app/wallet/deposits) | [Trading](/desktop-app/trading/asset-swaps)
-  </Step>
-</Steps>
+## How It Works
 
-## Before You Start
+The Desktop App is a client, not a custodian. It drives an **RGB Lightning Node** that holds your keys, manages channel state, and validates RGB contracts locally.
 
-To trade on the desktop app you will need:
+- The **app** is the interface: accounts, balances, channels, and trading screens
+- The **RGB Lightning Node** holds the keys and the channel state, whether it runs on your machine or on a server you control
+- **LSPs** supply inbound liquidity and act as the counterparty that locks the other leg of a swap
+- **Bitcoin** is where channels anchor and where positions finally settle
 
-| Requirement | Details |
-|-------------|---------|
-| **Bitcoin** | At least ~1M sats (0.01 BTC) recommended to fund a channel and cover fees |
-| **LSP connection** | A Lightning Service Provider to open a channel through (the default LSP is pre-configured) |
-| **RGB assets** | Allocated inside your channel when you open it, or obtained via swap |
+No third party has access to your funds at any point. For how this fits the wider stack, see [Architecture](/whats-kaleidoswap/architecture#client-architecture).
 
-If you just want to explore the app without trading, you can install and create a wallet without any funds first.
+## Everyday Flow
+
+1. **Unlock** — enter your password; the app starts or reconnects to your node
+2. **Review balances** — on-chain BTC, Lightning balance, and RGB assets for the selected account
+3. **Move funds** — deposit, withdraw, or open a channel
+4. **Trade** — quote a pair and settle an atomic swap against the maker
 
 ## System Requirements
 
@@ -64,3 +59,9 @@ If you just want to explore the app without trading, you can install and create 
 - **Linux** (Ubuntu 20.04+, Debian 11+, or equivalent)
 
 For building from source, you'll also need Rust, Node.js, and the Tauri prerequisites.
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

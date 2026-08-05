@@ -1,21 +1,26 @@
 ---
-title: "How to Create Swaps"
-description: "Step-by-step guide for creating and executing atomic swaps."
+title: "Create Atomic Swaps with the SDK"
+sidebarTitle: "How to Swap"
+description: "Create and execute Bitcoin atomic swaps with the KaleidoSDK in a step-by-step guide that runs from quote to settlement"
 ---
 
-# Creating Swaps
+This guide walks through an atomic swap (direct node-to-node) end to end with the KaleidoSDK, in both TypeScript and Python.
 
-This guide provides a detailed walkthrough on how to execute Atomic Swaps (direct node-to-node) using the Kaleido Python SDK.
+Atomic swaps are trustless: the maker never takes custody, because your own RGB Lightning Node holds the keys and has to whitelist the swap before it can settle. That also means you need an RLN node running alongside the client — see [Node Hosting](/desktop-app/getting-started/node-hosting) for the options.
 
-These examples leverage the Pydantic models from `kaleido_sdk` to ensure type safety and precise API interactions.
+## Setup
 
----
+Both a `baseUrl` and a `nodeUrl` are required: the first reaches the maker, the second reaches your node.
 
-## Executing an Atomic Swap
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
 
-Atomic Swaps allow direct, trustless node-to-node exchange using RGB Lightning Nodes. You must run an RLN node alongside this client.
-
-### Prerequisites & Imports
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+```
 
 ```python Python
 from kaleido_sdk import (
@@ -25,75 +30,170 @@ from kaleido_sdk import (
     PairQuoteRequest,
     SwapLegInput,
     SwapRequest,
+    SwapStatusRequest,
 )
 from kaleido_sdk.rln import TakerRequest
 
 client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001"
+    node_url="http://localhost:3001",
 )
 ```
+</CodeGroup>
 
-### Step-by-Step Flow
+## Step 1: Get a Quote
 
-#### Step 1: Get a Quote
-Obtain a quote for the asset pair you wish to swap.
+Request a quote for the pair you want to swap. Amounts are always **raw integer units** — see [Utilities](/sdk/utilities) for conversion helpers.
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.maker.getQuote({
+  from_asset: {
+    asset_id: 'BTC',
+    layer: Layer.BTC_LN,
+    amount: 1000000,
+  },
+  to_asset: {
+    asset_id: 'rgb:...:...', // Your RGB asset ID
+    layer: Layer.RGB_LN,
+  },
+});
+```
 
 ```python Python
 quote = await client.maker.get_quote(PairQuoteRequest(
     from_asset=SwapLegInput(
-        asset_id="BTC", 
-        layer=Layer.BTC_LN, 
-        amount=1000000
+        asset_id="BTC",
+        layer=Layer.BTC_LN,
+        amount=1000000,
     ),
     to_asset=SwapLegInput(
-        asset_id="rgb:...:...", # Your RGB asset ID
-        layer=Layer.RGB_LN
-    )
+        asset_id="rgb:...:...",  # Your RGB asset ID
+        layer=Layer.RGB_LN,
+    ),
 ))
 ```
+</CodeGroup>
 
-#### Step 2: Initialize the Swap
-Initialize the swap lock with the Maker based on the RFQ.
+The `rfq_id` on the response is what ties the next step to this price. Quotes expire — do not hold an `rfq_id` across user think-time, or `initSwap` will raise `QuoteExpiredError`.
+
+## Step 2: Initialize the Swap
+
+Lock the swap with the maker against that quote. This returns the `swapstring` and the `payment_hash` you need for every remaining step.
+
+<CodeGroup>
+```typescript TypeScript
+const swap = await client.maker.initSwap({
+  rfq_id: quote.rfq_id,
+  from_asset: quote.from_asset.asset_id,
+  from_amount: quote.from_asset.amount,
+  to_asset: quote.to_asset.asset_id,
+  to_amount: quote.to_asset.amount,
+});
+
+// swap.swapstring, swap.payment_hash
+```
 
 ```python Python
-swap_request = SwapRequest(
+swap = await client.maker.init_swap(SwapRequest(
     rfq_id=quote.rfq_id,
     from_asset=quote.from_asset.asset_id,
     from_amount=quote.from_asset.amount,
     to_asset=quote.to_asset.asset_id,
     to_amount=quote.to_asset.amount,
-)
+))
 
-swap = await client.maker.init_swap(swap_request)
-# Returns `swapstring` and `payment_hash`
+# swap.swapstring, swap.payment_hash
+```
+</CodeGroup>
+
+## Step 3: Whitelist on Your Taker Node
+
+Your node has to authorize the `swapstring` before it will honour the incoming HTLC. This is the only step that runs against `client.rln`.
+
+<CodeGroup>
+```typescript TypeScript
+const takerPubkey = await client.rln.getTakerPubkey();
+
+await client.rln.whitelistSwap({ swapstring: swap.swapstring });
 ```
 
-#### Step 3: Whitelist on your Taker Node
-Your RLN node needs to be aware of the `swapstring` to process the incoming swap correctly.
-
 ```python Python
-# Get your own node's pubkey
-taker_node_info = await client.rln.get_node_info()
-taker_pubkey = taker_node_info.pubkey
+taker_pubkey = await client.rln.get_taker_pubkey()
 
-# Authorize the swap string internally
 await client.rln.whitelist_swap(TakerRequest(
-    swapstring=swap.swapstring
+    swapstring=swap.swapstring,
 ))
 ```
+</CodeGroup>
 
-#### Step 4: Execute the Swap
-Finalize the execution with the Maker by providing your node's details.
+<Warning>
+Skipping this step is the most common cause of a `SwapError` on execute: init succeeds, then execution fails because the taker side never agreed to the swap.
+</Warning>
+
+## Step 4: Execute the Swap
+
+Hand the maker your node's details so it can settle.
+
+<CodeGroup>
+```typescript TypeScript
+const execution = await client.maker.executeSwap({
+  swapstring: swap.swapstring,
+  payment_hash: swap.payment_hash,
+  taker_pubkey: takerPubkey,
+});
+
+console.log(`Swap executed. Status: ${execution.status}`);
+```
 
 ```python Python
-confirm_request = ConfirmSwapRequest(
+execution = await client.maker.execute_swap(ConfirmSwapRequest(
     swapstring=swap.swapstring,
     payment_hash=swap.payment_hash,
     taker_pubkey=taker_pubkey,
-)
+))
 
-execution_response = await client.maker.execute_swap(confirm_request)
-
-print(f"Swap Executed! Status: {execution_response.status}")
+print(f"Swap executed. Status: {execution.status}")
 ```
+</CodeGroup>
+
+## Step 5: Track Settlement
+
+`executeSwap` returning is not the same as the swap having settled. Poll the status by `payment_hash` until it reaches a terminal state.
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getAtomicSwapStatus({
+  payment_hash: swap.payment_hash,
+});
+
+console.log(status.swap?.status);
+```
+
+```python Python
+status = await client.maker.get_atomic_swap_status(SwapStatusRequest(
+    payment_hash=swap.payment_hash,
+))
+
+print(status.swap.status if status.swap else None)
+```
+</CodeGroup>
+
+If a transfer sits pending longer than expected, `client.rln.refreshTransfers()` / `refresh_transfers()` advances pending RGB transfers, and `client.rln.listSwaps()` gives you the node's own view. See [Troubleshooting](/sdk/troubleshooting#swap-issues) for the failure modes.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/sdk/error-handling">
+    The exception hierarchy and retry patterns around each step.
+  </Card>
+  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
+    The HTLC flow underneath, endpoint by endpoint, with the sequence diagram.
+  </Card>
+  <Card title="WebSocket" icon="tower-broadcast" href="/sdk/websocket">
+    Stream live quotes instead of requesting them one at a time.
+  </Card>
+  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
+    Every method on `client.maker` and `client.rln`.
+  </Card>
+</CardGroup>

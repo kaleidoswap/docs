@@ -1,0 +1,133 @@
+---
+title: "KaleidoSwap Extension Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Fix node connection, payment, and DApp provider problems in the KaleidoSwap Extension, plus what to include when reporting a bug to the support team."
+---
+
+Fixes for the problems KaleidoSwap Extension users hit most often. For issues across every KaleidoSwap surface, see the [full troubleshooting guide](/whats-kaleidoswap/troubleshooting).
+
+## Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to node" icon="link-slash">
+    **Symptoms:** Connection fails or shows "Disconnected"
+    
+    **Solutions:**
+    1. Verify the **node URL** is correct
+    2. Check that the node is **running and accessible**
+    3. If using a local node, ensure it is running on the expected port
+    4. If using a remote node, check network/firewall settings
+    5. If using a Biscuit/auth token, verify the **token is valid**
+    6. Try disconnecting and reconnecting in Settings > Networks
+  </Accordion>
+
+  <Accordion title="Swap venue not connecting" icon="plug-circle-xmark">
+    **Symptoms:** Swap feature is disabled or shows connection error
+    
+    **Solutions:**
+    1. Check that the relevant account is connected
+    2. Verify RLN if using KaleidoSwap maker pairs
+    3. Verify Spark availability if using Flashnet routes
+    4. Try refreshing the swap screen
+  </Accordion>
+
+  <Accordion title="Provider not detected by a DApp" icon="eye-slash">
+    **Symptoms:** A DApp does not detect the KaleidoSwap Extension as a wallet
+    
+    **Solutions:**
+    1. Ensure the KaleidoSwap Extension is **installed and unlocked**
+    2. Refresh the web page
+    3. Check that the extension is **enabled** for the site
+    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, and `window.nostr` (NIP-07)
+    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, and `nostr:ready`
+  </Accordion>
+</AccordionGroup>
+
+## Payment Issues
+
+<AccordionGroup>
+  <Accordion title="Payment failed" icon="circle-xmark">
+    **Symptoms:** Send payment shows error
+    
+    **Solutions:**
+    1. Check your **balance** is sufficient
+    2. Verify the **destination** is correct
+    3. For Lightning, ensure there is a **route** to the destination
+    4. Check that your node is **online and synced**
+    5. Try again after a few moments
+  </Accordion>
+
+  <Accordion title="Invoice generation failed" icon="receipt">
+    **Symptoms:** Cannot generate receive invoice
+    
+    **Solutions:**
+    1. Check your **node connection**
+    2. Ensure the node has **inbound liquidity** (for Lightning)
+    3. Try generating a different type (on-chain instead of Lightning)
+    4. Restart the extension and try again
+  </Accordion>
+</AccordionGroup>
+
+## Extension Issues
+
+<AccordionGroup>
+  <Accordion title="Extension not loading" icon="puzzle-piece">
+    **Symptoms:** Clicking the icon does nothing or shows blank popup
+    
+    **Solutions:**
+    1. Go to `chrome://extensions` and check the KaleidoSwap Extension is **enabled**
+    2. Try **disabling and re-enabling** the extension
+    3. Clear browser cache
+    4. Restart the browser
+    5. For manual installs, try **reloading** the extension
+  </Accordion>
+
+  <Accordion title="Locked out / forgot password" icon="lock">
+    **Symptoms:** Cannot unlock the extension
+    
+    **Solutions:**
+    1. The KaleidoSwap Extension cannot recover passwords
+    2. **Uninstall** the extension and **reinstall**
+    3. Import your recovery phrase
+    4. Set up a new password and reconnect optional services
+  </Accordion>
+
+  <Accordion title="Balances not updating" icon="arrows-rotate">
+    **Symptoms:** Stale balances shown
+    
+    **Solutions:**
+    1. Check your **node connection** status
+    2. Pull down to **refresh** on the dashboard
+    3. Close and reopen the extension popup
+    4. Verify the node is **synced**
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [FAQ](/extensions/kaleidoswap-extension/faq) for questions rather than errors. For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Browser name and version
+2. KaleidoSwap Extension version (Settings > About)
+3. Node type and version
+4. Steps to reproduce
+5. Error messages or screenshots
+6. Console logs (right-click extension popup > Inspect > Console)
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="Access the Beta" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  Request access to the KaleidoSwap Extension closed beta.
+</Card>

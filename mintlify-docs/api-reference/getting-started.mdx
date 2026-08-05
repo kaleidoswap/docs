@@ -1,15 +1,16 @@
 ---
-title: Getting Started
-description: Set up and start calling the KaleidoSwap Maker API across the Regtest and Signet environments
+title: "Bitcoin Swap API: Getting Started"
+sidebarTitle: "Getting Started"
+description: "Start using the KaleidoSwap swap API, with base URLs for regtest, signet, and mainnet plus authentication, request format, and rate limits"
 ---
 
-Welcome to the Kaleidoswap API! This guide will help you set up and start using the API quickly and effectively.
+Welcome to the KaleidoSwap API! This guide will help you set up and start using the API quickly and effectively.
 
 ---
 
 ## Base URL
 
-The Kaleidoswap API is accessible via HTTPS for secure communication. Here are the available environments:
+The KaleidoSwap API is accessible via HTTPS for secure communication. Here are the available environments:
 
 ### Regtest
 A local-style regtest network with instant block generation, ideal for rapid development and unit testing. This environment is **currently live**. All API requests in this environment should be directed to the following base URL:
@@ -31,7 +32,7 @@ The mainnet environment is the production-ready endpoint for live transactions. 
 ## Authentication
 
 ### Current State
-The Kaleidoswap API currently does not require any authentication to use its endpoints. This makes it easy to start testing and integrating with the API immediately.
+The KaleidoSwap API currently does not require any authentication to use its endpoints. This makes it easy to start testing and integrating with the API immediately.
 
 ### Future Plans
 Authentication mechanisms may be introduced in upcoming versions to enhance security and provide access control for advanced features.
@@ -69,7 +70,7 @@ curl -X 'POST' \
 ---
 
 ## Response Format
-All responses from the Kaleidoswap API are in JSON format for ease of parsing. A typical response includes:
+All responses from the KaleidoSwap API are in JSON format for ease of parsing. A typical response includes:
 
 - A response value structured according to the corresponding **schema**.
 - `detail`: Details about any errors encountered.
@@ -94,7 +95,7 @@ All responses from the Kaleidoswap API are in JSON format for ease of parsing. A
 ---
 
 ## API Versioning
-Kaleidoswap uses versioning to ensure backward compatibility. The current API version is:
+KaleidoSwap uses versioning to ensure backward compatibility. The current API version is:
 
 **Version**: `v1`
 

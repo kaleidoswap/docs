@@ -1,15 +1,16 @@
 ---
-title: Installation Guide
-description: Step-by-step instructions for installing KaleidoSwap Desktop App on macOS, Windows, and Linux
+title: "KaleidoSwap Desktop App: Installation"
+sidebarTitle: "Installation"
+description: "Install the KaleidoSwap Desktop App on macOS, Windows, or Linux, with downloads, system requirements, and setup explained step by step"
 ---
 
 ## Installation Methods
 
-You can install the Kaleidoswap Desktop App in two ways:
+You can install the KaleidoSwap Desktop App in two ways:
 
 ### 1. Download Binaries
 
-1. **Download**: Visit the [Releases](https://github.com/kaleidoswap/desktop-app/releases) page and download the appropriate binary for your operating system.
+1. **Download**: Get the latest build from the [KaleidoSwap downloads page](https://kaleidoswap.com/downloads) or the GitHub [Releases](https://github.com/kaleidoswap/desktop-app/releases) page, choosing the appropriate binary for your operating system.
 2. **Verify**: Every binary is published alongside a per-file GPG signature (`.asc`). Download the matching `.asc` file for your platform and verify it before installing. See our [Binary Verification Guide](/desktop-app/getting-started/verify-binaries) for detailed instructions.
 3. **Install**: Run the app by executing the binary.
 
@@ -28,8 +29,7 @@ You can install the Kaleidoswap Desktop App in two ways:
 #### Platform-Specific Instructions
 
 **Windows:**
-- The `rgb-lightning-node` integration is not yet fully supported on Windows
-- Consider using a Docker container for RLN and connect remotely
+- The RGB Lightning Node integration is not yet fully supported natively on Windows. To get started with RLN on Windows, run it in a Docker container and connect remotely — see [Node Hosting](/desktop-app/getting-started/node-hosting), or [Troubleshooting](/desktop-app/support/troubleshooting#connectivity) for other remote-node options
 - Install [vcpkg](https://github.com/microsoft/vcpkg) to install libraries like **openssl** and **sqlite3**
 - Ensure **Microsoft Visual C++** is installed (via Visual Studio or Build Tools)
 
@@ -48,7 +48,7 @@ You can install the Kaleidoswap Desktop App in two ways:
    ```sh
    pnpm tauri build
    ```
-3. **Run Kaleidoswap in development mode**:  
+3. **Run KaleidoSwap in development mode**:  
    ```sh
    pnpm tauri dev
    ```
@@ -80,5 +80,14 @@ For complete control and privacy, you can run a node directly on your machine:
 - Enhanced privacy
 - No dependency on external services
 
+<Note>
+  Local node integration is not yet fully supported natively on **Windows**. Windows users should choose Option 1 above (a remote node, self-hosted via [Docker](/desktop-app/getting-started/node-hosting) or a hosted provider like ThunderStack) — see [Troubleshooting](/desktop-app/support/troubleshooting#connectivity) for details.
+</Note>
+
 Choose the option that best fits your technical skills and requirements before proceeding with the KaleidoSwap setup.
 
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

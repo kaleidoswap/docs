@@ -1,11 +1,14 @@
 ---
-title: Settings
-description: Configuring the KaleidoSwap Desktop App settings
+title: "Desktop App Settings"
+sidebarTitle: "Settings"
+description: "Configure the KaleidoSwap Desktop App, from network selection to node connection and interface preferences"
 ---
 
 The Settings panel is accessible from the drop-down menu in the upper right corner of the app. It is organized into **Application Settings**, **Maker & LSP Settings**, and **Node Connection Settings**, with **Security & Backup** and **Node Status** panels alongside. Most changes take effect after clicking **Save**; changes under Node Connection Settings additionally require a node restart.
 
 ## Application Settings
+
+<img src="/assets/images/desktop-app/27_settings.png" alt="Application Settings panel" width={1498} height={863} />
 
 ### Capabilities (App Mode)
 
@@ -14,6 +17,8 @@ The Settings panel is accessible from the drop-down menu in the upper right corn
 - **Node + Mind** — run the wallet/node and the local AI brain (KaleidoMind) together
 - **Only Node** — just the RGB Lightning node, channels and swaps
 - **Only Mind** — just the local AI brain, no node required
+
+<img src="/assets/images/desktop-app/26_settings-capabilities.png" alt="Capabilities App Mode setting" width={595} height={228} />
 
 ### Bitcoin Unit
 
@@ -32,7 +37,13 @@ The Settings panel is accessible from the drop-down menu in the upper right corn
 
 **What it does:** Sets the display language of the app. Several languages are available in the dropdown.
 
+### Theme
+
+Dark mode is the only supported theme. Light mode was disabled to avoid inconsistent rendering across screens, so Settings has no theme switch and the app ignores your operating system's preference. A theme switch is coming soon.
+
 ## Maker & LSP Settings
+
+<img src="/assets/images/desktop-app/29_settings-maker.png" alt="Maker and LSP settings panel" width={910} height={451} />
 
 ### Maker URLs
 
@@ -72,6 +83,8 @@ The Settings panel is accessible from the drop-down menu in the upper right corn
   Changing any node connection setting will reconnect the app to a different node or backend. Make sure the target node and services are running and accessible before saving, then restart the node when prompted.
 </Note>
 
+<img src="/assets/images/desktop-app/30_settings-node.png" alt="Node Connection settings panel" width={909} height={622} />
+
 ## Security & Backup
 
 The Security & Backup panel provides:
@@ -80,6 +93,16 @@ The Security & Backup panel provides:
 - **Change Password** — update the wallet encryption password
 - **Backup** — create an encrypted backup of your channel state. See the [Channel Backups](/desktop-app/channels/channel-backups) page for full instructions.
 
+<img src="/assets/images/desktop-app/31_settings-security.png" alt="Security and Backup settings panel" width={435} height={397} />
+
 ## Node Status
 
 Shows whether the node is running or offline and whether it is a local or remote node. From here you can **Logout** (locks the node) or **Shutdown** the node. For local nodes, live node logs are also shown at the bottom of the Settings page.
+
+<img src="/assets/images/desktop-app/32_settings-node-status.png" alt="Node Status and logs panel" width={433} height={326} />
+
+---
+
+<Card title="Download the Desktop App" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  Get the latest KaleidoSwap Desktop App release for macOS, Windows, or Linux.
+</Card>

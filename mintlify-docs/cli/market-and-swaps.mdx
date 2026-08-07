@@ -14,12 +14,11 @@ The `market` group is the read-only entry point for pairs, quotes, routes, and m
 | `kaleido market quote <pair>` | Request a quote |
 | `kaleido market info` | Show maker node information |
 | `kaleido market routes <pair>` | List route options |
-| `kaleido market analytics` | Show maker-side order analytics |
 
 ### Quote examples
 
 ```bash
-kaleido market quote BTC/USDT --from-amount 100000
+kaleido market quote BTC/USDT --from-amount 0.001
 kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB_LN
 ```
 
@@ -49,7 +48,7 @@ Use `swap atomic` when the maker side is remote but execution uses your local no
 | Command | Purpose |
 |--------|---------|
 | `kaleido swap atomic init <pair>` | Initialize the atomic swap |
-| `kaleido swap atomic execute` | Execute the initialized swap |
+| `kaleido swap atomic execute` | Execute the initialized swap (`--swapstring`, `--taker-pubkey`, `--payment-hash`, prompted if omitted; `--auto-whitelist`) |
 | `kaleido swap atomic status <payment-hash>` | Track atomic swap status |
 | `kaleido swap atomic run <pair>` | Run init, whitelist, and execute in one command |
 
@@ -72,10 +71,10 @@ Use `node swap` for low-level RLN swap steps (these live under the `node` comman
 | Command | Purpose |
 |--------|---------|
 | `kaleido node swap pubkey` | Print the taker public key |
-| `kaleido node swap init` | Start a local maker-init swap flow |
-| `kaleido node swap whitelist` | Whitelist the swap on the taker side |
+| `kaleido node swap init` | Start a local maker-init swap flow (`--from-asset`, `--qty-from`, `--to-asset`, `--qty-to`, `--timeout`) |
+| `kaleido node swap whitelist --swapstring '<swapstring>'` | Whitelist the swap on the taker side |
 | `kaleido node swap execute` | Execute after whitelisting |
-| `kaleido node swap status <payment-hash>` | Inspect status |
+| `kaleido node swap status <payment-hash>` | Inspect status (`--taker` or `--maker`) |
 | `kaleido node swap list` | List swaps known to the node |
 
 This path is useful for debugging, demos, and lower-level protocol operations where you want each step exposed separately.
@@ -86,7 +85,7 @@ This path is useful for debugging, demos, and lower-level protocol operations wh
 
 ```bash
 kaleido market pairs
-kaleido market quote BTC/USDT --from-amount 100000
+kaleido market quote BTC/USDT --from-amount 0.001
 ```
 
 Executing a swap requires a local RLN node — use the atomic flow below.
@@ -96,7 +95,7 @@ Executing a swap requires a local RLN node — use the atomic flow below.
 ```bash
 kaleido node unlock
 kaleido node swap pubkey
-kaleido swap atomic run BTC/USDT --from-amount 100000 --from-layer BTC_LN --to-layer RGB_LN
+kaleido swap atomic run BTC/USDT --from-amount 0.001 --from-layer BTC_LN --to-layer RGB_LN
 ```
 
 Use [Command Reference](/cli/command-reference) for the complete command map.

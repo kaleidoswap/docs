@@ -4,7 +4,29 @@ sidebarTitle: "Changelog"
 description: "KaleidoSDK version history, listing new features, breaking changes, and RLN and Maker API compatibility notes for each release"
 ---
 
-## SDK v0.1.15 (Current)
+## SDK v0.1.17 (Current)
+
+**Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Fixed
+
+- **TypeScript** `listSwaps()` no longer loses precision on RGB swap quantities above `Number.MAX_SAFE_INTEGER` — `qty_from`/`qty_to` are preserved verbatim (typed `string | number`; read them with `BigInt(...)`). `JSON.parse` silently rounded them before, misreporting large swaps.
+
+## SDK v0.1.16
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Added
+
+- **TypeScript** `nodeApiKey` on `KaleidoConfig` — a bearer token applied to RLN node requests (including `enableNodeClient()`), kept separate from the maker `apiKey` so credentials are never sent cross-service.
+
+### Fixed
+
+- **TypeScript** a credential intended for an authenticated RLN node was silently dropped — `apiKey` was only ever attached to the maker client, so all node calls went out unauthenticated.
+
+## SDK v0.1.15
 
 **Environments:** Regtest (`api.regtest.kaleidoswap.com`), Signet (`api.signet.kaleidoswap.com`)
 
@@ -25,7 +47,7 @@ If your RGB Lightning Node still runs **v0.7.1**, stay on SDK **0.1.13** — the
 ### Changed
 
 - Synced the vendored RGB Lightning Node OpenAPI spec to RLN **v0.8.0** and regenerated the node models (Python + TypeScript).
-- `refreshTransfers()` / `refresh_transfers()` now returns a `RefreshResponse` (`{ transfers }`) instead of an empty body.
+- The `/refreshtransfers` endpoint now returns a `RefreshResponse` (`{ transfers }`) instead of an empty body. The SDK methods `refreshTransfers()` / `refresh_transfers()` still return `void` / `None`.
 
 ### Added
 

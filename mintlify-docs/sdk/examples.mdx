@@ -87,7 +87,7 @@ stop = await client.maker.stream_quotes_by_ticker(
     "BTC",
     "USDT",
     100000,
-    lambda quote: print(quote.price),
+    lambda quote: print(quote["price"]),
     poll_interval=2.0,
 )
 

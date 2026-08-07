@@ -11,12 +11,12 @@ Backing up your channels is essential to prevent loss of funds if your device fa
 
 ## What a Channel Backup Contains
 
-A channel backup is an encrypted file that records the current state of your open Lightning channels. It includes the information your node needs to initiate a force-close of each channel and recover the on-chain funds if your node data is lost.
+A backup is a complete encrypted archive of your node's data directory. It captures the full node state — Lightning channel data, RGB asset data, and on-chain wallet state — so a restored node picks up exactly where the backup left off.
 
-Channel backups do **not** replace your mnemonic phrase. You need both to fully recover your wallet:
+Backups do **not** replace your mnemonic phrase. Keep both:
 
-- **Mnemonic phrase** — recovers your on-chain Bitcoin and wallet keys
-- **Channel backup** — recovers funds locked in Lightning channels
+- **Mnemonic phrase** — the root of your wallet keys, written down offline
+- **Backup file** — the node state needed to restore your channels and assets
 
 ## Creating a Channel Backup
 
@@ -61,13 +61,13 @@ If you need to restore your wallet on a new device:
 
 1. Reinstall the KaleidoSwap Desktop App
 2. Choose **Restore Wallet** during the setup flow
-3. Enter your 12-word mnemonic phrase to recover your keys
-4. Once the wallet is set up, use the backup file to restore your channel state
-5. Decrypt the backup using the node password you set when creating it
-6. Allow the node to sync and initiate force-closes on any channels listed in the backup
+3. Select your backup file and enter the node password you set when creating it
+4. Allow the node to start and sync
+
+Because the backup contains the complete node state, your channels resume operating normally after the restore — no mnemonic entry is required and no force-closes are triggered.
 
 <Note>
-  Force-closing channels from a backup has a timelock before funds are returned on-chain. This is a standard Lightning Network safety mechanism.
+  The backup is encrypted with your node password. Without that password, the backup file cannot be decrypted or restored.
 </Note>
 
 ---

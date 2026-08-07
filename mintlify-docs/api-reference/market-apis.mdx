@@ -7,8 +7,8 @@ description: Fetch assets, trading pairs, quotes, and fee estimates from the Kal
 
 The Market APIs are the starting point for any swap integration. They give you the information you need before creating a swap order:
 
-- **List assets** — discover all RGB assets supported by the maker (asset IDs, tickers, precision).
-- **List trading pairs** — find which pairs are active and their min/max order sizes.
+- **List assets** — discover all assets supported by the maker (asset IDs, tickers, precision, per-layer trading limits).
+- **List trading pairs** — find which pairs are active and which routes they support.
 - **Request a quote** — get a locked price for a specific amount; the returned `rfq_id` is used to create an order.
 
 All Market API endpoints are public and require no authentication.
@@ -23,19 +23,39 @@ All Market API endpoints are public and require no authentication.
 **`GET /api/v1/market/assets`**
 
 ### Description
-Fetch the list of assets available for trading on the RGB Lightning Node.
+List the assets supported by the maker, with optional filters and pagination. This endpoint is safe to poll and cache.
+
+### Query Parameters
+All filters are AND-combined; all are optional.
+
+| Parameter   | Type    | Description                                            |
+|-------------|---------|--------------------------------------------------------|
+| `asset_id`  | String  | Filter by asset ID (e.g., `rgb:2dkSTbr-...`).          |
+| `ticker`    | String  | Filter by ticker (e.g., `BTC`, `USDT`).                |
+| `layer`     | String  | Filter by layer (e.g., `BTC_LN`, `RGB_L1`).            |
+| `network`   | String  | Filter by network (e.g., `LN`, `L1`).                  |
+| `protocol`  | String  | Filter by protocol (e.g., `BTC`, `RGB`).               |
+| `is_active` | Boolean | Filter by active status.                               |
+| `limit`     | Integer | Items per page (default: 50, max: 100).                |
+| `offset`    | Integer | Offset for pagination (default: 0).                    |
 
 ### Response Structure
 - **`assets`**: Array of supported assets.
-  - **`asset_id`**: The unique identifier of the asset.
-  - **`asset_iface`**: The RGB interface type (e.g., `NIA` — Non-Inflatable Asset, formerly `RGB20`).
   - **`ticker`**: Short name or symbol of the asset (e.g., `USDT`).
+  - **`asset_id`**: The unique identifier of the asset.
   - **`name`**: Full name of the asset (e.g., `Tether USD`).
   - **`precision`**: Decimal precision for the asset.
-  - **`issued_supply`**: Total issued supply of the asset.
+  - **`protocol_ids`**: Map of protocol name to the asset's identifier on that protocol.
   - **`media`**: Additional media or metadata about the asset (optional).
+  - **`issued_supply`**: Total issued supply of the asset.
+  - **`timestamp`**: Asset metadata timestamp.
+  - **`endpoints`**: Array of per-layer trading limits — each entry has `layer`, `min_amount`, `max_amount` (in smallest units), and `is_active`.
   - **`is_active`**: Boolean indicating if the asset is currently active.
-- **`network`**: Indicates whether the response pertains to the mainnet, testnet, or regtest.
+  - **`added_at`**: Timestamp when the asset was added.
+  - **`supported_layers`**: List of layers the asset can settle on (e.g., `["BTC_LN", "BTC_L1"]`).
+- **`network`**: Indicates whether the response pertains to the mainnet, signet, or regtest.
+- **`total`**: Total count of matching assets (not just the current page).
+- **`limit`** / **`offset`**: Pagination echo of the request.
 - **`timestamp`**: The server-side timestamp when the response was generated.
 
 ### Example Response
@@ -43,27 +63,33 @@ Fetch the list of assets available for trading on the RGB Lightning Node.
 {
   "assets": [
     {
-      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-      "asset_iface": "NIA",
       "ticker": "USDT",
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
       "name": "Tether USD",
       "precision": 6,
-      "issued_supply": 100000000000,
+      "protocol_ids": {
+        "RGB": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
+      },
       "media": null,
-      "is_active": true
-    },
-    {
-      "asset_id": "rgb:2AqCRS7-BAchKZra7-nmyQz7z68-itsY6o85v-z8gQJAXMD-evdFnKz",
-      "asset_iface": "NIA",
-      "ticker": "ETH",
-      "name": "Ethereum",
-      "precision": 8,
       "issued_supply": 100000000000,
-      "media": null,
-      "is_active": true
+      "timestamp": 1724676126,
+      "endpoints": [
+        {
+          "layer": "RGB_LN",
+          "min_amount": 1000000,
+          "max_amount": 100000000000,
+          "is_active": true
+        }
+      ],
+      "is_active": true,
+      "added_at": 1724676126,
+      "supported_layers": ["RGB_LN"]
     }
   ],
   "network": "regtest",
+  "total": 1,
+  "limit": 50,
+  "offset": 0,
   "timestamp": 1724676126
 }
 ```
@@ -78,20 +104,37 @@ Fetch the list of assets available for trading on the RGB Lightning Node.
 
 ### Description
 
-Retrieve the list of supported trading pairs for swap operations.
+Retrieve the list of supported trading pairs for swap operations, with filters and pagination. This endpoint is safe to poll and cache.
+
+### Query Parameters
+All parameters are optional. Single-pair identifiers are mutually exclusive.
+
+| Parameter                       | Type    | Description                                             |
+|---------------------------------|---------|---------------------------------------------------------|
+| `pair_id`                       | String  | Filter by pair UUID.                                    |
+| `pair_ticker`                   | String  | Filter by pair ticker in `BASE/QUOTE` format.           |
+| `base_ticker` + `quote_ticker`  | String  | Filter by asset tickers.                                |
+| `from_asset_id` + `quote_asset_id` | String | Filter by asset IDs.                                  |
+| `layer`                         | String  | Filter by layer (e.g., `BTC_LN`, `RGB_LN`).             |
+| `asset`                         | String  | Filter by asset ticker or ID (either side of the pair). |
+| `active_only`                   | Boolean | Only return active pairs (default: `true`).             |
+| `limit`                         | Integer | Items per page (default: 50, max: 100).                 |
+| `offset`                        | Integer | Offset for pagination (default: 0).                     |
 
 ### Response Structure
 
 - `pairs`: Array of supported trading pairs.
-  - `base_asset`: The base asset in the trading pair (e.g., `BTC`).
-  - `base_asset_id`: The unique identifier of the base asset.
-  - `quote_asset`: The quote asset in the trading pair (e.g., `USDT`).
-  - `quote_asset_id`: The unique identifier of the quote asset.
+  - `id`: The unique identifier (UUID) of the pair.
+  - `base` / `quote`: Full asset objects (`ticker`, `asset_id`, `name`, `precision`, `protocol_ids`, `media`, `issued_supply`, `endpoints`). Per-layer min/max trading limits live in each asset's `endpoints` array.
+  - `price`: Indicative price for the pair (string, may be `null`).
+  - `routes`: Supported execution routes, each with `from_layer` and `to_layer`.
   - `is_active`: Boolean indicating if the trading pair is currently active.
-  - `min_order_size`: The minimum order size for this trading pair.
-  - `max_order_size`: The maximum order size for this trading pair.
-  - `price_precision`: Decimal precision for prices in this trading pair.
-  - `quantity_precision`: Decimal precision for quantities in this trading pair.
+  - `ticker`: The pair ticker (e.g., `BTC/USDT`).
+  - `base_asset` / `base_asset_id`: Base asset ticker and unique identifier.
+  - `quote_asset` / `quote_asset_id`: Quote asset ticker and unique identifier.
+- `total`: Total count of matching pairs (not just the current page).
+- `limit` / `offset`: Pagination echo of the request.
+- `timestamp`: The server-side timestamp when the response was generated.
 
 ### Example Response
 
@@ -99,41 +142,156 @@ Retrieve the list of supported trading pairs for swap operations.
 {
   "pairs": [
     {
+      "id": "2c188c7b-a823-4e5b-a82f-4d9fcb5e80ba",
+      "base": {
+        "ticker": "BTC",
+        "asset_id": "BTC",
+        "name": "Bitcoin",
+        "precision": 8,
+        "protocol_ids": {},
+        "media": null,
+        "issued_supply": null,
+        "endpoints": [
+          {
+            "layer": "BTC_LN",
+            "min_amount": 100000,
+            "max_amount": 100000000000,
+            "is_active": true
+          }
+        ]
+      },
+      "quote": {
+        "ticker": "USDT",
+        "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+        "name": "Tether USD",
+        "precision": 6,
+        "protocol_ids": {},
+        "media": null,
+        "issued_supply": 100000000000,
+        "endpoints": [
+          {
+            "layer": "RGB_LN",
+            "min_amount": 1000000,
+            "max_amount": 100000000000,
+            "is_active": true
+          }
+        ]
+      },
+      "price": "59507.00",
+      "routes": [
+        { "from_layer": "BTC_LN", "to_layer": "RGB_LN" },
+        { "from_layer": "RGB_LN", "to_layer": "BTC_LN" }
+      ],
+      "is_active": true,
+      "ticker": "BTC/USDT",
       "base_asset": "BTC",
       "base_asset_id": "BTC",
       "quote_asset": "USDT",
-      "quote_asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-      "is_active": true,
-      "min_order_size": 1000,
-      "max_order_size": 1000000,
-      "price_precision": 2,
-      "quantity_precision": 0
-    },
-    {
-      "base_asset": "ETH",
-      "base_asset_id": "rgb:2AqCRS7-BAchKZra7-nmyQz7z68-itsY6o85v-z8gQJAXMD-evdFnKz",
-      "quote_asset": "BTC",
-      "quote_asset_id": "BTC",
-      "is_active": true,
-      "min_order_size": 0.001,
-      "max_order_size": 1,
-      "price_precision": 0,
-      "quantity_precision": 8
-    },
-    {
-      "base_asset": "ETH",
-      "base_asset_id": "rgb:2AqCRS7-BAchKZra7-nmyQz7z68-itsY6o85v-z8gQJAXMD-evdFnKz",
-      "quote_asset": "USDT",
-      "quote_asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-      "is_active": true,
-      "min_order_size": 0.001,
-      "max_order_size": 1,
-      "price_precision": 2,
-      "quantity_precision": 8
+      "quote_asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
     }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0,
+  "timestamp": 1724676126
+}
+```
+---
+
+## Get Pair Routes
+
+### Endpoint
+**`POST /api/v1/market/pairs/routes`**
+
+### Description
+Return the supported execution routes for a specific trading pair. Exactly one identification method must be provided in the request body: `pair_id`, `from_asset_id` + `quote_asset_id`, `pair_ticker`, or `base_ticker` + `quote_ticker`.
+
+### Example Request
+```json
+{
+  "pair_ticker": "BTC/USDT"
+}
+```
+
+### Example Response
+```json
+{
+  "routes": [
+    { "from_layer": "BTC_LN", "to_layer": "RGB_LN" },
+    { "from_layer": "RGB_LN", "to_layer": "BTC_LN" }
   ]
 }
 ```
+
+If no routes exist for the requested pair, the endpoint returns a `404` error.
+
+---
+
+## Discover Routes
+
+### Endpoint
+**`POST /api/v1/market/routes`**
+
+### Description
+Discover direct and multi-hop routes between assets. The response is informational and does not reserve liquidity.
+
+### Request Body
+| Field        | Type    | Description                                                        |
+|--------------|---------|--------------------------------------------------------------------|
+| `from_asset` | String  | Source asset ticker or ID (required).                              |
+| `from_layer` | String  | Filter by source layer (optional).                                 |
+| `to_asset`   | String  | Destination asset; if omitted, returns all reachable assets.       |
+| `to_layer`   | String  | Filter by destination layer (optional).                            |
+| `max_hops`   | Integer | Maximum number of hops, 1-5 (default: 2).                          |
+
+### Example Response
+```json
+{
+  "routes": [
+    {
+      "steps": [
+        {
+          "from_asset": "BTC",
+          "from_layer": "BTC_LN",
+          "to_asset": "USDT",
+          "to_layer": "RGB_LN",
+          "pair_ticker": "BTC/USDT",
+          "indicative_price": "59507.00"
+        }
+      ],
+      "total_hops": 1
+    }
+  ],
+  "timestamp": 1724676126
+}
+```
+
+---
+
+## Get Route Reachability Matrix
+
+### Endpoint
+**`GET /api/v1/market/routes/matrix`**
+
+### Description
+Return a matrix showing which assets can reach each other and the minimum hop count for each combination. Safe to poll and cache.
+
+### Example Response
+```json
+{
+  "matrix": [
+    {
+      "from_asset": "BTC",
+      "to_asset": "USDT",
+      "layers": ["BTC_LN->RGB_LN"],
+      "min_hops": 1
+    }
+  ],
+  "assets": ["BTC", "USDT"],
+  "timestamp": 1724676126
+}
+```
+
 ---
 
 ## Request Quote for a Pair
@@ -142,40 +300,48 @@ Retrieve the list of supported trading pairs for swap operations.
 **`POST /api/v1/market/quote`**
 
 ### Description
-Request a quote for a specific trading pair and amount. The response includes detailed information about the quote, including prices, fees, and expiration time.
+Request an RFQ-backed quote for a route between two asset legs. The response includes detailed information about the quote, including prices, fees, and expiration time.
 
 ### Request Structure
 
-- **`pair_id`**: The unique identifier of the trading pair (obtained from the `/api/v1/market/pairs endpoint`).
-- **`from_asset`**: The asset ID of the asset to swap from.
-- **`from_amount`**: The amount of the base asset to swap from.
-- **`to_asset`**: The asset ID of the asset to swap to.
+The request body contains two nested leg objects — there is no `pair_id`:
+
+- **`from_asset`**: Source leg specification.
+  - **`asset_id`**: Asset identifier (e.g., `BTC` or an RGB contract ID).
+  - **`layer`**: Settlement layer (e.g., `BTC_LN`, `RGB_LN`, `BTC_L1`, `RGB_L1`).
+  - **`amount`** (optional): Amount in the asset's smallest unit.
+- **`to_asset`**: Destination leg specification — same fields as `from_asset`.
+
+Exactly one of `from_asset.amount` or `to_asset.amount` must be provided: set `from_asset.amount` for a forward quote or `to_asset.amount` for a reverse quote.
 
 ### Example Request
 
 ```json
 {
-  "pair_id": "BTC_USDT",
-  "from_asset": "BTC",
-  "from_amount": 100000000,
-  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
+  "from_asset": {
+    "asset_id": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "layer": "RGB_LN"
+  }
 }
 ```
 
 ### Response Structure
 
 - `rfq_id`: A unique identifier for this quote request.
-- `pair_id`: The ID of the trading pair.
-- `from_asset`: The asset ID being swapped from.
-- `to_asset`: The asset ID being swapped to.
-- `from_amount`: The amount of the base asset to be swapped.
-- `to_amount`: The amount of the quote asset to be received after fees.
-- `price`: The exchange rate between the base and quote assets.
-- `fee`: The fee applied to the transaction, denominated in the quote asset.
-- `fee_rate`: The fee rate as a percentage.
-- `price_precision`: The number of decimal places for the price.
-- `base_precision`: The number of decimal places for the base asset.
-- `quote_precision`: The number of decimal places for the quote asset.
+- `from_asset` / `to_asset`: Complete leg specifications, each with `asset_id`, `name`, `ticker`, `layer`, `amount` (smallest unit), and `precision`.
+- `price`: Price of 1 whole unit of `from_asset` expressed in the smallest unit of `to_asset`.
+- `fee`: Fee breakdown object:
+  - `base_fee`: Fixed fee component.
+  - `variable_fee`: Amount-dependent fee component.
+  - `fee_rate`: The variable fee rate.
+  - `final_fee`: Total fee (`base_fee + variable_fee`).
+  - `fee_asset`: The asset the fee is denominated in.
+  - `fee_asset_precision`: Decimal precision of the fee asset.
 - `timestamp`: The server-side timestamp when the quote was generated.
 - `expires_at`: The timestamp when this quote will expire.
 
@@ -184,29 +350,42 @@ Request a quote for a specific trading pair and amount. The response includes de
 ```json
 {
   "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
-  "pair_id": "BTC_USDT",
-  "from_asset": "BTC",
-  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-  "from_amount": 100000000,
-  "to_amount": 5877000000,
+  "from_asset": {
+    "asset_id": "BTC",
+    "name": "Bitcoin",
+    "ticker": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000,
+    "precision": 8
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "layer": "RGB_LN",
+    "amount": 875000,
+    "precision": 6
+  },
   "price": 59507000000,
-  "fee": 53000000,
-  "fee_rate": 0.001,
-  "price_precision": 2,
-  "base_precision": 8,
-  "quote_precision": 6,
-  "timestamp": 1630296243,
-  "expires_at": 1630296543
+  "fee": {
+    "base_fee": 1000,
+    "variable_fee": 250,
+    "fee_rate": 0.0001,
+    "final_fee": 1250,
+    "fee_asset": "BTC",
+    "fee_asset_precision": 8
+  },
+  "timestamp": 1715896356,
+  "expires_at": 1715896416
 }
 ```
 
 ### Additional Notes
-- The `pair_id` in the request should match an ID returned from the `/api/v1/market/pairs` endpoint.
-- The `from_amount` should adhere to the `min_order_size` and `max_order_size` defined in the trading pair details.
+- The requested route (`from_asset.layer` → `to_asset.layer`) must be one of the pair's supported `routes` from `/api/v1/market/pairs`; unsupported routes return a `400` error.
+- Amounts should stay within the per-layer `min_amount`/`max_amount` limits found in each asset's `endpoints` array.
 - The `expires_at` field indicates when this quote will no longer be valid for initiating a swap.
-- The `fee` is already included in the `to_amount`.
-- Precision fields help clients format and display values correctly.
-- The `rfq_id` can be used in subsequent swap initiation requests if the client decides to proceed with the trade.
+- The fee is already reflected in the calculated leg amount.
+- The `rfq_id` can be used in subsequent swap initiation or LSPS1 order requests until it expires.
 
 ---
 

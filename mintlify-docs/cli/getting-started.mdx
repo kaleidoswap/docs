@@ -42,7 +42,14 @@ For new users, start with:
 kaleido setup
 ```
 
-The setup flow supports two profiles:
+Bare `kaleido setup` runs non-interactively: it immediately creates and starts a local Docker mutinynet node with default settings, so Docker must be running. The Bitcoin network is an optional positional argument (default `mutinynet`):
+
+```bash
+kaleido setup signetcustom
+kaleido setup mutinynet --env-name taker-1
+```
+
+Use `--mode` to select a profile explicitly:
 
 - `market`: save API settings for market data and server-side swap flows
 - `local`: configure API settings and optionally create a local Docker node environment
@@ -61,10 +68,10 @@ kaleido setup --mode local --create-node --defaults
 
 | Flag | Purpose |
 |------|---------|
+| `<network>` (positional) | Bitcoin network for the local node, default `mutinynet` |
 | `--mode market\|local` | Choose the setup profile |
 | `--defaults` | Use saved or default values instead of prompting |
 | `--api-url` | Save the KaleidoSwap API base URL |
-| `--network` | Save the Bitcoin network |
 | `--node-url` | Save a node URL directly |
 | `--create-node` | Create a Docker node environment during setup |
 | `--spawn-dir` | Set the base directory for named environments |
@@ -104,7 +111,7 @@ kaleido config path
 ```bash
 kaleido setup --mode market --defaults
 kaleido market pairs
-kaleido market quote BTC/USDT --from-amount 100000
+kaleido market quote BTC/USDT --from-amount 0.001
 ```
 
 ### Local node

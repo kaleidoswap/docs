@@ -18,7 +18,7 @@ Fixes for the problems KaleidoSwap Extension users hit most often. For issues ac
     3. If using a local node, ensure it is running on the expected port
     4. If using a remote node, check network/firewall settings
     5. If using a Biscuit/auth token, verify the **token is valid**
-    6. Try disconnecting and reconnecting in Settings > Networks
+    6. Try disconnecting and reconnecting in Settings > RGB
   </Accordion>
 
   <Accordion title="Swap venue not connecting" icon="plug-circle-xmark">
@@ -38,8 +38,8 @@ Fixes for the problems KaleidoSwap Extension users hit most often. For issues ac
     1. Ensure the KaleidoSwap Extension is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
-    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, and `window.nostr` (NIP-07)
-    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, and `nostr:ready`
+    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, `window.nostr` (NIP-07), and `window.bitcoin`
+    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, `nostr:ready`, and `bitcoin:ready`
   </Accordion>
 </AccordionGroup>
 
@@ -114,12 +114,9 @@ Check the [FAQ](/extensions/kaleidoswap-extension/faq) for questions rather than
 5. Error messages or screenshots
 6. Console logs (right-click extension popup > Inspect > Console)
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
-  </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
-    Report a bug on the relevant repository.
   </Card>
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
     Direct support for urgent issues.

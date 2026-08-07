@@ -55,8 +55,8 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     4. If behind a firewall, ensure outbound HTTPS is allowed
   </Accordion>
 
-  <Accordion title="NodeNotConfiguredError" icon="server">
-    **Symptoms:** `NodeNotConfiguredError` when calling `client.rln.*` methods
+  <Accordion title="Node not configured" icon="server">
+    **Symptoms:** `ConfigError` ("Node API not configured...") in TypeScript, or `NodeNotConfiguredError` in Python, when calling `client.rln.*` methods
 
     **Cause:** No `nodeUrl` / `node_url` was provided when creating the client.
 
@@ -137,7 +137,7 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     **Cause:** Too many requests in the rate-limit window.
 
     **Solutions:**
-    1. Back off and retry — `RateLimitError` is retryable; honour any `retry_after` the response carries
+    1. Back off and retry, honouring any `retry_after` the response carries (in Python, `is_retryable()` returns `False` for rate limits, so back off manually)
     2. Stream quotes over WebSocket instead of polling `getQuote` in a loop
     3. Cache `listAssets` / `listPairs` rather than refetching them per operation
   </Accordion>
@@ -255,7 +255,7 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     **Solutions:**
     1. Ensure you are importing types from `kaleido-sdk`:
        ```typescript
-       import type { Asset, TradingPair } from 'kaleido-sdk';
+       import type { AssetResponseModel, TradingPairResponseModel } from 'kaleido-sdk';
        ```
     2. Check your TypeScript version is 5.0+
     3. If using strict mode, you may need to handle `undefined` explicitly

@@ -12,7 +12,7 @@ description: "Answers to frequently asked questions about the KaleidoSwap Deskto
   </Accordion>
 
   <Accordion title="What assets can I trade on KaleidoSwap Desktop App?">
-    Currently, KaleidoSwap Desktop App supports RGB NIA assets (Non-Inflatable Assets, formerly known as RGB20) on the Lightning Network. These are client-validated smart contracts on Bitcoin that represent fixed-supply fungible tokens.
+    The wallet supports all four RGB schemas: NIA (Non-Inflatable Assets), CFA (Collectible Fungible Assets), UDA (Unique Digital Assets), and IFA (Inflatable Fungible Assets). The pairs currently traded on the platform are NIA assets (formerly known as RGB20) — client-validated smart contracts on Bitcoin that represent fixed-supply fungible tokens.
   </Accordion>
 
   <Accordion title="Is KaleidoSwap Desktop App custodial?">
@@ -34,10 +34,9 @@ description: "Answers to frequently asked questions about the KaleidoSwap Deskto
   </Accordion>
 
   <Accordion title="Why can't I trade all the sats on my side of the channel?">
-    There are two protocol limits in place:
+    **Dust reserve (3,000 sats):** In RGB Lightning swaps, the taker (you) must always send 3,000 sats to the maker as part of the swap. These sats aren't lost — they act as a temporary "dust amount." When the maker completes the HTLC and sends assets back, you also receive 3,000 sats with the assets on top. So, you need to keep at least 3,000 sats untradeable in your balance to make the swap process work.
 
-    1. **Dust reserve (3,000 sats):** In RGB Lightning swaps, the taker (you) must always send 3,000 sats to the maker as part of the swap. These sats aren't lost — they act as a temporary "dust amount." When the maker completes the HTLC and sends assets back, you also receive 3,000 sats with the assets on top. So, you need to keep at least 3,000 sats untradeable in your balance to make the swap process work.
-    2. **Per-swap limit (10%):** You can only trade up to 10% of the total channel capacity in a single swap.
+    Beyond the dust reserve, the tradeable amount is bounded by your channel's outbound capacity and by the per-asset limits the maker advertises for each route.
   </Accordion>
 
   <Accordion title="How secure are my assets?">
@@ -75,7 +74,7 @@ description: "Answers to frequently asked questions about the KaleidoSwap Deskto
   <Accordion title="What are the minimum requirements?">
     Minimum requirements for running KaleidoSwap Desktop App:
     - Modern operating system (Windows, macOS, Linux)
-    - 2GB RAM minimum (4GB recommended)
+    - 4GB RAM recommended
     - Stable internet connection
     - Sufficient storage for blockchain data if running a full node
   </Accordion>
@@ -106,9 +105,9 @@ Check the [Troubleshooting](/desktop-app/support/troubleshooting) for errors rat
 4. Steps to reproduce
 5. Error messages or screenshots
 6. Log files:
-   - macOS: `~/Library/Application Support/KaleidoSwap/logs/`
-   - Windows: `%APPDATA%/KaleidoSwap/logs/`
-   - Linux: `~/.config/KaleidoSwap/logs/`
+   - macOS: `~/Library/Logs/com.kaleidoswap.dev/`
+   - Windows: `%APPDATA%\com.kaleidoswap.dev\logs`
+   - Linux: `~/.local/share/com.kaleidoswap.dev/logs`
 
 <CardGroup cols={3}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">

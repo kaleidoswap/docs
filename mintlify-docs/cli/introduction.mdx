@@ -9,7 +9,7 @@ description: 'Use the KaleidoCLI to manage local multi-asset Lightning nodes and
 `kaleido` is the command-line interface for two distinct workflows:
 
 - **Local RGB Lightning Node operations**: create Docker-backed node environments, initialize and unlock wallets, manage BTC, RGB assets, channels, peers, and Lightning payments.
-- **KaleidoSwap market and swap flows**: inspect market data, request quotes, create maker swap orders, run atomic swaps, and drive low-level local node swap steps.
+- **KaleidoSwap market and swap flows**: inspect market data, request quotes, run maker-backed atomic swaps, and drive low-level local node swap steps.
 
 The same binary supports both interactive terminal use and scripted automation.
 
@@ -26,7 +26,7 @@ The same binary supports both interactive terminal use and scripted automation.
     Work with BTC, RGB assets, invoices, transfers, backups, and Lightning payments.
   </Card>
   <Card title="Trading And Swaps" icon="arrows-rotate" href="/cli/market-and-swaps">
-    Query pairs and quotes, place maker orders, and run atomic or local swap flows.
+    Query pairs and quotes, and run atomic or local node swap flows.
   </Card>
 </CardGroup>
 
@@ -73,8 +73,8 @@ Command-line flags take precedence over environment variables and stored config.
 | `channel` | Lightning channels plus LSP-backed channel ordering |
 | `peer` | Peer discovery and connectivity |
 | `payment` | Lightning invoices, sends, keysend, decode, and status |
-| `market` | Assets, pairs, routes, quotes, maker info, and analytics |
-| `swap` | Maker order flow, maker atomic flow, and local node swap flow |
+| `market` | Assets, pairs, routes, quotes, and maker info |
+| `swap` | Maker-backed atomic swap flow (init, execute, status, run); local node swap steps live under `node swap` |
 | `config` | Stored CLI configuration in `~/.kaleido/config.json` |
 
 ## Output Modes
@@ -82,7 +82,7 @@ Command-line flags take precedence over environment variables and stored config.
 By default, `kaleido` renders human-readable tables and summaries. For pipelines and automation, prefer `--json`:
 
 ```bash
-kaleido --json market quote BTC/USDT --from-amount 100000
+kaleido --json market quote BTC/USDT --from-amount 0.001
 ```
 
 Use `--agent` when the command must fail instead of prompting for missing input.

@@ -58,13 +58,12 @@ The amount input is gated by your **spendable** balance for the selected source 
   </Step>
 
   <Step title="Track Status">
-    The swap status screen shows real-time progress:
-    - Order creation
-    - Payment processing
-    - Swap execution
-    - Completion
-    
-    Logs are displayed for transparency.
+    The swap status screen shows a three-step progress tracker:
+    - Requesting
+    - Atomic Swap
+    - Completing
+
+    followed by a success or failure result.
   </Step>
 </Steps>
 
@@ -84,21 +83,21 @@ When you enter an amount, the KaleidoSwap Extension fetches a quote from the act
 
 Quotes update in real time as you change the amount.
 
-### Slippage Tolerance
+### Slippage Protection
 
-Flashnet swaps enforce your configured slippage tolerance: the minimum output amount is derived from the tolerance you set, and the swap fails rather than executing at a worse rate.
+Flashnet swaps enforce a built-in maximum slippage of 5%: the minimum output amount is derived from that limit, and the swap fails rather than executing at a worse rate. Slippage is not user-configurable.
 
 ## Swap Status
 
-After confirming, the swap progresses through several stages:
+After confirming, the status screen tracks the swap through three steps:
 
-| Status | Description |
-|--------|-------------|
-| **Creating Order** | The swap order is being created |
-| **Processing Payment** | Your payment is being processed |
-| **Executing** | The maker is processing the swap |
-| **Completed** | The swap is done and you have received the asset |
-| **Failed** | Something went wrong -- check the logs for details |
+| Step | Description |
+|------|-------------|
+| **Requesting** | The swap order is being created |
+| **Atomic Swap** | The swap is executing atomically |
+| **Completing** | The swap is being finalized |
+
+When the swap finishes, the screen shows a success result. If a step fails, an error message with the failure details is shown instead.
 
 <img src="/assets/images/extension/25-swap-status.png" alt="Swap in progress with a three step tracker for requesting, atomic swap, and completing, showing the pair being exchanged" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -117,8 +116,8 @@ If no compatible venue or pair is available, the KaleidoSwap Extension shows an 
     Quotes expire after a short period. Review and confirm promptly to avoid needing a new quote.
   </Accordion>
 
-  <Accordion title="Check swap logs">
-    If a swap fails, the status screen shows detailed logs that can help diagnose the issue.
+  <Accordion title="Read the failure message">
+    If a swap fails, the status screen shows an error message with the failure details.
   </Accordion>
 </AccordionGroup>
 

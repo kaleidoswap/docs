@@ -15,7 +15,7 @@ Opening a channel through an LSP involves four general steps:
 
 ## Step 1: Connect to LSP
 
-First, after going to the **"Buy a New Channel"** functionality from the left vertical menu, you'll need to connect to an LSP:
+First, after going to the **"Buy Channel"** tab in the Channels section, you'll need to connect to an LSP:
 1. Enter the LSP URL or select the default KaleidoSwap LSP.
 2. The LSP connection string will be displayed.
 3. Confirm the connection to proceed.
@@ -27,8 +27,8 @@ First, after going to the **"Buy a New Channel"** functionality from the left ve
 1. Set the total **channel capacity** (in satoshis). This represents the total size of the channel (min: 50,000 sats; max: 16,777,215 sats).
 2. Choose the **outbound liquidity** you want to purchase. This is the amount the LSP commits to your channel, while the remaining capacity becomes your inbound liquidity. Example: For a 1M sat channel with 700k outbound, you'll have 300k inbound capacity.
 3. Select how long the LSP needs to guarantee to keep the channel open (**channel duration**), among the following options:
-- 1 week (1,008 blocks)
 - 1 month (4,320 blocks)
+- 3 months (12,960 blocks)
 - 6 months (25,920 blocks)
 <img src="/assets/images/desktop-app/13_channel_order.png" alt="LSP channel order form with capacity options" width={1006} height={991} />
 
@@ -44,14 +44,17 @@ To proceed with the channel opening, you will need to execute the payment. You w
 
 ### KaleidoSwap LSP Fee Structure
 When using KaleidoSwap LSP:
-- Base fee: 1% of total channel balance
-- Time-lock fee: 10 sats per block of guaranteed channel lifetime
+- Setup fee: 1,000 sats (one-time, per channel)
+- Capacity fee: 1% of total channel capacity
+- Duration fee: 1 sat per block of guaranteed channel lifetime
+- The total fee is capped between a minimum of 2,000 sats and a maximum of 100,000 sats
 - Example calculation:
   ```
   For a 1M sat channel locked for 1 month (4,320 blocks):
-  - Base fee: 10,000 sats (1% of 1M).
-  - Time-lock fee: 43,200 sats (10 sats × 4,320 blocks).
-  - Total fee: 53,200 sats.
+  - Setup fee: 1,000 sats.
+  - Capacity fee: 10,000 sats (1% of 1M).
+  - Duration fee: 4,320 sats (1 sat × 4,320 blocks).
+  - Total fee: 15,320 sats.
   ```
 
 You can choose to pay for your channel on-chain or via the Lightning Network, either using the funds already present in your KaleidoSwap wallet or from a different one.
@@ -74,7 +77,7 @@ You can choose to pay for your channel on-chain or via the Lightning Network, ei
 
 After payment confirmation:
 1. The LSP initiates channel opening.
-2. Wait for blockchain confirmations (3 blocks).
+2. Wait for the blockchain confirmations advertised by the LSP (around 6 blocks, roughly an hour on mainnet).
 3. Your channel becomes active with the specified:
    - Total capacity.
    - Outbound liquidity.
@@ -84,10 +87,15 @@ After payment confirmation:
 ## Order States
 
 Your channel order can be in these states:
-- `PENDING`: Waiting for payment.
-- `PAID`: Payment received, channel opening in progress.
+- `CREATED`: Order accepted by the LSP, waiting for payment and channel opening.
 - `COMPLETED`: Channel successfully opened.
 - `FAILED`: An error occurred during the process.
+
+While an order is in the `CREATED` state, its payment moves through these sub-states:
+- `EXPECT_PAYMENT`: Waiting for your payment.
+- `HOLD`: Lightning payment received and held while the channel opens.
+- `PAID`: Payment settled.
+- `TIMEOUT` / `EXPIRED`: No payment arrived in time and the order lapsed.
 
 ## Refund Policy
 

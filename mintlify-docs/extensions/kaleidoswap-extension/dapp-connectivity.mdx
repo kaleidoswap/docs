@@ -149,13 +149,13 @@ Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for 
 
 The extension can also expose the wallet to external apps over **Nostr Wallet Connect**: pair an app by scanning the pairing QR code, then control what it can do with **amount-aware budgets**. Zap payments (NIP-57) made through NWC are validated and correlated with wallet activity.
 
-## Permission Prompts and Connected Sites
+## Permission Prompts and Connected Apps
 
 When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. Connected Nostr clients start from a "Reasonable" consent default (comparable to other NIP-07 wallets): routine, low-risk operations are allowed for a connected app, while payments and other sensitive actions still prompt.
 
 <img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="Connection approval prompt showing the requesting site origin, the access it asks for, and the Reasonable consent default with Deny and Allow actions" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-**Settings > Connected Sites** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
+**Settings > Connected Apps** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
 
 <img src="/assets/images/extension/33-connected-sites.png" alt="Connected Apps screen listing connected apps, Nostr Wallet Connect sessions, and a field to block a site" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 

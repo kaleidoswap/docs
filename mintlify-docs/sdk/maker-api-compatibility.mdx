@@ -17,9 +17,9 @@ The Maker API provides the following endpoint groups:
 
 | Endpoint Group | Base Path | Description |
 |---|---|---|
-| **Market** | `/api/v1/market/` | Asset listings, trading pairs, quote requests, fee estimates |
+| **Market** | `/api/v1/market/` | Asset listings, trading pairs, quote requests |
 | **Swaps (Atomic)** | `/api/v1/swaps/` | HTLC-based atomic swap initialization, execution, and status tracking |
-| **LSPS1** | `/api/v1/lsps1/` | Channel ordering, liquidity provisioning, and Lightning channel setup |
+| **LSPS1** | `/api/v1/lsps1/` | Channel ordering, fee estimates, liquidity provisioning, and Lightning channel setup |
 
 <Note>
 The order-based swap endpoints (`/api/v1/swaps/orders/*`) were retired, and the matching SDK methods were removed in **0.1.13**. Use the atomic swap flow instead — see [How to Swap](/sdk/how-to-swap).

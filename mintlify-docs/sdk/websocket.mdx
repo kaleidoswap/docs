@@ -66,7 +66,7 @@ unsubscribe = await client.maker.stream_quotes_by_ticker(
     from_ticker="BTC",
     to_ticker="USDT",
     amount=100000,
-    on_update=lambda quote: print(f"Price: {quote.price}, RFQ: {quote.rfq_id}"),
+    on_update=lambda quote: print(f"Price: {quote['price']}, RFQ: {quote['rfq_id']}"),
     preferred_from_layer=Layer.BTC_LN,
     preferred_to_layer=Layer.RGB_LN,
     poll_interval=3.0,
@@ -87,18 +87,18 @@ Options:
 
 ### `streamQuotes` / `stream_quotes`
 
-Stream quotes for a specific route (asset IDs and layers).
+Stream quotes for a specific route (tickers and layers).
 
 <CodeGroup>
 ```typescript TypeScript
 const unsubscribe = await client.maker.streamQuotes(
-  'BTC',           // from_asset ID
-  'USDT',          // to_asset ID
+  'BTC',           // from_asset ticker
+  'USDT',          // to_asset ticker
   100000,          // from_amount (or null)
   'BTC_LN',        // from_layer (or null)
   'RGB_LN',        // to_layer (or null)
   (quote) => {
-    console.log(`${quote.from_amount} -> ${quote.to_amount}`);
+    console.log(`${quote.from_asset.amount} -> ${quote.to_asset.amount}`);
   }
 );
 ```
@@ -110,7 +110,7 @@ unsubscribe = await client.maker.stream_quotes(
     from_amount=100000,
     from_layer=Layer.BTC_LN,
     to_layer=Layer.RGB_LN,
-    on_update=lambda quote: print(f"{quote.from_amount} -> {quote.to_amount}")
+    on_update=lambda quote: print(f"{quote['from_asset']['amount']} -> {quote['to_asset']['amount']}")
 )
 ```
 </CodeGroup>
@@ -136,7 +136,7 @@ unsubscribers = await client.maker.stream_quotes_for_all_routes(
     from_ticker="BTC",
     to_ticker="USDT",
     amount=100000,
-    on_update=lambda route, quote: print(f"Route {route}: price={quote.price}")
+    on_update=lambda route, quote: print(f"Route {route}: price={quote['price']}")
 )
 # Returns: dict[str, Callable]
 ```
@@ -304,16 +304,25 @@ The WebSocket uses a JSON message protocol:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `from_asset` | string | Source asset ID |
-| `to_asset` | string | Destination asset ID |
-| `from_amount` | number | Source amount |
-| `to_amount` | number | Destination amount |
-| `price` | number | Exchange rate |
+| `action` | string | Always `quote_response` |
+| `from_asset` | SwapLegData | Complete specification for the source leg of the swap |
+| `to_asset` | SwapLegData | Complete specification for the destination leg of the swap |
+| `price` | number | Price of 1 whole unit of `from_asset` expressed in the smallest unit of `to_asset` |
 | `rfq_id` | string | Request-for-quote ID (pass to `initSwap`) |
-| `price_precision` | number | Price decimal precision |
 | `timestamp` | number | Server timestamp |
 | `expires_at` | number | Quote expiry timestamp |
 | `fee` | Fee | Fee breakdown |
+
+Each `SwapLegData` object describes one leg of the swap:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `asset_id` | string | Unique asset identifier (e.g. `BTC`, RGB contract ID) |
+| `name` | string | Full asset name (e.g. `Bitcoin`) |
+| `ticker` | string | Display ticker (e.g. `BTC`, `USDT`) |
+| `layer` | string | Settlement layer (e.g. `BTC_LN`, `RGB_LN`) |
+| `amount` | number | Amount in raw smallest units |
+| `precision` | number | Decimal places for the asset (e.g. 8 for BTC) |
 
 ## Best Practices
 

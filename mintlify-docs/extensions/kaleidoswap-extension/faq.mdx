@@ -12,7 +12,7 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
   </Accordion>
 
   <Accordion title="Where do I get the closed beta build?">
-    Invited testers receive a private Drive link from the KaleidoSwap team. The extension is not listed in browser stores yet, and the source repository is not public yet, so closed beta testers should install only the zip shared through the official invite or support channel.
+    Invited testers receive a personal download link from the KaleidoSwap team, of the form `https://kaleidoswap.com/dl?t=...`; it always serves the latest beta build. The extension is not listed in browser stores yet, and the source repository is not public yet, so closed beta testers should install only the zip served by their personal download link.
   </Accordion>
 
   <Accordion title="Do I need my own node?">
@@ -45,16 +45,14 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
   </Accordion>
 
   <Accordion title="How do I back up my wallet?">
-    Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen can also publish an encrypted Nostr backup of extension settings and RGB backup metadata.
+    Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen also covers RGB backup guidance for the node-less account.
 
     Keep separate offline copies of:
     - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, Liquid, RGB-L1, and the derived Nostr identity
     - A recent **RGB node backup file** if you use an RGB Lightning Node
     - Your **RLN node seed phrase or node backup material** if the node is managed separately
 
-    The node-less **RGB-L1 account backs itself up automatically**: RGB state is written to an encrypted cloud (VSS) backup and a local backup on every receive. When you re-import the wallet, onboarding offers to restore from the cloud backup — restore only happens with your explicit consent.
-
-    The Nostr settings backup does **not** include your recovery phrase, password hash, or saved RGB API token.
+    The node-less **RGB-L1 account backs itself up automatically** to an encrypted cloud (VSS) backup after wallet activity such as sends, receives, and UTXO changes. A local encrypted backup file can also be exported manually from the backup screen. When you re-import the wallet, onboarding offers to restore from the cloud backup — restore only happens with your explicit consent.
   </Accordion>
 
   <Accordion title="What happens if I forget my password?">
@@ -72,7 +70,7 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
   </Accordion>
 
   <Accordion title="How does auto-lock work?">
-    The KaleidoSwap Extension automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Preferences**.
+    The KaleidoSwap Extension automatically locks after a period of inactivity (default: 10 minutes). When locked, you must enter your password to unlock. Configure the timeout in **Settings > Security**.
   </Accordion>
 
   <Accordion title="Can I use the KaleidoSwap Extension with DApps?">
@@ -91,12 +89,9 @@ Check the [Troubleshooting](/extensions/kaleidoswap-extension/troubleshooting) f
 5. Error messages or screenshots
 6. Console logs (right-click extension popup > Inspect > Console)
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
-  </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
-    Report a bug on the relevant repository.
   </Card>
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
     Direct support for urgent issues.

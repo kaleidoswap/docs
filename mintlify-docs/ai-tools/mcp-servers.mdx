@@ -4,7 +4,7 @@ sidebarTitle: "MCP Servers"
 description: "Typed Model Context Protocol tools for Bitcoin wallets, the KaleidoSwap DEX, and Lightning-paid APIs, covering the server list, tool surface, and client setup"
 ---
 
-KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, a single unified server, plus two per-wallet servers that remain standalone.
+KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, a single unified server, plus three per-wallet servers that remain standalone.
 
 ## Why One Server
 
@@ -32,9 +32,10 @@ Several focused, single-domain MCP servers existed early on: a KaleidoSwap DEX s
 | [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp) | `kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`, `kaleido_node_*` | The unified gateway. Every domain below, in one connection |
 | [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node wallet: balances, RGB and BOLT11 invoices, payments, channels, atomic swap taker |
 | [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark wallet: balances, Lightning receive and pay, token transfers, BTC bridge deposits and withdrawals |
+| [wdk-wallet-liquid-mcp](https://github.com/kaleidoswap/wdk-wallet-liquid-mcp) | `liquid_*` | Liquid wallet: L-BTC and asset balances, confidential addresses, sends, backed by an in-process LWK wallet with no external daemon |
 
 <Note>
-  `kaleido-mcp` is a composition layer and is meant to stay thin. Domain logic belongs in the focused servers it wraps, not reimplemented in the gateway. Legacy `rln_*` and generic `get_*` market aliases remain in place for migration.
+  `kaleido-mcp` implements its tools directly on kaleido-sdk and the WDK toolkit rather than proxying the focused servers: it is a composition of the same tool contracts, not a wrapper around those processes. Legacy `rln_*` and generic `get_*` market aliases remain in place for migration.
 </Note>
 
 ### Retired Servers
@@ -85,6 +86,9 @@ PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
 | `RLN_NODE_URL` | No | RLN daemon URL, default `http://localhost:3001` |
 | `KALEIDOSWAP_API_URL` | No | KaleidoSwap API URL, default `https://api.kaleidoswap.com` |
 | `KALEIDO_BIN` | No | Path to the `kaleido` binary, for the node lifecycle tools |
+| `KALEIDO_NODE_URL` | No | Node URL passed as `--node-url` to the node lifecycle tools |
+| `KALEIDO_API_URL` | No | API URL passed as `--api-url` to the node lifecycle tools |
+| `KALEIDO_ENV_NAME` | No | Default environment name for the node lifecycle tools |
 | `PORT` | No | Enable Streamable HTTP transport instead of stdio |
 | `MCP_AUTH_TOKEN` | No | Bearer token for HTTP mode |
 
@@ -94,11 +98,11 @@ Some tools are still reachable under older names (`rln_*` for `wdk_*`, generic `
 
 ## Tool Surface by Domain
 
-All tools below are served by `kaleido-mcp` over a single connection. Tools marked with a 🔒 icon in the underlying tool contract require host-side confirmation before executing (spend-moving actions); see each host's own confirmation UX.
+All tools below are served by `kaleido-mcp` over a single connection. The 🔒 icon marks spend-moving tools in these docs; `kaleido-mcp` does not encode a confirmation flag, so whether a call is confirmed before executing is the MCP host's behavior. The exception is the WDK built-in `sendTransaction` and `transfer`, which request an MCP-elicitation confirmation themselves before broadcasting.
 
 <AccordionGroup>
   <Accordion title="Spark L2 wallet (spark_*)">
-    WDK built-in tools (via `@tetherto/wdk-mcp-toolkit`, scoped to the `spark` chain): `getAddress`, `getBalance`, `sendTransaction`, `transfer`, `getTokenBalance`, `quoteSendTransaction`, `quoteTransfer`, `getFeeRates`, `sign`, `verify`.
+    WDK built-in tools (via `@tetherto/wdk-mcp-toolkit`, scoped to the `spark` chain): `getAddress`, `getBalance`, `getMaxSpendableBtc`, `sendTransaction`, `transfer`, `getTokenBalance`, `quoteSendTransaction`, `quoteTransfer`, `getFeeRates`, `sign`, `verify`.
 
     Custom Spark tools, on top of the built-ins:
 
@@ -186,8 +190,7 @@ All tools below are served by `kaleido-mcp` over a single connection. Tools mark
     | `mpp_parse_challenge_header` | Parse a raw `WWW-Authenticate` header without an HTTP request |
     | `l402_request_challenge` | Legacy L402 challenge for a premium endpoint, BOLT11 invoice plus macaroon |
     | `l402_fetch_resource` | Fetch an L402-gated resource after paying the invoice |
-
-    Set `MPP_GATEWAY_URL` to reach an authenticated MPP server. Omit it to stay on the free public endpoints.
+    | `search_paid_apis` | Search the [402index.io](https://402index.io) directory for payment-gated APIs (L402/MPP/x402), with pricing in sats and health status |
   </Accordion>
 
   <Accordion title="Market data (l402_get_*, alias get_*)">

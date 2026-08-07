@@ -25,7 +25,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 
 ### Wallet Management
 
-- Create or import a wallet from a 12 or 24-word recovery phrase
+- Create a wallet with a freshly generated 12-word recovery phrase, or import an existing 12 or 24-word phrase
 - Derive Spark, Arkade, Liquid, RGB-L1, and Nostr identity state from the same phrase
 - Opt into an RGB Lightning Node when you want RGB Lightning channels and maker-based RGB swaps
 - View BTC by account and layer: Spark, Arkade, Liquid, Bitcoin L1, and Lightning/RLN
@@ -43,7 +43,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 
 - Fetch KaleidoSwap maker pairs when RLN is connected
 - Use Spark/Flashnet venues when Spark pools are available
-- Review quote output, fee, expiry, and venue before execution; quotes honor your slippage tolerance
+- Review quote output, fee, expiry, and venue before execution; a built-in maximum slippage protects the minimum output amount
 - Bridge funds between Spark and external chains (EVM networks, Solana, and more) with persistent order tracking
 
 ### DApp Connectivity
@@ -52,7 +52,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 - **WebBTC provider** (`window.webbtc`) for on-chain addresses, PSBT signing, and broadcasting
 - **Nostr provider** (`window.nostr`) implementing NIP-07 event signing and encryption, derived from the recovery phrase or an imported identity
 - **NIP-46 remote signing** (`bunker://`) and **Nostr Wallet Connect** for external apps
-- Permission prompts for sensitive DApp operations, with a Connected Sites manager for per-capability review and revocation
+- Permission prompts for sensitive DApp operations, with a Connected Apps manager for per-capability review and revocation
 
 ### Security
 
@@ -60,7 +60,7 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 - Master mnemonic encrypted in `chrome.storage.local`; decrypted only in memory while unlocked
 - Optional passkey (WebAuthn) unlock alongside the password
 - PSBT confirmations decode and display destinations, amounts, and the network fee before you sign
-- Auto-lock timeout configurable from Preferences
+- Auto-lock timeout configurable from Security settings
 
 ## Architecture
 
@@ -88,7 +88,7 @@ The background service worker owns protocol adapter lifecycle and message routin
 - The **background service worker** manages protocol adapters and cross-context messaging
 - **Spark, Arkade, Liquid, and RGB-L1** are derived from the wallet recovery phrase
 - **RGB Lightning Node** is optional and currently presented as an experimental feature
-- **DApp connectivity** is handled through content scripts that inject `window.webln`, `window.webbtc`, and `window.nostr` (NIP-07)
+- **DApp connectivity** is handled through content scripts that inject `window.webln`, `window.webbtc`, `window.nostr` (NIP-07), and `window.bitcoin`
 
 ## Everyday Wallet Flow
 

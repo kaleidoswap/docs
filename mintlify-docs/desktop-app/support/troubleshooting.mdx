@@ -47,8 +47,8 @@ Fixes for the problems Desktop App users hit most often. For installation, node 
 
     **Solutions**:
     1. Check your internet connection is stable
-    2. Verify the LSP URL — default is `https://api.signet.kaleidoswap.com`, under Settings → LSP Configuration
-    3. Check firewall/VPN settings; required ports are 9735 (P2P) and 9736 (RPC)
+    2. Verify the LSP URL — default is `https://api.mutinynet2.kaleidoswap.com/`, under Settings → Maker & LSP Settings
+    3. Check firewall/VPN settings; required ports are 9735 (Lightning P2P) and 3001 (node API)
     4. Visit the LSP's status page, or switch to a different LSP if available
 
     See the [full troubleshooting guide](/whats-kaleidoswap/troubleshooting) for more connection issues, including node configuration and channel capacity problems.
@@ -112,9 +112,9 @@ Check the [FAQ](/desktop-app/support/faq) for questions rather than errors. For 
 4. Steps to reproduce
 5. Error messages or screenshots
 6. Log files:
-   - macOS: `~/Library/Application Support/KaleidoSwap/logs/`
-   - Windows: `%APPDATA%/KaleidoSwap/logs/`
-   - Linux: `~/.config/KaleidoSwap/logs/`
+   - macOS: `~/Library/Logs/com.kaleidoswap.dev/`
+   - Windows: `%APPDATA%\com.kaleidoswap.dev\logs`
+   - Linux: `~/.local/share/com.kaleidoswap.dev/logs`
 
 <CardGroup cols={3}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">

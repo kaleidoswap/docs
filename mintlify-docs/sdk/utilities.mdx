@@ -140,12 +140,12 @@ Validate an order amount against min/max limits.
 <CodeGroup>
 ```typescript TypeScript
 const result = handler.validateOrderSize(0.001, btcAsset);
-// Returns: { valid: boolean, reason?: string }
+// Returns: { valid: boolean, error?: string, rawAmount, minRawAmount, maxRawAmount }
 ```
 
 ```python Python
 result = handler.validate_order_size(0.001, btc_asset)
-# Returns: ValidationResult { valid, reason }
+# Returns: ValidationResult { valid, error, raw_amount, min_raw_amount, max_raw_amount }
 ```
 </CodeGroup>
 
@@ -156,12 +156,12 @@ Get the min/max order size for an asset.
 <CodeGroup>
 ```typescript TypeScript
 const limits = handler.getOrderSizeLimits(btcAsset);
-// Returns: { min: number, max: number }
+// Returns: { minDisplayAmount, maxDisplayAmount, minRawAmount, maxRawAmount, precision }
 ```
 
 ```python Python
 limits = handler.get_order_size_limits(btc_asset)
-# Returns: OrderSizeLimits { min, max }
+# Returns: OrderSizeLimits { min_display_amount, max_display_amount, min_raw_amount, max_raw_amount, precision }
 ```
 </CodeGroup>
 
@@ -231,7 +231,7 @@ Get all active trading pairs.
 
 ```typescript
 const activePairs = mapper.getActivePairs();
-// Returns: TradingPair[]
+// Returns: TradingPairResponseModel[]
 ```
 
 #### `findPairByTickers`
@@ -240,7 +240,7 @@ Find a specific pair by base and quote tickers.
 
 ```typescript
 const pair = mapper.findPairByTickers('BTC', 'USDT');
-// Returns: TradingPair | undefined
+// Returns: TradingPairResponseModel | undefined
 ```
 
 ## SDK Info
@@ -252,14 +252,18 @@ Get the SDK version string.
 <CodeGroup>
 ```typescript TypeScript
 import { getVersion } from 'kaleido-sdk';
-console.log(getVersion());  // "0.1.15"
+console.log(getVersion());  // "0.1.0" -- returns a hardcoded value, not the package version
 ```
 
 ```python Python
 from kaleido_sdk import get_version
-print(get_version())  # "0.1.15"
+print(get_version())  # "0.1.17"
 ```
 </CodeGroup>
+
+<Note>
+The TypeScript `getVersion()` currently returns a hardcoded `"0.1.0"` rather than the installed package version. To read the real version, check `package.json` for the `kaleido-sdk` dependency.
+</Note>
 
 ### `getSdkName` / `get_sdk_name`
 

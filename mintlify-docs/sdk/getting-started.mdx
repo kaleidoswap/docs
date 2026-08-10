@@ -53,7 +53,7 @@ pip install kaleido-sdk
 import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
 });
 
 const assets = await client.maker.listAssets();
@@ -64,7 +64,7 @@ console.log(`Found ${assets.assets.length} assets`);
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com"
+    base_url="https://api.signet.kaleidoswap.com"
 )
 
 assets = await client.maker.list_assets()
@@ -86,7 +86,7 @@ print(f"Found {len(assets.assets)} assets")
 import { KaleidoClient, LogLevel } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
   nodeUrl: 'http://localhost:3001',
   apiKey: process.env.KALEIDO_API_KEY,
   timeout: 30,
@@ -96,7 +96,7 @@ const client = KaleidoClient.create({
 
 Supported config fields:
 
-- `baseUrl?`: Maker API base URL. Defaults to `https://api.regtest.kaleidoswap.com`
+- `baseUrl?`: Maker API base URL. Defaults to `https://api.signet.kaleidoswap.com`
 - `nodeUrl?`: RGB Lightning Node URL
 - `apiKey?`: optional API key
 - `nodeApiKey?`: optional bearer token for authenticated RLN node requests
@@ -113,7 +113,7 @@ import logging
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com",
+    base_url="https://api.signet.kaleidoswap.com",
     node_url="http://localhost:3001",
     api_key=None,
     timeout=30.0,
@@ -144,7 +144,7 @@ The SDK does not auto-load environment variables, but these names are used by th
 import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: process.env.KALEIDO_API_URL || 'https://api.regtest.kaleidoswap.com',
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.signet.kaleidoswap.com',
   nodeUrl: process.env.KALEIDO_NODE_URL,
   apiKey: process.env.KALEIDO_API_KEY,
 });
@@ -155,7 +155,7 @@ import os
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
-    base_url=os.environ.get("KALEIDO_API_URL", "https://api.regtest.kaleidoswap.com"),
+    base_url=os.environ.get("KALEIDO_API_URL", "https://api.signet.kaleidoswap.com"),
     node_url=os.environ.get("KALEIDO_NODE_URL"),
     api_key=os.environ.get("KALEIDO_API_KEY"),
 )
@@ -168,9 +168,7 @@ Pass the API URL as `baseUrl` / `base_url`; the SDK appends the `/api/v1` path i
 
 | Environment | API URL | WebSocket URL | Status |
 |-------------|---------|---------------|--------|
-| **Regtest** | `https://api.regtest.kaleidoswap.com` | `wss://api.regtest.kaleidoswap.com/ws/{id}` | Live (default) |
-| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/ws/{id}` | Live |
-| **Staging** | `https://api.staging.kaleidoswap.com` | `wss://api.staging.kaleidoswap.com/ws/{id}` | Signet-backed pre-release |
+| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/ws/{id}` | Live (default) |
 | **Mainnet** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/ws/{id}` | Coming soon |
 
 ## Sub-Client Architecture
@@ -178,7 +176,7 @@ Pass the API URL as `baseUrl` / `base_url`; the SDK appends the `/api/v1` path i
 <CodeGroup>
 ```typescript TypeScript
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
   nodeUrl: 'http://localhost:3001',
 });
 
@@ -192,7 +190,7 @@ if (client.hasNode()) {
 
 ```python Python
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com",
+    base_url="https://api.signet.kaleidoswap.com",
     node_url="http://localhost:3001",
 )
 

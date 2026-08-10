@@ -11,7 +11,7 @@ description: "Working KaleidoSDK code examples in TypeScript and Python, coverin
 import { KaleidoClient } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
 });
 
 const [assets, pairs] = await Promise.all([
@@ -31,7 +31,7 @@ for (const pair of pairs.pairs.slice(0, 5)) {
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com"
+    base_url="https://api.signet.kaleidoswap.com"
 )
 
 assets = await client.maker.list_assets()

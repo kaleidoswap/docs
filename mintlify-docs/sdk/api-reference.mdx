@@ -11,7 +11,7 @@ description: "Full reference for KaleidoClient, MakerClient, and RlnClient, cove
 import { KaleidoClient, LogLevel } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
   nodeUrl: 'http://localhost:3001',
   apiKey: process.env.KALEIDO_API_KEY,
   timeout: 30,
@@ -29,7 +29,7 @@ import logging
 from kaleido_sdk import KaleidoClient
 
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com",
+    base_url="https://api.signet.kaleidoswap.com",
     node_url="http://localhost:3001",
     api_key=None,
     timeout=30.0,

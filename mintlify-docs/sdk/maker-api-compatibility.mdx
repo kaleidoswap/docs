@@ -34,7 +34,7 @@ To use Maker API features with the SDK:
 import { KaleidoClient, Layer } from 'kaleido-sdk';
 
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
 });
 
 // Access Maker API through client.maker
@@ -52,7 +52,7 @@ from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
 
 async def main():
     client = KaleidoClient.create(
-        base_url="https://api.regtest.kaleidoswap.com"
+        base_url="https://api.signet.kaleidoswap.com"
     )
 
     # Access Maker API through client.maker

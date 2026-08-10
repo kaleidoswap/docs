@@ -51,7 +51,7 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     **Solutions:**
     1. Verify the `baseUrl` is correct and accessible
     2. Check internet connectivity
-    3. Try accessing the API URL in a browser: `https://api.regtest.kaleidoswap.com/api/v1/market/assets`
+    3. Try accessing the API URL in a browser: `https://api.signet.kaleidoswap.com/api/v1/market/assets`
     4. If behind a firewall, ensure outbound HTTPS is allowed
   </Accordion>
 
@@ -65,14 +65,14 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     <CodeGroup>
     ```typescript TypeScript
     const client = KaleidoClient.create({
-      baseUrl: 'https://api.regtest.kaleidoswap.com',
+      baseUrl: 'https://api.signet.kaleidoswap.com',
       nodeUrl: 'http://localhost:3001',  // Add this
     });
     ```
 
     ```python Python
     client = KaleidoClient.create(
-        base_url="https://api.regtest.kaleidoswap.com",
+        base_url="https://api.signet.kaleidoswap.com",
         node_url="http://localhost:3001",  # Add this
     )
     ```
@@ -320,7 +320,7 @@ logging.getLogger("websockets").setLevel(logging.DEBUG)
 <CodeGroup>
 ```typescript TypeScript
 const client = KaleidoClient.create({
-  baseUrl: 'https://api.regtest.kaleidoswap.com',
+  baseUrl: 'https://api.signet.kaleidoswap.com',
   nodeUrl: 'http://localhost:3001',
 });
 
@@ -346,7 +346,7 @@ if (client.hasNode()) {
 
 ```python Python
 client = KaleidoClient.create(
-    base_url="https://api.regtest.kaleidoswap.com",
+    base_url="https://api.signet.kaleidoswap.com",
     node_url="http://localhost:3001",
 )
 

@@ -222,6 +222,27 @@
         ]
       },
       {
+        "tab": "Wallet Engine",
+        "groups": [
+          {
+            "group": "Introduction",
+            "icon": "flag",
+            "pages": [
+              "wallet-engine/introduction",
+              "wallet-engine/getting-started"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "wallet-engine/concepts",
+              "wallet-engine/adding-a-protocol"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "CLI",
         "groups": [
           {

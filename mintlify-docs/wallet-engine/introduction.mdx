@@ -1,0 +1,86 @@
+---
+title: "Multi-Protocol Bitcoin L2 Wallet Engine"
+sidebarTitle: "Overview"
+description: "The headless core behind KaleidoSwap's wallets — one adapter contract, a cross-protocol router, and BIP321 unified receive across Spark, RGB-LN, RGB-L1, Liquid and Arkade"
+---
+
+`@kaleidorg/wallet-engine` is the headless core you build a multi-protocol Bitcoin wallet on. It hides the differences between Bitcoin L2s behind one interface, keeps app code identical across React Native, browser extension and Node hosts, and ships the hard parts — routing, unified receive, swaps, lite/advanced UX — as reusable primitives.
+
+It powers the KaleidoSwap [browser extension](/extensions/introduction), the `rate` mobile wallet, and the [desktop agent](/desktop-app/getting-started/introduction).
+
+<Warning>
+  **Alpha — experimental.** The engine moves real funds across Bitcoin L2s. Interfaces are unstable and nothing has been independently audited. Do not use it with mainnet funds you cannot afford to lose.
+</Warning>
+
+## The problem
+
+Every Bitcoin L2 ships its own SDK, its own address formats, and its own quirks — channel liquidity, boarding transactions, invoice expiry, zero-fee transfers. A wallet that supports more than one of them ends up with `if (protocol === …)` smeared across every screen, and each new protocol edits every existing path.
+
+The engine collapses that into **one contract plus a data manifest of differences**:
+
+- Screens call one API — `ProtocolManager` or `CrossProtocolRouter` — never a protocol SDK.
+- Protocol *differences* live as data in a capability manifest, not as branches in app code.
+- The same engine runs on every host; platform specifics are injected.
+
+## What you get
+
+The adapters are the part you could write yourself. These four are the part you would rather not write twice.
+
+<CardGroup cols={2}>
+  <Card title="Cross-protocol router" icon="route">
+    Hand it a destination string or a BIP321 URI, get back the ranked protocols that can settle it — filtered to what's registered and connected. `.best` is the auto-route.
+  </Card>
+  <Card title="Unified receive" icon="qrcode">
+    One `bitcoin:` QR carrying on-chain, BOLT11/BOLT12, Spark, Arkade, Liquid and RGB at once. Foreign wallets ignore the params they don't know.
+  </Card>
+  <Card title="Capability manifest" icon="table-list">
+    Every protocol's layers, quirks and limits as data. The router and your UI read it; nothing special-cases a protocol by name.
+  </Card>
+  <Card title="Disclosure" icon="eye">
+    Lite vs advanced as one reversible setting rather than two codebases. Lite collapses every BTC representation into one "BTC".
+  </Card>
+</CardGroup>
+
+Add a protocol and all four pick it up with no changes to existing protocol code.
+
+## Supported protocols
+
+`Maturity` is the field each protocol carries in the capability manifest. Read it at runtime rather than hardcoding it.
+
+| Protocol | Maturity | Layers | Assets | Swaps | Notable quirks |
+|---|:---:|---|---|:---:|---|
+| **BTC** | `stable` | on-chain | — | — | base on-chain only |
+| **SPARK** | `beta` | Spark, LN, on-chain | Spark tokens | — | zero-fee, static receive address |
+| **RGB-LN** | `beta` | RGB-L1, RGB-LN, BTC-L1, BTC-LN | RGB (USDT, XAUT) | ✅ | needs channel liquidity (LSPS1) |
+| **RGB-L1** | `beta` | RGB-L1, BTC-L1 | RGB (USDT, XAUT) | — | on-chain only, local rgb-lib |
+| **LIQUID** | `beta` | Liquid, Liquid assets | USDt | — | own L1, no Lightning |
+| **ARKADE** | `beta` | Arkade, LN | Arkade assets | — | boarding address, static receive |
+
+## Where it sits
+
+The engine consumes [`kaleido-sdk`](/sdk/introduction) internally for the KaleidoSwap protocol. Consumers of the engine never import `kaleido-sdk` directly.
+
+```
+your app          rate · extension · desktop
+   ↓
+wallet-engine     router · unified receive · manifest · disclosure · adapters
+   ↓
+kaleido-sdk       RFQ/maker + RLN client
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Getting Started" icon="rocket" href="/wallet-engine/getting-started">
+    Install it, then run the five-minute tour with no node and no credentials.
+  </Card>
+  <Card title="Core Concepts" icon="cube" href="/wallet-engine/concepts">
+    The router, unified receive, the manifest, disclosure and platform ports.
+  </Card>
+  <Card title="Add a Protocol" icon="puzzle-piece" href="/wallet-engine/adding-a-protocol">
+    The whole recipe, from the reference adapter to a manifest entry.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap/wallet-engine">
+    Source, issues and the MIT license.
+  </Card>
+</CardGroup>

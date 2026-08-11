@@ -1,0 +1,142 @@
+---
+title: "Core Concepts"
+sidebarTitle: "Core Concepts"
+description: "The adapter contract, capability manifest, cross-protocol router, BIP321 unified receive, lite/advanced disclosure, platform ports and swaps"
+---
+
+## `IProtocolAdapter` — the contract
+
+Every protocol implements the same interface: connect, list assets and transactions, create and decode invoices, send and receive, and optionally quote and execute swaps. Two flavours ship — **native** adapters (direct SDK integrations) and **WDK-backed** adapters. Both satisfy the same contract, so app code cannot tell which is underneath.
+
+The contract is decomposed into a small required core (`ICoreProtocolAdapter`) plus optional capability groups:
+
+| Group | Covers |
+|---|---|
+| `IOnchainOperations` | on-chain addresses, UTXOs, fee estimation |
+| `IRgbOperations` | RGB assets, invoices, transfers |
+| `ISparkOperations` | Spark-specific token records |
+| `IArkadeOperations` | VTXO lifecycle, boarding |
+| `ISigningOperations` | message and PSBT signing |
+| `IBackupOperations` | backup and restore |
+| `ISwapOperations` | quote and execute |
+| `IKeysendOperations` | spontaneous payments |
+
+`IProtocolAdapter` is their composition — core plus `Partial<…>` of each group — so the flat surface is unchanged and every existing call site still works. A new adapter can `implements ICoreProtocolAdapter & IRgbOperations` to opt into a group with *required* rather than optional methods, and callers narrow cleanly instead of optional-chaining across the whole surface:
+
+```ts
+import { asRgbOperations, asSwapOperations } from '@kaleidorg/wallet-engine'
+
+const rgb = asRgbOperations(adapter)
+if (rgb) await rgb.createRgbInvoice({ assetId, amount })
+```
+
+Third-party protocols implement the core and connect with any `BaseProtocolConfig`-shaped config — no edit to the engine's config union required.
+
+## Capability manifest — differences as data
+
+`PROTOCOL_CAPABILITIES` is the single source of truth for what each protocol can do: layers, asset support, swaps, and the behavioural quirks a UI or router must know about — `zeroFee`, `staticReceiveAddress`, `boarding`, `invoiceExpiry`, `needsChannelLiquidity` — plus its backing WDK module and `maturity`.
+
+```ts
+import { PROTOCOL_CAPABILITIES, getCapabilities, protocolsForLayer } from '@kaleidorg/wallet-engine'
+
+PROTOCOL_CAPABILITIES.SPARK.zeroFee              // true
+PROTOCOL_CAPABILITIES.RGB_LN.needsChannelLiquidity // true
+protocolsForLayer('BTC_LN')                      // protocols that can settle on LN
+```
+
+<Note>
+  **The rule:** when you are tempted to add a method to the contract for one protocol, add a capability flag here instead. The router and UI read the manifest; they must never special-case a protocol by name.
+</Note>
+
+## `CrossProtocolRouter` — choosing *between* protocols
+
+The router takes a destination string or a receive layer and returns the protocols that can fulfil it, filtered to those actually registered **and** connected.
+
+```ts
+const { best, routes } = router.resolveSend('lnbc1…')
+```
+
+`routes` carries every candidate with a `direct` flag verified against the manifest — a candidate is only a direct route if its protocol genuinely supports the surface the destination settles on. Direct routes sort first, so `.best` is always a genuinely-direct route or `null`. That is what makes lite mode possible: lite uses `.best`, advanced shows the full ranked list.
+
+For a unified payment URI carrying several rails at once, `resolveUnifiedSend(uri, { preference })` matches every present rail to the protocols that can settle it and ranks the whole set by the user's `RoutePreference` — a per-asset layer ranking — falling back to a Lightning-first default.
+
+```ts
+const { best, routes } = router.resolveUnifiedSend(bip321Uri, { preference })
+```
+
+BIP353 (`₿user@domain`) is resolved to a URI by the host before it reaches the router.
+
+## Unified receive (BIP321)
+
+`buildUnifiedReceiveURI` builds **one** `bitcoin:` URI carrying on-chain plus Lightning (BOLT11 and BOLT12), Spark, Arkade, Liquid and RGB. Other wallets ignore the params they don't recognise; Kaleido-aware wallets get the full menu and let the router choose.
+
+```ts
+const uri = buildUnifiedReceiveURI({
+  btcAddress: 'bc1q…',
+  lightningInvoice: 'lnbc1…',
+  lightningOffer: 'lno1…',
+  liquidAddress: 'lq1…',
+  rgbInvoice: 'rgb:…',
+  label: 'invoice #42',
+})
+```
+
+The address is optional, so a lite wallet can publish a single Lightning- or asset-only QR. Amounts are only emitted for a finite, strictly-positive value — a zero or negative input never produces a misleading `amount=0` that a payer's wallet would read literally.
+
+## Disclosure — lite and advanced
+
+Lite versus advanced is **one reversible setting**, not a code fork. It controls how much the UI reveals (networks, route selector, channel management, raw ids) and how much the router auto-decides.
+
+```ts
+import { aggregateForLite } from '@kaleidorg/wallet-engine'
+
+const { btc, usd, other } = aggregateForLite(assets)
+```
+
+Lite mode collapses every BTC representation — on-chain, Lightning, Spark, Arkade, Liquid BTC — into one "BTC", and USDt-on-Liquid into one "USD". Advanced mode shows the same data per protocol and per layer.
+
+## Platform ports — write once, run everywhere
+
+The engine never touches platform APIs directly. Each host injects an `IStorageProvider` and an `IRuntimeProvider` (storage, CSPRNG, clock) once at startup, so the same engine runs on React Native, the browser extension and Node unchanged.
+
+```ts
+import { setPlatform, consoleLogger } from '@kaleidorg/wallet-engine'
+
+setPlatform({ storage, runtime, logger: consoleLogger })
+```
+
+Engine modules that persist state read `getPlatform()?.storage`. Modules whose correctness depends on durable state refuse to run without it — the chain-swap store throws `NO_PLATFORM` rather than hand out a derivation index it cannot persist — while modules holding merely convenient state fall back to an in-memory map that does not survive a reload. Inject the platform at startup and neither case applies.
+
+## Swaps
+
+`KaleidoswapSwap` wraps the KaleidoSwap **RFQ** flow — quote, execute, status — behind domain `Quote` and `SwapResult` types, so no SDK type leaks across the boundary.
+
+```ts
+import { KaleidoswapSwap } from '@kaleidorg/wallet-engine/swap'
+
+const swap = new KaleidoswapSwap(rlnAccount, { baseUrl: 'https://api.kaleidoswap.com' })
+
+const quote = await swap.getQuote({
+  fromAsset: 'rgb:USDT…', toAsset: 'BTC',
+  fromLayer: 'RGB_LN',    toLayer: 'BTC_LN',
+  fromAmount: 100,
+})
+
+const result = await swap.executeSwap({
+  ...quote,
+  receiverAddress: 'lnbc1…',
+  receiverAddressFormat: 'BOLT11',
+})
+
+await swap.getSwapStatus(result.swapId)  // pending → confirmed / failed
+```
+
+`executeSwap` refuses to proceed without the approved quote's `rfqId` and amounts, and rejects a quote that has already expired. The maker binds execution to that `rfqId` and those exact raw amounts — there is no server-side re-quote, so both legs settle at what the user approved or the swap fails with no funds moved.
+
+A second venue sits alongside the RFQ rail for BTC ↔ L-BTC **chain swaps** over the Boltz protocol against a KaleidoSwap maker. RGB always stays on the RFQ path. The engine deliberately never funds a lockup itself: `createSwap` returns the maker's binding amounts and the address to pay, and the host performs the send with its own adapter.
+
+## Next
+
+<Card title="Add a Protocol" icon="puzzle-piece" href="/wallet-engine/adding-a-protocol">
+  Everything above picks up a new protocol with no changes to existing code.
+</Card>

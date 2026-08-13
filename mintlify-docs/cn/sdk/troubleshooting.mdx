@@ -1,0 +1,390 @@
+---
+title: "KaleidoSDK 故障排查"
+sidebarTitle: "故障排查"
+description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本不匹配、交换报错等，每一项都给出可直接照做的排查步骤"
+---
+
+## 安装问题
+
+<AccordionGroup>
+  <Accordion title="npm install 失败（TypeScript）" icon="box">
+    **症状：** `npm install kaleido-sdk` 报错失败
+
+    **解决办法：**
+    1. 确认已安装 Node.js 18+：`node --version`
+    2. 清理 npm 缓存：`npm cache clean --force`
+    3. 删除 `node_modules` 和 `package-lock.json`，然后重新安装
+    4. 换一个包管理器试试：`pnpm add kaleido-sdk`
+  </Accordion>
+
+  <Accordion title="pip install 失败（Python）" icon="cube">
+    **症状：** `pip install kaleido-sdk` 失败
+
+    **解决办法：**
+    1. 确认已安装 Python 3.10+：`python --version`
+    2. 使用虚拟环境：`python -m venv .venv && source .venv/bin/activate`
+    3. 升级 pip：`pip install --upgrade pip`
+    4. 试试：`pip install kaleido-sdk --no-cache-dir`
+  </Accordion>
+
+  <Accordion title="安装完成后仍找不到模块" icon="magnifying-glass">
+    **症状：** `Cannot find module 'kaleido-sdk'` 或 `ModuleNotFoundError`
+
+    **解决办法：**
+    - **TypeScript：** SDK 仅支持 ESM，因此 `tsconfig.json` 需要 `"moduleResolution": "bundler"`、`"node16"` 或 `"nodenext"`。旧的 `"node"` 设置会忽略包的 `exports` 字段，无法解析该模块
+    - **Python：** 确认你处在正确的虚拟环境中
+    - 确认包已安装：`npm list kaleido-sdk` 或 `pip show kaleido-sdk`
+  </Accordion>
+</AccordionGroup>
+
+## 运行时错误
+
+<AccordionGroup>
+  <Accordion title="NetworkError：连接被拒绝" icon="link-slash">
+    **症状：** 调用 API 时抛出 `NetworkError`
+
+    **原因：**
+    - API 服务器不可达
+    - `baseUrl` 有误
+    - 防火墙拦截了请求
+
+    **解决办法：**
+    1. 确认 `baseUrl` 正确且可访问
+    2. 检查网络连通性
+    3. 在浏览器中访问该 API URL 试试：`https://api.signet.kaleidoswap.com/api/v1/market/assets`
+    4. 如果处在防火墙之后，确认已放行出向 HTTPS
+  </Accordion>
+
+  <Accordion title="节点未配置" icon="server">
+    **症状：** 调用 `client.rln.*` 方法时，TypeScript 抛出 `ConfigError`（"Node API not configured..."），Python 抛出 `NodeNotConfiguredError`
+
+    **原因：** 创建客户端时没有提供 `nodeUrl` / `node_url`。
+
+    **解决办法：**
+
+    <CodeGroup>
+    ```typescript TypeScript
+    const client = KaleidoClient.create({
+      baseUrl: 'https://api.signet.kaleidoswap.com',
+      nodeUrl: 'http://localhost:3001',  // 补上这一行
+    });
+    ```
+
+    ```python Python
+    client = KaleidoClient.create(
+        base_url="https://api.signet.kaleidoswap.com",
+        node_url="http://localhost:3001",  # 补上这一行
+    )
+    ```
+    </CodeGroup>
+
+    调用 RLN 方法前，务必先检查 `client.hasNode()` / `client.has_node()`。
+  </Accordion>
+
+  <Accordion title="QuoteExpiredError" icon="hourglass-end">
+    **症状：** 带 `rfq_id` 调用 `initSwap` / `init_swap` 时抛出 `QuoteExpiredError`
+
+    **原因：** 报价的 `expires_at` 时间已经过了。
+
+    **解决办法：**
+    1. 在调用 `initSwap` 之前才去获取新报价 —— 不要让一个 `rfq_id` 跨越用户的思考时间继续使用
+    2. 用 WebSocket 流式推送来保证报价始终是最新的
+    3. 尽快完成白名单和执行；整个 初始化 → 白名单 → 执行 的流程都基于同一个报价
+  </Accordion>
+
+  <Accordion title="ValidationError：金额无效" icon="calculator">
+    **症状：** 抛出 `ValidationError`，错误信息与金额相关
+
+    **原因：**
+    - 金额低于最小值或高于最大值
+    - 精度用错了（发送的是展示单位而不是原始单位）
+    - 金额为负数或零
+
+    **解决办法：**
+    1. 从 `listPairs` 的响应中查看最小/最大限额
+    2. 确认你发送的是原始金额而不是展示金额 —— 用[工具函数](/cn/sdk/utilities)中的 `parseRawAmount` / `parse_raw_amount` 进行换算
+    3. 在发送之前先校验金额
+  </Accordion>
+
+  <Accordion title="APIError：401 Unauthorized" icon="ban">
+    **症状：** 抛出状态码为 401 的 `APIError`
+
+    **原因：** API key 无效或缺失。
+
+    **解决办法：**
+    1. 检查 `apiKey` / `api_key` 是否设置正确
+    2. 确认该密钥有效且未过期
+    3. 有些接口端点可能并不需要 API key —— 请查阅[客户端参考](/cn/sdk/api-reference)
+  </Accordion>
+
+  <Accordion title="TimeoutError" icon="clock">
+    **症状：** API 调用抛出 `TimeoutError`
+
+    **原因：**
+    - 网络连接较慢
+    - 服务器负载过高
+    - 超时时间设置得太短
+
+    **解决办法：**
+    1. 增大超时时间：`timeout: 60`（单位为秒）
+    2. 检查网络连通性
+    3. 用 `error.isRetryable()` 实现重试逻辑 —— 参见[错误处理](/cn/sdk/error-handling#retry-patterns)
+  </Accordion>
+
+  <Accordion title="RateLimitError：429 Too Many Requests" icon="gauge-high">
+    **症状：** 重复调用时抛出 `RateLimitError`，通常出现在轮询报价的场景中
+
+    **原因：** 在速率限制窗口内发出了过多请求。
+
+    **解决办法：**
+    1. 先退避再重试，并遵守响应中携带的 `retry_after`（在 Python 中，速率限制错误的 `is_retryable()` 返回 `False`，需要你自己退避）
+    2. 改用 WebSocket 流式接收报价，而不是循环轮询 `getQuote`
+    3. 缓存 `listAssets` / `listPairs` 的结果，不要每次操作都重新拉取
+  </Accordion>
+</AccordionGroup>
+
+## 交换问题 {#swap-issues}
+
+<AccordionGroup>
+  <Accordion title="执行时报 SwapError：swapstring 未加入白名单" icon="triangle-exclamation">
+    **症状：** `initSwap` 成功，但 `executeSwap` / `execute_swap` 失败并抛出 `SwapError`
+
+    **原因：** `initSwap` 返回的 `swapstring` 从未在你自己的节点上加入白名单，因此接单方无法履行该 HTLC。
+
+    **解决办法：** 这三步必须按顺序执行，而且加入白名单这一步是在 `client.rln` 上完成，而不是 `client.maker`：
+
+    1. `client.maker.initSwap(...)` → 返回 `swapstring`
+    2. `client.rln.whitelistSwap(swapstring)` → 你的节点接受这笔交换
+    3. `client.maker.executeSwap(...)` → 做市方完成结算
+
+    完整流程见[如何进行交换](/cn/sdk/how-to-swap)。
+  </Accordion>
+
+  <Accordion title="InsufficientBalanceError" icon="wallet">
+    **症状：** 初始化或执行时抛出 `InsufficientBalanceError`
+
+    **原因：**
+    - 你要发送的这一侧在通道上的出向容量不足
+    - 除交换金额之外，还需要预留的粉尘储备不可用
+    - 余额在链上，而不在通道里
+
+    **解决办法：**
+    1. 通过 `client.rln.listChannels()` 检查对应资产的出向容量，而不只看总余额
+    2. 确认金额在 `listPairs` 给出的该交易对最小/最大限额之内
+    3. 如果容量不够，通过 LSPS1 追加入向或出向流动性
+  </Accordion>
+
+  <Accordion title="交换卡在待处理状态" icon="clock-rotate-left">
+    **症状：** `executeSwap` 已经返回，但资产没有到账
+
+    **解决办法：**
+    1. 轮询 `client.maker.getAtomicSwapStatus(...)` / `get_atomic_swap_status(...)`，不要以为执行就是终态
+    2. 调用 `client.rln.refreshTransfers()` / `refresh_transfers()` 推进处于待处理状态的 RGB 转移
+    3. 通过 `client.rln.listSwaps()` 查看节点自己对这笔交换的记录
+  </Accordion>
+
+  <Accordion title="版本不匹配：响应结构不符合预期" icon="code-compare">
+    **症状：** 某个调用在解析阶段失败（Pydantic 的 `ValidationError`，或者某个 TypeScript 字段意外为 `undefined`），而不是返回一个明确的 SDK 错误
+
+    **原因：** SDK 与它所对接的 API 是基于不同版本的规范生成的。这种情况在节点侧最常见，因为 RLN 的版本由你自己掌控。
+
+    **解决办法：**
+    1. 把你节点的版本与你所用 SDK 版本对应的目标版本对比 —— 参见 [RLN API 兼容性](/cn/sdk/rln-api-compatibility)
+    2. 升级 SDK：`npm install kaleido-sdk@latest` 或 `pip install --upgrade kaleido-sdk`
+    3. 查看[更新日志](/cn/sdk/changelog)，了解你当前版本与最新版本之间的破坏性变更 —— 有几个版本新增了现在已成为必填的请求字段
+  </Accordion>
+</AccordionGroup>
+
+## WebSocket 问题
+
+<AccordionGroup>
+  <Accordion title="WebSocket 连不上" icon="plug-circle-xmark">
+    **症状：** `connected` 事件始终不触发，或者抛出 `WebSocketError`
+
+    **解决办法：**
+    1. 确认 WebSocket URL 正确（应以 `wss://` 开头）
+    2. 确认在开始流式接收之前调用过 `enableWebSocket` / `enable_websocket`
+    3. 检查 WebSocket 连接是否被防火墙或代理拦截
+    4. 在 URL 中换一个 client ID 试试
+  </Accordion>
+
+  <Accordion title="收不到报价" icon="signal-slash">
+    **症状：** `quoteResponse` / `quote_response` 事件始终不触发
+
+    **解决办法：**
+    1. 确认该资产交易对有效且存在可用路由
+    2. 检查金额是否在最小/最大限额之内
+    3. 监听 WSClient 上的 `error` 事件
+    4. 确认连接已经建立（检查 `connected` 事件）
+  </Accordion>
+
+  <Accordion title="频繁断线" icon="arrows-rotate">
+    **症状：** WebSocket 反复断开并重连
+
+    **解决办法：**
+    1. 检查网络是否稳定
+    2. WSClient 会以指数退避自动重连
+    3. 监听 `reconnecting` 事件以跟踪重连尝试
+    4. 如果触发了 `maxReconnectExceeded`，就手动重连：
+
+    <CodeGroup>
+    ```typescript TypeScript
+    ws.on('maxReconnectExceeded', async () => {
+      console.log('Reconnecting manually...');
+      await ws.connect();
+    });
+    ```
+
+    ```python Python
+    async def manual_reconnect():
+        print("Reconnecting manually...")
+        await ws.connect()
+
+    ws.on("max_reconnect_exceeded", manual_reconnect)
+    ```
+    </CodeGroup>
+  </Accordion>
+</AccordionGroup>
+
+## TypeScript 特有问题
+
+<AccordionGroup>
+  <Accordion title="OpenAPI 类型引发的类型错误" icon="code">
+    **症状：** TypeScript 编译器报告类型不兼容
+
+    **解决办法：**
+    1. 确认你是从 `kaleido-sdk` 导入类型：
+       ```typescript
+       import type { AssetResponseModel, TradingPairResponseModel } from 'kaleido-sdk';
+       ```
+    2. 检查 TypeScript 版本是否为 5.0+
+    3. 如果启用了 strict 模式，可能需要显式处理 `undefined`
+  </Accordion>
+
+  <Accordion title="ESM / CommonJS 问题" icon="file-code">
+    **症状：** `ERR_REQUIRE_ESM` 或 import 语法报错
+
+    **解决办法：**
+    1. SDK 仅支持 ESM。请确认你的项目使用 ESM：
+       - 在 `package.json` 中设置 `"type": "module"`
+       - 或者使用 `.mts` 文件扩展名
+    2. 如果必须使用 CommonJS，请改用动态导入：`const sdk = await import('kaleido-sdk')`
+  </Accordion>
+</AccordionGroup>
+
+## Python 特有问题
+
+<AccordionGroup>
+  <Accordion title="Pydantic 校验错误" icon="circle-exclamation">
+    **症状：** 解析 API 响应时 Pydantic 抛出 `ValidationError`
+
+    **解决办法：**
+    1. 确认已安装 `pydantic>=2.0`
+    2. 检查你使用的请求格式是否正确
+    3. API 可能已经更新 —— 试着升级 SDK：`pip install --upgrade kaleido-sdk`
+  </Accordion>
+
+  <Accordion title="httpx 连接错误" icon="network-wired">
+    **症状：** `httpx.ConnectError` 或类似报错
+
+    **解决办法：**
+    1. 检查 API URL 是否可达
+    2. 如果使用代理，请通过环境变量配置：`HTTP_PROXY`、`HTTPS_PROXY`
+    3. 如果连接较慢，请增大超时时间
+  </Accordion>
+</AccordionGroup>
+
+## 调试
+
+### 开启详细日志
+
+<CodeGroup>
+```typescript TypeScript
+// 使用 Node.js 自带的调试能力
+// 设置环境变量：NODE_DEBUG=http
+// 或者用浏览器 DevTools 检查网络请求
+```
+
+```python Python
+import logging
+
+# 为 httpx 开启调试日志
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("websockets").setLevel(logging.DEBUG)
+```
+</CodeGroup>
+
+### 校验配置
+
+<CodeGroup>
+```typescript TypeScript
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+
+console.log(`Has node: ${client.hasNode()}`);
+
+// 测试连通性
+try {
+  const assets = await client.maker.listAssets();
+  console.log(`API connected: ${assets.assets.length} assets`);
+} catch (error) {
+  console.error('API connection failed:', error);
+}
+
+if (client.hasNode()) {
+  try {
+    const nodeInfo = await client.rln.getNodeInfo();
+    console.log(`Node connected: ${nodeInfo.pubkey}`);
+  } catch (error) {
+    console.error('Node connection failed:', error);
+  }
+}
+```
+
+```python Python
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+)
+
+print(f"Has node: {client.has_node()}")
+
+try:
+    assets = await client.maker.list_assets()
+    print(f"API connected: {len(assets.assets)} assets")
+except Exception as e:
+    print(f"API connection failed: {e}")
+
+if client.has_node():
+    try:
+        node_info = await client.rln.get_node_info()
+        print(f"Node connected: {node_info.pubkey}")
+    except Exception as e:
+        print(f"Node connection failed: {e}")
+```
+</CodeGroup>
+
+## 获取帮助
+
+如果是疑问而不是报错，请查阅[常见问题](/cn/sdk/faq)。其他情况请通过下面你偏好的渠道反馈问题，并附上：
+
+1. SDK 版本（`getVersion()` / `get_version()`）
+2. 语言与运行时版本（Node.js / Python）
+3. 错误信息与堆栈跟踪
+4. 可复现问题的最小代码
+5. 运行环境（regtest / signet / 主网）
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    在相应的仓库中报告缺陷。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

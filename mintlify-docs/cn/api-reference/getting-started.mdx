@@ -1,0 +1,160 @@
+---
+title: "比特币交换 API：快速开始"
+sidebarTitle: "快速开始"
+description: "开始使用 KaleidoSwap 交换 API：signet 与主网的基础 URL、认证方式、请求格式和速率限制，快速完成首次集成。"
+---
+
+欢迎使用 KaleidoSwap API！本指南帮助你快速、高效地完成配置并开始调用 API。
+
+---
+
+## 基础 URL
+
+KaleidoSwap API 通过 HTTPS 提供访问，以保证通信安全。可用环境如下：
+
+### Signet（MutinyNet）
+一个具备真实网络条件的公共测试网，建议在上主网之前用于集成测试。该环境**目前已上线**。此环境下的所有 API 请求都应发往以下基础 URL：
+
+- **基础 URL：** `https://api.signet.kaleidoswap.com/api/v1`
+
+### 比特币主网（即将推出）
+主网环境是面向真实交易的生产接口端点。发布进展请关注后续更新。
+
+- **基础 URL：** `https://api.kaleidoswap.com/api/v1`
+
+---
+
+## 认证
+
+### 当前状态
+匿名请求仍会被正常处理，因此你可以立即开始测试和集成 API。Bearer API 密钥（`Authorization: Bearer <token>`）目前已被接受并记录归属。
+
+### 强制校验上线计划
+API 密钥的强制校验正在逐步上线。一旦开启，不带有效密钥的请求将收到 `401` 响应 —— 集成方现在就应开始发送 API 密钥。详见[总览](/cn/api-reference/introduction#authentication)。
+
+---
+
+## 请求格式
+
+### HTTP 方法
+该 API 使用以下 HTTP 方法：
+- **GET：** 获取数据。
+- **POST：** 提交数据或执行操作。
+
+实时报价推送使用 **WebSocket** 接口端点 —— 参见[交换协议](/cn/api-reference/swap-protocol)。
+
+### 请求头
+请确保你的 `POST` HTTP 请求包含以下请求头：
+- `Content-Type: application/json`（用于携带 JSON 载荷的请求）
+
+### 请求示例
+下面是一个发往测试网环境的 `POST` 请求示例：
+
+```bash
+curl -X 'POST' \
+  'https://api.signet.kaleidoswap.com/api/v1/market/quote' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "from_asset": {
+    "asset_id": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "layer": "RGB_LN"
+  }
+}'
+```
+
+每一条腿都要指定 `asset_id`、结算层 `layer`（例如 `BTC_LN`、`RGB_LN`、`BTC_L1`、`RGB_L1`），并可选地以该资产的最小单位指定 `amount` —— 两条腿中必须且只能有一条携带金额。
+---
+
+## 响应格式
+KaleidoSwap API 的所有响应均为 JSON 格式，便于解析。典型响应包含：
+
+- 按对应 **schema** 结构组织的响应值。
+- `detail`：关于所遇错误的详细信息。
+
+## 响应示例
+```json
+{
+  "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+  "from_asset": {
+    "asset_id": "BTC",
+    "name": "Bitcoin",
+    "ticker": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000,
+    "precision": 8
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "layer": "RGB_LN",
+    "amount": 875000,
+    "precision": 6
+  },
+  "price": 59507000000,
+  "fee": {
+    "base_fee": 1000,
+    "variable_fee": 250,
+    "fee_rate": 0.0001,
+    "final_fee": 1250,
+    "fee_asset": "BTC",
+    "fee_asset_precision": 8
+  },
+  "timestamp": 1715896356,
+  "expires_at": 1715896416
+}
+```
+---
+
+## API 版本管理
+KaleidoSwap 使用版本号来保证向后兼容。当前 API 版本为：
+
+**版本**：`v1`
+
+版本号体现在基础 URL 中，例如 `https://api.signet.kaleidoswap.com/api/v1`。
+
+---
+
+## 速率限制
+为保证公平使用，API 实施速率限制。默认值为：
+- **每 IP**：每分钟 600 次请求
+- **每接口端点**：每分钟 300 次请求
+- **全局**：每分钟 1000 次请求
+
+这些限制可按部署配置，因此不同环境可能有所不同。每个响应都包含 `X-RateLimit-Limit`、`X-RateLimit-Remaining` 和 `X-RateLimit-Reset` 请求头；超出限制的请求会收到 `429 Too Many Requests` 响应。
+
+---
+
+## 错误与调试
+API 返回标准 HTTP 状态码来表示请求结果：
+
+- **200**：成功
+- **400**：请求错误（例如参数无效）
+- **404**：资源不存在
+- **500**：服务器内部错误
+关于错误处理的更多信息，见[错误处理](/cn/api-reference/error-handling)。
+
+---
+
+## 下一步
+
+<CardGroup cols={2}>
+  <Card title="交换协议" icon="arrows-rotate" href="/cn/api-reference/swap-protocol">
+    在调用交换接口端点之前，先了解完整的接单方-做市方交换生命周期
+  </Card>
+  <Card title="市场 API" icon="chart-line" href="/cn/api-reference/market-apis">
+    获取资产、交易对和报价
+  </Card>
+  <Card title="交换 API" icon="code" href="/cn/api-reference/swap-apis">
+    创建并跟踪交换订单
+  </Card>
+  <Card title="RGB LSPS1 API" icon="server" href="/cn/api-reference/rgb-lsps1-apis">
+    订购通道并管理流动性
+  </Card>
+</CardGroup>

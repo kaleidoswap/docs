@@ -1,0 +1,107 @@
+---
+title: 跨链桥
+description: 在 Spark 与外部链之间转移资金
+---
+
+## 概览
+
+**跨链桥**（Bridge）通过 **Flashnet Orchestra** 在你的 Spark 账户和外部区块链之间转移资金。它支持双向操作：
+
+- **存入**（Deposit） - 从外部链发送资产（例如以太坊或 Solana 上的 USDC），并在 Spark 账户中收到 **BTC** 或 **USDB**。
+- **提取**（Withdraw） - 从 Spark 发送到外部链上受支持的目标。在提取流程中粘贴外部链地址后，扩展会自动识别兼容的跨链路由。
+
+<Note>
+跨链桥用于跨链转移资金。要在钱包内部把一种资产换成另一种，请使用[交换](/cn/extensions/kaleidoswap-extension/swaps)。
+</Note>
+
+## 支持的网络
+
+可用路由来自 Flashnet Orchestra，会随时间变化。跨链桥界面中出现的网络包括 Ethereum、Base、Arbitrum、Optimism、Polygon、Solana、Tron、Avalanche、BNB Chain、HyperCore 和 HyperEVM，常见资产有 BTC、USDT 和 USDC。
+
+在资产选择器中使用**网络筛选器**和 **BTC / USDT / USDC 快捷标签**可以缩小路由列表。
+
+<img src="/assets/images/extension/26-bridge-source-picker.png" alt="跨链桥源资产选择器，列出 BTC、Base 上的 USDC 和以太坊上的 USDT，并带有搜索框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 跨链转入（存入）
+
+<Steps>
+  <Step title="打开跨链桥">
+    从仪表盘打开**跨链桥**。
+  </Step>
+
+  <Step title="选择来源">
+    选择你要发送的源链和资产。使用网络筛选器或快捷标签可以更快找到它。
+  </Step>
+
+  <Step title="选择目标">
+    选择你想在 Spark 上收到的资产：**BTC** 或 **USDB**。
+  </Step>
+
+  <Step title="获取报价">
+    输入金额。扩展会获取报价，显示预期输出、费用和额度限制。
+  </Step>
+
+  <Step title="发送资金">
+    跨链桥会显示源链上的存入地址（附二维码）。从你的外部钱包发送报价中的金额。
+  </Step>
+
+  <Step title="跟踪订单">
+    随着存入交易确认、资金抵达 Spark，订单状态会持续更新。订单会被持久保存，因此即使你在跨链过程中关闭扩展，跟踪也会恢复。
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/27-bridge-quote.png" alt="跨链桥存入报价，在存入二维码上方显示发送金额、预计收到金额、以基点计的费用和有效期" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/28-bridge-deposit-address.png" alt="跨链桥存入地址，包含二维码、可复制的地址、等待存入状态，以及粘贴交易哈希的输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 跨链转出（提取）
+
+跨链提取从常规的**提取**流程开始：
+
+<Steps>
+  <Step title="粘贴目标地址">
+    粘贴目标链上的地址（例如 EVM 或 Solana 地址）。扩展会识别出哪些跨链路由可以抵达该地址。
+  </Step>
+
+  <Step title="选择路由和金额">
+    选择目标资产并输入金额。默认情况下，金额固定的是**你发送的数量**（You send），报价会显示预期输出。在符合条件的路由上，你可以切换到**你收到的数量**（You receive）模式，即固定接收方最终拿到的数量。
+  </Step>
+
+  <Step title="核对并确认">
+    核对目标地址、输出金额和费用，然后确认。扩展会从你的 Spark 账户付款，由跨链桥在目标链上交付。
+  </Step>
+
+  <Step title="跟踪订单">
+    订单进度会被持久跟踪直至完成，扩展重启也不影响。
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/30-bridge-withdraw.png" alt="提取流程中识别出的跨链提取，显示目标网络、接收地址、接收代币、固定输出金额和费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 订单跟踪与恢复
+
+跨链桥订单会作为会话保存在本地。如果订单进行中扩展被关闭或 service worker 重启，跨链桥界面会恢复待处理订单并继续跟踪。已完成和失败的订单会显示最终状态以及相关的交易引用。
+
+<img src="/assets/images/extension/29-bridge-tracking.png" alt="正在处理的跨链桥订单，包含从处理中到已完成的六阶段进度列表，以及路由和订单 ID" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 使用建议
+
+<AccordionGroup>
+  <Accordion title="核实目标地址">
+    跨链转移不可撤销。确认前请反复检查目标地址和目标链。
+  </Accordion>
+
+  <Accordion title="遵守报价额度">
+    报价包含最小和最大金额。存入时发送报价范围之外的金额，可能导致订单延迟或资金卡住。
+  </Accordion>
+
+  <Accordion title="尽量保持订单界面打开">
+    重启后跟踪会自动恢复，但保持界面打开可以看到实时状态更新。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

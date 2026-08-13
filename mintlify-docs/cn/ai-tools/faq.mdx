@@ -1,0 +1,115 @@
+---
+title: "AI 工具常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种子处理、模型选择、网络、成本，以及不同接入方式各自适合什么场景。"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="这些 AI 工具是托管的吗？">
+    **不是。** 密钥始终留在本地 WDK 钱包和你所指向的 RGB Lightning Node 中。交易以闪电网络上的原子 HTLC 交换结算，因此做市商只是交易的对手方，从不持有你的资金。
+
+    引入 AI 改变的不是托管方式，而是*由谁发起花费*。这正是确认机制和风险上限存在的意义。
+  </Accordion>
+
+  <Accordion title="语言模型会看到我的助记词吗？">
+    助记词以环境变量（`WDK_SEED`）的形式传给服务器进程，或从 `agent.config.json` 中读取。签名发生在该进程内部。模型只是调用工具并接收结果，因此种子不会成为提示词或工具输出的一部分。
+
+    但这并不等于种子是安全的。任何能读取配置文件或进程环境的东西都能拿到你的助记词，所以主网种子绝不该出现在你会提交或分享的文件里。
+  </Accordion>
+
+  <Accordion title="我该用哪种接入方式？">
+    | 如果你想 | 使用 |
+    |----------------|-----|
+    | 给已有的 MCP 客户端加上比特币工具 | [MCP 服务器](/cn/ai-tools/mcp-servers) |
+    | 无人值守地管理一个投资组合 | [KaleidoAgent](/cn/ai-tools/kaleido-agent) |
+    | 在本地端通过聊天或语音操作钱包 | [KaleidoMind](/cn/ai-tools/kaleido-mind) |
+    | 不改代码就调整代理行为 | [Skills](/cn/ai-tools/skills) |
+  </Accordion>
+
+  <Accordion title="我需要运行一个节点吗？">
+    取决于你调用哪些工具。
+
+    - 行情数据（`l402_*`）和 Spark 钱包（`spark_*`）**不需要节点**，后者只需要一份种子。
+    - RGB Lightning Node 工具（`wdk_*`）和原子交换**需要节点**，因为 HTLC 的接单方一侧跑在你的节点上。
+
+    [KaleidoCLI](/cn/cli/getting-started) 可以为你部署一个基于 Docker 的节点，`kaleido-mcp` 也提供了 `kaleido_node_*` 工具来替你驱动这套生命周期。
+  </Accordion>
+
+  <Accordion title="这些工具用的是哪个模型？">
+    因接入方式而异：
+
+    - **KaleidoAgent** 用托管模型推理，Claude 或 OpenAI，通过 `AGENT_PROVIDER` 选择。
+    - **KaleidoMind** 通过 QVAC SDK 让模型**在设备上**运行，可以在本地，也可以在你显式配对过的桌面端。它的分层漏斗设计意味着大多数请求根本不会到达模型。
+    - **MCP 服务器** 与模型无关。调用工具的就是你的 MCP 宿主所运行的那个模型。
+  </Accordion>
+
+  <Accordion title="我可以在主网上运行吗？">
+    这些工具能够访问主网，但请把它当作最后一步而不是第一步。先用一次性种子在 regtest 或 signet 上起步，在 KaleidoAgent 上保持 `dry_run` 开启，直到 dry-run 的决策看起来都正确，然后再切换网络。
+
+    另外要注意，不同接入方式的成熟度并不相同：KaleidoAgent 和 MCP 服务器会直接动用真实资金，而 LLM 调错一个工具是真实存在的失败模式。
+  </Accordion>
+
+  <Accordion title="运行起来要花多少钱？">
+    三条相互独立的成本线：
+
+    - 托管模型的 **LLM token**。KaleidoAgent 会在 `GET /status` 中报告每轮运行的 token 开销。
+    - KaleidoMind **没有推理成本**，因为模型跑在你自己的硬件上。
+    - 每种情况下都有 **比特币费用**：闪电网络上的路由费、通道开通或关闭时的链上费用，以及交换中做市商的价差。
+  </Accordion>
+
+  <Accordion title="怎样阻止代理花钱？">
+    有几种相互独立的控制手段，而且值得同时用上多个：
+
+    | 控制项 | 效果 |
+    |---------|--------|
+    | `dry_run` | 只模拟决策，不真正执行 |
+    | `max_swap_usd` | 限制单笔交易的上限 |
+    | `stop_loss_btc_sats` | 低于某个 BTC 阈值时停止所有交易 |
+    | `min_btc_reserve_sats` | 为节点与 Spark 合计保留一个下限 |
+    | `max_concurrent_orders` | 限制同时挂出的订单数量 |
+
+    在 KaleidoMind 上，等价机制是结构性的而非配置出来的：会动用资金的工具被标记为 `requiresConfirmation`，并暂停等待宿主的确认面板。
+  </Accordion>
+
+  <Accordion title="代理能在没有 API 密钥的情况下为 API 付费吗？">
+    可以，这正是 Machine Payments Protocol 工具覆盖的场景。代理探测一个受门控的 URL，收到带闪电发票的 HTTP 402 挑战，支付它，然后提交凭据以拿到数据和一张收据。无需注册，也无需 API 密钥。完整流程见 [MCP 服务器页面](/cn/ai-tools/mcp-servers#paid-api-access)。
+  </Accordion>
+
+  <Accordion title="skill 和 MCP 服务器有什么区别？">
+    **MCP 服务器**提供工具：针对钱包、DEX 或节点的类型化、可调用操作。
+
+    **skill** 是一份 `SKILL.md` 操作手册，限定模型*可以调用其中哪些*工具，并承载执行计划。改动 skill 就能改变行为，无需触碰运行时代码。一个是能力，另一个是策略加计划。
+  </Accordion>
+
+  <Accordion title="这些都是开源的吗？">
+    是的。所有仓库都公开在 [github.com/kaleidoswap](https://github.com/kaleidoswap) 下：MCP 服务器、KaleidoAgent、KaleidoMind，以及 skill 本身。直达链接见[更多资源](/cn/ai-tools/additional-resources)。
+  </Accordion>
+
+  <Accordion title="这些工具能配合桌面应用或浏览器扩展使用吗？">
+    桌面应用直接把 KaleidoMind 作为应用内聊天来承载，其工具以 stdio 边车方式接入 `kaleido-mcp`，可在**「设置 > 能力」**(Settings > Capabilities) 中切换。浏览器扩展自带一个内置的对话式代理来执行钱包操作。独立的 MCP 服务器则面向 Claude Desktop 或你自己的客户端这类外部宿主。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请查看[故障排查](/cn/ai-tools/troubleshooting)。其他情况请通过下面任一渠道反馈问题，并附上：
+
+1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
+2. 你所在的网络（regtest、signet 或主网）
+3. 失败的工具名称和报错文本
+4. 宿主与运行时版本（MCP 客户端、Node.js）
+5. 你的配置，并移除其中的种子和所有密钥
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    在相关仓库提交缺陷报告。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

@@ -1,0 +1,138 @@
+---
+title: '节点环境'
+description: '用 KaleidoCLI 创建、运行、切换和维护命名的本地多资产闪电节点环境，为比特币分层协议开发与测试提供隔离的节点栈'
+---
+
+## 命名环境模型
+
+`kaleido node` 管理存放在某个基础目录下的**命名 Docker Compose 环境**，该目录默认为：
+
+```text
+~/.kaleido
+```
+
+每个环境都有自己的 compose 文件和数据卷，因此可以方便地为开发、测试或演示保留彼此独立的本地节点栈。
+
+布局示例：
+
+```text
+~/.kaleido/
+├── default/
+│   ├── docker-compose.yml
+│   └── volumes/
+└── staging/
+    ├── docker-compose.yml
+    └── volumes/
+```
+
+## 创建环境
+
+```bash
+kaleido node create
+kaleido node create staging
+```
+
+向导会依次询问：
+
+1. 基础目录
+2. 环境名称
+3. 节点数量
+4. 比特币网络
+5. 守护进程与对等节点的起始端口
+6. 是否立即启动该环境
+
+## 生命周期命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido node list` | 显示所有环境及其节点 URL |
+| `kaleido node use <name> [--node N]` | 将当前的 `node-url` 指向某个环境中的某个节点 |
+| `kaleido node up <name>` | 启动容器 |
+| `kaleido node stop <name>` | 停止容器但不删除数据 |
+| `kaleido node down <name>` | 停止并移除容器和网络 |
+| `kaleido node ps <name>` | 显示容器状态 |
+| `kaleido node logs <name>` | 实时输出日志 |
+| `kaleido node clean <name>` | 删除环境的数据卷 |
+
+当只存在一个环境时，`up`、`stop`、`logs` 和 `clean` 等命令可以自动识别它。
+
+## 切换当前活动节点
+
+使用 `kaleido node use` 更新已配置的节点 URL：
+
+```bash
+kaleido node use default
+kaleido node use staging --node 2
+```
+
+它是 Docker 管理的环境与所有依赖节点的命令（如 `wallet`、`asset`、`channel` 和 `payment`）之间的桥梁。
+
+## 初始化与解锁
+
+新环境启动后，对钱包执行一次初始化：
+
+```bash
+kaleido node init
+```
+
+主要选项：
+
+- `--password` 直接传入钱包密码
+- `--mnemonic` 在初始化时用已有助记词恢复钱包
+
+每次重启之后，都需要解锁钱包：
+
+```bash
+kaleido node unlock
+```
+
+值得关注的解锁选项：
+
+- `--password`
+- `--bitcoind-user`
+- `--bitcoind-pass`
+- `--bitcoind-host`
+- `--bitcoind-port`
+- `--indexer-url`
+- `--proxy-endpoint`
+- `--announce-alias`
+- `--announce-address`
+
+默认情况下，该命令使用 CLI 提供的 KaleidoSwap signet 服务。
+
+## 查看状态与上锁
+
+```bash
+kaleido node info
+kaleido node lock
+```
+
+在运行钱包、通道或交换流程之前，用 `info` 确认节点可访问且配置正确。
+
+## 节点交换操作
+
+嵌套的 `swap` 命令组支持节点侧的原子交换与底层交换操作：
+
+```bash
+kaleido node swap pubkey
+kaleido node swap whitelist --swapstring '30/rgb:abc.../10/rgb:def.../...'
+```
+
+## 推荐的本地流程
+
+```bash
+kaleido node create devnet
+kaleido node up devnet
+kaleido node use devnet
+kaleido node init
+kaleido node unlock
+kaleido node info
+```
+
+## 运维注意事项
+
+- `clean` 不可撤销，因为它会移除底层数据卷。
+- `down` 会移除容器和网络，但保留数据卷。
+- `logs` 支持 `--service`，可将输出限定到单个容器。
+
+继续阅读[钱包、资产与支付](/cn/cli/wallet-assets-payments)，了解针对已解锁节点运行的命令。

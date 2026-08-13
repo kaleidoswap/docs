@@ -1,0 +1,85 @@
+---
+title: "KaleidoSDK：更多资源"
+sidebarTitle: "更多资源"
+description: "面向 KaleidoSDK 开发者的资源汇总：已发布的软件包、OpenAPI 规范、节点与 RGB 协议参考、测试网络，以及技术支持渠道"
+---
+
+## 软件包与源码
+
+<CardGroup cols={2}>
+  <Card title="npm — kaleido-sdk" icon="npm" href="https://www.npmjs.com/package/kaleido-sdk">
+    已发布的 TypeScript 包。`npm install kaleido-sdk`
+  </Card>
+
+  <Card title="PyPI — kaleido-sdk" icon="python" href="https://pypi.org/project/kaleido-sdk/">
+    已发布的 Python 包。`pip install kaleido-sdk`
+  </Card>
+
+  <Card title="SDK 源码" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    两种语言实现的源码、发布记录与问题跟踪。
+  </Card>
+
+  <Card title="OpenAPI 规范" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    两个 SDK 都基于这些规范生成各自的 API 类型，这也是两种语言的请求与响应结构能够保持一致的原因。
+  </Card>
+</CardGroup>
+
+## 协议参考
+
+<CardGroup cols={2}>
+  <Card title="交换协议" icon="arrows-rotate" href="/cn/api-reference/swap-protocol">
+    SDK 所驱动的原子 HTLC 流程，逐个接口端点讲解，并附有时序图。
+  </Card>
+
+  <Card title="RGB LSPS1 API" icon="server" href="/cn/api-reference/rgb-lsps1-apis">
+    `client.maker` 的 LSPS1 调用背后的通道下单接口。
+  </Card>
+
+  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    `client.rln` 所通信的节点。这是 KaleidoSwap 的分支版本；[上游项目](https://github.com/RGB-Tools/rgb-lightning-node)由 RGB Tools 维护。
+  </Card>
+
+  <Card title="RGB 协议文档" icon="gem" href="https://docs.rgb.info">
+    客户端验证、资产接口，以及规范本身。
+  </Card>
+</CardGroup>
+
+## 开发与测试
+
+上主网之前请先在测试网络上开发。两个环境都已上线，且都不需要 API key。
+
+按下面的写法把它们传入 `baseUrl` / `base_url` —— `/api/v1` 路径由 SDK 自动追加。
+
+| 环境 | Base URL | 适用场景 |
+|-------------|----------|----------|
+| **signet (MutinyNet)** | `https://api.signet.kaleidoswap.com` | 在贴近真实的条件下做集成测试 |
+
+<CardGroup cols={2}>
+  <Card title="Mutiny 水龙头" icon="faucet" href="https://faucet.mutinynet.com/">
+    获取 signet 比特币，用于为节点充值并开通测试通道。
+  </Card>
+
+  <Card title="API 快速开始" icon="rocket" href="/cn/api-reference/getting-started">
+    Base URL、认证方式、请求格式与速率限制。
+  </Card>
+</CardGroup>
+
+## 社区与支持
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
+    针对 SDK 报告缺陷或提出功能需求。
+  </Card>
+
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区和团队提问。
+  </Card>
+
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+
+  <Card title="常见问题" icon="circle-question" href="/cn/sdk/faq">
+    语言选择、子客户端、密钥保管、版本兼容与金额单位。
+  </Card>
+</CardGroup>

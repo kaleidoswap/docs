@@ -1,0 +1,94 @@
+---
+title: "KaleidoCLI"
+sidebarTitle: "概览"
+description: '使用 KaleidoCLI 在终端管理本地多资产闪电节点，并跨比特币分层协议访问 KaleidoSwap 的市场数据与原子交换流程'
+---
+
+## CLI 覆盖的范围
+
+`kaleido` 是命令行界面，服务于两类不同的工作流：
+
+- **本地 RGB Lightning Node 操作**：创建基于 Docker 的节点环境，初始化并解锁钱包，管理 BTC、RGB 资产、通道、对等节点和闪电支付。
+- **KaleidoSwap 市场与交换流程**：查看市场数据、请求报价、执行由做市商支撑的原子交换，以及驱动底层的本地节点交换步骤。
+
+同一个二进制文件既支持交互式终端使用，也支持脚本化自动化。
+
+## 为什么使用它
+
+<CardGroup cols={2}>
+  <Card title="引导式设置" icon="rocket" href="/cn/cli/getting-started">
+    在同一个设置流程中，选择仅市场模式或搭建本地节点环境。
+  </Card>
+  <Card title="命名环境" icon="server" href="/cn/cli/node-environments">
+    让多套本地节点栈相互隔离，并用一条命令切换当前活动节点。
+  </Card>
+  <Card title="钱包与 RGB 操作" icon="wallet" href="/cn/cli/wallet-assets-payments">
+    处理 BTC、RGB 资产、发票、转账、备份和闪电支付。
+  </Card>
+  <Card title="交易与交换" icon="arrows-rotate" href="/cn/cli/market-and-swaps">
+    查询交易对与报价，并执行原子交换或本地节点交换流程。
+  </Card>
+</CardGroup>
+
+## 全局标志
+
+所有命令组都继承同一组根标志：
+
+| 标志 | 用途 |
+|------|---------|
+| `--json` | 返回原始 JSON，而不是富文本终端输出 |
+| `--agent` | 关闭交互式提示，适用于脚本或代理驱动的场景 |
+| `--node-url` | 为单条命令覆盖已配置的 RGB Lightning Node URL |
+| `--api-url` | 为单条命令覆盖已配置的 KaleidoSwap API URL |
+| `--install-completion` | 为当前 shell 安装补全 |
+| `--show-completion` | 打印 shell 补全内容，供手动配置 |
+
+示例：
+
+```bash
+kaleido --json market pairs
+kaleido --node-url http://localhost:3001 wallet balance
+kaleido --agent channel open 03ab...@host:9735 --capacity 100000
+```
+
+## 环境变量
+
+CLI 还会读取以下环境变量：
+
+| 变量 | 用途 |
+|----------|-----|
+| `KALEIDO_NODE_URL` | 默认的 RLN 节点 URL |
+| `KALEIDO_API_URL` | 默认的 KaleidoSwap API URL |
+
+命令行标志的优先级高于环境变量和已存储的配置。
+
+## 命令组
+
+| 组 | 用途 |
+|------|---------|
+| `setup` | 首次运行设置，用于仅市场模式或本地节点模式 |
+| `node` | 环境生命周期、钱包初始化、解锁以及接单方操作 |
+| `wallet` | BTC 余额、地址、发送、UTXO、费用、备份和恢复 |
+| `asset` | RGB 资产、发行、发票、发送、转账历史和同步 |
+| `channel` | 闪电通道以及由 LSP 支撑的通道订购 |
+| `peer` | 对等节点发现与连通性 |
+| `payment` | 闪电发票、发送、keysend、解码和状态 |
+| `market` | 资产、交易对、路由、报价和做市商信息 |
+| `swap` | 由做市商支撑的原子交换流程（init、execute、status、run）；本地节点交换步骤位于 `node swap` 下 |
+| `config` | 存储在 `~/.kaleido/config.json` 中的 CLI 配置 |
+
+## 输出模式
+
+默认情况下，`kaleido` 会渲染便于阅读的表格和摘要。用于流水线和自动化时，建议使用 `--json`：
+
+```bash
+kaleido --json market quote BTC/USDT --from-amount 0.001
+```
+
+当命令应当在缺少输入时直接失败、而不是弹出提示时，请使用 `--agent`。
+
+## 后续步骤
+
+- 如果你是第一次安装 CLI，请从[快速开始](/cn/cli/getting-started)开始。
+- 如果你需要本地 RLN 节点栈，请参阅[节点环境](/cn/cli/node-environments)。
+- 完整的命令地图请查看[命令参考](/cn/cli/command-reference)。

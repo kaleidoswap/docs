@@ -1,0 +1,367 @@
+---
+title: "KaleidoSDK 最佳实践"
+sidebarTitle: "最佳实践"
+description: "用 KaleidoSDK 构建生产级应用的实践指南：客户端初始化、错误处理与重试、金额精度、节点检查、WebSocket 清理与安全"
+---
+
+## 客户端初始化
+
+### 使用环境变量
+
+不要把配置写进源码：
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL!,
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+  apiKey: process.env.KALEIDO_API_KEY,
+});
+```
+
+```python Python
+import os
+
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url=os.environ["KALEIDO_API_URL"],
+    node_url=os.environ.get("KALEIDO_NODE_URL"),
+    api_key=os.environ.get("KALEIDO_API_KEY"),
+)
+```
+</CodeGroup>
+
+### 使用单例客户端
+
+只创建一个客户端实例，并在整个应用中复用：
+
+<CodeGroup>
+```typescript TypeScript
+// lib/kaleido.ts
+import { KaleidoClient } from 'kaleido-sdk';
+
+let client: KaleidoClient | null = null;
+
+export function getClient(): KaleidoClient {
+  if (!client) {
+    client = KaleidoClient.create({
+      baseUrl: process.env.KALEIDO_API_URL!,
+    });
+  }
+  return client;
+}
+```
+
+```python Python
+# lib/kaleido.py
+import os
+
+from kaleido_sdk import KaleidoClient
+
+_client = None
+
+def get_client() -> KaleidoClient:
+    global _client
+    if _client is None:
+        _client = KaleidoClient.create(
+            base_url=os.environ["KALEIDO_API_URL"]
+        )
+    return _client
+```
+</CodeGroup>
+
+## 错误处理
+
+### 始终处理错误
+
+把 SDK 调用包在 try/catch 中，并针对具体错误类型分别处理。下面给出的是最起码值得区分的几类；完整版本见 [错误处理](/cn/sdk/error-handling#comprehensive-error-handling)。
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoError, NetworkError, QuoteExpiredError } from 'kaleido-sdk';
+
+try {
+  const quote = await client.maker.getQuote({ /* ... */ });
+} catch (error) {
+  if (error instanceof QuoteExpiredError) {
+    // 用新报价重试
+  } else if (error instanceof NetworkError && error.isRetryable()) {
+    // 延迟一段时间后重试
+  } else if (error instanceof KaleidoError) {
+    // 记录日志并优雅处理
+    console.error(`[${error.code}] ${error.message}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
+
+try:
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+except QuoteExpiredError:
+    # 用新报价重试
+    pass
+except NetworkError as e:
+    if e.is_retryable():
+        # 延迟一段时间后重试
+        pass
+except KaleidoError as e:
+    print(f"[{e.code}] {e}")
+```
+</CodeGroup>
+
+### 检查是否可重试
+
+不要盲目重试。每个错误都提供 `isRetryable()` / `is_retryable()`，其中已经编码了哪些失败在第二次尝试时可能成功 —— 请使用它，而不要自己去匹配状态码。
+
+完整的异常层级结构、按状态码划分的可重试性表格，以及现成的指数退避封装，见 [错误处理](/cn/sdk/error-handling#retry-patterns)。
+
+## 异步模式
+
+### TypeScript：并行请求
+
+对互不依赖的请求使用 `Promise.all`：
+
+```typescript
+const [assets, pairs, lspInfo] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+  client.maker.getLspInfo(),
+]);
+```
+
+当你希望拿到部分结果时，使用 `Promise.allSettled`：
+
+```typescript
+const results = await Promise.allSettled([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+]);
+
+for (const result of results) {
+  if (result.status === 'fulfilled') {
+    console.log('Success:', result.value);
+  } else {
+    console.error('Failed:', result.reason);
+  }
+}
+```
+
+### Python：串行执行并从错误中恢复
+
+```python
+from kaleido_sdk import KaleidoError
+
+results = {}
+for name, fn in [
+    ("assets", lambda: client.maker.list_assets()),
+    ("pairs", lambda: client.maker.list_pairs()),
+]:
+    try:
+        results[name] = await fn()
+    except KaleidoError as e:
+        print(f"Failed to fetch {name}: {e}")
+        results[name] = None
+```
+
+## 金额处理
+
+### 调用 API 时一律使用原始单位
+
+API 使用原始（最小单位）金额。发送前请先转换展示金额：
+
+<CodeGroup>
+```typescript TypeScript
+import { parseRawAmount } from 'kaleido-sdk';
+
+// 用户输入 0.001 BTC
+const userInput = 0.001;
+const rawAmount = parseRawAmount(userInput, 8);  // 100000
+
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: rawAmount },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+```
+
+```python Python
+from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, parse_raw_amount
+
+# 用户输入 0.001 BTC
+user_input = 0.001
+raw_amount = parse_raw_amount(user_input, 8)  # 100000
+
+quote = await client.maker.get_quote(PairQuoteRequest(
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=raw_amount),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN)
+))
+```
+</CodeGroup>
+
+### 多资产应用请使用 PrecisionHandler
+
+处理多种资产时，使用 `PrecisionHandler` 避免精度错误：
+
+<CodeGroup>
+```typescript TypeScript
+import { createPrecisionHandler } from 'kaleido-sdk';
+
+const handler = createPrecisionHandler(mappedAssets);
+
+// 按资产 ID 安全转换
+const raw = handler.toRawAmount(userInput, assetId);
+const display = handler.toDisplayAmount(rawFromApi, assetId);
+```
+
+```python Python
+from kaleido_sdk import create_precision_handler
+
+handler = create_precision_handler(mapped_assets)
+raw = handler.to_raw_amount(user_input, asset_id)
+display = handler.to_display_amount(raw_from_api, asset_id)
+```
+</CodeGroup>
+
+## 节点操作
+
+### 使用 RLN 前先检查节点
+
+务必确认节点已配置：
+
+<CodeGroup>
+```typescript TypeScript
+if (!client.hasNode()) {
+  throw new Error('Node URL required for this operation');
+}
+
+const balance = await client.rln.getBtcBalance();
+```
+
+```python Python
+if not client.has_node():
+    raise RuntimeError("Node URL required for this operation")
+
+balance = await client.rln.get_btc_balance()
+```
+</CodeGroup>
+
+## WebSocket
+
+### 用完后取消订阅
+
+务必清理 WebSocket 订阅：
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC', 'USDT', 100000, onQuote
+);
+
+// 组件卸载或用户离开页面时清理
+unsubscribe();
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    "BTC", "USDT", 100000, on_quote
+)
+
+# 用完后清理
+unsubscribe()
+```
+</CodeGroup>
+
+### 处理重连
+
+`WSClient` 会自行以指数退避重连，因此你这边要做的是把状态呈现给用户：收到 `disconnected` 时显示「正在重连」提示，收到 `connected` 时重新请求报价，并把 `maxReconnectExceeded` 当作硬性错误而非短暂抖动来处理。
+
+事件列表与重连配置见 [WebSocket](/cn/sdk/websocket#events)。
+
+## 安全
+
+### 切勿在客户端代码中暴露 API 密钥
+
+API 密钥只应在服务端使用。浏览器应用请通过你自己的后端代理 API 调用。
+
+### 校验用户输入
+
+发送到 API 之前，务必校验金额和地址：
+
+<CodeGroup>
+```typescript TypeScript
+// 校验金额是否在该层的交易限额之内
+const pairs = await client.maker.listPairs();
+const pair = pairs.pairs.find(p =>
+  p.base.ticker === 'BTC' && p.quote.ticker === 'USDT'
+);
+
+const limits = pair?.base.endpoints?.find(e => e.layer === 'BTC_LN');
+if (limits && (amount < limits.min_amount || amount > limits.max_amount)) {
+  throw new Error(`Amount must be between ${limits.min_amount} and ${limits.max_amount}`);
+}
+```
+
+```python Python
+pairs = await client.maker.list_pairs()
+pair = next(
+    (p for p in pairs.pairs
+     if p.base.ticker == "BTC" and p.quote.ticker == "USDT"),
+    None
+)
+
+limits = next(
+    (e for e in (pair.base.endpoints or []) if e.layer == "BTC_LN"),
+    None,
+) if pair else None
+
+if limits and not (limits.min_amount <= amount <= limits.max_amount):
+    raise ValueError(
+        f"Amount must be between {limits.min_amount} and {limits.max_amount}"
+    )
+```
+</CodeGroup>
+
+订单规模限额位于每个资产的 `endpoints` 列表中（按层给出的 `TradingLimits`）；`pair.routes` 只告诉你存在哪些 `from_layer -> to_layer` 组合。
+
+## 性能
+
+### 缓存静态数据
+
+资产和交易对很少变化。缓存它们以减少 API 调用：
+
+<CodeGroup>
+```typescript TypeScript
+import type { TradingPairsResponse } from 'kaleido-sdk';
+
+let cachedPairs: TradingPairsResponse | null = null;
+let cacheTime = 0;
+
+async function getPairs() {
+  const now = Date.now();
+  if (!cachedPairs || now - cacheTime > 60000) {  // 缓存 60 秒
+    cachedPairs = await client.maker.listPairs();
+    cacheTime = now;
+  }
+  return cachedPairs;
+}
+```
+
+```python Python
+import time
+
+_cached_pairs = None
+_cache_time = 0
+
+async def get_pairs():
+    global _cached_pairs, _cache_time
+    now = time.time()
+    if _cached_pairs is None or now - _cache_time > 60:
+        _cached_pairs = await client.maker.list_pairs()
+        _cache_time = now
+    return _cached_pairs
+```
+</CodeGroup>

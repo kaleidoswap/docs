@@ -1,0 +1,136 @@
+---
+title: '钱包、资产与支付'
+description: '通过 KaleidoCLI 管理比特币、比特币二层资产、闪电发票和节点备份，在终端完成余额查询、资产发行与支付操作'
+---
+
+## 开始之前
+
+以下命令组需要一个已启动并解锁的节点：
+
+```bash
+kaleido node use default
+kaleido node unlock
+```
+
+## BTC 钱包
+
+### 常用钱包命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido wallet address` | 生成新的链上 BTC 存入地址 |
+| `kaleido wallet balance` | 显示 BTC 余额 |
+| `kaleido wallet send <amount> <address>` | 发送链上 BTC |
+| `kaleido wallet utxos` | 列出 UTXO |
+| `kaleido wallet create-utxos` | 为 RGB 操作创建染色 UTXO |
+| `kaleido wallet transactions` | 列出链上交易 |
+| `kaleido wallet estimate-fee` | 估算链上费率 |
+| `kaleido wallet backup <path>` | 创建加密的钱包备份 |
+| `kaleido wallet restore <path>` | 从备份压缩包恢复 |
+| `kaleido wallet change-password` | 更换钱包密码 |
+### 示例
+
+```bash
+kaleido wallet address
+kaleido wallet balance
+kaleido wallet send 50000 bc1q...
+kaleido wallet create-utxos --num 10 --size 3000
+```
+
+### 备份与恢复
+
+```bash
+kaleido wallet backup ~/kaleido-backup.zip
+kaleido wallet restore ~/kaleido-backup.zip
+```
+
+这两条命令都接受 `--password`。恢复会覆盖当前的节点数据，请谨慎使用。
+
+## RGB 资产
+
+### 核心资产命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido asset list` | 列出节点持有的资产 |
+| `kaleido asset balance <asset-id>` | 显示单个资产的余额 |
+| `kaleido asset metadata <asset-id>` | 显示资产元数据 |
+| `kaleido asset invoice <asset-id>` | 创建 RGB 发票 |
+| `kaleido asset send <asset-id> <amount> <invoice>` | 发送 RGB 资产 |
+| `kaleido asset send-batch` | 在一笔交易中向多个 RGB 接收方发送 |
+| `kaleido asset transfers <asset-id>` | 查看转账历史 |
+| `kaleido asset refresh` | 刷新待处理的转账 |
+| `kaleido asset sync` | 同步 RGB 钱包 |
+| `kaleido asset fail-transfers` | 将待处理的转账标记为失败 |
+| `kaleido asset media` | 按文件摘要获取资产媒体字节 |
+
+### 发行新资产
+
+`issue` 子命令组支持三种受支持的 schema：
+
+```bash
+kaleido asset issue nia --name "MyToken" --ticker MTK --supply 21000000
+kaleido asset issue cfa --name "Art Piece" --supply 100 --file ./art.png
+kaleido asset issue uda --ticker TKT1 --name "Ticket #1" --file ./ticket.png
+```
+
+用法：
+
+- `nia` 用于固定供应量的同质化资产
+- `cfa` 用于可收藏的同质化资产
+- `uda` 用于独一无二的数字资产
+
+### 资产发票与发送示例
+
+```bash
+kaleido asset invoice rgb:abc123... --amount 500 --duration 3600
+kaleido asset send rgb:abc123... 100 rgb:invoice...
+```
+
+`asset send` 值得关注的选项：
+
+- `--fee-rate`
+- `--min-confirmations`
+- `--donation`
+- `--transport-endpoint`
+- `--skip-sync`
+
+## 闪电与 RGB+LN 支付
+
+### 支付命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido payment invoice` | 创建 BOLT11 发票 |
+| `kaleido payment send <invoice>` | 支付闪电发票 |
+| `kaleido payment list` | 列出支付记录 |
+| `kaleido payment status <payment-hash>` | 查看支付状态 |
+| `kaleido payment decode <invoice>` | 解码闪电发票或 RGB 发票 |
+| `kaleido payment invoice-status <invoice>` | 查询发票状态 |
+| `kaleido payment keysend` | 发送无需发票的即时闪电支付 |
+
+### 示例
+
+```bash
+# BTC 发票
+kaleido payment invoice --amount-msat 10000
+
+# RGB+LN 发票
+kaleido payment invoice --asset-id rgb:abc... --asset-amount 500
+
+# 支付发票
+kaleido payment send lnbc...
+
+# 解码收到的发票
+kaleido payment decode rgb:...
+```
+
+支付零金额发票时，需要提供 `--amount-msat`。对于 RGB+LN 支付，需要提供 `--asset-id` 和 `--asset-amount`。
+
+## 使用习惯
+
+- 需要机器可读的响应时，使用 `--json`。
+- 只有在可以接受钱包或转账状态陈旧时，才使用 `--skip-sync`。
+- 在进行大量 RGB 操作之前先创建额外的 UTXO，以免可用的染色输出耗尽。
+
+如果你要管理通道或订购入向流动性，请接着阅读[通道与 LSP 流程](/cn/cli/channels-lsp)。

@@ -1,0 +1,299 @@
+---
+title: 交换 API
+description: 用于发起、执行和查询原子 HTLC 交换的接口端点 —— KaleidoSwap 桌面应用与直连节点的集成都建立在这些接口之上。
+---
+
+## 总览
+
+交换 API 实现了 KaleidoSwap 桌面应用所使用的**原子交换协议**。交换通过闪电网络上的哈希时间锁定合约（HTLC）执行 —— 双方同时锁定资产，因此要么整笔交换全部完成，要么资金原路退回。不存在对手方风险。
+
+使用这些接口端点需要具备：
+- 一个运行中的 **RGB Lightning Node（RLN）**，用于将 HTLC 加入白名单并进行路由。
+- 一条到做市方的 **WebSocket 连接**（或 REST `/market/quote` 接口端点），用于获取实时报价并生成 `rfq_id`。
+
+报价和资产数据见[市场 API](/cn/api-reference/market-apis)，原子交换流程的完整讲解见[交换协议](/cn/api-reference/swap-protocol)。
+
+**基础 URL：** `https://api.signet.kaleidoswap.com/api/v1`（Signet）
+
+---
+
+## 获取节点信息
+
+### 接口端点
+**`GET /api/v1/swaps/nodeinfo`**
+
+### 说明
+获取做市方 RGB Lightning Node 的公开身份信息 —— 包括其公钥、所在网络和当前区块高度。该接口端点可安全轮询。
+
+### 响应结构
+- **`pubkey`**：做市方节点的公钥。
+- **`network`**：该节点所在的比特币网络（例如 `Signet`、`Regtest`、`Mainnet`）。
+- **`block_height`**：该节点已同步到的当前区块高度。
+
+### 响应示例
+```json
+{
+  "pubkey": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706",
+  "network": "Signet",
+  "block_height": 805434
+}
+```
+---
+
+## 通过 WebSocket 获取实时报价
+### WebSocket 接口端点
+
+| Environment | URL |
+|-------------|-----|
+| **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **Mainnet** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *（即将上线）* |
+
+### 说明
+建立 WebSocket 连接，向做市方请求实时报价。该协议采用请求/响应模式：客户端发送一条消息，服务端针对该消息回复。它没有订阅机制 —— 想让价格保持新鲜，就在需要更新报价时再发一条 `quote_request`。
+
+### 连接
+- 将 `{client_id}` 替换为你的客户端的唯一标识符。
+
+### 消息格式
+仅支持两种 action：
+
+- **`ping`** —— 心跳；服务端回复 `pong`。
+- **`quote_request`** —— 为两个资产之间的交换请求报价。
+
+请求报价时，发送如下格式的 JSON 消息：
+
+```json
+{
+  "action": "quote_request",
+  "from_asset": "BTC",
+  "to_asset": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+  "from_amount": 1500000
+}
+```
+
+- **`from_asset`** / **`to_asset`**（必填）：资产标识符 —— 可以是 `BTC` 这类 ticker，也可以是 RGB 合约 ID。
+- **`from_amount`** / **`to_amount`**：以该资产**原始最小单位**表示的数量。两者必须且只能提供其中一个 —— 正向报价用 `from_amount`，反向报价用 `to_amount`。
+- **`from_layer`** / **`to_layer`**（可选）：显式指定结算层（例如 `BTC_LN`、`RGB_LN`）。省略时使用该交易对的默认路由。
+
+### 响应格式
+服务端对每条 `quote_request` 回复一条 `quote_response` 消息，完整报价放在 `data` 中（结构与 REST `POST /api/v1/market/quote` 的响应相同）：
+
+```json
+{
+  "action": "quote_response",
+  "data": {
+    "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+    "from_asset": {
+      "asset_id": "BTC",
+      "name": "Bitcoin",
+      "ticker": "BTC",
+      "layer": "BTC_LN",
+      "amount": 1500000,
+      "precision": 8
+    },
+    "to_asset": {
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+      "name": "Tether USD",
+      "ticker": "USDT",
+      "layer": "RGB_LN",
+      "amount": 875000,
+      "precision": 6
+    },
+    "price": 59507000000,
+    "fee": {
+      "base_fee": 1000,
+      "variable_fee": 250,
+      "fee_rate": 0.0001,
+      "final_fee": 1250,
+      "fee_asset": "BTC",
+      "fee_asset_precision": 8
+    },
+    "timestamp": 1715896356,
+    "expires_at": 1715896416
+  }
+}
+```
+
+### 字段说明
+
+- **`rfq_id`**：即 `request_for_quotation_id`，由做市方为该报价生成的唯一标识符。这个 ID 对发起交换至关重要，必须在 `expires_at` 之前传给 `init` 接口端点。
+- **`from_asset`** / **`to_asset`**：完整的腿规格，包含 `asset_id`、`name`、`ticker`、`layer`、`amount`（最小单位）和 `precision`。
+- **`price`**：1 个完整单位的 `from_asset` 的价格，以 `to_asset` 的最小单位表示。
+- **`fee`**：费用明细 —— `base_fee`、`variable_fee`、`fee_rate`、`final_fee`，以及费用计价所用的资产（`fee_asset`）和精度（`fee_asset_precision`）。
+- **`timestamp`**：报价生成的时间（unix 时间）。
+- **`expires_at`**：`rfq_id` 过期的时间（unix 时间）。
+
+### 补充说明：
+
+- 请求失败时（交易对未知、路由不受支持、数量无效）返回的消息带有 `error` 字段，而不是 `quote_response`。
+- WebSocket 连接会一直保持，直到客户端断开或发生网络错误；请定期发送 `ping` 消息以维持连接健康。
+
+---
+
+## 发起交换
+
+### 接口端点
+
+`POST /api/v1/swaps/init`
+
+### 说明
+基于一份新鲜报价发起交换。该接口端点会锁定价格，并为执行做好准备。
+
+### 请求体
+| Field                      |  Type    | 说明                                  |
+|----------------------------|----------|---------------------------------------|
+| `rfq_id` |  String  | 报价 ID，来自 WebSocket 的 `quote_response` 消息或 REST `POST /api/v1/market/quote` 接口端点。  |
+| `from_asset`               |  String  | 卖出方向的 RGB 资产 ID。              |
+| `from_amount`              |  Integer | 卖出的资产数量。*                     |
+| `to_asset`                 |  String  | 买入方向的 RGB 资产 ID。              |
+| `to_amount`                |  Integer | 买入的资产数量。*                     |
+
+*如果资产是 BTC，数量应以**毫聪（msat）**为单位。其他资产的数量直接按该资产的原生单位提供，不考虑精度。
+
+### 请求示例
+```json
+{
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "from_asset": "btc", 
+  "from_amount": 1000000, 
+  "to_asset": "rgb:2V2f58W-Tabtk3J4j-qGVQQwPWt-ksbujLNxx-x1BMTNBEf-KVsg2j3",
+  "to_amount": 587770
+}
+```
+
+### 响应结构
+- `swapstring`：待执行交换的字符串表示。
+- `payment_hash`：与该交换关联的支付哈希。
+- `access_token`：轮询 `/swaps/atomic/status` 所需的单笔交换 token。它只在发起时于此处返回一次 —— 请与支付哈希一起保存。
+
+### 响应示例
+```json
+{
+  "swapstring": "1000000/btc/587770/rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB/be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
+  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
+  "access_token": "ord_live_3rCkP9dG7mN4"
+}
+```
+
+### 补充说明
+
+- RGB 资产的精度可通过做市方节点上的 `/assets` API 获取。如果客户端持有同一资产，也可以通过节点 API 取得该精度。
+- 在执行交换之前，该接口端点返回的 swapstring 需要通过客户端 RGB Lightning Node（RLN）的 `/taker` API 加入白名单。
+- 在这个示例中，用户以 1,000 聪卖出，换取 0.5877 USDT（使用 RGB 资产 `rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB`）。
+
+---
+
+## 执行交换
+
+### 接口端点
+`POST /api/v1/swaps/execute`
+
+### 说明
+在交换已发起并通过校验后执行该交换。
+
+### 请求体
+| Field          |  Type    | 说明                                          |
+|----------------|----------|-----------------------------------------------|
+| `swapstring`   |  String  | 由 `init` 接口端点生成的 swap string。        |
+| `taker_pubkey` |  String  | 接单方的公钥。                                |
+| `payment_hash` |  String  | 与该交换关联的支付哈希。                      |
+
+### 请求示例
+```json
+{
+  "swapstring": "1000000/btc/587770/rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB/be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e",
+  "taker_pubkey": "03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad",
+  "payment_hash": "be35403fcd85722cb0373db0527a452ce9c2eb23d3ec489af8e33ffb57d5271e"
+}
+```
+
+### 响应结构
+- `status`：交换执行的状态码。
+- `message`：关于本次执行的补充信息。
+
+### 响应示例
+```json
+{
+  "status": 200,
+  "message": "Swap executed successfully"
+}
+```
+---
+
+## 查询交换状态
+
+### 接口端点
+`POST /api/v1/swaps/atomic/status`
+
+### 说明
+使用关联的 `payment_hash` 以及 `/swaps/init` 返回的单笔交换 `access_token`，获取某笔原子交换的当前状态。
+
+### 请求体
+| Field          | Type   | 说明                                                   |
+|----------------|--------|--------------------------------------------------------|
+| `payment_hash` | String | 要查询状态的那笔交换的支付哈希。                       |
+| `access_token` | String | `/swaps/init` 返回的单笔交换访问 token。               |
+
+### 请求示例
+```json
+{
+  "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664",
+  "access_token": "ord_live_3rCkP9dG7mN4"
+}
+```
+
+### 响应
+
+- `swap`：包含该交换详细信息的对象。
+
+### 响应示例
+```json
+{
+  "swap": {
+    "qty_from": 1000000,
+    "qty_to": 587770,
+    "from_asset": "btc",
+    "to_asset": "rgb:2V2f58W-Tabtk3J4j-qGVQQwPWt-ksbujLNxx-x1BMTNBEf-KVsg2j3",
+    "payment_hash": "7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664",
+    "status": "Pending",
+    "requested_at": 1691160765,
+    "initiated_at": 1691168512,
+    "expires_at": 1691172703,
+    "completed_at": 1691171075
+  }
+}
+```
+
+### Swap 对象结构
+- **`qty_from`**（`integer`）：卖出方向的资产数量。示例：`30`
+- **`qty_to`**（`integer`）：买入方向的资产数量。示例：`10`
+- **`from_asset`**（`string`）：卖出方向的 RGB 资产 ID。示例：`rgb:2dkSTbr-jFhznbPmo-TQafzswCN-av4gTsJjX-ttx6CNou5-M98k8Zd`
+- **`to_asset`**（`string`）：买入方向的 RGB 资产 ID。示例：`rgb:2eVw8uw-8G88LQ2tQ-kexM12SoD-nCX8DmQrw-yLMu6JDfK-xx1SCfc`
+- **`payment_hash`**（`string`）：与该交换关联的唯一支付哈希。示例：`7c2c95b9c2aa0a7d140495b664de7973b76561de833f0dd84def3efa08941664`
+- **`status`**（`SwapStatus`）：该交换的当前状态。可能的取值：
+  - `Waiting`
+  - `Pending`
+  - `Succeeded`
+  - `Expired`
+  - `Failed`
+- **`requested_at`**（`integer`）：交换被请求时的 Unix 时间戳。示例：`1691160765`
+- **`initiated_at`**（`integer`）：交换被发起时的 Unix 时间戳。示例：`1691168512`
+- **`expires_at`**（`integer`）：交换过期时的 Unix 时间戳。示例：`1691172703`
+- **`completed_at`**（`integer`）：交换完成时的 Unix 时间戳。示例：`1691171075`
+
+### 补充说明
+
+- `status` 字段实时反映交换的进展。
+- 请确保提供的 `payment_hash` 准确无误，才能取回正确的交换状态。
+- `access_token` 缺失或无效时统一返回 `404 Swap not found`，因此无法用该接口端点探测已存在的支付哈希。
+- 与时间相关的字段均为 Unix 时间戳格式。
+- `Swap` 对象中的 `SwapStatus` 字段可以是以下取值之一：
+  - **`Waiting`**：交换等待发起。
+  - **`Pending`**：交换已发起，正在进行中。
+  - **`Succeeded`**：交换已成功完成。
+  - **`Expired`**：交换在要求的时间内未完成。
+  - **`Failed`**：交换遇到错误，未能成功完成。
+
+---
+
+错误详情请参阅[错误处理](/cn/api-reference/error-handling)。

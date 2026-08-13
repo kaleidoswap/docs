@@ -1,0 +1,130 @@
+---
+title: "总览"
+sidebarTitle: "总览"
+description: "KaleidoSwap 比特币交换 API 提供 REST 接口端点，可在多协议比特币 DEX 上完成原子交换、获取市场数据以及下单开通闪电通道。"
+---
+
+RGB Lightning DEX API 用于与 RGB 闪电服务提供商（RGB-LSP）交互，后者按请求提供流动性并支持交换功能。交换协议采用接单方-做市方模型：客户端为交易对请求实时报价，并基于报价发起交换。该 API 同时支持 RGB LSPS1（Lightning Service Provider Specification），用于管理通道和流动性服务。
+
+### 核心特性
+- **RGB LSPS1（Lightning Service Provider Specification）支持**：流动性服务与交换功能。
+- **实时市场数据**：基于 WebSocket 的请求/响应式报价推送（`quote_request`/`quote_response`）。
+- **交换协议**：接单方-做市方模型，用于发起和执行交换。
+- **资产与交易对管理**：完整的 API，用于获取支持的资产和交易对。
+
+继续阅读[快速开始](/cn/api-reference/getting-started)。
+
+---
+
+## 两个子 API
+
+KaleidoSwap API 分为两个彼此独立的服务：
+
+| 子 API | 基础路径 | 用途 |
+|---------|-----------|---------|
+| **Maker API** | `/api/v1/` | 市场数据、报价、交换订单以及 LSPS1 通道操作 |
+| **RLN API** | 节点根路径（例如 `http://<node>:3001/`） | RGB Lightning Node 操作 —— 钱包、通道和支付 |
+
+**Maker API** 可公开访问，负责全部交易和流动性操作。**RLN API** 是直接由你自己的 RGB Lightning Node 根路径提供的 REST API（例如 `http://<node>:3001/nodeinfo`），需要运行一个节点实例。
+
+### 我该用哪个 API？
+
+| 目标 | API | 接口端点分组 |
+|------|-----|----------------|
+| 获取可用资产或交易对 | Maker API | [市场 API](/cn/api-reference/market-apis) |
+| 获取交换价格报价 | Maker API | [市场 API](/cn/api-reference/market-apis) |
+| 发起或跟踪原子交换 | Maker API | [交换 API](/cn/api-reference/swap-apis) |
+| 向 LSP 订购闪电通道 | Maker API | [RGB LSPS1 API](/cn/api-reference/rgb-lsps1-apis) |
+| 通过 WebSocket 请求实时报价 | Maker API（WebSocket） | [交换协议](/cn/api-reference/swap-protocol) |
+| 查询钱包余额或节点信息 | RLN API | 需要你自己的节点 |
+| 收发 BTC 或 RGB 资产 | RLN API | 需要你自己的节点 |
+| 开通或关闭闪电通道 | RLN API | 需要你自己的节点 |
+
+<Note>
+  下方的 **交互式 API 演练场** 运行在 **signet 环境**（`https://api.signet.kaleidoswap.com`）。请用它来探索和测试。生产环境请在主网地址可用后改用主网 URL。
+</Note>
+
+---
+
+## 认证 {#authentication}
+
+**当前状态**：所有 Maker API 接口端点均支持匿名访问。Bearer API 密钥（`Authorization: Bearer <token>`）目前已被**接受并记录归属** —— 密钥携带 `quote:read`（市场数据与报价）和 `swap:execute`（交换发起/执行）等作用域 —— 但强制校验正在逐步上线，因此不带密钥的请求仍会被正常处理。API 演练场已预先配置 bearer 认证。
+
+**即将上线**：一旦开启强制校验，缺失或无效密钥的请求将收到 `401` 响应。集成方现在就应开始发送 API 密钥，以便提前就绪。
+
+---
+
+## 基础响应格式
+
+所有 API 响应遵循统一的 JSON 结构。成功响应直接返回请求的数据，形式为 JSON 对象或数组。错误使用三种信封格式之一。
+
+**应用错误**（参数无效、资源缺失、冲突、速率限制、服务器错误）返回结构化信封：
+
+```json
+{
+  "error_code": "PAIR_NOT_FOUND",
+  "message": "Trading pair not found: BTC/USDT",
+  "details": {},
+  "request_id": "req_01HV8Q9X7G0Q7Y3Z"
+}
+```
+
+**请求校验错误**（schema 校验失败，HTTP `422`）返回 FastAPI 的校验信封：
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "rfq_id"],
+      "msg": "Field required",
+      "type": "missing"
+    }
+  ]
+}
+```
+
+**遗留错误**：少数接口端点的部分 `400` 响应仍是一个裸的 detail 对象，不含 `error_code` 或 `request_id` —— 例如 `/market/quote` 上不受支持的路由，或 `/market/pairs` 上格式错误的 `pair_ticker` 过滤条件：
+
+```json
+{
+  "detail": "Route not supported for this pair. From: BTC_LN, To: RGB_LN"
+}
+```
+
+HTTP 状态码遵循标准约定：
+
+| 状态码 | 含义 |
+|--------|---------|
+| `200` | 成功 |
+| `400` | 请求错误 —— 参数无效 |
+| `401` | 未授权 —— API 密钥缺失或无效（强制校验开启后） |
+| `403` | 禁止访问 —— 该密钥不允许从此来源使用 |
+| `404` | 资源不存在 |
+| `422` | 无法处理的实体 —— 校验错误 |
+| `429` | 请求过多 —— 超出速率限制 |
+| `500` | 服务器内部错误 |
+| `503` | 服务不可用 —— 做市方或 LSP 节点暂时无法访问 |
+
+完整的错误码列表见[错误处理](/cn/api-reference/error-handling)。
+
+---
+
+## 速率限制
+
+速率限制适用于所有 API 接口端点。超出限制的请求会收到 `429 Too Many Requests` 响应。具体限制因接口端点和环境而异。构建集成时，请为重试实现指数退避，并尽可能在本地缓存静态数据（资产、交易对）。
+
+---
+
+## 使用 SDK
+
+除了直接调用 REST API，你也可以使用官方 KaleidoSDK 库，它们对这些接口端点做了封装，提供类型安全和便捷方法：
+
+<CardGroup cols={2}>
+  <Card title="TypeScript SDK" icon="js" href="/cn/sdk/introduction">
+    从 OpenAPI 规范自动生成的类型化客户端，提供 `client.maker.*` 和 `client.rln.*` 子客户端
+  </Card>
+
+  <Card title="Python SDK" icon="python" href="/cn/sdk/introduction">
+    同步 Python 客户端，使用 Pydantic 模型，采用相同的子客户端架构
+  </Card>
+</CardGroup>

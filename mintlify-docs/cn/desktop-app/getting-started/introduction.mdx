@@ -1,0 +1,67 @@
+---
+title: "KaleidoSwap 桌面应用"
+sidebarTitle: "概览"
+description: "KaleidoSwap 桌面应用是一款非托管钱包，内置原子交换，让你在闪电网络上管理比特币与比特币二层资产，并完全掌控自己的节点、通道和密钥。"
+---
+
+KaleidoSwap 桌面应用是一款功能完整的客户端，用于在闪电网络上交易比特币和 RGB 资产。它让你完全掌控自己的节点、钱包和通道。
+
+## 你可以做什么
+
+<CardGroup cols={2}>
+  <Card title="运行自己的节点" icon="server">
+    在本地运行 RGB Lightning Node，或连接到远程节点 —— 基础设施完全自主掌控
+  </Card>
+  <Card title="管理钱包" icon="wallet">
+    创建钱包、生成助记词，并管理 BTC 与 RGB 资产余额
+  </Card>
+  <Card title="开通通道" icon="code-branch">
+    开通带或不带 RGB 资产的闪电通道，或通过 LSP 订购通道
+  </Card>
+  <Card title="交易资产" icon="arrows-rotate">
+    直接从你的节点执行 BTC 与 RGB 资产之间的原子交换
+  </Card>
+</CardGroup>
+
+## 桌面应用覆盖的范围
+
+| 领域 | 桌面应用为你提供什么 |
+|------|-------------------------------|
+| **节点控制** | 在本机运行 RGB Lightning Node，或让应用指向你自己托管的远程节点 |
+| **钱包** | 创建并解锁账户、生成或恢复助记词、持有 BTC 与 RGB 余额 |
+| **通道** | 直接与对等节点开通通道，或向 LSP 订购一条预先分配 RGB 资产的通道 |
+| **交易** | 从自己的节点发起询价，并结算 BTC 与 RGB 资产之间的原子交换 |
+| **备份** | 导出通道备份，数据丢失后通道资金仍可恢复 |
+| **设置** | 按账户配置节点接口端点、RGB proxy 和网络 |
+
+## 工作原理
+
+桌面应用是客户端，不是托管方。它驱动一个 **RGB Lightning Node**，由该节点保管你的密钥、维护通道状态并在本地验证 RGB 合约。
+
+- **应用**是界面层：账户、余额、通道和交易界面
+- **RGB Lightning Node** 保管密钥和通道状态，无论它运行在你的本机还是你控制的服务器上
+- **LSP** 提供入向流动性，并作为交换中锁定另一条腿的交易对手
+- **比特币**是通道的锚定层，也是仓位最终结算的地方
+
+任何第三方在任何环节都无法接触你的资金。想了解它在整体架构中的位置，参见[架构](/cn/whats-kaleidoswap/architecture#client-architecture)。
+
+## 日常流程
+
+1. **解锁** —— 输入密码；应用启动节点或重新连接到节点
+2. **查看余额** —— 所选账户的链上 BTC、闪电余额和 RGB 资产
+3. **调动资金** —— 存入、提取或开通通道
+4. **交易** —— 为交易对获取报价，并与做市方结算原子交换
+
+## 系统要求
+
+- **macOS** 12+（Apple Silicon 与 Intel）
+- **Windows** 10+（64 位）
+- **Linux**（Ubuntu 22.04+、Debian 12+，或其他带 `webkit2gtk-4.1` 的等效发行版）
+
+如需从源码构建，还需要 Rust、Node.js 和 Tauri 的前置依赖。
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

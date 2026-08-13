@@ -1,0 +1,64 @@
+---
+title: "KaleidoSwap 扩展：更多资源"
+sidebarTitle: "更多资源"
+description: "KaleidoSwap 扩展用户的常用链接：测试版申请、社群与支持渠道，以及 Spark、Arkade、Liquid、RGB 和 Nostr 各项标准的官方文档。"
+---
+
+## 协议文档
+
+扩展会从同一组助记词为每个分层派生一个账户。下面是各协议的上游参考资料。
+
+<CardGroup cols={2}>
+  <Card title="Spark" icon="bolt-lightning" href="https://docs.spark.money">
+    基于状态链的转账、Lightning 收发，以及 Spark 账户背后的代币机制。
+  </Card>
+  <Card title="Arkade" icon="alien-8bit" href="https://docs.arkadeos.com">
+    VTXO、进出通道（boarding/offboarding），以及 Arkade 账户背后的批量结算模型。
+  </Card>
+  <Card title="Liquid" icon="droplet" href="https://docs.liquid.net">
+    L-BTC 和 USDt 等已发行资产背后的联邦侧链。
+  </Card>
+  <Card title="RGB 协议" icon="gem" href="https://docs.rgb.info">
+    客户端验证和资产接口，同时适用于无节点 RGB-L1 和 Lightning 上的 RGB。
+  </Card>
+</CardGroup>
+
+## DApp 标准
+
+扩展注入网页的各个提供方所依据的规范。各提供方的具体暴露方式见 [DApp 连接](/cn/extensions/kaleidoswap-extension/dapp-connectivity)。
+
+<CardGroup cols={2}>
+  <Card title="WebLN" icon="bolt" href="https://www.webln.dev/">
+    面向 Lightning 的浏览器提供方标准，注入在 `window.webln` 上。
+  </Card>
+  <Card title="NIP-07" icon="signature" href="https://github.com/nostr-protocol/nips/blob/master/07.md">
+    页面内的 Nostr 签名，注入在 `window.nostr` 上。
+  </Card>
+  <Card title="NIP-46" icon="tower-broadcast" href="https://github.com/nostr-protocol/nips/blob/master/46.md">
+    通过 `bunker://` 字符串，经中继完成的 Nostr Connect 远程签名。
+  </Card>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    KaleidoSwap [MCP 服务器](/cn/ai-tools/mcp-servers)背后的工具协议。
+  </Card>
+</CardGroup>
+
+## 社群与支持
+
+<CardGroup cols={2}>
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    加入社群，与其他测试者交流并获取支持。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+<Note>
+  反馈问题时，请附上浏览器及版本、**设置 > 关于**（Settings > About）中显示的扩展版本、复现步骤，以及控制台日志（右键点击弹出窗口，然后选择 **Inspect > Console**）。请先查看[故障排查](/cn/extensions/kaleidoswap-extension/troubleshooting)。
+</Note>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

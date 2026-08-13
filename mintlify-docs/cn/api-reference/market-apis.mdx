@@ -1,0 +1,392 @@
+---
+title: 市场 API
+description: 从 KaleidoSwap 做市方获取资产、交易对、路由与报价数据，为在多协议比特币 DEX 上发起原子交换做好准备。
+---
+
+## 总览
+
+市场 API 是任何交换集成的起点。在创建交换订单之前，你需要的信息都由它们提供：
+
+- **列出资产** —— 发现做市方支持的全部资产（资产 ID、ticker、精度、各层的交易限额）。
+- **列出交易对** —— 查看哪些交易对处于启用状态，以及它们支持哪些路由。
+- **请求报价** —— 为指定数量获取锁定价格；返回的 `rfq_id` 用于创建订单。
+
+所有市场 API 接口端点均可公开访问，无需认证。
+
+**基础 URL：** `https://api.signet.kaleidoswap.com/api/v1`（Signet）
+
+---
+
+## 列出资产
+
+### 接口端点
+**`GET /api/v1/market/assets`**
+
+### 说明
+列出做市方支持的资产，支持可选的过滤条件和分页。该接口端点可安全轮询并缓存。
+
+### 查询参数
+所有过滤条件按 AND 组合，且均为可选。
+
+| Parameter   | Type    | 说明                                                   |
+|-------------|---------|--------------------------------------------------------|
+| `asset_id`  | String  | 按资产 ID 过滤（例如 `rgb:2dkSTbr-...`）。             |
+| `ticker`    | String  | 按 ticker 过滤（例如 `BTC`、`USDT`）。                 |
+| `layer`     | String  | 按层过滤（例如 `BTC_LN`、`RGB_L1`）。                  |
+| `network`   | String  | 按网络过滤（例如 `LN`、`L1`）。                        |
+| `protocol`  | String  | 按协议过滤（例如 `BTC`、`RGB`）。                      |
+| `is_active` | Boolean | 按启用状态过滤。                                       |
+| `limit`     | Integer | 每页条目数（默认 50，最大 100）。                      |
+| `offset`    | Integer | 分页偏移量（默认 0）。                                 |
+
+### 响应结构
+- **`assets`**：受支持资产的数组。
+  - **`ticker`**：资产的简称或符号（例如 `USDT`）。
+  - **`asset_id`**：资产的唯一标识符。
+  - **`name`**：资产全称（例如 `Tether USD`）。
+  - **`precision`**：资产的小数精度。
+  - **`protocol_ids`**：协议名称到该资产在对应协议上的标识符的映射。
+  - **`media`**：关于该资产的附加媒体或元数据（可选）。
+  - **`issued_supply`**：该资产的总发行量。
+  - **`timestamp`**：资产元数据的时间戳。
+  - **`endpoints`**：各层交易限额的数组 —— 每一项包含 `layer`、`min_amount`、`max_amount`（以最小单位计）和 `is_active`。
+  - **`is_active`**：布尔值，表示该资产当前是否启用。
+  - **`added_at`**：该资产被添加的时间戳。
+  - **`supported_layers`**：该资产可结算的层列表（例如 `["BTC_LN", "BTC_L1"]`）。
+- **`network`**：表明该响应对应主网、signet 还是 regtest。
+- **`total`**：匹配资产的总数（不只是当前页）。
+- **`limit`** / **`offset`**：请求中分页参数的回显。
+- **`timestamp`**：生成该响应时的服务端时间戳。
+
+### 响应示例
+```json
+{
+  "assets": [
+    {
+      "ticker": "USDT",
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+      "name": "Tether USD",
+      "precision": 6,
+      "protocol_ids": {
+        "RGB": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
+      },
+      "media": null,
+      "issued_supply": 100000000000,
+      "timestamp": 1724676126,
+      "endpoints": [
+        {
+          "layer": "RGB_LN",
+          "min_amount": 1000000,
+          "max_amount": 100000000000,
+          "is_active": true
+        }
+      ],
+      "is_active": true,
+      "added_at": 1724676126,
+      "supported_layers": ["RGB_LN"]
+    }
+  ],
+  "network": "regtest",
+  "total": 1,
+  "limit": 50,
+  "offset": 0,
+  "timestamp": 1724676126
+}
+```
+
+---
+
+## 列出交易对
+
+### 接口端点
+
+`GET /api/v1/market/pairs`
+
+### 说明
+
+获取交换操作支持的交易对列表，支持过滤条件和分页。该接口端点可安全轮询并缓存。
+
+### 查询参数
+所有参数均为可选。用于指定单个交易对的标识方式彼此互斥。
+
+| Parameter                       | Type    | 说明                                                    |
+|---------------------------------|---------|---------------------------------------------------------|
+| `pair_id`                       | String  | 按交易对 UUID 过滤。                                    |
+| `pair_ticker`                   | String  | 按 `BASE/QUOTE` 格式的交易对 ticker 过滤。              |
+| `base_ticker` + `quote_ticker`  | String  | 按资产 ticker 过滤。                                    |
+| `from_asset_id` + `quote_asset_id` | String | 按资产 ID 过滤。                                      |
+| `layer`                         | String  | 按层过滤（例如 `BTC_LN`、`RGB_LN`）。                   |
+| `asset`                         | String  | 按资产 ticker 或 ID 过滤（交易对任意一侧均可）。        |
+| `active_only`                   | Boolean | 仅返回启用的交易对（默认 `true`）。                     |
+| `limit`                         | Integer | 每页条目数（默认 50，最大 100）。                       |
+| `offset`                        | Integer | 分页偏移量（默认 0）。                                  |
+
+### 响应结构
+
+- `pairs`：受支持交易对的数组。
+  - `id`：该交易对的唯一标识符（UUID）。
+  - `base` / `quote`：完整的资产对象（`ticker`、`asset_id`、`name`、`precision`、`protocol_ids`、`media`、`issued_supply`、`endpoints`）。各层的最小/最大交易限额位于每个资产的 `endpoints` 数组中。
+  - `price`：该交易对的指示性价格（字符串，可能为 `null`）。
+  - `routes`：受支持的执行路由，每条包含 `from_layer` 和 `to_layer`。
+  - `is_active`：布尔值，表示该交易对当前是否启用。
+  - `ticker`：交易对 ticker（例如 `BTC/USDT`）。
+  - `base_asset` / `base_asset_id`：基础资产的 ticker 和唯一标识符。
+  - `quote_asset` / `quote_asset_id`：报价资产的 ticker 和唯一标识符。
+- `total`：匹配交易对的总数（不只是当前页）。
+- `limit` / `offset`：请求中分页参数的回显。
+- `timestamp`：生成该响应时的服务端时间戳。
+
+### 响应示例
+
+```json
+{
+  "pairs": [
+    {
+      "id": "2c188c7b-a823-4e5b-a82f-4d9fcb5e80ba",
+      "base": {
+        "ticker": "BTC",
+        "asset_id": "BTC",
+        "name": "Bitcoin",
+        "precision": 8,
+        "protocol_ids": {},
+        "media": null,
+        "issued_supply": null,
+        "endpoints": [
+          {
+            "layer": "BTC_LN",
+            "min_amount": 100000,
+            "max_amount": 100000000000,
+            "is_active": true
+          }
+        ]
+      },
+      "quote": {
+        "ticker": "USDT",
+        "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+        "name": "Tether USD",
+        "precision": 6,
+        "protocol_ids": {},
+        "media": null,
+        "issued_supply": 100000000000,
+        "endpoints": [
+          {
+            "layer": "RGB_LN",
+            "min_amount": 1000000,
+            "max_amount": 100000000000,
+            "is_active": true
+          }
+        ]
+      },
+      "price": "59507.00",
+      "routes": [
+        { "from_layer": "BTC_LN", "to_layer": "RGB_LN" },
+        { "from_layer": "RGB_LN", "to_layer": "BTC_LN" }
+      ],
+      "is_active": true,
+      "ticker": "BTC/USDT",
+      "base_asset": "BTC",
+      "base_asset_id": "BTC",
+      "quote_asset": "USDT",
+      "quote_asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0,
+  "timestamp": 1724676126
+}
+```
+---
+
+## 获取交易对路由
+
+### 接口端点
+**`POST /api/v1/market/pairs/routes`**
+
+### 说明
+返回指定交易对支持的执行路由。请求体中必须且只能提供一种标识方式：`pair_id`、`from_asset_id` + `quote_asset_id`、`pair_ticker`，或 `base_ticker` + `quote_ticker`。
+
+### 请求示例
+```json
+{
+  "pair_ticker": "BTC/USDT"
+}
+```
+
+### 响应示例
+```json
+{
+  "routes": [
+    { "from_layer": "BTC_LN", "to_layer": "RGB_LN" },
+    { "from_layer": "RGB_LN", "to_layer": "BTC_LN" }
+  ]
+}
+```
+
+如果所请求的交易对没有可用路由，该接口端点返回 `404` 错误。
+
+---
+
+## 发现路由
+
+### 接口端点
+**`POST /api/v1/market/routes`**
+
+### 说明
+发现资产之间的直连路由和多跳路由。该响应仅供参考，不会预留流动性。
+
+### 请求体
+| Field        | Type    | 说明                                                               |
+|--------------|---------|--------------------------------------------------------------------|
+| `from_asset` | String  | 源资产的 ticker 或 ID（必填）。                                    |
+| `from_layer` | String  | 按源层过滤（可选）。                                               |
+| `to_asset`   | String  | 目标资产；省略时返回所有可达资产。                                 |
+| `to_layer`   | String  | 按目标层过滤（可选）。                                             |
+| `max_hops`   | Integer | 最大跳数，1-5（默认 2）。                                          |
+
+### 响应示例
+```json
+{
+  "routes": [
+    {
+      "steps": [
+        {
+          "from_asset": "BTC",
+          "from_layer": "BTC_LN",
+          "to_asset": "USDT",
+          "to_layer": "RGB_LN",
+          "pair_ticker": "BTC/USDT",
+          "indicative_price": "59507.00"
+        }
+      ],
+      "total_hops": 1
+    }
+  ],
+  "timestamp": 1724676126
+}
+```
+
+---
+
+## 获取路由可达性矩阵
+
+### 接口端点
+**`GET /api/v1/market/routes/matrix`**
+
+### 说明
+返回一个矩阵，展示哪些资产之间可以互相到达，以及每种组合的最小跳数。可安全轮询并缓存。
+
+### 响应示例
+```json
+{
+  "matrix": [
+    {
+      "from_asset": "BTC",
+      "to_asset": "USDT",
+      "layers": ["BTC_LN->RGB_LN"],
+      "min_hops": 1
+    }
+  ],
+  "assets": ["BTC", "USDT"],
+  "timestamp": 1724676126
+}
+```
+
+---
+
+## 为交易对请求报价
+
+### 接口端点
+**`POST /api/v1/market/quote`**
+
+### 说明
+为两个资产腿之间的路由请求一份由 RFQ 支撑的报价。响应中包含该报价的详细信息，包括价格、费用和过期时间。
+
+### 请求结构
+
+请求体包含两个嵌套的腿对象 —— 没有 `pair_id`：
+
+- **`from_asset`**：源腿的规格。
+  - **`asset_id`**：资产标识符（例如 `BTC` 或某个 RGB 合约 ID）。
+  - **`layer`**：结算层（例如 `BTC_LN`、`RGB_LN`、`BTC_L1`、`RGB_L1`）。
+  - **`amount`**（可选）：以该资产最小单位表示的数量。
+- **`to_asset`**：目标腿的规格 —— 字段与 `from_asset` 相同。
+
+`from_asset.amount` 和 `to_asset.amount` 必须且只能提供其中一个：正向报价设置 `from_asset.amount`，反向报价设置 `to_asset.amount`。
+
+### 请求示例
+
+```json
+{
+  "from_asset": {
+    "asset_id": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "layer": "RGB_LN"
+  }
+}
+```
+
+### 响应结构
+
+- `rfq_id`：该报价请求的唯一标识符。
+- `from_asset` / `to_asset`：完整的腿规格，各自包含 `asset_id`、`name`、`ticker`、`layer`、`amount`（最小单位）和 `precision`。
+- `price`：1 个完整单位的 `from_asset` 的价格，以 `to_asset` 的最小单位表示。
+- `fee`：费用明细对象：
+  - `base_fee`：固定费用部分。
+  - `variable_fee`：随数量变化的费用部分。
+  - `fee_rate`：可变费用的费率。
+  - `final_fee`：总费用（`base_fee + variable_fee`）。
+  - `fee_asset`：费用计价所用的资产。
+  - `fee_asset_precision`：费用资产的小数精度。
+- `timestamp`：生成该报价时的服务端时间戳。
+- `expires_at`：该报价过期的时间戳。
+
+### 响应示例
+
+```json
+{
+  "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
+  "from_asset": {
+    "asset_id": "BTC",
+    "name": "Bitcoin",
+    "ticker": "BTC",
+    "layer": "BTC_LN",
+    "amount": 1500000,
+    "precision": 8
+  },
+  "to_asset": {
+    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "layer": "RGB_LN",
+    "amount": 875000,
+    "precision": 6
+  },
+  "price": 59507000000,
+  "fee": {
+    "base_fee": 1000,
+    "variable_fee": 250,
+    "fee_rate": 0.0001,
+    "final_fee": 1250,
+    "fee_asset": "BTC",
+    "fee_asset_precision": 8
+  },
+  "timestamp": 1715896356,
+  "expires_at": 1715896416
+}
+```
+
+### 补充说明
+- 所请求的路由（`from_asset.layer` → `to_asset.layer`）必须是 `/api/v1/market/pairs` 中该交易对所支持的 `routes` 之一；不受支持的路由返回 `400` 错误。
+- 数量应保持在每个资产 `endpoints` 数组中给出的各层 `min_amount`/`max_amount` 限额之内。
+- `expires_at` 字段表明该报价从何时起不再可用于发起交换。
+- 费用已计入所计算出的腿数量中。
+- 在过期之前，`rfq_id` 可用于后续的交换发起请求或 LSPS1 订单请求。
+
+---
+
+关于交换操作的更多细节，请继续阅读[交换 API](/cn/api-reference/swap-apis)。

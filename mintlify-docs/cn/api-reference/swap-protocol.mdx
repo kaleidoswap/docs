@@ -1,0 +1,136 @@
+---
+title: "原子交换协议"
+sidebarTitle: "交换协议"
+description: "深入了解 KaleidoSwap 交换的底层机制：基于闪电网络的 HTLC 原子交换，附流程图与代码示例，帮助你完成集成。"
+---
+
+KaleidoSwap 通过客户端的 RGB Lightning Node 原子性地执行交换：
+
+| 模型 | 使用方 | 所需信任 | 结算方式 |
+|-------|---------|----------------|------------|
+| **原子交换** | 桌面应用、SDK、节点集成 | 无 —— 由密码学保证 | 闪电网络上的 HTLC |
+
+---
+
+## 原子交换
+
+桌面应用使用**哈希时间锁合约（HTLC）**在闪电网络上原子性地执行交换。双方同时锁定各自的资产 —— 要么整笔交换完成，要么双方都拿回自己的资金。不存在对手方风险。这与[闪电主网上首笔 RGB 资产交换](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd)背后的机制相同。
+
+### 工作原理
+
+1. 接单方通过 WebSocket 向做市方请求实时报价（每个 `quote_response` 都带有一个 `rfq_id`）。
+2. 接单方调用 `POST /api/v1/swaps/init` —— 做市方锁定汇率，并返回 `swapstring`、`payment_hash` 和 `access_token`。`access_token` 只返回一次 —— 请与 payment hash 一起保存，后续轮询交换状态时需要用到它。
+3. 接单方的 RGB Lightning Node 将该 `swapstring` 加入白名单（授权其通过该节点路由）。
+4. 接单方调用 `POST /api/v1/swaps/execute` —— 做市方发起 HTLC。
+5. 闪电网络路由该 HTLC：做市方揭示 preimage 以领取 BTC，同时将 RGB 资产释放给接单方。
+6. 如果任一方未能在 HTLC 超时前完成，双方资金都会自动退回。
+7. 接单方用第 2 步得到的 `payment_hash` **和** `access_token` 轮询 `POST /api/v1/swaps/atomic/status`。token 缺失或无效时统一返回 `404 Swap not found`。
+
+### 时序图
+
+```
+Taker Client                         Maker (RGB-LSP)                   Taker RLN Node
+     |                                      |                                 |
+     |──── WebSocket connect ──────────────>|                                 |
+     |──── quote_request (BTC/USDT) ───────>|                                 |
+     |<─── quote_response (price, rfq_id) ──|                                 |
+     |                                      |                                 |
+     |──── POST /api/v1/swaps/init ────────>|                                 |
+     |       (rfq_id, from, to, amounts)    |                                 |
+     |<─── { swapstring, payment_hash,      |                                 |
+     |       access_token } ─────────────── |                                 |
+     |                                      |                                 |
+     |──── whitelist_swap(swapstring) ──────────────────────────────────────>|
+     |<─── swap whitelisted ───────────────────────────────────────────────  |
+     |                                      |                                 |
+     |──── POST /api/v1/swaps/execute ─────>|                                 |
+     |       (swapstring, taker_pubkey,     |                                 |
+     |        payment_hash)                 |                                 |
+     |<─── 200 OK ──────────────────────── |                                 |
+     |          ← HTLC resolves atomically on Lightning Network →             |
+     |                                      |                                 |
+     |── POST /api/v1/swaps/atomic/status ─>|                                 |
+     |       (payment_hash, access_token)   |                                 |
+     |<─── { status: "Succeeded" } ─────── |                                 |
+```
+
+### 使用到的接口端点
+
+| 步骤 | 接口端点 |
+|------|----------|
+| 请求报价 | WebSocket `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| 锁定汇率 | `POST /api/v1/swaps/init` |
+| 执行交换 | `POST /api/v1/swaps/execute` |
+| 查询状态 | `POST /api/v1/swaps/atomic/status`（需要 init 返回的 `access_token`） |
+
+### WebSocket 环境
+
+| 环境 | URL |
+|-------------|-----|
+| **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **主网** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *（即将推出）* |
+
+请将 `{client_id}` 替换为你本次会话的唯一标识符。
+
+### SDK 集成
+
+SDK 会替你处理 WebSocket、init 和 execute 这几个步骤：
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',  // 原子交换必需
+});
+
+// 订阅实时报价流
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client');
+
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC', 'USDT', 100000,
+  async (quote) => {
+    // 用最新报价中的 rfq_id 执行 init + execute
+    const result = await client.maker.initSwap({
+      rfq_id: quote.rfq_id,
+      from_asset: 'BTC',
+      from_amount: quote.from_amount,
+      to_asset: 'USDT',
+      to_amount: quote.to_amount,
+    });
+    // 在你的节点上加入白名单，然后执行……
+  }
+);
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",  # 原子交换必需
+)
+
+# 订阅实时报价流并发起交换
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client")
+# 完整的原子交换流程见 sdk/examples
+```
+</CodeGroup>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="交换 API" icon="code" href="/cn/api-reference/swap-apis">
+    原子交换 init 与 execute 的接口端点
+  </Card>
+  <Card title="市场 API" icon="chart-line" href="/cn/api-reference/market-apis">
+    报价与市场数据的接口端点
+  </Card>
+  <Card title="SDK 示例" icon="file-code" href="/cn/sdk/examples">
+    原子交换流程的端到端代码示例
+  </Card>
+  <Card title="错误处理" icon="triangle-exclamation" href="/cn/api-reference/error-handling">
+    处理交换失败与边界情况
+  </Card>
+</CardGroup>

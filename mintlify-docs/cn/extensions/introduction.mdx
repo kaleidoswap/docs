@@ -1,0 +1,106 @@
+---
+title: "KaleidoSwap 浏览器扩展"
+sidebarTitle: "概览"
+description: "KaleidoSwap 生态的浏览器扩展：面向 Spark、Arkade、Liquid 的多协议比特币分层钱包，内置原子交换、跨链桥和 DApp 连接，资产管理与支付审批都留在浏览器里完成。"
+---
+
+KaleidoSwap 浏览器扩展把钱包管理、协议账户、交换和 DApp 连接直接带进浏览器。它在工具栏上提供一个常驻的钱包界面，用于查看余额、发起转账、处理钱包审批请求以及执行协议操作。
+
+## KaleidoSwap 扩展是什么？
+
+KaleidoSwap 扩展是 KaleidoSwap 面向比特币及其分层协议的浏览器钱包。它把 Spark、Arkade、Liquid、Bitcoin L1 上的 RGB、可选的 RGB Lightning Node（RLN）、交换、跨链桥、Nostr 身份和 DApp 连接集中到同一个钱包界面里。
+
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 扩展仪表盘" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+| 能力 | KaleidoSwap 扩展带来什么 |
+|------------|-------------------------------------|
+| **钱包** | 从浏览器工具栏直接访问内置钱包 |
+| **支付** | 直接完成审批流程，无需在多个工具之间复制请求 |
+| **资产管理** | 覆盖 Spark、Arkade、Liquid、无节点 RGB-L1 以及可选 RGB Lightning Node 账户中的 BTC 和资产 |
+| **DApp 支持** | 为受信任的 DApp 提供 WebLN、WebBTC 和 Nostr（NIP-07 与 NIP-46）Provider |
+| **交换** | 连接到受支持的交易场所后，可在扩展内直接交换 |
+| **跨链桥** | 在 Spark 与外部链之间转移资金 |
+
+## 核心功能
+
+### 钱包管理
+
+- 使用新生成的 12 词助记词创建钱包，或导入已有的 12 词或 24 词助记词
+- 从同一助记词派生 Spark、Arkade、Liquid、RGB-L1 和 Nostr 身份状态
+- 需要 RGB 闪电通道和基于做市方的 RGB 交换时，可选择启用 RGB Lightning Node
+- 按账户和分层查看 BTC：Spark、Arkade、Liquid、Bitcoin L1 以及 Lightning/RLN
+- 按协议账户和网络筛选资产，并隐藏不想显示在仪表盘上的资产
+- 在侧边栏、弹出窗口或完整浏览器标签页中打开钱包
+
+### 发送与接收
+
+- **发送**（Send）至比特币地址、闪电发票、Lightning Address、LNURL-pay、Spark 地址、Arkade 路由、Liquid 地址和 `liquidnetwork:` URI，以及受支持场景下的 RGB 发票
+- **接收**（Receive）可根据所选账户和资产，通过 Spark、Arkade、Liquid、比特币链上、Lightning 或 RGB 发票流程完成
+- 生成二维码，方便分享
+- 自动识别目标地址类型和兼容的路由
+
+### 资产交换与跨链桥
+
+- RLN 连接后，可获取 KaleidoSwap 做市方交易对
+- Spark 池可用时，可使用 Spark/Flashnet 交易场所
+- 执行前先核对报价输出、费用、有效期和交易场所；内置的最大滑点会保护最小输出金额
+- 在 Spark 与外部链（EVM 网络、Solana 等）之间跨链转移资金，并持续跟踪订单状态
+
+### DApp 连接
+
+- **WebLN Provider**（`window.webln`）：提供节点信息、发票、支付、keysend 和 LNURL 能力
+- **WebBTC Provider**（`window.webbtc`）：提供链上地址、PSBT 签名和广播能力
+- **Nostr Provider**（`window.nostr`）：实现 NIP-07 事件签名与加密，身份来自助记词派生或导入
+- **NIP-46 远程签名**（`bunker://`）和 **Nostr Wallet Connect**，供外部应用使用
+- 敏感 DApp 操作会弹出权限提示，并可在已连接应用（Connected Apps）管理界面中按能力逐项查看和撤销
+
+### 安全
+
+- 基于 Argon2id 派生的密码哈希，以及一个独立的 Argon2id 派生 AES-GCM 加密密钥
+- 主助记词加密存储在 `chrome.storage.local` 中，仅在解锁期间于内存中解密
+- 除密码外，还可选启用 passkey（WebAuthn）解锁
+- PSBT 确认界面会在签名前解析并显示目标地址、金额和网络费用
+- 自动锁定超时时间可在安全（Security）设置中调整
+
+## 架构
+
+KaleidoSwap 扩展采用多协议适配器架构：
+
+| 协议 | 状态 | 说明 |
+|----------|--------|-------------|
+| **Spark** | 已实现 | 原生 Spark 钱包、Spark BTC、Spark 资产、Lightning 收发、Flashnet 路由和跨链桥 |
+| **Arkade** | 已实现 | Arkade BTC、Arkade 原生资产、进出通道（boarding/offboarding）、VTXO 生命周期设置，以及可选的轮换地址（HD）模式 |
+| **Liquid** | 已实现 | L-BTC 和 Liquid 资产（例如 USDt）——无节点、自主保管，通过 Esplora/waterfalls 接口端点同步 |
+| **RGB-L1** | 已实现 | 完全运行在 WebAssembly 中的无节点 Bitcoin L1 RGB，支持云端（VSS）和本地文件备份 |
+| **RGB Lightning** | 实验性，需手动启用 | RGB Lightning Node（直连 URL 或 Nostr Wallet Connect）、RGB 闪电通道，以及基于做市方的 RGB 交换 |
+
+<Note>
+RGB-L1 和 RGB Lightning Node 两种后端互斥：RGB 资产要么存放在无节点的链上账户中，要么存放在你的 RLN 节点上，不能同时存在于两者。
+</Note>
+
+后台 service worker 负责协议适配器的生命周期和消息路由。弹出窗口是一个 React 钱包界面，而内容脚本和注入脚本则负责把网页的 DApp 请求桥接到后台 service worker。
+
+## 工作原理
+
+![KaleidoSwap 扩展架构图](/assets/images/overview/kaleidoswap-extension.png)
+
+- **扩展界面**运行在浏览器侧边栏、弹出窗口或完整标签页中
+- **后台 service worker** 管理协议适配器和跨上下文消息传递
+- **Spark、Arkade、Liquid 和 RGB-L1** 均由钱包助记词派生
+- **RGB Lightning Node** 为可选项，目前作为实验性功能提供
+- **DApp 连接**通过内容脚本实现，由其注入 `window.webln`、`window.webbtc`、`window.nostr`（NIP-07）和 `window.bitcoin`
+
+## 日常钱包流程
+
+KaleidoSwap 扩展让钱包操作始终贴近浏览器：
+
+1. **打开 KaleidoSwap** - 从浏览器工具栏启动钱包
+2. **查看余额** - 检查 BTC 以及 Spark、Arkade、Liquid 和 RGB 资产状态
+3. **转移资金** - 在扩展内完成存入、提取、交换或跨链
+4. **审批请求** - 仅在核对细节后确认受信任的 DApp 操作
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

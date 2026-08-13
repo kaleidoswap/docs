@@ -1,0 +1,128 @@
+---
+title: "交换"
+sidebarTitle: "交换"
+description: "在 KaleidoSwap 扩展中直接完成资产交换：获取报价、核对费用与有效期、执行原子交换，并跨多个受支持的比特币分层网络跟踪进度。"
+---
+
+## 概览
+
+KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户已连接时，它可以使用 KaleidoSwap 做市方交易对；当 Spark 池可用时，它可以使用 Spark/Flashnet 路由。
+
+<img src="/assets/images/extension/10-swap.png" alt="KaleidoSwap 交换界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Note>
+交换是在你的钱包内部把一种资产换成另一种。要在 Spark 与外部链（EVM 网络、Solana 等）之间转移资金，请改用[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
+</Note>
+
+## 前置条件
+
+开始交换前：
+1. 至少要有一个可用的兼容交易场所
+2. 相关账户必须已连接
+3. 源资产余额必须足以覆盖交换金额和网络费用
+
+金额输入受所选源资产的**可用**余额限制，因此你无法对超出钱包实际可发送金额的数量询价。
+
+## 交换流程
+
+<Steps>
+  <Step title="打开交换">
+    在仪表盘的操作区点击**交换**（Swap）按钮。
+  </Step>
+
+  <Step title="选择资产">
+    选择**支出**（From）和**获得**（To）资产：
+    - **支出** - 你想卖出的资产（例如 BTC）
+    - **获得** - 你想收到的资产
+  </Step>
+
+  <Step title="输入金额">
+    输入想要交换的金额。扩展会从所选交易场所获取报价，其中包含：
+    - 汇率
+    - 输出金额
+    - 费用
+    - 有效期
+  </Step>
+
+  <Step title="核对">
+    交换预览界面会显示：
+    - 支出资产和金额
+    - 获得资产和金额
+    - 汇率
+    - 费用明细
+    - 总成本
+  </Step>
+
+  <Step title="确认">
+    在报价过期前确认交换。
+  </Step>
+
+  <Step title="跟踪状态">
+    交换状态界面会显示一个三步进度跟踪器：
+    - 请求中
+    - 原子交换
+    - 收尾中
+
+    随后给出成功或失败的结果。
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/24-swap-review.png" alt="交换核对界面，在「确认交换」按钮上方显示支付与收到金额、提供方、汇率、费用、报价 ID 和有效期" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 实时报价
+
+输入金额后，KaleidoSwap 扩展会从当前交易场所获取报价：
+
+| 报价字段 | 说明 |
+|------------|-------------|
+| **汇率**（Rate） | 两种资产之间的兑换比率 |
+| **输出金额**（Output Amount） | 你将收到多少 |
+| **费用**（Fee） | 协议费用和网络费用 |
+| **有效期**（Expiry） | 报价的有效时长 |
+| **交易场所**（Venue） | 路由提供方，例如 KaleidoSwap 做市方或 Flashnet |
+
+你调整金额时，报价会实时更新。
+
+### 滑点保护
+
+Flashnet 交换内置了 5% 的最大滑点限制：最小输出金额由该限制推导得出，一旦汇率变差，交换会直接失败而不会成交。滑点不可由用户配置。
+
+## 交换状态
+
+确认后，状态界面会通过三个步骤跟踪交换进度：
+
+| 步骤 | 说明 |
+|------|-------------|
+| **请求中**（Requesting） | 正在创建交换订单 |
+| **原子交换**（Atomic Swap） | 交换正在原子性地执行 |
+| **收尾中**（Completing） | 交换正在完成收尾 |
+
+交换结束后，界面会显示成功结果。如果某个步骤失败，则会显示带有失败细节的错误信息。
+
+<img src="/assets/images/extension/25-swap-status.png" alt="交换进行中，三步进度跟踪器显示请求中、原子交换和收尾中，并展示正在交换的交易对" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Note>
+如果没有可用的兼容交易场所或交易对，KaleidoSwap 扩展会显示空状态而不是报价。存入、提取、余额和设置等钱包功能仍然可用。
+</Note>
+
+## 使用建议
+
+<AccordionGroup>
+  <Accordion title="先确认余额">
+    确保源资产的数量足以同时覆盖交换金额和各项费用。
+  </Accordion>
+
+  <Accordion title="尽快确认">
+    报价会在很短时间后过期。请及时核对并确认，以免需要重新询价。
+  </Accordion>
+
+  <Accordion title="读懂失败提示">
+    如果交换失败，状态界面会显示带有失败细节的错误信息。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

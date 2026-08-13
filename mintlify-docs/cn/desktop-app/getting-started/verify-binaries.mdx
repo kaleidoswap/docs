@@ -1,0 +1,155 @@
+---
+title: 校验二进制文件下载
+description: 如何用经 GPG 签名的 SHA256 校验和清单验证 KaleidoSwap 桌面应用二进制文件的真实性，确保安装包未被篡改
+---
+
+安装处理比特币的软件时，安全性至关重要。KaleidoSwap 的发布版本可以通过多个层面进行校验：
+
+- **SHA256 校验和清单**（`manifest.txt`），由开发者用存放在硬件安全密钥（YubiKey）中的 GPG 密钥签名。私钥永不离开硬件令牌。
+- macOS 构建版本带有 **Apple Developer ID 签名与公证**，安装时不会出现任何安全警告。
+- **Tauri 更新器签名**（`.sig` 文件），应用内置的更新器会在应用更新前自动校验。
+
+<Note>
+为每个发布二进制文件提供独立的 GPG 分离签名（`.asc`）已在计划中，但目前尚未随发布版本一起发布。在此之前，请使用下面介绍的校验和清单来验证你的下载文件。
+</Note>
+
+## 为什么要校验下载文件？
+
+安装前校验二进制文件可以确认：
+
+- 文件由 KaleidoSwap 开发者构建并签名
+- 文件在传输过程中未被篡改或损坏
+- 构建完成后没有被注入恶意代码
+
+## 每个发布版本包含哪些文件
+
+[Releases 页面](https://github.com/kaleidoswap/desktop-app/releases)为每个平台发布一个安装包：
+
+| 平台 | 二进制文件 |
+|---|---|
+| macOS Apple Silicon | `KaleidoSwap_<version>_aarch64.dmg` |
+| macOS Intel | `KaleidoSwap_<version>_x64.dmg` |
+| Linux (AppImage) | `KaleidoSwap_<version>_amd64.AppImage` |
+| Linux (DEB) | `KaleidoSwap_<version>_amd64.deb` |
+| Linux (RPM) | `KaleidoSwap-<version>-1.x86_64.rpm` |
+| Windows (MSI) | `KaleidoSwap_<version>_x64_en-US.msi` |
+| Windows (NSIS installer) | `KaleidoSwap_<version>_x64-setup.exe` |
+
+发布版本中还包含 `.sig` 文件和一个 `latest.json`。它们是 **Tauri 更新器签名**，由应用内置的更新器自动使用 —— 不是 GPG 签名，也不用于手动校验。
+
+## SHA256 校验和验证
+
+每个构建产物的 SHA256 哈希都列在 `manifest.txt` 文件中，该文件可作为每次 CI 运行的构建产物获取。清单由开发者用 GPG 签名（分离签名 `manifest.txt.sig`），所用密钥存放在 YubiKey 上。
+
+### 前置条件
+
+- 系统中已安装 **GPG**（GNU Privacy Guard）
+- 你要校验的 KaleidoSwap 二进制文件
+- 同一发布版本的 `manifest.txt` 和 `manifest.txt.sig` 文件
+
+<CodeGroup>
+```sh macOS (Homebrew)
+brew install gnupg
+```
+
+```sh Debian / Ubuntu
+sudo apt install gnupg
+```
+
+```sh Windows (Gpg4win)
+# 从 https://gpg4win.org 下载
+```
+</CodeGroup>
+
+### 1. 导入开发者公钥
+
+这一步只需做一次。直接从 GitHub 导入 KaleidoSwap 开发者的 GPG 公钥：
+
+```sh
+curl -s https://github.com/bitwalt.gpg | gpg --import
+```
+
+导入后可以校验密钥指纹：
+
+```sh
+gpg --fingerprint walter@kaleidoswap.com
+```
+
+你在签名输出中看到的密钥 ID 应为 `9EE396C0452755F0`。
+
+### 2. 校验清单签名
+
+在信任清单里的校验和之前，先确认清单本身是真实的：
+
+```sh
+gpg --verify manifest.txt.sig manifest.txt
+```
+
+**校验通过**时的输出如下：
+
+```
+gpg: Signature made Mon 10 Nov 2025 21:30:00 UTC
+gpg:                using RSA key 9EE396C0452755F0
+gpg: Good signature from "Walter (Kaleidoswap Developer) <walter@kaleidoswap.com>"
+```
+
+除非你为这个密钥显式设置了信任级别，否则 `gpg` 给出的 *"This key is not certified with a trusted signature!"* 警告是正常的。关键是那行 `Good signature`。
+
+<Warning>
+如果看到 **"BAD signature"** 或 **"No public key"**，不要信任该清单，也不要安装该文件。请从官方 [GitHub Releases](https://github.com/kaleidoswap/desktop-app/releases) 页面重新下载后再试。如果问题仍在，请提交 [GitHub Issue](https://github.com/kaleidoswap/desktop-app/issues)，或在 [Telegram](https://t.me/kaleidoswap) 上联系我们。
+</Warning>
+
+### 3. 用清单核对你的二进制文件
+
+计算下载文件的 SHA256 哈希，并与 `manifest.txt` 中的条目比对：
+
+<CodeGroup>
+```sh macOS
+shasum -a 256 KaleidoSwap_0.5.0_aarch64.dmg
+```
+
+```sh Linux
+sha256sum -c manifest.txt --ignore-missing
+```
+
+```powershell Windows (PowerShell)
+Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.0_x64_en-US.msi
+```
+</CodeGroup>
+
+哈希必须与清单条目完全一致。如果不一致，请删除文件并重新下载。
+
+## macOS 平台的额外校验
+
+macOS 构建版本还使用 Apple Developer ID 证书进行了代码签名，并通过了 Apple 公证。安装后你可以自行校验：
+
+```sh
+# 检查 Gatekeeper 评估结果
+spctl --assess --verbose=4 --type install /Applications/KaleidoSwap.app
+
+# 检查代码签名
+codesign --verify --verbose=2 /Applications/KaleidoSwap.app
+```
+
+正确签名并公证的应用会让 `spctl` 输出 `accepted`，且 `codesign` 不报任何错误。
+
+## 自动更新
+
+安装完成后，应用内置的更新器会下载新版本，并用应用内嵌的公钥，对随发布版本一起发布的 `.sig` 更新器签名逐个校验。这一过程自动完成 —— 更新无需任何手动操作。
+
+## 故障排查
+
+| 错误 | 原因 | 解决方法 |
+|---|---|---|
+| `No public key` | 未导入开发者密钥 | 执行 `curl … \| gpg --import` 命令 |
+| `BAD signature` | 清单被修改或损坏 | 重新下载清单及其签名文件 |
+| `Can't check signature: No public key` | 密钥不匹配 | 确认你是从 `github.com/bitwalt.gpg` 导入的 |
+| 校验和不匹配 | 下载不完整或文件损坏 | 删除并重新下载二进制文件 |
+
+如果以上方法都无法解决问题，请通过 [GitHub Issues](https://github.com/kaleidoswap/desktop-app/issues) 或 [Telegram](https://t.me/kaleidoswap) 联系团队。
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

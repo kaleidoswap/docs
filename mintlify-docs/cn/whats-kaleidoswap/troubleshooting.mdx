@@ -1,0 +1,560 @@
+---
+title: "KaleidoSwap 故障排查"
+sidebarTitle: "故障排查"
+description: "排查桌面应用、浏览器扩展、API 与 SDK 上的常见问题：从连接失败、交换卡住，到通道异常、资产不显示与钱包恢复，逐一给出症状与解决办法。"
+---
+
+## 桌面应用
+
+### 安装与启动问题
+
+<AccordionGroup>
+  <Accordion title="应用无法启动" icon="circle-xmark">
+    **症状**：双击应用没有任何反应，或弹出错误提示。
+
+    **解决办法**：
+    1. **macOS**：检查应用是否被 Gatekeeper 拦截
+       - 打开「系统偏好设置 → 安全性与隐私」(System Preferences → Security & Privacy)
+       - 如果看到与 KaleidoSwap 相关的提示，点击「仍要打开」(Open Anyway)
+
+    2. **Windows**：以管理员身份运行
+       - 右键点击应用 → 以管理员身份运行 (Run as Administrator)
+       - 确认 Windows Defender 没有隔离该文件
+
+    3. **Linux**：检查可执行权限
+       ```bash
+       chmod +x kaleidoswap-desktop
+       ```
+
+    4. 检查系统要求：
+       - 至少 4GB 内存
+       - 500MB 可用磁盘空间
+       - 受支持的操作系统版本（macOS 12+、Windows 10+ 64 位、Ubuntu 22.04+）
+  </Accordion>
+
+  <Accordion title="二进制文件校验失败" icon="shield-xmark">
+    **症状**：SHA256 校验和与公布的哈希不一致。
+
+    **解决办法**：
+    1. 从官方 [GitHub releases](https://github.com/kaleidoswap/desktop-app/releases) 重新下载应用
+    2. 确认下载的是与你的平台匹配的文件
+    3. 使用稳定的网络下载（下载损坏会导致校验和不匹配）
+    4. 确认你比对的是对应版本的校验和
+
+    详细步骤见[二进制文件校验](/cn/desktop-app/getting-started/verify-binaries)指南。
+  </Accordion>
+
+  <Accordion title="应用启动后崩溃" icon="bomb">
+    **症状**：应用短暂打开后立即关闭，或弹出崩溃对话框。
+
+    **解决办法**：
+    1. 查看日志文件：
+       - macOS：`~/Library/Logs/com.kaleidoswap.dev/`
+       - Windows：`%APPDATA%\com.kaleidoswap.dev\logs`
+       - Linux：`~/.local/share/com.kaleidoswap.dev/logs`
+
+    2. 常见原因：
+       - **配置文件损坏**：删除配置文件后重启
+       - **端口冲突**：另一个应用占用了所需端口（9735、3001）
+       - **依赖缺失**：重新安装应用
+
+    3. 如果崩溃持续出现，在联系支持或提交 GitHub issue 时，请附上上述目录中最新的日志文件。
+  </Accordion>
+</AccordionGroup>
+
+### 节点与连接问题
+
+<AccordionGroup>
+  <Accordion title="无法连接 LSP" icon="link-slash">
+    **症状**：出现 LSP 连接相关的错误提示，或无法开通通道。
+
+    **解决办法**：
+    1. **检查网络连接**
+       - 确认网络连接稳定
+       - 尝试访问其他网站，确认连通性
+
+    2. **核对 LSP URL**
+       - 默认值：`https://api.signet.kaleidoswap.com`
+       - 在「设置 → LSP 配置」(Settings → LSP Configuration) 中检查
+
+    3. **防火墙 / VPN 问题**
+       - 临时关闭 VPN 进行测试
+       - 在防火墙中放行 KaleidoSwap
+       - 需要开放的端口：9735（闪电网络 P2P）、3001（节点 API）
+
+    4. **检查 LSP 状态**
+       - 访问 LSP 的状态页面，或联系支持
+       - 如有其他可用的 LSP，尝试切换
+  </Accordion>
+
+  <Accordion title="节点同步非常慢" icon="hourglass">
+    **症状**：区块链同步耗时数小时，或看起来卡住了。
+
+    **解决办法**：
+    1. **属于正常现象**：初次同步可能需要 30 分钟到数小时，取决于：
+       - 你的网络速度
+       - 系统的磁盘速度
+       - 网络拥堵情况
+
+    2. **查看同步进度**：
+       - 在界面中查看区块高度
+       - 与当前网络高度对比
+
+    3. **同步卡住时的排查**：
+       - 重启应用
+       - 检查可用磁盘空间（至少需要 10GB）
+       - 清空对等节点列表并重新连接
+       - 确认防火墙没有拦截 P2P 连接
+  </Accordion>
+
+  <Accordion title="对等节点连接问题" icon="users-slash">
+    **症状**：提示「没有连接对等节点」(No peers connected)，或对等节点数量过少。
+
+    **解决办法**：
+    1. **先等一会儿**：对等节点发现可能需要几分钟
+
+    2. **检查网络设置**：
+       - 确认路由器已启用 UPnP（用于接受入向连接）
+       - 若 UPnP 不可用，手动转发 9735 端口
+
+    3. **引导节点**：
+       - 应用应会自动连接引导节点
+       - 若未连接，检查你的网络连接和防火墙
+
+    4. **网络选择**：
+       - 确认你处于正确的网络（主网 / 测试网 / signet / regtest）
+       - 对等节点必须处于同一网络
+  </Accordion>
+</AccordionGroup>
+
+### 钱包与资产问题
+
+<AccordionGroup>
+  <Accordion title="钱包余额显示为零" icon="wallet">
+    **症状**：预期有资金，但余额显示 0 或数值不对。
+
+    **解决办法**：
+    1. **等待同步完成**：节点完全同步前不会显示余额
+    2. **确认网络正确**：确保你所在的网络就是资金所在的网络
+    3. **核对钱包恢复过程**：如果是从种子恢复的，确认使用的助记词正确
+    4. **区分资产余额与 BTC 余额**：在比特币视图和 RGB 资产视图之间切换查看
+    5. **刷新**：尝试重启应用
+  </Accordion>
+
+  <Accordion title="无法解锁钱包" icon="lock">
+    **症状**：密码无效，钱包始终处于锁定状态。
+
+    **解决办法**：
+    1. **核对密码**：密码区分大小写
+    2. **大写锁定**：检查是否误开了 Caps Lock
+    3. **键盘布局不同**：确认与设置密码时使用的键盘布局一致
+    4. **钱包恢复**：如果密码确实丢失，只能用助记词恢复钱包
+    5. **联系支持**：作为最后手段，带上钱包公钥联系支持（切勿分享私钥）
+  </Accordion>
+
+  <Accordion title="RGB 资产不显示" icon="eye-slash">
+    **症状**：已收到资产，但钱包中看不到。
+
+    **解决办法**：
+    1. **等待确认**：RGB 资产转移需要比特币确认
+    2. **导入交付包**：你可能需要手动导入 consignment 数据
+    3. **核对资产 ID**：确认你查看的是正确的资产
+    4. **刷新资产列表**：设置 → 资产 → 刷新 (Settings → Assets → Refresh)
+    5. **确认发送方已完成转移**：联系发送方，确认对方已走完发送流程
+  </Accordion>
+</AccordionGroup>
+
+### 通道操作
+
+<AccordionGroup>
+  <Accordion title="通道开通失败" icon="door-closed">
+    **症状**：通道订单失败或卡住。
+
+    **解决办法**：
+    1. **查询订单状态**：用订单 ID 通过 API 查询，或联系支持
+
+    2. **常见失败原因**：
+       - **资金不足**：需要覆盖通道金额加费用
+       - **支付超时**：发票在支付前已过期
+       - **参数无效**：检查通道大小的上下限
+       - **LSP 不可用**：LSP 临时停机
+
+    3. **退款流程**：
+       - 订单失败后，退款会自动打到你的退款地址
+       - 退款可能需要 6 个以上确认才会显示
+
+    4. **重试**：
+       - 等几分钟后再试
+       - 如果已达上限，减小通道大小
+       - 确认入向流动性充足
+  </Accordion>
+
+  <Accordion title="通道显示为未激活" icon="plug-circle-xmark">
+    **症状**：通道存在，但无法收发支付。
+
+    **解决办法**：
+    1. **等待确认**：通道需要区块链确认才会激活
+       - 通常需要 3 到 6 个确认
+       - 在通道详情中查看确认数
+
+    2. **对等节点离线**：通道对端需要在线
+       - 等待对端重新上线
+       - 查看「最后在线」(Last Seen) 时间戳
+
+    3. **通道储备金**：不能花到低于通道储备金的额度
+       - 闪电通道要求保留一部分储备余额
+       - 这是协议的正常行为
+
+    4. **强制关闭**：如果通道彻底卡死，可以强制关闭
+       - 这会在一段延迟后把资金退回链上
+       - 只作为最后手段
+  </Accordion>
+
+  <Accordion title="资产交付待处理" icon="truck-clock">
+    **症状**：通道已开通，但 RGB 资产尚未交付。
+
+    **解决办法**：
+    1. **属于正常延迟**：通过 keysend 交付资产可能需要几分钟
+       - 系统内置了自动重试机制
+       - 个别情况下可能长达 30 分钟
+
+    2. **查看交付状态**：
+       - 订单详情中会显示资产交付状态
+       - 状态流转：PENDING → IN_PROGRESS → COMPLETED
+
+    3. **手动重试**：
+       - 如有「重试交付」(Retry Delivery) 按钮，点击它
+
+    4. **交付失败**：
+       - 带上订单 ID 联系 LSP 支持
+       - 如果交付无法完成，可能可以退款
+  </Accordion>
+</AccordionGroup>
+
+### 交易与交换
+
+<AccordionGroup>
+  <Accordion title="交换失败或超时" icon="clock-rotate-left">
+    **症状**：交换未完成，或已过期。
+
+    **解决办法**：
+    1. **报价过期**：询价报价的有效期很短 —— 默认约 60 秒，且每份报价都自带 `expires_at`
+       - 在过期前完成交换
+       - 若已过期，重新请求报价
+
+    2. **汇率变动**：市场汇率出现显著变化
+       - 收到提示时接受新汇率
+       - 或者取消并获得退款
+
+    3. **支付路由失败**：闪电支付找不到路径
+       - 尝试更小的金额
+       - 开通更多通道以获得更多流动性
+       - 稍后重试
+
+    4. **交换卡住**：
+       - 查询交换状态：`POST /api/v1/swaps/atomic/status`（按支付哈希查询）
+       - 带上支付哈希联系支持寻求协助
+  </Accordion>
+
+  <Accordion title="交换价格与预期不符" icon="triangle-exclamation">
+    **症状**：最终价格与预期不同。
+
+    **解决办法**：
+    1. **核对报价细节**：仔细查看询价响应
+       - `from_amount` 与 `to_amount`
+       - 已计入的费用
+       - 资产的精度
+
+    2. **费用结构**：
+       - 基础费用 + 浮动费用
+       - 计费资产与精度
+       - 报价中会显示总费用
+
+    3. **精度混淆**：
+       - BTC 使用 8 位小数
+       - USDT 通常使用 6 位小数
+       - 资产精度的说明见术语表
+
+    4. **滑点**：
+       - 市价单的价格可能小幅变动
+       - 如果需要精确价格，使用限价单
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  交易失败、钱包恢复以及 LSP 连接相关的问题，见[桌面应用故障排查](/cn/desktop-app/support/troubleshooting)。
+</Note>
+
+## 浏览器扩展
+
+下面这些情况专门针对内测版的安装方式，以及各账户的支撑方式。
+
+### 安装与更新
+
+<AccordionGroup>
+  <Accordion title="加载已解压的扩展失败，或扩展稍后消失" icon="folder-open">
+    **症状**：`chrome://extensions` 拒绝该文件夹，或原本正常的扩展过一段时间后无法加载。
+
+    **解决办法**：
+    1. **选对文件夹**：选择包含 `manifest.json` 的那个文件夹。如果压缩包里有 `dist` 目录，就选 `dist`。
+    2. **不要移动或删除解压后的文件夹**：浏览器每次都从该路径加载扩展。把它移到别的磁盘、重命名，或清空下载目录，都会让安装失效。
+    3. **先解压**：让浏览器指向解压后的文件夹，而不是 zip 文件。
+    4. **重新添加**：在 `chrome://extensions` 中移除出问题的卡片，然后重新加载该文件夹。你的钱包并不存放在那个文件夹里，因此这不会影响你的资金。
+  </Accordion>
+
+  <Accordion title="新的内测版本没有生效" icon="rotate">
+    **症状**：你安装了更新的 zip，但扩展的行为仍与旧版本一致。
+
+    **解决办法**：
+    1. 内测版本**不会自动更新** —— 没有商店条目来推送更新。
+    2. 解压新的 zip 之后，打开 `chrome://extensions`，在 KaleidoSwap 卡片上点击**重新加载** (Reload)。
+    3. 如果你解压到了**另一个文件夹**，请移除旧的已解压扩展，改为加载新文件夹 —— 否则浏览器会继续运行旧版本。
+    4. 在**设置 > 关于** (Settings > About) 中确认版本号。
+  </Accordion>
+
+  <Accordion title="扩展无法在我的浏览器中安装" icon="browser">
+    **症状**：内测 zip 完全无法加载。
+
+    **解决办法**：
+    1. 内测版面向**基于 Chromium 的浏览器**：Chrome、Brave、Edge、Opera。
+    2. 除非专门提供了 Firefox 版本，否则 **Firefox** 不在首轮内测范围内；**Safari** 目前也还不支持。
+    3. 必须先在 `chrome://extensions` 中打开**开发者模式** (Developer mode)，**加载已解压的扩展程序** (Load unpacked) 才会出现。
+    4. 只安装来自官方邀请或支持渠道的压缩包 —— 绝不要用转发来的副本。
+  </Accordion>
+</AccordionGroup>
+
+### 账户与余额
+
+<AccordionGroup>
+  <Accordion title="连接节点后 RGB 资产消失了" icon="layer-group">
+    **症状**：原本能看到 RGB 余额，连接 RGB 闪电节点后就不见了。
+
+    **说明**：无需节点的 **RGB-L1** 账户与 **RLN** 账户是 RGB 资产的两种*互斥*支撑方式。连接 RLN 会替换掉无需节点的那一种，因此你看到的是另一个账户 —— RGB-L1 的状态并没有丢失。
+
+    **解决办法**：
+    1. 在**设置 > 账户 > RGB** (Settings > Accounts > RGB) 中断开 RLN，即可回到无需节点的 RGB-L1 支撑方式。
+    2. 决定你需要哪一种支撑方式：无需节点适用于比特币 L1 上的 RGB，RLN 适用于 RGB **闪电通道**以及基于做市方的交换。
+    3. 切换之前，确认你即将离开的那一种已经完成备份 —— RGB-L1 备份到云端（VSS）和本地文件，RLN 则备份到节点自身的备份材料。
+  </Accordion>
+
+  <Accordion title="恢复的钱包缺少 RGB 状态" icon="cloud-arrow-down">
+    **症状**：导入助记词后 Spark、Arkade 和 Liquid 的余额都回来了，但 RGB 资产没有。
+
+    **解决办法**：
+    1. RGB-L1 状态**不是**从助记词派生的 —— 它由加密云端（VSS）备份恢复，而且只有在你于引导步骤中**明确同意**时才会恢复。跳过该提示就会把状态留在原处。
+    2. 重新导入钱包，并在恢复提示出现时接受它。
+    3. 如果你改用 RLN，RGB 状态必须从节点自身的备份材料恢复，而不是从扩展恢复。
+  </Accordion>
+
+  <Accordion title="导入 Nostr 密钥后资金不见了" icon="key">
+    **症状**：你用 `nsec1…` 密钥做了恢复，结果钱包是空的。
+
+    **解决办法**：
+    1. Nostr 密钥**并不掌控资金**。导入它只会替换 Nostr 身份。
+    2. 恢复时始终使用 **BIP39 助记词** —— 派生 Spark、Arkade、Liquid 和 RGB-L1 账户的正是它。
+    3. 用助记词重新导入；之后可以在设置中再导入 Nostr 密钥。
+  </Accordion>
+</AccordionGroup>
+
+### 交换与跨链桥
+
+<AccordionGroup>
+  <Accordion title="无法按全部余额询价" icon="circle-minus">
+    **症状**：交换界面拒绝了一个看起来你确实持有的金额。
+
+    **解决办法**：
+    1. 金额输入受源资产的**可花费**余额限制，而不是总余额，因此你无法按超过钱包实际可发送的金额去询价。
+    2. 链上发送还会预留网络费用 —— **最大** (Max) 会自动把这部分算进去。
+    3. 确认余额位于所选路径实际使用的那个账户上；余额是按分层分别记账的。
+  </Accordion>
+
+  <Accordion title="交换直接失败而不是成交" icon="arrow-trend-down">
+    **症状**：已报价的交换以失败告终，而不是以更差的汇率成交。
+
+    **解决办法**：
+    1. 这是**滑点保护**在按预期工作：最小输出量由你设置的容忍度推导得出，一旦超出，交换会直接失败而不成交。
+    2. 重新询价 —— 报价会过期，汇率也可能已经变动。
+    3. 如果市场确实波动剧烈，可以调整滑点容忍度，或者减小金额。
+  </Accordion>
+
+  <Accordion title="跨链桥订单好像丢了" icon="bridge">
+    **症状**：你在跨链桥进行中关闭了扩展，订单不再显示在界面上。
+
+    **解决办法**：
+    1. 跨链桥订单会**以会话形式保存在本地**。重新打开跨链桥界面会恢复待处理的订单并继续跟踪，即便 service worker 已经重启过。
+    2. 已完成和已失败的订单会显示最终状态，并附上相关的交易引用。
+    3. 存入需要先在源链上确认 —— 在此期间订单会一直处于进行中状态。
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  节点连接、支付以及 DApp provider 相关的问题，见 [KaleidoSwap 扩展故障排查](/cn/extensions/kaleidoswap-extension/troubleshooting)。
+</Note>
+
+## API 与集成
+
+### 认证与连接
+
+<AccordionGroup>
+  <Accordion title="401 未授权错误" icon="ban">
+    **症状**：API 返回 401 状态码。
+
+    **解决办法**：
+    1. **Bearer token**：确认认证 token 的发送格式正确
+       ```http
+       Authorization: Bearer YOUR_TOKEN_HERE
+       ```
+
+    2. **Token 过期**：token 可能已过期 —— 重新获取一个
+
+    3. **接口端点不对**：确认使用了正确的 API 基础 URL
+       - signet（已上线）：`https://api.signet.kaleidoswap.com/api/v1`
+       - 主网：`https://api.kaleidoswap.com/api/v1` *（即将上线）*
+  </Accordion>
+
+  <Accordion title="422 校验错误" icon="circle-exclamation">
+    **症状**：API 返回 422 及校验错误。
+
+    **解决办法**：
+    1. **检查请求体**：确认所有必填字段都已提供
+    2. **数据类型**：确认整数、字符串、布尔值的类型正确
+    3. **字段校验**：检查最小值 / 最大值和格式
+    4. **阅读错误详情**：响应中会指出哪些字段校验失败
+
+    错误响应示例：
+    ```json
+    {
+      "detail": [
+        {
+          "loc": ["body", "from_amount"],
+          "msg": "field required",
+          "type": "value_error.missing"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="浏览器中的 CORS 错误" icon="globe">
+    **症状**：浏览器以 CORS 错误拦截 API 请求。
+
+    **解决办法**：
+    1. **改用后端调用**：从你的后端而不是前端发起 API 请求
+       - 出于安全考虑，大多数接口端点都禁用了 CORS
+       - 基于浏览器的应用需要一个后端代理
+
+    2. **开发期的临时办法**：
+       - 使用浏览器 CORS 插件（仅限开发环境）
+       - 把开发服务器配置成代理
+
+    3. **生产环境**：始终使用服务端 API 调用
+  </Accordion>
+</AccordionGroup>
+
+### 询价与订单问题
+
+<AccordionGroup>
+  <Accordion title="询价在使用前已过期" icon="hourglass-end">
+    **症状**：使用询价 ID 时返回过期相关的错误。
+
+    **解决办法**：
+    1. **检查 expires_at**：报价默认约 60 秒内有效；始终读取报价自带的 `expires_at`，不要假设一个固定时长
+    2. **重新请求报价**：再次调用 `/api/v1/market/quote`
+    3. **加快集成流程**：尽量缩短从报价到创建订单之间的时间
+    4. **利用过期时间**：在界面上做一个显示剩余时间的倒计时
+  </Accordion>
+
+  <Accordion title="订单卡在 PENDING 状态" icon="spinner">
+    **症状**：订单停留在 PENDING_PAYMENT 或其他状态不再推进。
+
+    **解决办法**：
+    1. **需要支付**：检查你是否还需要支付一张发票，或向某个地址转账
+    2. **查询支付状态**：
+       ```bash
+       POST /api/v1/lsps1/get_order
+       {
+         "order_id": "your-order-id"
+       }
+       ```
+
+    3. **自动流转**：部分状态会自动推进
+       - PENDING_PAYMENT → PAID（支付确认后）
+       - CHANNEL_OPENING → COMPLETED（通道开通后）
+
+    4. **超时**：订单未在时限内支付就会过期
+       - 检查 `expires_at` 字段
+       - 未支付的订单会自动过期并退款
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  完整的 HTTP 状态码列表、错误响应格式和重试策略，见 API 参考中的[错误处理](/cn/api-reference/error-handling)。
+</Note>
+
+## SDK
+
+两份 SDK 指南都同时覆盖 TypeScript 和 Python —— 每个示例都给出两种写法。按需选择：
+
+<CardGroup cols={2}>
+  <Card title="错误处理" icon="triangle-exclamation" href="/cn/sdk/error-handling">
+    SDK 会抛出哪些异常、如何捕获它们、重试模式，以及与 HTTP 状态码的对应关系。
+  </Card>
+
+  <Card title="SDK 故障排查" icon="wrench" href="/cn/sdk/troubleshooting">
+    针对安装失败、连接错误、WebSocket 问题以及各语言特有的坑，逐条给出症状与解决办法。
+  </Card>
+</CardGroup>
+
+**速查提示**：
+- 捕获 `KaleidoError` —— 所有 SDK 异常都继承自它，`isRetryable()` / `is_retryable()` 会告诉你重试是否安全
+- 开启调试日志，查看完整的请求与响应细节
+- 检查运行时版本：Node.js 18+ / Python 3.10+
+
+## 通用最佳实践
+
+<CardGroup cols={2}>
+  <Card title="先看日志" icon="file-lines">
+    大多数问题都能从日志文件中查出原因。排查时请开启调试日志。
+  </Card>
+
+  <Card title="核对网络" icon="network-wired">
+    确认你所处的网络（主网、测试网、signet、regtest）与你的使用场景相符。
+  </Card>
+
+  <Card title="保持更新" icon="arrow-up-from-bracket">
+    使用最新版本的桌面应用和 SDK，以获得问题修复与功能改进。
+  </Card>
+
+  <Card title="先在测试网测试" icon="flask">
+    在主网动用真实资金之前，务必先在测试网上验证新的集成。
+  </Card>
+</CardGroup>
+
+## 还需要帮助？
+
+如果上述排查步骤没能解决你的问题：
+
+<Steps>
+  <Step title="查看对应产品的 FAQ">
+    每个产品都有自己的参考文档：[桌面应用故障排查](/cn/desktop-app/support/troubleshooting)、[KaleidoSwap 扩展故障排查](/cn/extensions/kaleidoswap-extension/troubleshooting)、[KaleidoSDK 故障排查](/cn/sdk/troubleshooting)，以及 [API 错误处理](/cn/api-reference/error-handling)。
+  </Step>
+
+  <Step title="搜索文档">
+    用搜索框在文档中查找具体主题。
+  </Step>
+
+  <Step title="查看 GitHub Issues">
+    到你所运行组件对应的仓库中，看看是否已有人报告过同样的问题。所有仓库都在 [KaleidoSwap 组织](https://github.com/kaleidoswap)下。
+  </Step>
+
+  <Step title="联系支持">
+    可通过以下方式联系我们：
+    - 邮箱：[support@kaleidoswap.com](mailto:support@kaleidoswap.com)
+    - Telegram：[https://t.me/kaleidoswap](https://t.me/kaleidoswap)
+    - GitHub Issues：在与你的配置相符的仓库中提交，例如[桌面应用](https://github.com/kaleidoswap/desktop-app/issues/new)、[KaleidoSDK](https://github.com/kaleidoswap/kaleido-sdk/issues/new) 或 [KaleidoCLI](https://github.com/kaleidoswap/kaleido-cli/issues/new)。
+  </Step>
+</Steps>
+
+<Warning>
+  **绝不要把私钥或助记词分享给任何人，包括支持人员。** 正规的支持渠道永远不会索要这些信息。
+</Warning>

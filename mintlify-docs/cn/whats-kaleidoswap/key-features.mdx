@@ -1,0 +1,423 @@
+---
+title: "KaleidoSwap 核心功能"
+sidebarTitle: "核心功能"
+description: "自主保管钱包、内置 RGB 闪电节点、本地 AI 大脑、自主交易代理、跨协议原子交换与多资产支持，构成 KaleidoSwap 的完整能力版图。"
+---
+
+## 核心能力
+
+<CardGroup cols={2}>
+  <Card title="多资产管理" icon="server">
+    运行你自己的多资产闪电节点，或连接到已有节点。
+  </Card>
+
+  <Card title="多协议交易" icon="coins">
+    在闪电网络上即时交易比特币二层资产。
+  </Card>
+
+  <Card title="闪电网络集成" icon="bolt">
+    通过支付通道实现快速、低成本的交易。
+  </Card>
+
+  <Card title="安全优先" icon="shield-check">
+    非托管架构，配合加密备份。
+  </Card>
+</CardGroup>
+
+---
+
+## 多资产管理
+
+### 完整的节点控制权
+
+KaleidoSwap 允许你运行自托管的 RGB 闪电节点，或连接到远程节点。
+
+<Tabs>
+  <Tab title="运行自己的节点">
+    **自托管 RGB 闪电节点**
+
+    通过本地运行的节点，完全掌控自己的基础设施。
+
+    - 最大程度的隐私
+    - 直接的 P2P 连接
+    - 不依赖任何第三方
+
+    ```bash
+    # 配置并启动你的 RGB 闪电节点
+    kaleido setup --mode local --create-node --defaults
+    ```
+  </Tab>
+
+  <Tab title="连接已有节点">
+    **连接远程节点**
+
+    连接到专业托管的节点，或你自己的远程服务器。
+
+    - 可从多台设备访问
+    - 可选择托管式基础设施
+    - 通过节点的 REST API 连接
+  </Tab>
+</Tabs>
+
+### 节点功能
+
+<AccordionGroup>
+  <Accordion title="通道管理" icon="network-wired">
+    - 开通/关闭闪电通道
+    - 监控通道状态
+    - 重新平衡流动性
+    - 设置通道策略
+  </Accordion>
+
+  <Accordion title="资产分配（RGB Lightning）" icon="layer-group">
+    - 将 RGB 资产分配到通道
+    - 支持多资产通道
+    - 按资产路由
+    - 按资产跟踪余额
+  </Accordion>
+
+  <Accordion title="加密备份" icon="cloud-arrow-up">
+    - 节点状态变化后自动创建备份
+    - 手动导出为加密文件
+    - 将文件保存在本地磁盘或你自己的外部存储中
+    - 使用助记词加备份文件即可恢复
+  </Accordion>
+
+  <Accordion title="监控与告警" icon="bell">
+    - 实时节点监控
+    - 通道状态告警
+    - 支付通知
+    - 性能指标
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 多协议交易
+
+### 原子交换
+
+无需信任、无需中间人，即时完成资产交换。
+
+**支持的交换类型**：
+
+<CardGroup cols={3}>
+  <Card title="闪电到闪电的 RGB 资产交换" icon="bolt">
+    通过闪电通道，直接用 RGB 资产（如 USDT）交换 BTC。
+  </Card>
+
+  <Card title="链上到闪电的流动性管理" icon="arrow-right-arrow-left">
+    用你的链上资金开通通道，立即开始交易。
+  </Card>
+
+  <Card title="闪电到链上的结算" icon="bitcoin">
+    将资产从闪电通道转回链上，用于冷存储。
+  </Card>
+</CardGroup>
+
+### 交易功能
+
+<AccordionGroup>
+  <Accordion title="多种订单类型" icon="list-check">
+    - **做市商** —— 自动报价，与流动性提供方即时成交
+    - **手动交换** —— 单笔交易中自行选择对手方和汇率
+    - **DCA** —— 定期定额买入或卖出，随时间摊平持仓成本
+    - **限价单** —— 设定目标汇率，仅在市场触达时执行
+  </Accordion>
+
+  <Accordion title="实时报价" icon="chart-line">
+    - 每个交易对的实时市场汇率
+    - 确认前显示预计到手数量
+    - 每份报价均列出汇率与费用
+    - 按笔计算价格影响
+  </Accordion>
+
+  <Accordion title="滑点保护" icon="shield-halved">
+    - 为每笔交易设置可接受的最大滑点
+    - 汇率超出限制时交换自动中止
+    - 报价有时效，需在过期前确认
+  </Accordion>
+
+  <Accordion title="订单历史" icon="clock-rotate-left">
+    - 在**历史**标签页查看完整交换记录
+    - 每笔交换的详细执行数据
+    - 可用于对账与会计的记录
+  </Accordion>
+
+  <Accordion title="支持多个 LSP" icon="handshake">
+    - 连接多个流动性提供方
+    - 比较不同做市商的汇率
+    - 手动交换时自行选择做市方
+  </Accordion>
+</AccordionGroup>
+
+
+
+<Note>
+  可交易资产取决于所连接的 LSP。不同 LSP 支持的资产集合可能不同。
+</Note>
+
+---
+
+## 闪电网络集成
+
+### 快速且低成本的交易
+
+借助闪电网络实现高性能交易。
+
+<CardGroup cols={2}>
+  <Card title="即时结算" icon="bolt-lightning">
+    交易在毫秒级完成，余额立即更新。
+  </Card>
+
+  <Card title="费用极低" icon="coins">
+    费用仅为链上成本的极小一部分，让微额交易变得可行。
+  </Card>
+
+  <Card title="高吞吐" icon="gauge-high">
+    执行交易不受区块链拥堵或区块空间限制。
+  </Card>
+
+  <Card title="更强隐私" icon="user-shield">
+    链下交易配合洋葱路由，隐私性更佳。
+  </Card>
+</CardGroup>
+
+### 通道操作
+
+#### 开通通道
+
+1. 选择 LSP 或对等节点
+2. 选择通道容量
+3. 分配 RGB 资产（可选）
+4. 设置通道参数
+5. 确认并开通
+
+**通道选项**：
+- **公开通道**：参与路由并赚取费用
+- **私有通道**：仅用于直接支付，隐私性更好
+- **Anchor 通道**：使用 anchor 输出提升安全性
+
+#### 管理流动性
+
+<Tabs>
+  <Tab title="入向流动性">
+    **接收支付**
+
+    从 LSP 获取入向流动性：
+    - 订购带入向容量的通道
+    - 潜艇交换（submarine swaps）
+    - 闪电服务提供商的各类服务
+  </Tab>
+
+  <Tab title="出向流动性">
+    **发送支付**
+
+    确保拥有出向容量：
+    - 用链上存入的资金为通道注资
+    - 接收支付以积累入向容量
+    - 通道再平衡服务
+  </Tab>
+
+  <Tab title="环形再平衡">
+    **优化通道**
+
+    平衡通道流动性：
+    - 通过不同路径给自己支付
+    - 保持通道处于理想状态
+    - 自动再平衡机器人
+  </Tab>
+</Tabs>
+
+---
+
+## 安全特性
+
+### 非托管架构
+
+KaleidoSwap 建立在「你的密钥，你的币」这一原则之上。
+
+<Check>
+  私钥永不离开你的设备
+</Check>
+<Check>
+  第三方无法接触你的资金
+</Check>
+<Check>
+  交易完全由你掌控
+</Check>
+<Check>
+  基于原子交换的无需信任交易协议
+</Check>
+
+### 安全的密钥管理
+
+**加密层**：
+
+- **软件钱包**
+    - AES-256 加密
+    - 密码保护
+    - 助记词备份
+- **硬件钱包支持（即将推出）**
+
+### 通道备份
+
+<AccordionGroup>
+  <Accordion title="自动备份" icon="arrows-rotate">
+    - 每次状态变化后都会备份通道
+    - 每份备份都反映创建时刻的通道状态
+  </Accordion>
+
+  <Accordion title="加密存储" icon="lock">
+    - 备份文件使用你的节点密码加密
+    - 恢复时需要用同一个密码解密
+  </Accordion>
+
+  <Accordion title="多处存放" icon="hard-drive">
+    - 可保存到本地磁盘、外部硬盘或加密云存储
+    - 保留多份冗余副本，确保日后仍能取用
+  </Accordion>
+
+  <Accordion title="轻松恢复" icon="rotate-left">
+    - 使用助记词加备份文件即可恢复
+    - 节点会强制关闭备份中列出的通道
+  </Accordion>
+</AccordionGroup>
+
+### 安全最佳实践
+
+<Warning>
+  **重要安全提示**：
+  - 安装前务必验证二进制文件签名
+  - 将助记词离线妥善保存
+  - 使用强度高且唯一的密码
+  - 通道发生变化后导出一份新备份
+  - 保持软件更新到最新版本
+</Warning>
+
+---
+
+## AI 功能
+
+### 自主代理
+
+<Card title="KaleidoAgent" icon="robot" href="/cn/ai-tools/kaleido-agent">
+  AI 投资组合管理者与钱包操作者。监控资产配置并管理资产，且从不托管你的资金。
+</Card>
+
+### 本地 AI
+
+<Card title="KaleidoMind" icon="brain" href="/cn/ai-tools/kaleido-mind">
+  设备端 AI 助手。用日常语言获取报价、构建支付、查找联系人或完成一笔交换。
+</Card>
+
+### AI 工具链
+
+<AccordionGroup>
+  <Accordion title="MCP 服务器" icon="server">
+    为钱包、DEX 和支付门控 API 提供带类型的工具接口，任何兼容 MCP 的客户端均可调用
+  </Accordion>
+
+  <Accordion title="Skills" icon="sparkles">
+    `SKILL.md` 操作手册，限定代理可使用的工具范围并承载执行计划
+  </Accordion>
+
+  <Accordion title="机器支付" icon="bolt">
+    代理可通过闪电网络为 HTTP 402 门控的数据 API 付费，无需 API 密钥或注册
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 其他功能
+
+### 用户界面
+
+<CardGroup cols={3}>
+  <Card title="单一种子" icon="key">
+    用一组 12 个单词的种子管理所有比特币分层协议的余额，不必在多个钱包之间来回切换。
+  </Card>
+
+  <Card title="多语言界面" icon="language">
+    界面支持英语、西班牙语、意大利语、德语、法语、中文、日语和韩语。
+  </Card>
+
+  <Card title="直观的设计" icon="paintbrush">
+    界面简洁现代，兼顾新手与资深用户，并支持深色与浅色主题。
+  </Card>
+</CardGroup>
+
+### 平台增强
+
+<CardGroup cols={3}>
+  <Card title="Docker 节点后端" icon="docker">
+    在容器中启动你的 RGB 闪电节点。一次配置，省去依赖烦恼。
+  </Card>
+
+  <Card title="后台节点" icon="gauge">
+    通过托盘控制运行，应用最小化时节点仍持续同步。
+  </Card>
+
+  <Card title="多平台" icon="desktop">
+    桌面应用支持 macOS、Windows 和 Linux。浏览器扩展面向基于 Chromium 的浏览器，目前处于邀请制封闭测试阶段。
+  </Card>
+</CardGroup>
+
+### 进阶功能
+
+<AccordionGroup>
+  <Accordion title="WebSocket 流式推送" icon="bolt">
+    通过 WebSocket 连接获取实时市场数据与报价更新
+  </Accordion>
+
+  <Accordion title="多资产通道（RGB Lightning）" icon="layer-group">
+    将多种 RGB 资产分配到同一条闪电通道
+  </Accordion>
+
+  <Accordion title="自定义费用策略" icon="sliders">
+    为公开通道设置你自己的路由费
+  </Accordion>
+
+  <Accordion title="支付路由" icon="route">
+    为闪电支付自动寻找最优路径
+  </Accordion>
+
+  <Accordion title="发票管理" icon="file-invoice">
+    创建、跟踪和管理闪电发票
+  </Accordion>
+</AccordionGroup>
+
+### 开发者工具
+
+面向在 KaleidoSwap 上构建应用的开发者：
+
+<CardGroup cols={2}>
+  <Card title="SDK" icon="code" href="/cn/sdk/introduction">
+    完整的 SDK 参考、示例与最佳实践。
+  </Card>
+
+  <Card title="API 参考" icon="brackets-curly" href="/cn/api-reference/introduction">
+    REST 接口端点与交换协议细节。
+  </Card>
+
+  <Card title="CLI" icon="terminal" href="/cn/cli/introduction">
+    在终端中运行本地节点、交换和通道流程。
+  </Card>
+
+  <Card title="AI 工具" icon="sparkles" href="/cn/ai-tools/introduction">
+    用于钱包操作的 MCP 服务器，以及定义特定行为的 Skills 文件。
+  </Card>
+</CardGroup>
+
+---
+
+## 即将推出
+
+<Info>
+  **即将上线的功能**：
+  - Web 应用与移动应用（iOS 与 Android）
+  - 硬件钱包集成
+  - 多重签名钱包支持
+  - 基于意图的交易引擎与 P2P 交易引擎
+
+</Info>

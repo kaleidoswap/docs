@@ -1,0 +1,136 @@
+---
+title: "KaleidoSDK 类型定义"
+sidebarTitle: "类型定义"
+description: "KaleidoSDK 中通用的核心类型与配置对象，涵盖资产、交易对、报价、交换以及客户端配置的字段说明。"
+---
+
+## 总览
+
+SDK 同时提供自动生成的 API 模型和一层轻量的手写客户端。
+
+- TypeScript 从 `kaleido-sdk` 导出请求与响应类型
+- Python 从 `kaleido_sdk` 导出 Pydantic 模型
+
+## 客户端配置
+
+### TypeScript
+
+```typescript
+import type { KaleidoConfig } from 'kaleido-sdk';
+
+const config: KaleidoConfig = {
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+  apiKey: process.env.KALEIDO_API_KEY,
+  timeout: 30,
+  logLevel: 'info',
+  logger: console,
+};
+```
+
+`KaleidoConfig` 目前支持以下字段：
+
+- `baseUrl?`
+- `nodeUrl?`
+- `apiKey?`
+- `nodeApiKey?`
+- `timeout?`
+- `logLevel?`
+- `logger?`
+
+### Python
+
+在常规用法中，Python 不会暴露单独的构造参数对象。请通过 `KaleidoClient.create(...)` 配置客户端：
+
+```python
+import logging
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+    api_key=None,
+    timeout=30.0,
+    max_retries=3,
+    cache_ttl=60,
+    log_level=logging.INFO,
+)
+```
+
+## 常用枚举与模型
+
+<CodeGroup>
+```typescript TypeScript
+import type {
+  AssetResponseModel,
+  PairQuoteRequest,
+  PairQuoteResponse,
+  TradingPairResponseModel,
+} from 'kaleido-sdk';
+import { Layer } from 'kaleido-sdk';
+```
+
+```python Python
+from kaleido_sdk import (
+    AssetResponseModel,
+    Layer,
+    PairQuoteRequest,
+    PairQuoteResponse,
+    TradingPairResponseModel,
+)
+```
+</CodeGroup>
+
+## 分层协议
+
+SDK 使用共用的 `Layer` 枚举，在受支持的网络之间路由资产。
+
+<CodeGroup>
+```typescript TypeScript
+import { Layer } from 'kaleido-sdk';
+
+const fromLayer = Layer.BTC_LN;
+const toLayer = Layer.RGB_LN;
+```
+
+```python Python
+from kaleido_sdk import Layer
+
+from_layer = Layer.BTC_LN
+to_layer = Layer.RGB_LN
+```
+</CodeGroup>
+
+## 报价模型
+
+<CodeGroup>
+```typescript TypeScript
+import type { PairQuoteRequest, PairQuoteResponse } from 'kaleido-sdk';
+
+const request: PairQuoteRequest = {
+  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
+};
+
+const response: PairQuoteResponse = await client.maker.getQuote(request);
+```
+
+```python Python
+from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput
+
+request = PairQuoteRequest(
+    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+)
+
+response = await client.maker.get_quote(request)
+```
+</CodeGroup>
+
+## 辅助类型
+
+TypeScript 还从包根导出与 WebSocket 和日志相关的类型：
+
+```typescript
+import type { QuoteResponse, LogLevelValue, SdkLogger } from 'kaleido-sdk';
+```

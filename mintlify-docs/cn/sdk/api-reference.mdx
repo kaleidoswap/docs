@@ -1,0 +1,210 @@
+---
+title: "KaleidoSDK 客户端参考"
+sidebarTitle: "客户端参考"
+description: "KaleidoSDK 中 KaleidoClient、MakerClient 与 RlnClient 的完整参考，涵盖各个方法、参数与返回类型。"
+---
+
+## 客户端初始化
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+  apiKey: process.env.KALEIDO_API_KEY,
+  timeout: 30,
+  logLevel: LogLevel.INFO,
+});
+
+client.hasMaker(); // boolean
+client.hasNode();  // boolean
+client.maker;      // MakerClient
+client.rln;        // RlnClient
+```
+
+```python Python
+import logging
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+    api_key=None,
+    timeout=30.0,
+    max_retries=3,
+    cache_ttl=60,
+    log_level=logging.INFO,
+)
+
+client.has_node()  # bool
+client.maker       # MakerClient
+client.rln         # RlnClient，缺少 node_url 时会抛出异常
+```
+</CodeGroup>
+
+## MakerClient（`client.maker`）
+
+### 市场数据
+
+| TypeScript | Python | 说明 |
+|------------|--------|-------|
+| `listAssets()` | `list_assets()` | 列出所有资产 |
+| `listPairs()` | `list_pairs()` | 列出所有交易对 |
+| `getQuote(body)` | `get_quote(body)` | 请求报价 |
+| `getPairRoutes(body)` | `get_pair_routes(pair_ticker)` | TS 接收请求体；Python 接收交易对代码，例如 `"BTC/USDT"` |
+| `getMarketRoutes(body)` | `get_market_routes(body)` | 发现市场路由 |
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
+
+const client = KaleidoClient.create();
+
+const assets = await client.maker.listAssets();
+const pairs = await client.maker.listPairs();
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
+});
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
+
+client = KaleidoClient.create()
+
+assets = await client.maker.list_assets()
+pairs = await client.maker.list_pairs()
+quote = await client.maker.get_quote(
+    PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+    )
+)
+```
+</CodeGroup>
+
+### 原子交换
+
+| TypeScript | Python | 说明 |
+|------------|--------|-------|
+| `initSwap(body)` | `init_swap(body)` | 初始化一笔原子交换 |
+| `executeSwap(body)` | `execute_swap(body)` | 确认或执行该笔交换 |
+| `getAtomicSwapStatus(body)` | `get_atomic_swap_status(body)` | 查询交换状态 |
+| `getSwapNodeInfo()` | `get_swap_node_info()` | 做市方交换节点详情 |
+
+### LSPS1
+
+| TypeScript | Python | 说明 |
+|------------|--------|-------|
+| `getLspInfo()` | `get_lsp_info()` | LSP 元数据 |
+| `getLspNetworkInfo()` | `get_lsp_network_info()` | LSP 网络信息 |
+| `createLspOrder(body)` | `create_lsp_order(body)` | 创建 LSPS1 订单 |
+| `getLspOrder(body)` | `get_lsp_order(body)` | 获取 LSPS1 订单 |
+| `estimateLspFees(body)` | `estimate_lsp_fees(body)` | 估算订单费用 |
+| `submitLspRateDecision(body)` | `submit_lsp_rate_decision(body)` | 费率决策接口端点 |
+
+### WebSocket 与流式推送
+
+| TypeScript | Python | 说明 |
+|------------|--------|-------|
+| `enableWebSocket(wsUrl)` | `enable_websocket(ws_url, user_id=None)` | 创建一个 `WSClient` |
+| `streamQuotes(...)` | `stream_quotes(...)` | 通过 WebSocket 轮询报价流 |
+| `streamQuotesByTicker(...)` | `stream_quotes_by_ticker(...)` | 自动选择路由 |
+| `streamQuotesForAllRoutes(...)` | `stream_quotes_for_all_routes(...)` | 推送全部路由 |
+| `getAvailableRoutes(...)` | `get_available_routes(...)` | 路由辅助方法 |
+
+## RlnClient（`client.rln`） {#rlnclient-clientrln}
+
+### 钱包与 BTC
+
+| TypeScript | Python |
+|------------|--------|
+| `getNodeInfo()` | `get_node_info()` |
+| `getNetworkInfo()` | `get_network_info()` |
+| `initWallet(body)` | `init_wallet(body)` |
+| `unlockWallet(body)` | `unlock_wallet(body)` |
+| `lockWallet()` | `lock_wallet()` |
+| `changePassword(body)` | `change_password(body)` |
+| `backup(body)` | `backup(body)` |
+| `restore(body)` | `restore(body)` |
+| `shutdown()` | `shutdown()` |
+| `getAddress()` | `get_address()` |
+| `getBtcBalance(skipSync?)` | `get_btc_balance(skip_sync=False)` |
+| `sendBtc(body)` | `send_btc(body)` |
+| `listTransactions(request?)` | `list_transactions(...)` |
+| `listUnspents()` | `list_unspents(...)` |
+| `createUtxos(body)` | `create_utxos(body)` |
+| `estimateFee(body)` | `estimate_fee(body)` |
+
+### RGB 资产
+
+| TypeScript | Python |
+|------------|--------|
+| `listAssets(filterAssetSchemas?)` | `list_assets(filter_asset_schemas=...)` |
+| `getAssetBalance(body)` | `get_asset_balance(body)` |
+| `getAssetMetadata(body)` | `get_asset_metadata(body)` |
+| `getAssetMedia(body)` | `get_asset_media(body)` |
+| `postAssetMedia(body)` | `post_asset_media(body)` |
+| `issueAssetNIA(body)` | `issue_asset_nia(body)` |
+| `issueAssetCFA(body)` | `issue_asset_cfa(body)` |
+| `issueAssetUDA(body)` | `issue_asset_uda(body)` |
+| `issueAssetIFA(body)` | `issue_asset_ifa(body)` |
+| `inflate(body)` | `inflate(body)` |
+| `sendRgb(body)` | `send_rgb(body)` |
+| `listTransfers(body)` | `list_transfers(body)` |
+| `refreshTransfers(body?)` | `refresh_transfers(body=None)` |
+| `syncRgbWallet(body?)` | `sync_rgb_wallet(body=None)` |
+| `failTransfers(body)` | `fail_transfers(body)` |
+| `decodeSwapstring(body)` | `decode_swapstring(body)` |
+
+### 通道、对等节点、发票与支付
+
+| TypeScript | Python |
+|------------|--------|
+| `listChannels()` | `list_channels()` |
+| `openChannel(body)` | `open_channel(body)` |
+| `closeChannel(body)` | `close_channel(body)` |
+| `getChannelId(body)` | `get_channel_id(body)` |
+| `listPeers()` | `list_peers()` |
+| `connectPeer(body)` | `connect_peer(body)` |
+| `disconnectPeer(body)` | `disconnect_peer(body)` |
+| `createLNInvoice(body)` | `create_ln_invoice(body)` |
+| `createRgbInvoice(body)` | `create_rgb_invoice(body)` |
+| `decodeLNInvoice(body)` | `decode_ln_invoice(body)` |
+| `decodeRgbInvoice(body)` | `decode_rgb_invoice(body)` |
+| `getInvoiceStatus(body)` | `get_invoice_status(body)` |
+| `sendPayment(body)` | `send_payment(body)` |
+| `keysend(body)` | `keysend(body)` |
+| `listPayments()` | `list_payments()` |
+| `getPayment(body)` | `get_payment(body)` |
+
+### 交换协调与辅助方法
+
+| TypeScript | Python | 说明 |
+|------------|--------|-------|
+| `getTakerPubkey()` | `get_taker_pubkey()` | 返回节点公钥 |
+| `whitelistSwap(body)` | `whitelist_swap(body)` | 接收请求对象或原始 swapstring |
+| `makerInit(body)` | `maker_init(body)` | 做市方侧的交换初始化 |
+| `makerExecute(body)` | `maker_execute(body)` | 做市方侧的执行 |
+| `listSwaps()` | `list_swaps()` | 列出交换 |
+| `getSwap(body)` | `get_swap(body)` | 获取某笔交换 |
+| `signMessage(body)` | `sign_message(body)` | 辅助方法 |
+| `sendOnionMessage(body)` | `send_onion_message(body)` | 辅助方法 |
+| `checkIndexerUrl(body)` | `check_indexer_url(body)` | 辅助方法 |
+| `checkProxyEndpoint(body)` | `check_proxy_endpoint(body)` | 辅助方法 |
+| `revokeToken(body)` | `revoke_token(body)` | 辅助方法 |
+
+## 关闭客户端
+
+<CodeGroup>
+```typescript TypeScript
+await client.close();
+```
+
+```python Python
+await client.close()
+```
+</CodeGroup>

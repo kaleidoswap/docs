@@ -1,0 +1,203 @@
+---
+title: DApp 连接
+description: "用 WebLN、WebBTC 和 Nostr（NIP-07）提供方把 KaleidoSwap 扩展连接到受信任的 DApp：授权流程、权限管理与可用方法一览。"
+---
+
+## 概览
+
+KaleidoSwap 扩展会把标准钱包提供方注入浏览器页面，DApp 在获得用户授权后即可调用钱包能力。它沿用与其他浏览器钱包（例如 Alby）相同的提供方约定，因此大多数现有的 WebLN、WebBTC 和 Nostr 应用无需为 KaleidoSwap 做任何专门集成即可使用。
+
+扩展注入以下对象：
+
+- **`window.webln`** — 面向 Lightning 的 [WebLN](https://www.webln.dev/) 提供方（发票、支付、消息签名、keysend、LNURL）。
+- **`window.webbtc`** — 面向链上比特币的 WebBTC 提供方（地址、PSBT 签名、BIP-322 消息签名、广播）。
+- **`window.nostr`** — 完整的 [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) 提供方，用于 Nostr 事件签名与加密。
+- **`window.bitcoin`** — Bitcoin Wallet Standard 提供方（Unisat／OKX／Leather 风格），部分 DApp 会探测它来获取链上账户。
+
+### 工作原理
+
+1. KaleidoSwap 扩展的**内容脚本**被注入网页
+2. 内容脚本加载**注入脚本**，添加 `window.webln`、`window.webbtc`、`window.nostr` 和 `window.bitcoin`
+3. DApp 调用这些提供方上的方法
+4. 请求被路由到 KaleidoSwap 扩展的**后台 service worker**
+5. 敏感操作会触发确认或权限提示
+
+### 提供方就绪事件
+
+提供方安装完成后，注入脚本会派发就绪事件（同时提供带冒号和不带冒号两种写法，以兼容各类 SDK）：
+
+- `webln:ready` / `weblnReady`
+- `webbtc:ready` / `webbtcReady`
+- `nostr:ready`
+- `bitcoin:ready`
+
+## WebLN 提供方
+
+`window.webln` 遵循 WebLN 规范，可用于：
+
+- 请求节点信息
+- 创建闪电发票
+- 发送闪电支付
+- 签名和验证消息
+- 发送 keysend 支付
+- 处理 LNURL 请求
+- 读取余额详情
+
+### 支持的方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `enable()` | 连接 DApp 并为该来源请求授权 |
+| `getInfo()` | 获取节点信息和支持的方法 |
+| `sendPayment(paymentRequest)` | 支付 BOLT-11 发票 |
+| `makeInvoice(args)` | 创建闪电发票 |
+| `signMessage(message)` | 用节点密钥签名消息 |
+| `verifyMessage(signature, message)` | 验证已签名的消息 |
+| `keysend(args)` | 发送自发（keysend）支付 |
+| `lnurl(input)` | 处理 LNURL 请求 |
+| `getBalance()` | 获取钱包余额详情 |
+| `request(method, params)` | 底层透传请求 |
+
+### 用法示例
+
+```javascript
+window.addEventListener('webln:ready', async () => {
+  await window.webln.enable();
+
+  const info = await window.webln.getInfo();
+
+  const { paymentRequest } = await window.webln.makeInvoice({
+    amount: 1000,
+    defaultMemo: 'Coffee'
+  });
+
+  const { preimage } = await window.webln.sendPayment('lnbc...');
+});
+```
+
+## WebBTC 提供方
+
+`window.webbtc` 是链上比特币提供方，可以：
+
+- 返回接收地址
+- 签名并终结 PSBT
+- 签名消息（BIP-322）
+- 广播原始交易
+- 发送链上支付
+
+### 支持的方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `enable()` | 连接 DApp 并为该来源请求授权 |
+| `getInfo()` | 获取节点／网络信息和支持的方法 |
+| `getAddress()` | 获取链上接收地址 |
+| `signPsbt(psbtHex)` | 签名 PSBT 中属于本钱包的输入 |
+| `finalizePsbt(psbtHex)` | 把已签名的 PSBT 终结为可广播的 hex |
+| `broadcastTransaction(txHex)` | 广播已签名的原始交易 |
+| `signMessage(message, address?)` | 签名消息（BIP-322） |
+| `sendPayment(paymentRequest)` | 支付 BIP-21 或 BOLT-11 请求 |
+| `sendTransaction(address, amount)` | 发送链上支付 |
+
+<Note>
+部分 DApp 会探测 `window.bitcoin`（Bitcoin Wallet Standard 提供方），替代或同时配合 `window.webbtc` 使用。它基于同一套钱包密钥暴露 `connect()`、`getAccounts()`、`getPublicKey()`、`signMessage()`、`signPsbt()`、`pushPsbt()` 和 `sendBitcoin()`。
+</Note>
+
+### PSBT 确认
+
+批准 `signPsbt`、`finalizePsbt` 或 `pushPsbt` 绝不是盲签：确认提示会解码 PSBT，在你批准之前展示目标地址、金额和网络费用。如果无法从 PSBT 中解码出金额，提示会改为给出明确警告。
+
+<img src="/assets/images/extension/32-psbt-confirm.png" alt="PSBT 签名确认界面，解码出交易总额、每个输出的目标地址和金额，以及网络费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## Nostr 提供方（NIP-07）
+
+KaleidoSwap 扩展在 `window.nostr` 上注入完整的 **NIP-07** 提供方，Nostr 网页应用可以请求钱包公钥、签名事件，以及加密或解密私信。Nostr 身份由钱包助记词派生（若已设置，则使用导入的身份）。
+
+### 支持的方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `getPublicKey()` | 返回钱包的 Nostr 公钥（hex） |
+| `signEvent(event)` | 签名一个 Nostr 事件 |
+| `getRelays()` | 返回已配置的中继 |
+| `signSchnorr(sigHash)` | 用 Nostr 密钥签名 32 字节哈希 |
+| `nip04.encrypt(pubkey, plaintext)` / `nip04.decrypt(pubkey, ciphertext)` | NIP-04 加密 |
+| `nip44.encrypt(pubkey, plaintext)` / `nip44.decrypt(pubkey, ciphertext)` | NIP-44 加密 |
+
+### 用法示例
+
+```javascript
+window.addEventListener('nostr:ready', async () => {
+  const pubkey = await window.nostr.getPublicKey();
+
+  const signed = await window.nostr.signEvent({
+    kind: 1,
+    content: 'Hello from KaleidoSwap',
+    tags: [],
+    created_at: Math.floor(Date.now() / 1000)
+  });
+});
+```
+
+## Nostr Connect（NIP-46）
+
+除了页面内的 NIP-07 签名，扩展还可以为支持 [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md)（nsecBunker）的 Nostr 应用充当**远程签名器**。在**设置 > Nostr Connect**（Settings > Nostr Connect）中生成 `bunker://` 连接字符串，粘贴到客户端应用中，签名请求随后会通过 Nostr 中继传输，并在扩展中批准。活跃的 NIP-46 会话会出现在**已连接应用**（Connected Apps）中，可在那里查看和撤销。
+
+<img src="/assets/images/extension/34-nostr-connect-bunker.png" alt="Nostr Connect 远程签名界面，显示监听状态、生成的 bunker 连接字符串和撤销操作" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## Nostr Wallet Connect（NWC）
+
+扩展也可以通过 **Nostr Wallet Connect** 把钱包暴露给外部应用：扫描配对二维码完成配对，再用**按金额生效的预算**限定它能做什么。通过 NWC 发起的 Zap 支付（NIP-57）会被校验，并与钱包交易记录关联。
+
+## 权限提示与已连接应用
+
+当已连接的站点发起敏感请求时，KaleidoSwap 扩展会要求用户批准或拒绝该操作。已连接的 Nostr 客户端默认采用「合理」(Reasonable) 授权级别（与其他 NIP-07 钱包相当）：已连接应用的常规低风险操作直接放行，而支付和其他敏感操作仍会弹出提示。
+
+<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="连接授权提示，显示发起请求的站点来源、它申请的访问权限，以及默认的「合理」授权级别和拒绝、允许两个操作" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+**设置 > 已连接应用**（Settings > Connected Apps）列出连接到钱包的每个站点和应用，并显示各自被授予的能力。你可以随时撤销单项能力，或彻底断开某个站点。
+
+<img src="/assets/images/extension/33-connected-sites.png" alt="已连接应用界面，列出已连接的应用、Nostr Wallet Connect 会话，以及用于屏蔽站点的输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Warning>
+批准之前务必看清 DApp 请求的内容。只批准来自你信任的站点的支付、发票、资产发送和签名请求。
+</Warning>
+
+## Nostr 身份
+
+KaleidoSwap 扩展从钱包助记词（或导入的身份）派生 Nostr 身份，并同时通过 `window.nostr` 暴露给网页，以及在扩展设置中展示。
+
+### Nostr 密钥管理
+
+你的 Nostr 密钥对在**设置 > Nostr 账户**（Settings > Nostr Account）中管理：
+
+- 查看公钥（`npub`）
+- 钱包处于解锁状态时查看／复制会话私钥
+- 从钱包助记词重新派生身份
+
+默认情况下，身份由助记词派生（NIP-06）。如果你已经有 Nostr 身份，可以在初始设置时或之后从设置中导入自己的密钥（`nsec1…` 或 64 位十六进制字符串）；它会被加密存储，并在所有原本使用派生身份的场景中生效。
+
+## 浏览器授权流程
+
+KaleidoSwap 扩展让 DApp 授权始终由用户驱动：
+
+1. 受信任的站点请求连接、支付、发票、资产或签名操作
+2. KaleidoSwap 扩展通过内容脚本和后台 service worker 转发请求
+3. 用户核对详情，批准或拒绝该操作
+
+这样既保证钱包侧的操作始终显式确认，又允许 DApp 把 KaleidoSwap 扩展当作浏览器提供方使用。
+
+## 安全注意事项
+
+| 做法 | 说明 |
+|----------|-------------|
+| **核实站点** | 批准钱包连接前先检查 URL |
+| **审阅请求** | 批准前读清发票、资产和签名的详细内容 |
+| **用完即锁** | 使用完 DApp 后锁定 KaleidoSwap 扩展 |
+| **控制暴露面** | 只连接受信任的站点 |
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

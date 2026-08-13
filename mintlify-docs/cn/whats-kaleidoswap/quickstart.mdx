@@ -1,0 +1,274 @@
+---
+title: "KaleidoSwap 快速开始"
+sidebarTitle: "快速开始"
+description: "几分钟完成 KaleidoSwap 配置并做出首笔非托管交换：安装应用、为闪电钱包充值、交易比特币二层资产。桌面应用、浏览器扩展和 SDK 三条路径任选其一。"
+---
+
+<CardGroup cols={3}>
+  <Card title="桌面应用" icon="desktop" href="#desktop-app-quickstart">
+    通过桌面应用执行原子交换
+  </Card>
+
+  <Card title="浏览器扩展" icon="puzzle-piece" href="#extension-quickstart">
+    在浏览器中使用钱包并完成交换
+  </Card>
+
+  <Card title="SDK" icon="code" href="#sdk-quickstart">
+    将 KaleidoSwap 集成到你的应用中
+  </Card>
+</CardGroup>
+
+---
+
+## 桌面应用快速开始
+
+<Steps>
+  <Step title="下载与安装">
+    下载适用于你的平台的最新版本：
+
+    - [macOS（Apple Silicon）](https://github.com/kaleidoswap/desktop-app/releases)
+    - [macOS（Intel）](https://github.com/kaleidoswap/desktop-app/releases)
+    - [Windows](https://github.com/kaleidoswap/desktop-app/releases)
+    - [Linux（AppImage）](https://github.com/kaleidoswap/desktop-app/releases)
+
+    <Tip>
+      安装前请务必验证二进制文件签名。[了解方法 →](/cn/desktop-app/getting-started/verify-binaries)
+    </Tip>
+  </Step>
+
+  <Step title="创建钱包">
+    启动 KaleidoSwap 并创建新钱包：
+
+    1. 点击「创建新钱包」(Create New Wallet)
+    2. **妥善保存你的 12 个单词助记词**
+    3. 设置一个强密码
+    4. 确认你的助记词
+
+    <Warning>
+      **切勿分享你的助记词！** 任何拿到助记词的人都能盗走你的资金。
+    </Warning>
+  </Step>
+
+  <Step title="存入资金">
+    获取你的比特币地址并存入资金：
+
+    1. 进入「钱包」(Wallet) → 「接收」(Receive)
+    2. 复制你的比特币地址
+    3. 从交易所或其他钱包向该地址发送 BTC
+    4. 等待确认（通常需要 10-60 分钟）
+  </Step>
+
+  <Step title="开通通道">
+    连接到闪电服务提供商（LSP）：
+
+    1. 进入「通道」(Channels) → 「开通通道」(Open Channel)
+    2. 选择一个 LSP，或使用默认项
+    3. 选择通道容量（建议至少 1M 聪）
+    4. 选择要分配的 RGB 资产（例如 USDT）
+    5. 确认并等待通道开通
+  </Step>
+
+  <Step title="完成首笔交换">
+    执行一笔原子交换：
+
+    1. 进入「交换」(Swap) 标签页
+    2. 选择资产：BTC → USDT（或反向）
+    3. 输入交换数量
+    4. 查看报价
+    5. 确认交换
+    6. 等待完成（通常不到 30 秒）
+  </Step>
+</Steps>
+
+<Check>
+  **恭喜！** 你已在闪电网络上完成了第一笔 RGB 资产原子交换。
+</Check>
+
+---
+
+## 浏览器扩展快速开始
+
+<Steps>
+  <Step title="安装扩展">
+    从你的邀请链接下载最新的封闭测试版 zip 包，然后加载到浏览器中：
+
+    1. 解压该 zip 压缩包
+    2. 打开 `chrome://extensions` 并启用**开发者模式**
+    3. 点击**加载已解压的扩展程序**，选择解压后的文件夹
+    4. 将 KaleidoSwap 图标固定到工具栏
+
+    <Tip>
+      完整流程（含校验和验证）见：[安装指南 →](/cn/extensions/kaleidoswap-extension/installation)
+    </Tip>
+  </Step>
+
+  <Step title="创建钱包">
+    打开扩展并创建新钱包：
+
+    1. 选择「创建新钱包」(Create New Wallet)
+    2. 设置一个安全的密码
+    3. **妥善保存你的 12 个单词助记词**
+    4. 可选：注册 passkey 并配置你的 Nostr 身份
+
+    <Warning>
+      **切勿分享你的助记词！** 任何拿到助记词的人都能盗走你的资金。
+    </Warning>
+  </Step>
+
+  <Step title="为钱包充值">
+    向已连接的账户存入 BTC 或其他资产：
+
+    1. 在仪表盘点击「存入」(Deposit)
+    2. 选择一条路径：比特币链上、闪电网络、Spark、Arkade、Liquid 或 RGB
+    3. 复制地址或发票，从交易所或其他钱包发送资金
+    4. 等待确认（Spark/Arkade 上即时到账，链上按出块时间）
+  </Step>
+
+  <Step title="连接交换场所">
+    交换需要连接一个兼容的交换场所：
+
+    - Spark 资金池会在你的 Spark 账户充值后可用
+    - 如需 RGB 交换，请在「设置」(Settings) → 「账户」(Accounts) → 「RGB」中连接一个 RGB 闪电节点（直接填写 URL 或使用 Nostr Wallet Connect）
+  </Step>
+
+  <Step title="完成首笔交换">
+    在仪表盘执行一笔交换：
+
+    1. 点击「交换」(Swap)
+    2. 选择**支付**与**收到**的资产
+    3. 输入数量并查看报价
+    4. 在报价过期前确认交换
+    5. 跟踪状态直至完成
+  </Step>
+</Steps>
+
+<Check>
+  **恭喜！** 你已在 KaleidoSwap 浏览器扩展中完成了第一笔交换。
+</Check>
+
+---
+
+## SDK 快速开始
+
+### Python SDK
+
+<CodeGroup>
+
+```bash Installation
+pip install kaleido-sdk
+```
+
+```python Basic Usage
+from kaleido_sdk import KaleidoClient
+
+# 初始化客户端
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="<Your RGB Lightning Node URL>"
+)
+
+# 获取可用的交易对
+pairs = client.maker.list_pairs()
+print(f"Available pairs: {len(pairs)}")
+
+# 获取 BTC 兑 USDT 的报价
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+print(f"Quote received: {quote}")
+```
+
+</CodeGroup>
+
+<Card title="Python SDK 文档" icon="python" href="/cn/sdk/introduction">
+  查看完整的 SDK 文档 →
+</Card>
+
+### TypeScript SDK
+
+<CodeGroup>
+
+```bash npm
+npm install kaleido-sdk
+```
+
+```bash yarn
+yarn add kaleido-sdk
+```
+
+```typescript Basic Usage
+import { KaleidoClient } from 'kaleido-sdk';
+
+// 初始化客户端
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com'
+});
+
+// 获取可用的交易对
+const pairs = await client.maker.listPairs();
+console.log(`Available pairs: ${pairs.length}`);
+
+// 获取 BTC 兑 USDT 的报价
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+console.log(`Quote received:`, quote);
+```
+
+</CodeGroup>
+
+<Card title="TypeScript SDK 文档" icon="js" href="/cn/sdk/introduction">
+  查看完整的 SDK 文档 →
+</Card>
+
+### API 快速参考
+
+<CodeGroup>
+
+```bash Get Trading Pairs
+curl https://api.signet.kaleidoswap.com/api/v1/market/pairs
+```
+
+```bash Get Asset List
+curl https://api.signet.kaleidoswap.com/api/v1/market/assets
+```
+
+```bash Request Quote
+curl -X POST https://api.signet.kaleidoswap.com/api/v1/market/quote \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+  }'
+```
+
+</CodeGroup>
+
+<Card title="API 参考" icon="book" href="/cn/api-reference/introduction">
+  查看完整的 API 文档 →
+</Card>
+
+---
+
+## 可用网络
+
+<Tabs>
+  <Tab title="Signet">
+    **API URL**：`https://api.signet.kaleidoswap.com/api/v1`
+
+    **WebSocket**：`wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}`
+
+    - Bitcoin Signet（MutinyNet）—— 条件贴近真实环境的公共测试网
+    - 建议在上主网前用于集成测试
+    - **目前已上线**
+  </Tab>
+
+  <Tab title="主网">
+    **API URL**：`https://api.kaleidoswap.com/api/v1`
+
+    - 比特币主网 —— 生产环境
+    - **即将上线**
+  </Tab>
+</Tabs>

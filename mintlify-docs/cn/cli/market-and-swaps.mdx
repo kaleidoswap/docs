@@ -1,0 +1,101 @@
+---
+title: '市场与交换'
+description: '在 CLI 中浏览 KaleidoSwap 市场、请求报价，并跨比特币分层协议执行订单、原子交换或本地节点交换流程'
+---
+
+## 市场数据
+
+`market` 命令组是只读入口，用于查看交易对、报价、路由和做市商元数据。
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido market assets` | 列出可交易资产 |
+| `kaleido market pairs` | 列出交易对 |
+| `kaleido market quote <pair>` | 请求报价 |
+| `kaleido market info` | 显示做市商节点信息 |
+| `kaleido market routes <pair>` | 列出可用路由 |
+
+### 报价示例
+
+```bash
+kaleido market quote BTC/USDT --from-amount 0.001
+kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB_LN
+```
+
+重要的报价选项：
+
+- `--from-amount` 或 `--to-amount`
+- `--from-layer`
+- `--to-layer`
+
+市场报价支持的分层值包括 `BTC_LN`、`RGB_LN` 和 `BTC_ONCHAIN`。
+
+## 交换的两种范围
+
+交换功能分布在两个命令组中：
+
+| 范围 | 适用场景 |
+|------|----------|
+| `swap atomic` | 以本地节点作为接单方，执行由做市商支撑的原子交换 |
+| `node swap` | 直接驱动底层的本地 RLN 交换步骤（位于 `node` 命令组下） |
+
+## 原子交换流程
+
+当做市方在远端、而执行使用本地节点作为接单方时，请使用 `swap atomic`。
+
+### 子命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido swap atomic init <pair>` | 初始化原子交换 |
+| `kaleido swap atomic execute` | 执行已初始化的交换（`--swapstring`、`--taker-pubkey`、`--payment-hash`，省略时会提示输入；`--auto-whitelist`） |
+| `kaleido swap atomic status <payment-hash>` | 跟踪原子交换状态 |
+| `kaleido swap atomic run <pair>` | 用一条命令依次完成 init、whitelist 和 execute |
+
+### 示例
+
+```bash
+kaleido swap atomic run BTC/USDT --to-amount 5
+```
+
+你还可以提供：
+
+- `--taker-pubkey`
+- `--yes`
+- 显式的 `--from-layer` 和 `--to-layer`
+
+## 本地节点交换流程
+
+使用 `node swap` 执行底层的 RLN 交换步骤（这些命令位于 `node` 命令组下）：
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido node swap pubkey` | 打印接单方公钥 |
+| `kaleido node swap init` | 启动本地的做市方初始化交换流程（`--from-asset`、`--qty-from`、`--to-asset`、`--qty-to`、`--timeout`） |
+| `kaleido node swap whitelist --swapstring '<swapstring>'` | 在接单方一侧将该交换加入白名单 |
+| `kaleido node swap execute` | 加入白名单后执行交换 |
+| `kaleido node swap status <payment-hash>` | 查看状态（`--taker` 或 `--maker`） |
+| `kaleido node swap list` | 列出节点已知的交换 |
+
+当你希望把每个步骤单独暴露出来时，这条路径适合调试、演示和更底层的协议操作。
+
+## 推荐的交易流程
+
+### 浏览市场（无需节点）
+
+```bash
+kaleido market pairs
+kaleido market quote BTC/USDT --from-amount 0.001
+```
+
+执行交换需要本地 RLN 节点——请使用下面的原子交换流程。
+
+### 使用本地节点
+
+```bash
+kaleido node unlock
+kaleido node swap pubkey
+kaleido swap atomic run BTC/USDT --from-amount 0.001 --from-layer BTC_LN --to-layer RGB_LN
+```
+
+完整的命令地图请查看[命令参考](/cn/cli/command-reference)。

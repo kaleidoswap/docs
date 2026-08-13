@@ -1,0 +1,130 @@
+---
+title: "KaleidoSwap 扩展故障排查"
+sidebarTitle: "故障排查"
+description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提供方问题，并说明向支持团队反馈缺陷时应该附上哪些信息。"
+---
+
+这里汇总了 KaleidoSwap 扩展用户最常遇到的问题及其解决办法。如需覆盖 KaleidoSwap 全部产品的问题排查，请参见[完整故障排查指南](/cn/whats-kaleidoswap/troubleshooting)。
+
+## 连接问题
+
+<AccordionGroup>
+  <Accordion title="无法连接到节点" icon="link-slash">
+    **现象：** 连接失败或显示「已断开」(Disconnected)
+
+    **解决办法：**
+    1. 确认 **节点 URL** 填写正确
+    2. 检查节点是否**正在运行且可访问**
+    3. 使用本地节点时，确认它运行在预期端口上
+    4. 使用远程节点时，检查网络／防火墙设置
+    5. 使用 Biscuit／认证令牌时，确认**令牌仍然有效**
+    6. 尝试在 Settings > RGB 中断开再重新连接
+  </Accordion>
+
+  <Accordion title="交易场所连不上" icon="plug-circle-xmark">
+    **现象：** 交换功能不可用，或显示连接错误
+
+    **解决办法：**
+    1. 检查相关账户是否已连接
+    2. 使用 KaleidoSwap 做市方交易对时，确认 RLN 状态
+    3. 使用 Flashnet 路由时，确认 Spark 是否可用
+    4. 尝试刷新交换界面
+  </Accordion>
+
+  <Accordion title="DApp 检测不到提供方" icon="eye-slash">
+    **现象：** DApp 无法把 KaleidoSwap 扩展识别为钱包
+
+    **解决办法：**
+    1. 确认 KaleidoSwap 扩展**已安装并已解锁**
+    2. 刷新网页
+    3. 检查扩展是否对该站点**已启用**
+    4. 确认 DApp 使用的是标准提供方——KaleidoSwap 扩展注入 `window.webln`（WebLN）、`window.webbtc`、`window.nostr`（NIP-07）和 `window.bitcoin`
+    5. 有些应用会等待就绪事件——扩展会派发 `webln:ready`、`webbtc:ready`、`nostr:ready` 和 `bitcoin:ready`
+  </Accordion>
+</AccordionGroup>
+
+## 支付问题
+
+<AccordionGroup>
+  <Accordion title="支付失败" icon="circle-xmark">
+    **现象：** 发送支付时报错
+
+    **解决办法：**
+    1. 检查**余额**是否充足
+    2. 确认**目标地址**填写正确
+    3. Lightning 支付需要确认到目标存在可用**路由**
+    4. 检查节点是否**在线且已同步**
+    5. 稍等一会儿再重试
+  </Accordion>
+
+  <Accordion title="发票生成失败" icon="receipt">
+    **现象：** 无法生成接收发票
+
+    **解决办法：**
+    1. 检查**节点连接**
+    2. 确认节点具备**入向流动性**（Lightning 场景）
+    3. 尝试生成其他类型（用链上代替 Lightning）
+    4. 重启扩展后重试
+  </Accordion>
+</AccordionGroup>
+
+## 扩展问题
+
+<AccordionGroup>
+  <Accordion title="扩展无法加载" icon="puzzle-piece">
+    **现象：** 点击图标没有反应，或弹出窗口空白
+
+    **解决办法：**
+    1. 打开 `chrome://extensions`，检查 KaleidoSwap 扩展是否**已启用**
+    2. 尝试**先禁用再重新启用**扩展
+    3. 清理浏览器缓存
+    4. 重启浏览器
+    5. 手动安装的版本可以尝试**重新加载**扩展
+  </Accordion>
+
+  <Accordion title="被锁在外／忘记密码" icon="lock">
+    **现象：** 无法解锁扩展
+
+    **解决办法：**
+    1. KaleidoSwap 扩展无法找回密码
+    2. **卸载**扩展并**重新安装**
+    3. 导入助记词
+    4. 设置新密码，并重新连接可选服务
+  </Accordion>
+
+  <Accordion title="余额不更新" icon="arrows-rotate">
+    **现象：** 显示的余额是旧数据
+
+    **解决办法：**
+    1. 检查**节点连接**状态
+    2. 在仪表盘上下拉**刷新**
+    3. 关闭扩展弹出窗口再重新打开
+    4. 确认节点**已同步**
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果是疑问而不是报错，请查看[常见问题](/cn/extensions/kaleidoswap-extension/faq)。其他情况请从下面的渠道中选择一个反馈问题，并附上：
+
+1. 浏览器名称和版本
+2. KaleidoSwap 扩展版本（Settings > About）
+3. 节点类型和版本
+4. 复现步骤
+5. 错误信息或截图
+6. 控制台日志（右键点击扩展弹出窗口 > Inspect > Console）
+
+<CardGroup cols={2}>
+  <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
+    向社群提问。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

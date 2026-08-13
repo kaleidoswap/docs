@@ -1,0 +1,110 @@
+---
+title: '通道与 LSP 流程'
+description: '在 KaleidoCLI 中直接开通闪电通道，或使用 KaleidoSwap 闪电服务提供商（LSP）的通道订单流程获取入向流动性'
+---
+
+## 通道操作
+
+`channel` 命令组用于直接管理本地节点上的闪电通道。
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido channel list` | 列出当前通道 |
+| `kaleido channel open <peer>` | 向某个对等节点开通通道 |
+| `kaleido channel close <channel-id>` | 关闭通道 |
+
+对等节点参数使用 `pubkey@host:port` 格式。
+
+## 开通通道
+
+```bash
+kaleido channel open 03abc...@peer.host:9735 --capacity 100000
+```
+
+值得关注的选项：
+
+- `--capacity`
+- `--push-msat`
+- `--asset-id`
+- `--asset-amount`
+- `--push-asset-amount`
+- `--public` 或 `--private`
+- `--with-anchors`
+- `--fee-base-msat`
+- `--fee-proportional-millionths`
+
+染色通道示例：
+
+```bash
+kaleido channel open 03abc...@peer.host:9735 \
+  --capacity 100000 \
+  --asset-id rgb:abc... \
+  --asset-amount 5000
+```
+
+## LSP 通道订单
+
+如果你希望使用 KaleidoSwap 的 LSP 流程，而不是手动开通对等通道，请使用 `channel order`。
+
+### 子命令
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido channel order create <client-pubkey>` | 创建通道订单 |
+| `kaleido channel order get <order-id>` | 获取订单状态与详情 |
+| `kaleido channel order pay <order-id>` | 用本地钱包资金支付订单 |
+| `kaleido channel order decide <order-id>` | 提交费率决定 |
+| `kaleido channel order estimate-fees` | 估算开通费用 |
+
+### 创建订单
+
+```bash
+kaleido channel order create 03abc... \
+  --lsp-balance 1000000 \
+  --client-balance 500000
+```
+
+常用选项：
+
+- `--confirmations`
+- `--funding-within`
+- `--expiry-blocks`
+- `--refund-address`
+- `--announce` 或 `--private`
+- `--asset-id`
+- `--lsp-asset-amount`
+- `--client-asset-amount`
+- `--email`
+
+染色通道订单示例：
+
+```bash
+kaleido channel order create 03abc... \
+  --lsp-balance 1000000 \
+  --client-balance 500000 \
+  --asset-id rgb:xyz... \
+  --lsp-asset-amount 5000 \
+  --client-asset-amount 2000
+```
+
+## LSP 元数据
+
+`lsp` 子命令组用于查看服务端元数据和网络详情：
+
+| 命令 | 用途 |
+|--------|---------|
+| `kaleido channel lsp info` | 显示 LSP 信息和可用选项 |
+| `kaleido channel lsp network-info` | 显示该 LSP 的网络元数据 |
+
+在创建订单之前，或者在设定客户端默认值时，这些命令很有用。
+
+## 实用操作顺序
+
+```bash
+kaleido channel lsp info
+kaleido node swap pubkey
+kaleido channel order estimate-fees --lsp-balance 1000000 --client-balance 500000
+kaleido channel order create 03abc... --lsp-balance 1000000 --client-balance 500000
+```
+
+服务端交易流程通常与通道和流动性管理同时进行，详见[市场与交换](/cn/cli/market-and-swaps)。

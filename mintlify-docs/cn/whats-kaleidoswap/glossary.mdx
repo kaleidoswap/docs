@@ -1,0 +1,391 @@
+---
+title: "比特币二层与闪电网络术语表"
+sidebarTitle: "术语表"
+description: "跨比特币分层协议交易所需的核心术语：原子交换、HTLC、闪电通道、LSP，以及 RGB、Spark、Arkade、Liquid 与 Nostr 连接能力。"
+---
+
+## 比特币与链上
+
+<AccordionGroup>
+  <Accordion title="聪 (Satoshi, sat)" icon="bitcoin-sign">
+    比特币的最小单位，等于 0.00000001 BTC。KaleidoSwap 中的所有金额都以聪计价。
+  </Accordion>
+
+  <Accordion title="毫聪 (Millisatoshi, msat)" icon="coins">
+    一聪的千分之一，用于闪电网络支付中的精确计算（在链上无法强制执行）。
+  </Accordion>
+
+  <Accordion title="未花费交易输出 (UTXO, Unspent Transaction Output)" icon="cube">
+    一份可被花费的独立比特币份额。RGB 资产锚定在比特币区块链上特定的 UTXO 之上。
+  </Accordion>
+
+  <Accordion title="确认 (Confirmation)" icon="check-double">
+    比特币交易被打包进区块链上的某个区块。确认数越多，抵御链重组的安全性越高。
+  </Accordion>
+
+  <Accordion title="内存池 (Mempool)" icon="inbox">
+    等待被打包进下一个区块的未确认比特币交易的集合。
+  </Accordion>
+
+  <Accordion title="费率 (Fee Rate)" icon="gauge-high">
+    把一笔交易打包进比特币区块的每字节成本，通常以每虚拟字节多少聪（sat/vB）来衡量。
+  </Accordion>
+
+  <Accordion title="Esplora 索引服务 (Esplora Indexer)" icon="magnifying-glass">
+    一种比特币区块链索引服务：钱包向它查询地址、UTXO 和交易历史，而不必自己扫描整条链。KaleidoSwap 在无需节点的 RGB-L1 账户和 Liquid 上使用 Esplora 接口端点；默认已配置一个，你也可以填入自己的。
+  </Accordion>
+
+  <Accordion title="测试网 (Testnet)" icon="flask">
+    一个独立的比特币网络，专用于测试，其中的币没有真实价值。
+  </Accordion>
+
+  <Accordion title="signet" icon="pen-nib">
+    较新的测试网络，出块时间更可预测，用于开发和测试。
+  </Accordion>
+
+  <Accordion title="Mutinynet" icon="rocket">
+    定制的比特币 signet，出块快且可预测，也不存在区块空间竞争，是 KaleidoSwap 的主要公共测试网络。[创建账户](/cn/desktop-app/wallet/creating-wallet)时可以选择它。
+  </Accordion>
+
+  <Accordion title="regtest" icon="wrench">
+    回归测试模式，让开发者可以创建本地私有比特币网络用于测试。
+  </Accordion>
+</AccordionGroup>
+
+## 闪电网络
+
+<AccordionGroup>
+  <Accordion title="闪电网络 (Lightning Network)" icon="bolt">
+    构建在比特币之上的二层支付协议，通过链下支付通道实现即时、低成本的交易。
+  </Accordion>
+
+  <Accordion title="支付通道 (Payment Channel)" icon="arrow-right-arrow-left">
+    两个闪电节点之间的双向支付通道，在通道关闭之前可以进行多次交易而无需触及区块链。
+  </Accordion>
+
+  <Accordion title="通道容量 (Channel Capacity)" icon="gauge">
+    锁定在支付通道中的比特币（以及可能的 RGB 资产）总量，决定了单笔交易的上限。
+  </Accordion>
+
+  <Accordion title="入向流动性 (Inbound Liquidity)" icon="arrow-down">
+    他人通过通道可以向你发送的资金量，由通道对端的余额决定。
+  </Accordion>
+
+  <Accordion title="出向流动性 (Outbound Liquidity)" icon="arrow-up">
+    你通过通道可以发送的资金量，由你在通道中的余额决定。
+  </Accordion>
+
+  <Accordion title="BOLT11" icon="receipt">
+    闪电网络请求支付的标准发票格式，包含金额、收款方及其他元数据。
+  </Accordion>
+
+  <Accordion title="闪电地址 (Lightning Address)" icon="at">
+    一种人类可读的支付标识，形如电子邮件地址（`user@domain.com`），在后台解析为一张闪电发票。KaleidoSwap 扩展支持将其作为提取的目标地址。
+  </Accordion>
+
+  <Accordion title="LNURL" icon="link">
+    一组协议，让闪电钱包能从某个 URL 获取支付细节，从而实现可复用的支付链接、提取和身份认证。扩展支持 LNURL，并通过 WebLN 暴露给 DApp。
+  </Accordion>
+
+  <Accordion title="Keysend" icon="paper-plane">
+    一种闪电支付方式，无需发票即可发起即时支付，用于推送资产或资金。
+  </Accordion>
+
+  <Accordion title="哈希时间锁定合约 (HTLC, Hash Time-Locked Contract)" icon="clock">
+    一种条件支付机制，借助密码学哈希和时间锁，保证跨闪电通道的交易具备原子性。
+  </Accordion>
+
+  <Accordion title="支付哈希与原像 (Payment Hash & Preimage)" icon="hashtag">
+    原像是解锁 HTLC 的秘密值；支付哈希是它的哈希，会公布在发票或交换参数中。公开原像即可领取支付，这正是原子交换之所以原子的原因 —— 两条腿要么用同一个秘密值一起结算，要么都不结算。KaleidoSwap 在交换初始化时会返回一个 `payment_hash`。
+  </Accordion>
+
+  <Accordion title="路由 (Routing)" icon="route">
+    在闪电网络中寻找路径，把支付从发送方送达接收方的过程。
+  </Accordion>
+
+  <Accordion title="协作关闭与强制关闭 (Cooperative Close vs Force Close)" icon="door-closed">
+    在链上结清通道的两种方式。协作关闭中双方对最终状态达成一致并签名，成本低、确认快。强制关闭则由一方单方面广播最新状态 —— 用于对等节点失联或通道卡住的情况 —— 资金会一直被时间锁锁定，直到延迟期结束。从[通道备份](/cn/desktop-app/channels/channel-backups)恢复会强制关闭其中包含的所有通道。
+  </Accordion>
+</AccordionGroup>
+
+## LSP 与流动性
+
+<AccordionGroup>
+  <Accordion title="闪电服务提供商 (LSP, Lightning Service Provider)" icon="server">
+    向用户提供闪电基础设施、流动性和通道管理服务的服务提供商。
+  </Accordion>
+
+  <Accordion title="LSP 规范 (LSPS, LSP Specification)" icon="file-contract">
+    面向闪电服务提供商的一组标准化协议，规定它们与客户端之间如何交互。
+  </Accordion>
+
+  <Accordion title="LSPS1" icon="hashtag">
+    第一份 LSP 规范，定义了通道开通与流动性服务。KaleidoSwap 为支持 RGB 的通道实现了 LSPS1。
+  </Accordion>
+
+  <Accordion title="通道请求 (Channel Request)" icon="hand">
+    客户端向 LSP 发出的请求，要求按指定参数（例如容量和资产分配）开通一条闪电通道。
+  </Accordion>
+
+  <Accordion title="通道订单 (Channel Order)" icon="receipt">
+    LSPS1 中用于追踪通道请求生命周期的对象：已创建、已支付、已开通。每个订单都有一个 ID，你可以据此查询、支付或提交汇率决定 —— 在 [CLI](/cn/cli/channels-lsp) 中对应 `kaleido channel order create | get | pay | decide`，在桌面应用中对应**购买通道** (Buy Channel) 标签页。
+  </Accordion>
+
+  <Accordion title="做市商 (Market Maker)" icon="chart-line">
+    持续对某个交易对双边报价、并为交换提供可成交流动性的参与者。目前这一角色由 KaleidoSwap LSP 自行承担；外部做市商从 2027 年起加入。不要与单笔交换中的做市方混淆，后者定义在「交易与市场」一节。
+  </Accordion>
+</AccordionGroup>
+
+## 比特币分层协议与资产 {#bitcoin-layers-and-assets}
+
+<AccordionGroup>
+  <Accordion title="RGB 资产 (RGB Asset)" icon="gem">
+    使用 RGB 协议创建的数字资产。RGB 资产是经客户端验证的智能合约，既借用比特币的安全性，又通过链下验证保持可扩展性与隐私。
+  </Accordion>
+
+  <Accordion title="RGB 闪电节点 (RLN, RGB Lightning Node)" icon="server">
+    能理解 RGB 资产的闪电节点，因此一条通道可以同时承载 BTC 和 RGB 代币。它持有你的密钥、管理通道，并在本地验证合约。桌面应用的每一项钱包、通道和支付操作都要连接一个 RLN；在扩展中它是可选的实验性账户。见[节点托管](/cn/desktop-app/getting-started/node-hosting)。
+  </Accordion>
+
+  <Accordion title="不可增发资产 (NIA, formerly RGB20)" icon="coins">
+    Non-Inflatable Asset —— 面向固定供应量同质化代币的 RGB 接口，类似以太坊上的 ERC-20。用于创建和管理稳定币、功能型代币等可分割资产。这也是 KaleidoSwap 目前交易的资产类型。
+  </Accordion>
+
+  <Accordion title="可增发同质化资产 (IFA)" icon="coins">
+    Inflatable Fungible Asset —— 面向供应量可由发行方扩充或替换（铸造/销毁）的同质化代币的 RGB 接口。KaleidoSwap 支持该接口。
+  </Accordion>
+
+  <Accordion title="唯一数字资产 (UDA, formerly RGB21)" icon="image">
+    Unique Digital Asset —— 面向非同质化代币（NFT）的 RGB 接口，可类比 ERC-721。用于独一无二的数字资产和收藏品。KaleidoSwap 支持该接口。
+  </Accordion>
+
+  <Accordion title="收藏型同质化资产 (CFA, formerly RGB25)" icon="layer-group">
+    Collectible Fungible Asset —— 面向带有丰富媒体与元数据的收藏品的 RGB 接口。KaleidoSwap 支持该接口。
+  </Accordion>
+
+  <Accordion title="资产 ID (Asset ID)" icon="fingerprint">
+    RGB 资产的唯一标识，通常形如 `rgb:xxxxxx-xxxxxx-xxxxxx`。每种资产都有一个由其创世交易派生出的全局唯一 ID。
+  </Accordion>
+
+  <Accordion title="客户端验证 (Client-Side Validation)" icon="shield-check">
+    RGB 的核心概念：资产状态和交易历史由客户端验证，而不是存放在区块链上。这带来了更强的隐私性和可扩展性。
+  </Accordion>
+
+  <Accordion title="着色 UTXO (Colored UTXO)" icon="palette">
+    除了聪之外还承载 RGB 资产状态的比特币 UTXO。要在链上接收或交易 RGB 资产，至少需要一个可用的着色 UTXO；如果你有 BTC 余额，桌面应用可以在[存入](/cn/desktop-app/wallet/deposits)过程中替你创建一个。不附带任何资产状态的 UTXO 有时称为 vanilla UTXO。
+  </Accordion>
+
+  <Accordion title="盲化 UTXO (Blinded UTXO)" icon="eye-slash">
+    一种接收承诺，让发送方可以把 RGB 资产转给你，却不知道它最终落在哪个 UTXO 上。在链上 RGB 转移中，它取代了地址的位置，因此 RGB [提取](/cn/desktop-app/wallet/withdrawals)要求填入盲化 UTXO，而 BTC 提取要求填入地址。
+  </Accordion>
+
+  <Accordion title="RGB 发票 (RGB Invoice)" icon="file-invoice">
+    RGB 转移使用的支付请求格式，以 `rgb:` 开头。它编码了资产、金额和盲化接收承诺。无需节点的 RGB-L1 账户会自动创建盲化发票；连接 RLN 后，你还可以通过闪电网络接收 RGB。
+  </Accordion>
+
+  <Accordion title="RGB 代理 (RGB Proxy)" icon="tower-broadcast">
+    一种中继服务，在发送方与接收方之间传递 RGB 交付包 —— 因为 RGB 转移数据走链下，从不触及区块链。在桌面应用中与节点接口端点一起配置，在扩展中位于 RGB-L1 设置内。
+  </Accordion>
+
+  <Accordion title="交付包 (Consignment)" icon="box">
+    一个数据包，包含验证一次 RGB 资产转移所需的全部信息，包括证明、历史和状态转移。
+  </Accordion>
+
+  <Accordion title="模式 (Schema)" icon="sitemap">
+    定义 RGB 资产属性、状态转移和验证规则的蓝图。不同接口（NIA、IFA、UDA、CFA —— 旧称 RGB20/21/25）对应不同的资产类型。
+  </Accordion>
+
+  <Accordion title="Spark" icon="bolt-lightning">
+    面向 BTC 与原生资产的比特币分层，支持通过闪电网络收付。在 KaleidoSwap 扩展中，它是由你的助记词派生的自主保管账户，同时也支撑 Flashnet 交换和跨链桥。
+  </Accordion>
+
+  <Accordion title="Flashnet" icon="network-wired">
+    构建在 Spark 上的流动性网络。KaleidoSwap 把 Flashnet 路径作为一个交易场所，并把 Flashnet Orchestra 作为跨链桥背后的路由服务。
+  </Accordion>
+
+  <Accordion title="Arkade" icon="alien-8bit">
+    基于 Ark 设计的比特币分层，资金以 VTXO（虚拟 UTXO）而非链上输出的形式持有。进出分别称为上船（boarding）与下船（offboarding）。扩展中作为一个账户支持，并提供可选的轮换地址模式。
+  </Accordion>
+
+  <Accordion title="虚拟 UTXO (VTXO, Virtual UTXO)" icon="square-dashed">
+    Arkade 中的价值单位。资金以在链下流转的虚拟输出形式持有，而不是链上 UTXO，这正是 Arkade 转账即时且便宜的原因。VTXO 有自己的生命周期：上船时创建，账户使用期间维护，下船时在链上结算。扩展在**设置 > Arkade** (Settings > Arkade) 下提供 VTXO 与生命周期相关设置。
+  </Accordion>
+
+  <Accordion title="Liquid" icon="droplet">
+    带有保密交易的比特币侧链，是 L-BTC 以及 USDt 等发行资产的所在地。扩展中作为无需节点的自主保管账户支持，默认运行在主网上。
+  </Accordion>
+
+  <Accordion title="L-BTC" icon="bitcoin-sign">
+    Liquid Bitcoin —— 持有在 Liquid 网络上的 BTC，由锁定在主链上的比特币一比一背书。它是扩展中 Liquid 账户的基础资产，与 USDt 等发行资产并列，并与你的 Spark、Arkade、比特币 L1 和闪电网络余额分开计算。
+  </Accordion>
+</AccordionGroup>
+
+## 交易与市场
+
+<AccordionGroup>
+  <Accordion title="原子交换 (Atomic Swap)" icon="atom">
+    一种无需信任的资产交换，要么完整完成，要么完整失败，不存在部分执行的可能。
+  </Accordion>
+
+  <Accordion title="交易对 (Trading Pair)" icon="scale-unbalanced">
+    可以互相交易的两种资产的组合，例如 BTC/USDT。
+  </Accordion>
+
+  <Accordion title="基础资产 (Base Asset)" icon="b">
+    交易对中的第一种资产 —— 也就是你买入或卖出的对象。
+  </Accordion>
+
+  <Accordion title="计价资产 (Quote Asset)" icon="q">
+    交易对中的第二种资产 —— 也就是你用来支付或收到的资产。
+  </Accordion>
+
+  <Accordion title="精度 (Precision)" icon="calculator">
+    某种资产支持的小数位数。例如 USDT 通常有 6 位小数精度。
+  </Accordion>
+
+  <Accordion title="询价 (RFQ, Request for Quote)" icon="comment-dollar">
+    针对两种资产之间的交换请求报价。报价只在有限时间内有效。
+  </Accordion>
+
+  <Accordion title="做市方 (Maker)" icon="user-tie">
+    通过创建可供他人接受的交换报价来提供流动性的一方。
+  </Accordion>
+
+  <Accordion title="接单方 (Taker)" icon="user">
+    通过接受已有交换报价来消耗流动性的一方。
+  </Accordion>
+
+  <Accordion title="滑点 (Slippage)" icon="arrow-trend-down">
+    预期价格与实际成交价格之间的差额，通常源于市场波动或流动性限制。你可以为每笔交易设置可接受的最大滑点；一旦超出，交换会直接失败，而不会以更差的汇率成交。
+  </Accordion>
+
+  <Accordion title="交易场所 (Swap Venue)" icon="store">
+    客户端可以据以执行交换的报价与流动性来源。连接 RLN 时，扩展可以使用 KaleidoSwap 做市方的交易对；Spark 资金池可用时，则可以使用 Spark/Flashnet 路径。执行交换至少需要一个可用的交易场所；基础钱包功能则不需要。
+  </Accordion>
+
+  <Accordion title="跨链桥 (Bridge, cross-chain)" icon="bridge">
+    在某个比特币分层与外部链之间转移资金 —— 在扩展中，即在你的 Spark 账户与 Ethereum、Base、Solana、Tron 等网络之间转移。它与交换不同：交换是在你的钱包内把一种资产换成另一种。比特币分层协议之间的原子交换完全不需要跨链桥。见[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
+  </Accordion>
+
+  <Accordion title="交换状态 (Swap Status)" icon="list-check">
+    原子交换的当前状态：Waiting、Pending、Succeeded、Expired 或 Failed。
+  </Accordion>
+</AccordionGroup>
+
+## 钱包、密钥与安全
+
+<AccordionGroup>
+  <Accordion title="助记词 (Recovery Phrase, BIP39 mnemonic)" icon="key">
+    由 12 或 24 个单词组成的短语，可以恢复你的整个钱包，也称为 mnemonic 或种子短语。一组助记词派生出所有账户：在扩展中，它掌控 Spark、Arkade、Liquid 和 RGB-L1，以及默认的 Nostr 身份。任何拿到它的人都能动用你的资金，因此请离线保存，绝不外传。
+  </Accordion>
+
+  <Accordion title="公钥 (Public Key)" icon="lock-open">
+    密码学密钥对中的公开部分，可以安全地分享。用于接收支付和验证签名。
+  </Accordion>
+
+  <Accordion title="私钥 (Private Key)" icon="lock">
+    密码学密钥对中的秘密部分，绝不可分享。用于签署交易和证明所有权。
+  </Accordion>
+
+  <Accordion title="派生路径 (Derivation Path)" icon="code-branch">
+    一种从单组助记词以确定性方式生成多个密钥的方案。
+  </Accordion>
+
+  <Accordion title="只读钱包 (Watch-Only Wallet)" icon="eye">
+    只能查看余额和交易，但无法签署或发送交易的钱包。
+  </Accordion>
+
+  <Accordion title="通道备份 (Channel Backup)" icon="floppy-disk">
+    一个备份文件，包含在数据丢失时恢复闪电通道资金所需的关键数据。
+  </Accordion>
+
+  <Accordion title="VSS 备份 (VSS Backup)" icon="cloud-arrow-up">
+    针对无需节点的 RGB-L1 账户的加密云端 RGB 状态备份，每次接收时都会自动写入，并同时生成一份本地文件备份。重新导入时，引导流程会提示从中恢复 —— 绝不会在你未明确同意的情况下进行。RLN 的状态则改由节点自身的备份材料恢复。
+  </Accordion>
+</AccordionGroup>
+
+## 连接与身份
+
+<AccordionGroup>
+  <Accordion title="DApp" icon="window-maximize">
+    一种 Web 应用，它通过注入的浏览器 provider 与你的钱包通信，而不是索要密钥。KaleidoSwap 扩展会向你批准的页面暴露 WebLN、WebBTC 和 Nostr provider，并在任何敏感操作前向你确认。见 [DApp 连接](/cn/extensions/kaleidoswap-extension/dapp-connectivity)。
+  </Accordion>
+
+  <Accordion title="WebLN" icon="bolt">
+    闪电网络的标准浏览器 provider，注入在 `window.webln`。已批准的页面可以借它请求发票、支付、消息签名、keysend 以及 LNURL 处理。
+  </Accordion>
+
+  <Accordion title="WebBTC" icon="bitcoin-sign">
+    面向链上比特币的配套浏览器 provider，注入在 `window.webbtc`，供已批准的页面发起地址和交易请求。
+  </Accordion>
+
+  <Accordion title="Nostr" icon="feather">
+    一个开放协议，用于在服务器之间中继签名消息，常用于身份和社交类应用。扩展会从你的助记词派生一个 Nostr 身份，也可以导入你已有的身份。
+  </Accordion>
+
+  <Accordion title="npub / nsec" icon="id-card">
+    Nostr 身份的两半：`npub1…` 是你的公钥，可以安全分享；`nsec1…` 是你的私钥。任何持有你 nsec 的人都能签署事件、以你的身份行事 —— 绝不要分享它。
+  </Accordion>
+
+  <Accordion title="NIP-07" icon="signature">
+    页面内 Nostr 签名的标准，注入在 `window.nostr`。已批准的页面可以请求你的公钥、让事件被签名，以及加密或解密私信，而始终看不到你的密钥。
+  </Accordion>
+
+  <Accordion title="NIP-46 (Nostr Connect)" icon="tower-broadcast">
+    面向无法使用页面内 provider 的 Nostr 应用的远程签名。扩展会生成一个 `bunker://` 连接串，供你粘贴到应用中；签名请求随后经中继传输，并在扩展中批准。
+  </Accordion>
+
+  <Accordion title="NWC (Nostr Wallet Connect)" icon="plug">
+    即 NIP-47 —— 让外部应用通过 Nostr 中继控制钱包的一种方式，用 `nostr+walletconnect://` 字符串或二维码完成配对，并受带金额上限的预算约束。也用于连接远程 RGB 闪电节点，让节点本身保持私密。
+  </Accordion>
+
+  <Accordion title="Zap (NIP-57)" icon="bolt">
+    以 Nostr 事件形式发布的闪电支付，通常是对某条笔记的打赏。通过 NWC 发起的 Zap 会被验证，并与钱包活动关联起来。
+  </Accordion>
+</AccordionGroup>
+
+## KaleidoSwap 平台
+
+<AccordionGroup>
+  <Accordion title="RGB-LSP" icon="palette">
+    支持在支付通道中承载 RGB 资产的闪电服务提供商，让 RGB 资产可以通过闪电网络即时转移。
+  </Accordion>
+
+  <Accordion title="分层 (Layer)" icon="layer-group">
+    交换的某一方在哪条通路上结算。每条交换腿都会指明一个 `asset_id` 和一个 `layer`，因此一笔交易可以跨通路 —— 例如从 `BTC_LN` 到 `RGB_LN`。市场报价接受 `BTC_LN`、`RGB_LN` 和 `BTC_L1`（`BTC_ONCHAIN` 是旧的别名）。
+  </Accordion>
+
+  <Accordion title="Swapstring" icon="link">
+    一个紧凑的字符串，编码了一笔交换交易的全部参数，用于在各方之间协调原子交换。
+  </Accordion>
+
+  <Accordion title="结算类型 (Settlement Type)" icon="handshake">
+    完成资产转移所用的方式 —— 可以是 LIGHTNING（通过支付通道即时完成）或 ONCHAIN（通过比特币交易完成）。
+  </Accordion>
+
+  <Accordion title="资产交付 (Asset Delivery)" icon="truck">
+    通道开通后，通过 keysend 在闪电通道中转移 RGB 资产的过程。
+  </Accordion>
+
+  <Accordion title="汇率决定 (Rate Decision)" icon="scale-balanced">
+    当订单处理期间市场汇率出现显著变化时，用户可以选择接受新汇率或申请退款。
+  </Accordion>
+
+  <Accordion title="kaleido-sdk 与 wallet-engine" icon="code">
+    每个 KaleidoSwap 客户端都构建在这两个 SDK 界面之上：`kaleido-sdk` 负责交换集成（TypeScript 与 Python，发布在 npm 和 PyPI 上，Rust 核心正在开发中），`@kaleidorg/wallet-engine` 提供钱包基础能力（TypeScript）。第三方集成使用的接口与我们自家应用完全相同。见 [SDK 文档](/cn/sdk/introduction)。
+  </Accordion>
+
+  <Accordion title="KaleidoAgent" icon="robot">
+    一个自主、非托管的比特币二层代理，负责管理闪电网络与 RGB 投资组合、用原子交换再平衡，并自行购买通道流动性。密钥始终留在本地钱包和 RGB 闪电节点中，每笔交易都以原子 HTLC 交换结算。见 [KaleidoAgent](/cn/ai-tools/kaleido-agent)。
+  </Accordion>
+
+  <Accordion title="KaleidoMind" icon="brain">
+    支撑代理化 KaleidoSwap 钱包的推理与工具调用引擎。模型运行在你的设备上，或运行在你明确配对的桌面端上，并通过同一套工具契约以聊天或语音方式驱动 Spark、RGB 闪电网络、Arkade 和 Liquid。见 [KaleidoMind](/cn/ai-tools/kaleido-mind)。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Note>
+  本术语表会持续更新。如果你遇到这里没有列出的陌生术语，欢迎通过我们的[支持渠道](/cn/desktop-app/support/additional-resources)告诉我们。
+</Note>

@@ -1,0 +1,91 @@
+---
+title: 交换资产
+description: "在 KaleidoSwap 桌面应用中交换比特币与比特币二层资产：获取报价、执行无需信任的原子交换、了解各种交易模式与交易对，并跟踪交换状态。"
+---
+
+资产交换让你可以通过 KaleidoSwap 平台把一种资产换成另一种。桌面应用采用**原子交换**——交易双方同时执行，任何一方都无法作弊。
+
+## 前置条件
+
+开始交换之前，请确认你已具备：
+
+1. **已注资的钱包** —— 你需要持有想要换出的资产余额。参见[存入资金](/cn/desktop-app/wallet/deposits)。
+2. **已开通的通道** —— 通道容量必须足够覆盖交换数量，并且包含你想交易的 RGB 资产。参见[开通通道](/cn/desktop-app/channels/opening-channel)或[购买通道](/cn/desktop-app/channels/order-new-channel)。
+
+## 执行资产交换
+
+<Steps>
+  <Step title="进入交易页面">
+    点击左侧边栏的**「交易」(Trading)** 标签，然后选择**「做市商」(Market Maker)** 标签开始。
+  </Step>
+
+  <Step title="选择资产">
+    选择你持有的资产（例如 BTC）和你想收到的资产（例如 USDT）。
+  </Step>
+
+  <Step title="输入数量">
+    填写你想交换的资产数量。应用会按当前汇率显示你预计收到的数量。
+  </Step>
+
+  <Step title="核对并确认">
+    核对汇率和各项费用，点击**「交换」(Swap)** 执行交易。
+  </Step>
+
+  <Step title="等待确认">
+    交换会通过闪电网络原子化执行。完成后，你会看到成功确认提示。
+  </Step>
+</Steps>
+
+![KaleidoSwap 桌面应用交易页面，显示资产对选择与交换报价](/assets/images/desktop-app/19_trading_page.png)
+
+## 交易模式
+
+**交易**区域把几种交易方式分别放在各自的标签页中：
+
+- **做市商** —— 基于已连接做市商的实时报价交易。交换按做市方的当前汇率原子化执行。这是默认模式，也就是上文描述的流程。
+- **手动交换** (Manual Swaps) —— 自行发起并确认单笔交换，可以选择做市方，并在执行前逐笔核对报价。
+- **DCA** —— 通过固定周期买入或下跌价格触发来自动积累 BTC。每次成功执行都会把固定金额换成 BTC。
+
+![DCA 交易界面](/assets/images/desktop-app/24_dca.png)
+
+- **限价单** (Limit Orders) —— 为某个交易对设定目标价格；当市场达到该价格时，交换会自动执行。
+
+![限价单交易界面](/assets/images/desktop-app/25_limit-order.png)
+- **Nostr P2P** *（即将推出）* —— 通过 Nostr 进行点对点交易，无需依赖中心化做市方，直接与其他用户成交。
+
+## 支持的交易对
+
+可用交易对由你连接的做市方决定，因此具体列表会有所不同。截至撰写本文时，默认的 KaleidoSwap 做市方提供以下交易对：
+
+| 交易对 | 说明 |
+|------|------------|
+| **BTC / USDT** | 比特币兑 Tether USD（RGB NIA） |
+| **BTC / XAUT** | 比特币兑 Tether Gold（RGB NIA） |
+
+应用中的**可用交易对** (Available Trading Pairs) 面板始终反映你所连接做市方当前支持的交易对。
+
+## 交换历史
+
+在**「历史」(History)** 标签中查看过往交换记录，便于留档和对账。
+
+## 故障排查
+
+<AccordionGroup>
+  <Accordion title="交换因余额不足而失败">
+    请确认对应通道中有足够余额。仅有链上余额是不够的——资产必须已分配到与交易对等节点之间的闪电通道中。
+  </Accordion>
+
+  <Accordion title="没有可用的交易对">
+    检查你的节点是否已连接到支持该资产对的对等节点。你可能需要与提供做市服务的 LSP 开通一条通道。
+  </Accordion>
+
+  <Accordion title="交换卡住或长时间处于待处理状态">
+    闪电网络上的原子交换应在几秒内完成结算。如果某笔交换看起来卡住了，请在设置中检查节点的连接状态。如果连接曾中断，重启应用可能有帮助。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新版 KaleidoSwap 桌面应用。
+</Card>

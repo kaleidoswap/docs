@@ -1,0 +1,372 @@
+---
+title: "SDK 错误处理"
+sidebarTitle: "错误处理"
+description: "借助 KaleidoSDK 的异常层级处理错误：各类错误的含义、HTTP 状态码映射、可重试性判断与重试模式，以及排查集成问题的思路"
+---
+
+## 错误层级结构
+
+两个 SDK 使用几乎完全一致的错误类层级。所有错误都继承自 `KaleidoError`：
+
+```
+KaleidoError (基类)
+├── APIError (HTTP 400-599)
+│   └── RateLimitError (HTTP 429，仅 TypeScript)
+├── RateLimitError (HTTP 429，Python —— 直接继承 KaleidoError)
+├── NetworkError (连接问题)
+├── ValidationError (HTTP 400, 422)
+├── TimeoutError (HTTP 408, 504)
+├── WebSocketError (WebSocket 问题)
+├── NotFoundError (HTTP 404)
+├── ConfigError (配置问题)
+├── SwapError (交换操作失败)
+├── NodeNotConfiguredError (节点未配置)
+├── QuoteExpiredError (报价已过期)
+└── InsufficientBalanceError (余额不足)
+```
+
+有一处差异需要注意：在 TypeScript 中 `RateLimitError` 继承 `APIError`，而在 Python 中它直接继承 `KaleidoError` —— Python 里的 `except APIError` 处理块捕获不到速率限制错误。
+
+## 基类错误：KaleidoError
+
+所有 SDK 错误都继承 `KaleidoError`，并带有以下属性：
+
+| 属性 | 类型 | 说明 |
+|----------|------|-------------|
+| `code` | `string` | 供程序化处理使用的错误码 |
+| `message` | `string` | 可读的错误信息 |
+| `statusCode` / `status_code` | `number?` | HTTP 状态码（如适用） |
+| `details` | `string?` | 额外的错误细节 |
+| `isRetryable()` / `is_retryable()` | `boolean` | 该错误是否可以安全重试 |
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoError } from 'kaleido-sdk';
+
+try {
+  await client.maker.listPairs();
+} catch (error) {
+  if (error instanceof KaleidoError) {
+    console.log(`Code: ${error.code}`);
+    console.log(`Message: ${error.message}`);
+    console.log(`Status: ${error.statusCode}`);
+    console.log(`Retryable: ${error.isRetryable()}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import KaleidoError
+
+try:
+    await client.maker.list_pairs()
+except KaleidoError as e:
+    print(f"Code: {e.code}")
+    print(f"Message: {e}")
+    print(f"Status: {e.status_code}")
+    print(f"Retryable: {e.is_retryable()}")
+```
+</CodeGroup>
+
+## 各个错误类
+
+### APIError
+
+在发生 HTTP 错误（状态码 400-599）时抛出。
+
+<CodeGroup>
+```typescript TypeScript
+import { APIError } from 'kaleido-sdk';
+// 属性：code='API_ERROR'、statusCode、message、details
+```
+
+```python Python
+from kaleido_sdk import APIError
+# 属性：code='API_ERROR'、status_code、response_body
+```
+</CodeGroup>
+
+### RateLimitError
+
+超出速率限制（HTTP 429）时抛出。在 TypeScript 中继承 `APIError`；在 Python 中直接继承 `KaleidoError`。
+
+<CodeGroup>
+```typescript TypeScript
+import { RateLimitError } from 'kaleido-sdk';
+// 额外属性：retryAfter?: number（秒）
+
+try { /* ... */ } catch (error) {
+  if (error instanceof RateLimitError) {
+    console.log(`Retry after: ${error.retryAfter} seconds`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import RateLimitError
+# 额外属性：retry_after: int | None
+
+try:
+    ...
+except RateLimitError as e:
+    print(f"Retry after: {e.retry_after} seconds")
+```
+</CodeGroup>
+
+### NetworkError
+
+在出现网络连接问题（DNS 解析失败、连接被拒等）时抛出。
+
+始终可重试（`isRetryable()` 返回 `true`）。
+
+### ValidationError
+
+在校验失败（HTTP 400、422）时抛出。包含对 FastAPI 校验错误的解析。
+
+### TimeoutError
+
+在请求超时（HTTP 408、504）时抛出。
+
+始终可重试。
+
+### WebSocketError
+
+在 WebSocket 连接或通信出错时抛出。
+
+### NotFoundError
+
+在资源不存在（HTTP 404）时抛出。
+
+### ConfigError
+
+在 SDK 配置有问题（例如 URL 无效）时抛出。
+
+### SwapError
+
+在交换操作失败时抛出。
+
+<CodeGroup>
+```typescript TypeScript
+import { SwapError } from 'kaleido-sdk';
+// 额外属性：swapId?: string
+
+try { /* ... */ } catch (error) {
+  if (error instanceof SwapError) {
+    console.log(`Swap failed: ${error.swapId}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import SwapError
+# 额外属性：swap_id: str | None
+```
+</CodeGroup>
+
+### NodeNotConfiguredError
+
+当在未配置 `node_url` 的情况下执行 RLN 节点操作时，由 Python SDK 抛出。TypeScript 在未提供 `nodeUrl` 却调用 `client.rln.*` 方法时，改为抛出 `ConfigError`（"Node API not configured. Provide \"nodeUrl\" when creating the client."）。
+
+<CodeGroup>
+```typescript TypeScript
+import { ConfigError } from 'kaleido-sdk';
+
+try {
+  await client.rln.getNodeInfo();
+} catch (error) {
+  if (error instanceof ConfigError) {
+    console.log('Configure nodeUrl to use RLN operations');
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import NodeNotConfiguredError
+
+try:
+    await client.rln.get_node_info()
+except NodeNotConfiguredError:
+    print("Configure node_url to use RLN operations")
+```
+</CodeGroup>
+
+### QuoteExpiredError
+
+在尝试使用已过期的报价时抛出。
+
+### InsufficientBalanceError
+
+在余额不足以完成所请求的操作时抛出。
+
+<CodeGroup>
+```typescript TypeScript
+import { InsufficientBalanceError } from 'kaleido-sdk';
+// 属性：requiredAmount: number、availableAmount: number、asset?: string
+
+try { /* ... */ } catch (error) {
+  if (error instanceof InsufficientBalanceError) {
+    console.log(`Need: ${error.requiredAmount}, Have: ${error.availableAmount}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import InsufficientBalanceError
+# 属性：required_amount、available_amount、asset
+
+try:
+    ...
+except InsufficientBalanceError as e:
+    print(f"Need: {e.required_amount}, Have: {e.available_amount}")
+```
+</CodeGroup>
+
+## 完整的错误处理 {#comprehensive-error-handling}
+
+<CodeGroup>
+```typescript TypeScript
+import {
+  KaleidoError,
+  APIError,
+  NetworkError,
+  ValidationError,
+  TimeoutError,
+  NotFoundError,
+  QuoteExpiredError,
+  ConfigError,
+  InsufficientBalanceError,
+  RateLimitError,
+} from 'kaleido-sdk';
+
+try {
+  const quote = await client.maker.getQuote({ /* ... */ });
+  const swap = await client.maker.initSwap({ /* ... */ });
+} catch (error) {
+  if (error instanceof QuoteExpiredError) {
+    // 获取新报价并重试
+  } else if (error instanceof InsufficientBalanceError) {
+    console.log(`Need ${error.requiredAmount}, have ${error.availableAmount}`);
+  } else if (error instanceof ValidationError) {
+    console.log(`Invalid request: ${error.message}`);
+  } else if (error instanceof RateLimitError) {
+    // 等待后重试
+    await new Promise(r => setTimeout(r, (error.retryAfter ?? 5) * 1000));
+  } else if (error instanceof NotFoundError) {
+    console.log('Resource not found');
+  } else if (error instanceof TimeoutError) {
+    console.log('Request timed out, retrying...');
+  } else if (error instanceof NetworkError) {
+    console.log('Network issue, check connectivity');
+  } else if (error instanceof ConfigError) {
+    console.log('Node not configured');
+  } else if (error instanceof APIError) {
+    console.log(`API error (${error.statusCode}): ${error.message}`);
+  } else if (error instanceof KaleidoError) {
+    console.log(`SDK error [${error.code}]: ${error.message}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import (
+    KaleidoError,
+    APIError,
+    NetworkError,
+    ValidationError,
+    TimeoutError,
+    NotFoundError,
+    QuoteExpiredError,
+    NodeNotConfiguredError,
+    InsufficientBalanceError,
+    RateLimitError,
+    PairQuoteRequest,
+    SwapRequest,
+)
+import asyncio
+
+try:
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+    swap = await client.maker.init_swap(SwapRequest(...))
+except QuoteExpiredError:
+    # 获取新报价并重试
+    pass
+except InsufficientBalanceError as e:
+    print(f"Need {e.required_amount}, have {e.available_amount}")
+except ValidationError as e:
+    print(f"Invalid request: {e}")
+except RateLimitError as e:
+    await asyncio.sleep(e.retry_after or 5)
+except NotFoundError:
+    print("Resource not found")
+except TimeoutError:
+    print("Request timed out, retrying...")
+except NetworkError:
+    print("Network issue, check connectivity")
+except NodeNotConfiguredError:
+    print("Node not configured")
+except APIError as e:
+    print(f"API error ({e.status_code}): {e}")
+except KaleidoError as e:
+    print(f"SDK error [{e.code}]: {e}")
+```
+</CodeGroup>
+
+## 重试模式 {#retry-patterns}
+
+使用 `isRetryable()` 实现自动重试：
+
+<CodeGroup>
+```typescript TypeScript
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof KaleidoError && error.isRetryable() && attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+const pairs = await withRetry(() => client.maker.listPairs());
+```
+
+```python Python
+import asyncio
+
+async def with_retry(fn, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return await fn()
+        except KaleidoError as e:
+            if e.is_retryable() and attempt < max_retries - 1:
+                delay = 2 ** attempt
+                await asyncio.sleep(delay)
+                continue
+            raise
+    raise RuntimeError("Max retries exceeded")
+
+pairs = await with_retry(lambda: client.maker.list_pairs())
+```
+</CodeGroup>
+
+## HTTP 错误映射
+
+SDK 通过 `mapHttpError` / `map_http_error` 自动把 HTTP 错误映射为带类型的异常：
+
+| HTTP 状态码 | 错误类 | 是否可重试 |
+|------------|-------------|-----------|
+| 400, 422 | `ValidationError` | 否 —— 请求本身就有问题 |
+| 404 | `NotFoundError` | 否 |
+| 408, 504 | `TimeoutError` | 是，始终可重试 |
+| 429 | `RateLimitError` | TypeScript：可以，等待 `retryAfter` 之后重试。Python：`is_retryable()` 返回 `False` —— 需要你自己按 `retry_after` 退避 |
+| 500, 502, 503 | `APIError` | 是 —— 服务端故障可能自行恢复 |
+| 其他 4xx | `APIError` | 否 |
+| 网络故障 | `NetworkError` | 是，始终可重试 |
+
+不要把这张表硬编码进你自己的重试逻辑，而应调用 `isRetryable()` / `is_retryable()` —— 它精确编码了这些规则，并会随映射关系的演进保持正确。

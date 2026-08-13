@@ -1,0 +1,118 @@
+---
+title: "KaleidoSDK 代码示例"
+sidebarTitle: "代码示例"
+description: "可直接运行的 KaleidoSDK TypeScript 与 Python 示例，涵盖市场数据查询、原子交换流程与基于 WebSocket 的实时报价流"
+---
+
+## 市场数据
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+const [assets, pairs] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+]);
+
+console.log(`Assets: ${assets.assets.length}`);
+console.log(`Pairs: ${pairs.pairs.length}`);
+
+for (const pair of pairs.pairs.slice(0, 5)) {
+  console.log(`${pair.base.ticker}/${pair.quote.ticker}`);
+}
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+assets = await client.maker.list_assets()
+pairs = await client.maker.list_pairs()
+
+print(f"Assets: {len(assets.assets)}")
+print(f"Pairs: {len(pairs.pairs)}")
+
+for pair in pairs.pairs[:5]:
+    print(f"{pair.base.ticker}/{pair.quote.ticker}")
+```
+</CodeGroup>
+
+## 原子交换
+
+一次交换由五个步骤组成 —— 询价、初始化、在你的节点上加入白名单、执行，然后跟踪结算 —— 在 `initSwap` 之后停下来，只会留下一笔永远不会执行的已锁定交换。两种语言的完整流程见 [如何交换](/cn/sdk/how-to-swap)。
+
+## WebSocket 流式传输
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
+
+const stop = await client.maker.streamQuotesByTicker(
+  'BTC',
+  'USDT',
+  100000,
+  (quote) => console.log(quote.price),
+  { pollInterval: 2000 }
+);
+
+setTimeout(() => stop(), 10000);
+```
+
+```python Python
+import asyncio
+
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
+
+stop = await client.maker.stream_quotes_by_ticker(
+    "BTC",
+    "USDT",
+    100000,
+    lambda quote: print(quote["price"]),
+    poll_interval=2.0,
+)
+
+await asyncio.sleep(10)
+stop()
+```
+</CodeGroup>
+
+## 节点操作
+
+关于 `client.rln` 入口 —— `hasNode()` 守卫以及最初的几个节点调用 —— 见 [快速开始](/cn/sdk/getting-started#node-configuration-checks)。全部可用方法列在 [客户端参考](/cn/sdk/api-reference#rlnclient-clientrln) 中。
+
+## 后续步骤
+
+<CardGroup cols={2}>
+  <Card title="如何交换" icon="arrows-rotate" href="/cn/sdk/how-to-swap">
+    完整的原子交换流程：初始化、白名单、执行、状态查询。
+  </Card>
+  <Card title="WebSocket" icon="tower-broadcast" href="/cn/sdk/websocket">
+    流式传输选项、事件，以及底层的 `WSClient`。
+  </Card>
+  <Card title="工具函数" icon="calculator" href="/cn/sdk/utilities">
+    金额换算、精度处理与资产交易对映射。
+  </Card>
+  <Card title="客户端参考" icon="code" href="/cn/sdk/api-reference">
+    `client.maker` 与 `client.rln` 上的全部方法。
+  </Card>
+</CardGroup>

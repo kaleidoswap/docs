@@ -1,0 +1,201 @@
+---
+title: "KaleidoSwap：闪电网络上的比特币 DEX"
+sidebarTitle: "欢迎"
+description: "非托管去中心化交易所，支持跨比特币分层协议的原子交换，并通过闪电网络完成结算。无需账户与中间人，专为无需信任、自主掌控的交易而设计。"
+---
+
+![抽象的 KaleidoSwap 标识：紫绿色多切面宝石图形，周围环绕闪电符号与代币图标，背景为深色电路板](/assets/images/overview/hero-banner.png)
+
+KaleidoSwap 正在为比特币原生原子交换构建流动性层，让任何人都能自由、私密地交换比特币资产，无需中间人。
+
+其垂直整合的技术栈涵盖桌面应用与浏览器扩展等终端用户应用、多语言 SDK、面向自主 AI 代理与本地 AI 大脑的 AI 工具，以及做市商软件。
+
+---
+
+## 为什么选择 KaleidoSwap？
+
+<CardGroup cols={2}>
+  <Card title="多协议" icon="layer-group">
+    在比特币分层协议之间持有、支付和交换资产。BTC ↔ RGB 交换通过闪电网络原子化结算；其他路径则通过已支持的交易场所完成
+  </Card>
+
+  <Card title="非托管" icon="shield-check">
+    你的密钥，你的币。无需账户，没有中间人。连接你的钱包，或运行自己的节点即可
+  </Card>
+
+  <Card title="开源" icon="code-branch">
+    桌面应用、SDK、CLI、钱包引擎和 AI 工具均采用 MIT 许可。你可以审阅代码、参与贡献，或构建自己的集成
+  </Card>
+
+  <Card title="多平台" icon="desktop">
+    桌面应用支持 macOS、Windows 和 Linux。扩展可在浏览器中使用
+  </Card>
+</CardGroup>
+
+---
+
+## 平台总览
+
+![KaleidoSwap 平台架构图：桌面端、扩展、移动端和 Web 应用客户端通过 swap-sdk 与 wallet-sdk 集成层，连接到比特币、闪电网络和二层协议图标、KaleidoSwap LSP 与做市商，以及 KaleidoMind 和 KaleidoAgent 智能层](/assets/images/overview/kaleidoswap-platform-overview.jpg)
+
+整个技术栈是垂直整合的：同一套 SDK 驱动我们发布的每一个客户端和每一个第三方集成，因此每个入口面对的都是同一个交换引擎、同一批协议和同一份流动性。
+
+- **客户端与集成方** — 桌面端、扩展、移动端和 Web 应用，以及基于相同接口构建的第三方钱包、新型银行、支付服务商和 AI 代理。
+- **集成层** — 用于交换集成的 `kaleido-sdk`（TypeScript 和 Python，Rust 核心正在开发中），以及提供钱包基础能力的 `@kaleidorg/wallet-engine`（TypeScript）。[从 SDK 开始 →](/cn/sdk/introduction)
+- **协议** — 比特币链上与闪电网络，以及交换可结算的各类比特币分层协议。[工作原理 →](/cn/whats-kaleidoswap/background)
+- **流动性层** — 目前由 KaleidoSwap LSP 提供初始流动性；外部做市商将从 2027 年起加入。
+- **智能层** — KaleidoMind 是自托管的 AI 大脑（QVAC 运行时、Skills 与 MCP 库、微调模型），KaleidoAgent 是自主交易代理，可基于本地模型或 Claude 与 OpenAI 运行。[了解 AI 工具 →](/cn/ai-tools/introduction)
+
+标记为 LIVE 的组件已在生产环境中运行；其余部分列在 2026 年路线图中。
+
+---
+
+## 面向交易者
+
+使用我们的应用和扩展，从自己的钱包直接交易：
+
+### 快速上手
+
+<Steps>
+  <Step title="安装应用">
+    下载 macOS、Windows 或 Linux 版本。
+    [安装指南 →](/cn/desktop-app/getting-started/installation)
+  </Step>
+
+  <Step title="创建钱包">
+    生成新钱包并保存你的助记词。
+    [钱包设置 →](/cn/desktop-app/wallet/creating-wallet)
+  </Step>
+
+  <Step title="存入资金并开通通道">
+    为钱包充值，然后开通闪电通道。
+    [存入指南 →](/cn/desktop-app/wallet/deposits) · [通道指南 →](/cn/desktop-app/channels/opening-channel)
+  </Step>
+
+  <Step title="开始交易">
+    使用 RGB 资产执行原子交换。
+    [交易指南 →](/cn/desktop-app/trading/asset-swaps)
+  </Step>
+</Steps>
+
+### 指南
+
+<CardGroup cols={3}>
+  <Card title="桌面应用指南" icon="desktop" href="/cn/desktop-app/getting-started/introduction">
+    节点、钱包、通道与交易
+  </Card>
+
+  <Card title="浏览器扩展" icon="puzzle-piece" href="/cn/extensions/introduction">
+    多层钱包、交换与 DApp 连接
+  </Card>
+
+  <Card title="AI 工具" icon="sparkles" href="/cn/ai-tools/introduction">
+    用于投资组合管理的自主代理与本地 AI 大脑
+  </Card>
+</CardGroup>
+
+---
+
+## 面向开发者
+
+使用我们的 SDK、API 和 AI 工具在 KaleidoSwap 上构建应用：
+
+### 快速上手
+
+<Steps>
+  <Step title="安装 SDK">
+    TypeScript 使用 `npm install kaleido-sdk`，Python 使用 `pip install kaleido-sdk`。
+    [安装指南 →](/cn/sdk/getting-started)
+  </Step>
+
+  <Step title="创建客户端">
+    将 `KaleidoClient.create()` 指向 signet 接口端点 —— 主网即将上线。
+    [客户端参考 →](/cn/sdk/api-reference)
+  </Step>
+
+  <Step title="请求报价">
+    从做市方获取交易对和实时报价。
+    [市场 API →](/cn/api-reference/market-apis)
+  </Step>
+
+  <Step title="执行交换">
+    完整跑通你的第一笔非托管原子交换。
+    [如何交换 →](/cn/sdk/how-to-swap)
+  </Step>
+</Steps>
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com'
+});
+
+// 获取可用的交易对
+const pairs = await client.maker.listPairs();
+
+// 获取报价
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
+});
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+# 获取可用的交易对
+pairs = client.maker.list_pairs()
+
+# 获取报价
+quote = client.maker.get_quote({
+    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
+    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
+})
+```
+</CodeGroup>
+
+### 指南
+
+<CardGroup cols={2}>
+  <Card title="SDK" icon="code" href="/cn/sdk/introduction">
+    完整的 SDK 参考、示例与最佳实践
+  </Card>
+
+  <Card title="API 参考" icon="brackets-curly" href="/cn/api-reference/introduction">
+    REST 接口端点与交换协议细节
+  </Card>
+
+  <Card title="CLI" icon="terminal" href="/cn/cli/introduction">
+    在终端中运行本地节点、交换和通道流程
+  </Card>
+
+  <Card title="AI 工具" icon="sparkles" href="/cn/ai-tools/introduction">
+    用于钱包操作的 MCP 服务器，以及定义特定行为的 Skills 文件
+  </Card>
+</CardGroup>
+
+---
+
+## 社区与支持
+
+<CardGroup cols={3}>
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
+    加入我们的社区聊天
+  </Card>
+
+  <Card title="Twitter/X" icon="x-twitter" href="https://x.com/kaleidoswap">
+    关注我们获取最新动态
+  </Card>
+
+  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap">
+    参与项目贡献
+  </Card>
+</CardGroup>
+
+KaleidoSwap 是采用 [MIT 许可证](https://github.com/kaleidoswap/desktop-app/blob/main/LICENSE) 的开源软件。

@@ -1,0 +1,36 @@
+---
+title: 向钱包存入资金
+description: "向 KaleidoSwap 钱包存入比特币和 RGB 资产：链上地址、二维码、闪电发票、染色 UTXO，以及测试网水龙头的用法。"
+---
+
+开始使用 KaleidoSwap 通常要做的第一件事就是存入一些资金，无论是为了交换资产还是为了保管资产。前者需要你存入比特币来开通 RGB 通道，后者则可以自行决定存入哪种资产（包括 RGB 资产）。
+
+## 存入比特币
+
+1. **点击「存入」(Deposit)**：它位于左侧菜单的「快捷操作」(Quick Actions) 区域。<img src="/assets/images/desktop-app/9_deposit_quick_actions.png" alt="桌面应用快捷操作菜单中的存入按钮" width={359} height={798} />
+2. **选择资产**：在下拉菜单中选择「BTC」（比特币，默认应该已选中），然后点击「继续」(Continue)。你会进入**存入 BTC** (Deposit BTC) 界面。
+3. **存入方式**：在存入 BTC 界面选择你偏好的方式：**链上** (On-chain) 或**闪电** (Lightning)。选择链上时，应用会立即显示比特币地址和二维码（你可以复制地址，或刷新以获取新地址）。<img src="/assets/images/desktop-app/10_deposit_method.png" alt="存入 BTC 界面，显示链上地址与二维码" width={588} height={833} />
+4. **完成存入**：如果选择**链上**，复制或扫描同一界面上显示的地址（或二维码），并向其发送你想存入的比特币金额。如果选择**闪电**，输入要存入的金额以生成发票，然后支付该发票。
+
+## 存入 RGB 资产
+
+1. **选择资产**：重复上一节的第 1、2 步，但这次选择某个已注册资产，或用资产 ID 上传一个。资产要出现在已注册列表中，你的节点必须此前遇到过（即接收过）它。本例中我们使用 test-USDT。
+2. **存入方式**：与上一节相同，在两种可用方式中选择一种存入资产：链上或闪电网络。
+3. **完成存入**：如果选择链上方式，你需要复制自动生成的 `recipient id`，用对应的 id 存入想要的资产数量。
+注意，要继续存入，你至少需要有一个可用的「染色」(Colored) UTXO —— 这是在比特币区块链上交易 RGB 资产所必需的一种特殊 UTXO。如果你没有可用的染色 UTXO，应用会在这一步允许你一键生成一个（前提是 KaleidoSwap 钱包中有一些可用的比特币余额）。
+4. **生成闪电发票**：如果选择通过闪电网络存入，你需要输入想存入的资产数量以生成发票，然后完成存入。
+
+<img src="/assets/images/desktop-app/22_deposit-rgb-asset.png" alt="存入 RGB 资产界面" width={588} height={853} />
+
+## 获取测试币
+
+如果你在创建钱包时选择了测试网络来体验 KaleidoSwap，可以使用以下水龙头获取用于存入、开通通道、交换和提取的币和资产：
+
+- regtest：可以在 Telegram 上体验 RGB LN Bot（@rgb_lightning_bot）的各项功能。
+- signet：可以使用 [Mutiny 水龙头](https://faucet.mutinynet.com/)，在「How much?」字段输入想接收的聪数量，把 signet 比特币地址粘贴到水龙头的「Destination」字段，然后点击「Make it rain」即可收到资金。
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

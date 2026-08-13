@@ -1,0 +1,307 @@
+---
+title: "面向钱包、交换与付费 API 的比特币 MCP 服务器"
+sidebarTitle: "MCP 服务器"
+description: "用于比特币钱包、KaleidoSwap DEX 和闪电付费 API 的类型化 Model Context Protocol 工具：服务器清单、工具集与客户端配置一次讲清。"
+---
+
+KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 和支付能力开放给 AI 代理（Claude Desktop、[KaleidoAgent](/cn/ai-tools/kaleido-agent)、基于 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的宿主，或任何其他 [MCP](https://modelcontextprotocol.io) 客户端），另外还有三个仍然独立存在的按钱包划分的服务器。
+
+## 为什么只用一个服务器
+
+早期存在多个各管一域的 MCP 服务器：一个 KaleidoSwap DEX 服务器、一个 MPP/L402 支付服务器，以及 RLN 和 Spark 各自的钱包服务器。DEX 与支付服务器此后已合并进 `kaleido-mcp`，它在同一条连接下重新暴露了完全相同的工具契约：
+
+<CardGroup cols={2}>
+  <Card title="一条连接" icon="plug">
+    代理宿主只需配置一个 MCP 服务器，而不是接四五个。
+  </Card>
+  <Card title="工具名不变" icon="fingerprint">
+    工具契约（`kaleidoswap_*`、`wdk_*`、`spark_*`、`mpp_*`、`l402_*`）与原来的单域服务器完全一致，无需重新学习。
+  </Card>
+  <Card title="只需维护一处" icon="wrench">
+    缺陷修复和新工具都落在同一个仓库，而不是在多个仓库里重复。
+  </Card>
+  <Card title="持续维护" icon="check">
+    独立的 `kaleidoswap-mcp` 和 `l402-gateway-mcp` 仓库已归档。后续开发都在 `kaleido-mcp` 中进行。
+  </Card>
+</CardGroup>
+
+## 可用的服务器
+
+| 服务器 | 工具前缀 | 覆盖范围 |
+|--------|-------------|--------|
+| [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp) | `kaleidoswap_*`、`wdk_*`、`spark_*`、`mpp_*`、`l402_*`、`kaleido_node_*` | 统一网关。下面所有领域，一条连接全包 |
+| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node 钱包：余额、RGB 与 BOLT11 发票、支付、通道、原子交换接单方 |
+| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark 钱包：余额、闪电收付、代币转账、BTC 桥接的存入与提取 |
+| [wdk-wallet-liquid-mcp](https://github.com/kaleidoswap/wdk-wallet-liquid-mcp) | `liquid_*` | Liquid 钱包：L-BTC 与资产余额、保密地址、发送，底层由进程内的 LWK 钱包支撑，无需外部守护进程 |
+
+<Note>
+  `kaleido-mcp` 的工具直接构建在 kaleido-sdk 和 WDK 工具包之上，而不是代理那些单域服务器：它是同一批工具契约的组合，而不是对那些进程的封装。为便于迁移，遗留的 `rln_*` 以及通用 `get_*` 行情别名仍然保留。
+</Note>
+
+### 已退役的服务器 {#retired-servers}
+
+以下仓库已归档。它们自己的 README 都指向 `kaleido-mcp`，并声明不再更新：
+
+| 仓库 | 取代者 |
+|------|---------------|
+| `kaleidoswap-mcp` | kaleido-mcp 中的 `kaleidoswap_*` 工具 |
+| `l402-gateway-mcp` | kaleido-mcp 中的 `mpp_*` / `l402_*` 工具 |
+| `kaleido-node-mcp` | 节点生命周期工具已移植为 `kaleido_node_*`；该仓库同时具备的钱包、资产、通道、支付、行情和交换工具已被弃用，改用 kaleido-mcp 中现有的、由 SDK 支撑的工具 |
+
+如果你的集成仍然直接指向 `kaleidoswap-mcp` 或 `l402-gateway-mcp`，请改指 `kaleido-mcp`。工具名和参数都没有变化。
+
+## 安装与配置 {#installation-and-configuration}
+
+`kaleido-mcp` 已发布到 npm，因此最快的路径不需要本地构建：
+
+```bash
+npx -y kaleido-mcp
+```
+
+实际使用中由 MCP 宿主替你执行这条命令，把宿主配置指向该命令即可（见下面的[客户端配置](#client-configuration)）。若用于开发，或要运行某个特定提交，请改为从源码构建：
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-mcp
+cd kaleido-mcp
+npm install
+npm run build
+```
+
+无论哪种方式，服务器读取的环境变量都相同，并且默认使用 stdio 通信：
+
+```bash
+# stdio（Claude Desktop、KaleidoAgent 等）
+WDK_SEED="word1 word2 ..." node dist/index.js
+
+# HTTP 传输
+PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
+```
+
+| 环境变量 | 是否必需 | 说明 |
+|---------|----------|--------------|
+| `WDK_SEED` | 使用 Spark 工具时必需 | Spark 钱包的 BIP-39 助记词。没有它服务器仍能启动，只是 Spark 工具会被禁用 |
+| `SPARK_NETWORK` | 否 | `MAINNET` 或 `REGTEST` |
+| `SPARK_SCAN_API_KEY` | 否 | SparkScan API 密钥 |
+| `SPARK_USDT_TOKEN` | 否 | 默认的 Spark 代币标识符 |
+| `RLN_NODE_URL` | 否 | RLN 守护进程 URL，默认 `http://localhost:3001` |
+| `KALEIDOSWAP_API_URL` | 否 | KaleidoSwap API URL，默认 `https://api.kaleidoswap.com` |
+| `KALEIDO_BIN` | 否 | `kaleido` 可执行文件的路径，供节点生命周期工具使用 |
+| `KALEIDO_NODE_URL` | 否 | 以 `--node-url` 传给节点生命周期工具的节点 URL |
+| `KALEIDO_API_URL` | 否 | 以 `--api-url` 传给节点生命周期工具的 API URL |
+| `KALEIDO_ENV_NAME` | 否 | 节点生命周期工具的默认环境名 |
+| `PORT` | 否 | 启用 Streamable HTTP 传输，替代 stdio |
+| `MCP_AUTH_TOKEN` | 否 | HTTP 模式下的 Bearer token |
+
+### 遗留别名
+
+为兼容早期集成，部分工具仍可通过旧名称调用（`rln_*` 对应 `wdk_*`，通用 `get_*` 对应 `l402_get_*` 行情工具）。新的集成应使用规范的 `wdk_*` / `l402_*` 名称。
+
+## 按领域划分的工具集
+
+下面所有工具都由 `kaleido-mcp` 通过同一条连接提供。🔒 图标在本文档中标记会动用资金的工具；`kaleido-mcp` 本身不携带确认标志，因此调用在执行前是否需要确认，取决于 MCP 宿主的行为。例外是 WDK 内置的 `sendTransaction` 和 `transfer`，它们会在广播前自行发起一次 MCP elicitation 确认。
+
+<AccordionGroup>
+  <Accordion title="Spark 二层钱包（spark_*）">
+    WDK 内置工具（通过 `@tetherto/wdk-mcp-toolkit`，作用域限定在 `spark` 链）：`getAddress`、`getBalance`、`getMaxSpendableBtc`、`sendTransaction`、`transfer`、`getTokenBalance`、`quoteSendTransaction`、`quoteTransfer`、`getFeeRates`、`sign`、`verify`。
+
+    在内置工具之上的自定义 Spark 工具：
+
+    | 工具 | 用途 |
+    |------|---------|
+    | `spark_get_balance` | Spark 二层钱包余额，以聪计价（转账免费） |
+    | `spark_get_address` | 用于接收聪或代币的 Spark 二层地址 |
+    | `spark_get_token_balance` | 按代币标识符查询某个 Spark 代币（如 USDT）的余额 |
+    | `spark_get_deposit_address` | 将 BTC 桥接进 Spark 二层钱包的比特币一层地址 |
+    | `spark_create_lightning_invoice` | 通过闪电网络把 BTC 收入 Spark 的 BOLT11 发票 |
+    | `spark_pay_lightning_invoice` 🔒 | 从 Spark 钱包支付一张 BOLT11 发票 |
+    | `spark_quote_lightning_payment` | 支付前预估闪电路由费 |
+    | `spark_send_sats` 🔒 | 向另一个 Spark 二层地址发送聪（免费） |
+    | `spark_transfer_token` 🔒 | 把 Spark 代币（如 USDT）转到另一个地址（免费） |
+    | `spark_quote_withdraw` | 协作退出提取到比特币一层的费用报价 |
+    | `spark_withdraw` 🔒 | 从 Spark 二层提取 BTC 到比特币一层地址 |
+    | `spark_get_transfers` | 最近的 Spark 二层转账历史 |
+    | `spark_create_sats_invoice` | 用于接收 BTC 聪的 Spark 发票（`spark1...`） |
+    | `spark_create_tokens_invoice` | 用于接收代币的 Spark 发票（`spark1...`） |
+    | `spark_pay_spark_invoice` 🔒 | 支付一张或多张 Spark 发票 |
+    | `spark_get_spark_invoices` | 查询一张或多张 Spark 发票的状态 |
+    | `spark_mpp_pay` 🔒 | 从 Spark 钱包支付一个 MPP 闪电挑战 |
+
+    在独立的 `wdk-wallet-spark-mcp` 服务器上通过 `WDK_SPARK_SEED` 配置，另有可选的 `SPARK_NETWORK`、`SPARK_SCAN_API_KEY` 和 `SPARK_USDT_TOKEN`。
+  </Accordion>
+
+  <Accordion title="RLN，即 RGB Lightning Node（wdk_*，别名 rln_*）">
+    | 工具 | 用途 |
+    |------|---------|
+    | `wdk_get_node_info` | 节点身份信息：pubkey、通道数量、闪电余额、对等节点 |
+    | `wdk_get_balances` | BTC 链上余额（普通与着色 UTXO）以及闪电余额 |
+    | `wdk_get_asset_balance` | 按 `asset_id` 查询某个 RGB 资产（USDT、XAUT）的余额 |
+    | `wdk_list_assets` | 节点持有的全部 RGB 资产（NIA、UDA、CFA schema） |
+    | `wdk_get_address` | 用于接收存入的链上 BTC 地址 |
+    | `wdk_create_rgb_invoice` | 创建一张 RGB 发票以接收 RGB 资产 |
+    | `wdk_create_ln_invoice` | 创建一张 BOLT11 发票，通过闪电网络接收 BTC |
+    | `wdk_pay_invoice` 🔒 | 支付一张 BOLT11 闪电发票 |
+    | `wdk_send_btc` 🔒 | 链上发送 BTC |
+    | `wdk_send_asset` 🔒 | 链上发送 RGB 资产（USDT/XAUT） |
+    | `wdk_list_channels` | 所有闪电通道：容量、余额、可用性、RGB 分配 |
+    | `wdk_connect_peer` | 连接到某个闪电对等节点（`pubkey@host:port`），LSPS1 购买通道前必需 |
+    | `wdk_open_channel` 🔒 | 开通一条闪电通道，可选携带 RGB 资产分配 |
+    | `wdk_close_channel` 🔒 | 关闭一条闪电通道（`force=true` 仅用于无响应的对等节点） |
+    | `wdk_get_channel_id` | 把 `temporary_channel_id` 解析为永久的 `channel_id` |
+    | `wdk_list_payments` | 最近的闪电支付，收发均含 |
+    | `wdk_refresh_transfers` | 同步待处理的 RGB 资产转移，在 KaleidoSwap 订单成交后调用 |
+    | `wdk_atomic_taker` 🔒 | 原子 HTLC 交换的第 2 步，把进入的 HTLC 加入白名单 |
+    | `wdk_list_swaps` | 列出节点上的所有原子交换，含做市方与接单方两侧 |
+    | `wdk_get_swap` | 按 `payment_hash` 查询原子交换状态 |
+    | `wdk_mpp_pay` 🔒 | 从 RLN 钱包支付一个 MPP 闪电挑战 |
+
+    需要一个运行中的 [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node)，可通过 `RLN_NODE_URL` 访问，默认 `http://localhost:3001`。
+  </Accordion>
+
+  <Accordion title="KaleidoSwap DEX（kaleidoswap_*）">
+    | 工具 | 用途 |
+    |------|---------|
+    | `kaleidoswap_get_assets` | 可交易资产：代号、名称、精度、RGB 协议 ID |
+    | `kaleidoswap_get_pairs` | 可交易的交易对及其可用的分层路由 |
+    | `kaleidoswap_get_quote` | 一笔交换的价格报价，返回输出数量、价格、费用和 `rfq_id` |
+    | `kaleidoswap_get_spreads` | 某个交易对在每条路由上的报价，用于比价或发现套利机会 |
+    | `kaleidoswap_place_order` | 下一个 REST 交换订单，返回一个 `deposit_address` |
+    | `kaleidoswap_get_order_status` | 轮询订单状态，直到 `FILLED`、`FAILED`、`EXPIRED` 或 `CANCELLED` |
+    | `kaleidoswap_get_open_orders` | 本会话中下过的订单及其最后已知状态 |
+    | `kaleidoswap_cancel_order` | 在本地会话跟踪器中把订单标记为已取消 |
+    | `kaleidoswap_get_position` | 本会话交易统计：成交率、按资产统计的交易量 |
+    | `kaleidoswap_atomic_init` | 原子交换的第 1 步，返回 `swapstring` 和 `payment_hash` |
+    | `kaleidoswap_atomic_execute` 🔒 | 第 3 步，在 `wdk_atomic_taker` 把 HTLC 加入白名单后确认执行 |
+    | `kaleidoswap_atomic_status` | 按 `payment_hash` 轮询原子交换状态 |
+    | `kaleidoswap_lsp_get_info` | LSP 的对等节点连接信息与通道容量上限 |
+    | `kaleidoswap_lsp_estimate_fees` | 在下单前预估 LSPS1 开通通道的费用 |
+    | `kaleidoswap_lsp_create_order` 🔒 | 申请一条新的闪电通道（LSPS1），返回一张 BOLT11 发票 |
+    | `kaleidoswap_lsp_get_order` | 轮询 LSPS1 通道订单状态 |
+    | `kaleidoswap_lsp_quote_asset_channel` | 为预装了 RGB 资产（USDT、XAUT）的新通道报价 |
+    | `kaleidoswap_lsp_create_asset_channel` 🔒 | 向 LSP 订购一条预装资产的新通道 |
+
+    通过 `KALEIDOSWAP_API_URL` 配置。底层接口端点请见[交换协议](/cn/api-reference/swap-protocol)和 [RGB LSPS1 API](/cn/api-reference/rgb-lsps1-apis)参考。
+  </Accordion>
+
+  <Accordion title="MPP / L402 支付（mpp_*、l402_*）">
+    | 工具 | 用途 |
+    |------|---------|
+    | `mpp_request_challenge` | 探测一个受 MPP 保护的 URL，把 HTTP 402 解析为发票 + `challenge_id` |
+    | `mpp_submit_credential` | 提交支付凭据（在 `wdk_mpp_pay` / `spark_mpp_pay` 之后）以访问资源 |
+    | `mpp_parse_challenge_header` | 不发 HTTP 请求，直接解析原始的 `WWW-Authenticate` 头 |
+    | `l402_request_challenge` | 针对付费接口端点的遗留 L402 挑战，返回 BOLT11 发票加 macaroon |
+    | `l402_fetch_resource` | 支付发票后获取受 L402 保护的资源 |
+    | `search_paid_apis` | 在 [402index.io](https://402index.io) 目录中搜索付费门控 API（L402/MPP/x402），含以聪计价的价格和健康状态 |
+  </Accordion>
+
+  <Accordion title="行情数据（l402_get_*、别名 get_*）">
+    WDK 内置行情工具（Bitfinex）：`getCurrentPrice`、`getHistoricalPrice`。
+
+    | 工具 | 用途 |
+    |------|---------|
+    | `l402_get_price` | 单个资产的现货价格和 24 小时统计 |
+    | `l402_get_market_data` | 一次调用批量获取多个资产的价格 |
+    | `l402_get_ohlcv` | OHLCV K 线，附带区间涨跌幅 |
+    | `l402_get_sentiment` | 恐慌与贪婪指数，0 到 100，附带一个交易信号 |
+
+    使用免费的公开 API（CoinGecko、alternative.me），无需任何配置。CoinGecko 免费层有速率限制，因此调用行情工具的间隔不要短于 30 秒。
+  </Accordion>
+
+  <Accordion title="节点生命周期（kaleido_node_*）">
+    通过调用本地的 `kaleido` 可执行文件工作，因此代理可以自己把节点拉起来并解锁，而不必要求节点已在运行。这些操作的 CLI 原生等价方式见[节点环境](/cn/cli/node-environments)。
+
+    | 工具 | 用途 |
+    |------|---------|
+    | `kaleido_node_list` | 列出所有 kaleido 节点环境及其节点 URL |
+    | `kaleido_node_up` | 为指定环境启动 Docker 容器 |
+    | `kaleido_node_stop` | 停止运行中的容器，数据保留 |
+    | `kaleido_node_down` | 停止并删除容器和网络，卷保留 |
+    | `kaleido_node_ps` | 指定环境的 Docker 容器状态 |
+    | `kaleido_node_status` | RLN 节点健康检查 |
+    | `kaleido_node_info` | 来自当前 RLN 节点的详细节点与网络信息 |
+    | `kaleido_node_use` | 在 kaleido 配置中设置当前节点 URL |
+    | `kaleido_node_init` | 首次初始化 RLN 钱包 |
+    | `kaleido_node_unlock` | 重启后解锁 RLN 钱包 |
+    | `kaleido_node_lock` | 锁定 RLN 钱包 |
+  </Accordion>
+</AccordionGroup>
+
+## 客户端配置 {#client-configuration}
+
+把服务器添加到 Claude Desktop 这类 MCP 宿主中。已发布的网关用 `npx` 即可；独立的钱包服务器则从本地构建运行。
+
+<Warning>
+  这些配置文件以明文保存着真实的 BIP-39 助记词。请先在测试网络上起步，绝不要提交或分享包含主网种子的配置。
+</Warning>
+
+<CodeGroup>
+```json kaleido-mcp
+{
+  "mcpServers": {
+    "kaleido": {
+      "command": "npx",
+      "args": ["-y", "kaleido-mcp"],
+      "env": {
+        "WDK_SEED": "your twelve word seed phrase",
+        "SPARK_NETWORK": "REGTEST",
+        "RLN_NODE_URL": "http://localhost:3001",
+        "KALEIDOSWAP_API_URL": "https://api.kaleidoswap.com"
+      }
+    }
+  }
+}
+```
+
+```json wdk-wallet-mcp
+{
+  "mcpServers": {
+    "wdk_wallet": {
+      "command": "node",
+      "args": ["/path/to/wdk-wallet-mcp/dist/index.js"],
+      "env": {
+        "RLN_NODE_URL": "http://localhost:3001"
+      }
+    }
+  }
+}
+```
+
+```json wdk-wallet-spark-mcp
+{
+  "mcpServers": {
+    "wdk_wallet_spark": {
+      "command": "node",
+      "args": ["/path/to/wdk-wallet-spark-mcp/dist/index.js"],
+      "env": {
+        "WDK_SPARK_SEED": "your twelve word seed phrase",
+        "SPARK_NETWORK": "REGTEST"
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+## 跨服务器的原子交换 {#atomic-swap-across-servers}
+
+一笔原子交换需要 DEX 工具和钱包工具配合。`kaleido-mcp` 用它的 `kaleidoswap_*` 工具与做市方通信，并用 `wdk_*` 工具驱动接单方节点。任何一步都不涉及托管，HTLC 在闪电网络上结算。
+
+```
+kaleidoswap_get_quote        → rfq_id + raw amounts
+kaleidoswap_atomic_init      → swapstring + payment_hash
+wdk_atomic_taker             → whitelist the HTLC on the node
+wdk_get_node_info            → taker_pubkey
+kaleidoswap_atomic_execute   → trigger HTLC settlement
+kaleidoswap_atomic_status    → poll until Succeeded
+```
+
+上面每一步都走同一条 `kaleido-mcp` 连接，因为两组前缀同时可用。
+
+## 付费 API 访问 {#paid-api-access}
+
+Machine Payments Protocol 流程让代理无需 API 密钥、无需注册就能买到受门控资源的访问权，直接通过闪电网络支付发票。
+
+```
+mpp_request_challenge(url)          → challenge { invoice, challenge_id }
+wdk_mpp_pay(invoice, challenge_id)  → payment credential
+mpp_submit_credential(url, cred)    → { ok, data, receipt }
+```

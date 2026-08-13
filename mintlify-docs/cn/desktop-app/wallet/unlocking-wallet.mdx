@@ -1,0 +1,50 @@
+---
+title: 解锁钱包
+description: "在 KaleidoSwap 桌面应用中解锁钱包：输入密码、启动节点、等待区块同步，以及解锁耗时过长时该怎么处理。"
+---
+
+创建钱包之后，每次打开 KaleidoSwap 桌面应用都需要解锁节点。解锁使用的是你在节点初始化时设置的密码。
+
+## 快速解锁流程
+
+1. **打开应用**  
+   启动 KaleidoSwap 桌面应用。
+
+2. **选择账户**  
+   选择与你要使用的节点关联的账户。
+
+3. **运行节点**  
+   在账户仪表盘中启动节点。  
+   如果节点处于锁定状态，解锁界面会自动出现。
+
+4. **输入密码**  
+   在密码输入框中输入你初始化节点时使用的密码。  
+   <img src="/assets/images/desktop-app/7_unlock_wallet.png" alt="KaleidoSwap 桌面应用的钱包解锁界面，带密码输入框" width={1919} height={985} />
+
+## 解锁前的节点同步
+
+输入正确密码后，节点会**先**与区块链同步，然后才完全可用。  
+这一过程的耗时取决于需要同步的区块数量，而这又取决于节点离线了多久。  
+请耐心等待节点完成这一步。
+
+<img src="/assets/images/desktop-app/8_unlocking_animation.png" alt="RGB Lightning Node 解锁过程中的加载动画" width={1919} height={986} />
+
+## 理解解锁参数
+
+- **密码**  
+  用于保护对钱包和节点的访问。就是你在首次配置节点时设置的那个密码。
+
+- **网络**  
+  网络在账户创建时即固定 —— 解锁时不需要选择。解锁界面只会连接到该账户已配置的网络（例如 regtest、signet、Mutinynet 或测试网）。
+
+- **高级设置** (Advanced Settings)  
+  这些设置取自节点的账户配置。如有需要，可在解锁前于工具栏中调整：
+  - Bitcoin Core 的 RPC 认证信息  
+  - Electrum 索引器地址  
+  - 与 RGB Lightning Node 通信所用的 RGB proxy 和端口设置  
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

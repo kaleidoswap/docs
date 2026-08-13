@@ -1,0 +1,362 @@
+---
+title: "WebSocket 实时报价推送"
+sidebarTitle: "WebSocket"
+description: "使用 KaleidoSDK 通过 WebSocket 订阅实时交换报价，了解订阅方式、消息格式、事件类型与自动重连处理机制。"
+---
+
+## 总览
+
+SDK 提供 WebSocket 支持，用于实时报价推送。WebSocket 客户端会负责连接管理、带指数退避的自动重连，以及 ping/pong 保活。
+
+使用 WebSocket 有两种方式：
+
+1. **高层接口**：使用 `MakerClient` 上的 `streamQuotes` / `streamQuotesByTicker` 便捷方法
+2. **底层接口**：直接使用 `WSClient`，基于事件处理消息
+
+## 启用 WebSocket
+
+在订阅报价之前，先启用 WebSocket 连接：
+
+<CodeGroup>
+```typescript TypeScript
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
+```
+
+```python Python
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
+```
+</CodeGroup>
+
+URL 中包含一个客户端 ID，用于会话跟踪。`enableWebSocket` 方法返回一个 `WSClient` 实例。
+
+<Note>
+本页示例使用 signet，它同时也是 SDK 的默认环境。请让 WebSocket URL 与 `baseUrl` 指向的环境保持一致。参阅 [可用环境](/cn/sdk/getting-started#available-environments)。
+</Note>
+
+## 高层接口
+
+### `streamQuotesByTicker` / `stream_quotes_by_ticker`
+
+订阅报价最简单的方式，会自动发现路由并开始推送。
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotesByTicker(
+  'BTC',           // fromTicker
+  'USDT',          // toTicker
+  100000,          // amount
+  (quote) => {     // 回调
+    console.log(`Price: ${quote.price}, RFQ: ${quote.rfq_id}`);
+  },
+  {                // options（可选）
+    preferredFromLayer: 'BTC_LN',
+    preferredToLayer: 'RGB_LN',
+    pollInterval: 3000
+  }
+);
+
+// 完成后停止推送
+unsubscribe();
+```
+
+```python Python
+from kaleido_sdk import Layer
+
+unsubscribe = await client.maker.stream_quotes_by_ticker(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda quote: print(f"Price: {quote['price']}, RFQ: {quote['rfq_id']}"),
+    preferred_from_layer=Layer.BTC_LN,
+    preferred_to_layer=Layer.RGB_LN,
+    poll_interval=3.0,
+)
+
+# 完成后停止推送
+unsubscribe()
+```
+</CodeGroup>
+
+选项：
+
+| 选项 | 类型 | 说明 |
+|--------|------|-------------|
+| `preferredFromLayer` / `preferred_from_layer` | `Layer` | 固定源分层协议，而不交由路由发现自动选择 |
+| `preferredToLayer` / `preferred_to_layer` | `Layer` | 固定目标分层协议 |
+| `pollInterval` / `poll_interval` | number | 两次报价请求之间的间隔。TypeScript 以毫秒为单位（默认 `2000`），Python 以秒为单位 |
+
+### `streamQuotes` / `stream_quotes`
+
+针对指定路由（代码与分层协议）订阅报价。
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribe = await client.maker.streamQuotes(
+  'BTC',           // from_asset 代码
+  'USDT',          // to_asset 代码
+  100000,          // from_amount（或 null）
+  'BTC_LN',        // from_layer（或 null）
+  'RGB_LN',        // to_layer（或 null）
+  (quote) => {
+    console.log(`${quote.from_asset.amount} -> ${quote.to_asset.amount}`);
+  }
+);
+```
+
+```python Python
+unsubscribe = await client.maker.stream_quotes(
+    from_asset="BTC",
+    to_asset="USDT",
+    from_amount=100000,
+    from_layer=Layer.BTC_LN,
+    to_layer=Layer.RGB_LN,
+    on_update=lambda quote: print(f"{quote['from_asset']['amount']} -> {quote['to_asset']['amount']}")
+)
+```
+</CodeGroup>
+
+### `streamQuotesForAllRoutes` / `stream_quotes_for_all_routes`
+
+同时订阅两个代码之间所有可用路由的报价。
+
+<CodeGroup>
+```typescript TypeScript
+const unsubscribers = await client.maker.streamQuotesForAllRoutes(
+  'BTC', 'USDT', 100000,
+  (route, quote) => {
+    console.log(`Route ${route}: price=${quote.price}`);
+  }
+);
+// 返回：Map<string, () => void>
+// 调用其中任一取消函数即可停止，或遍历后全部调用
+```
+
+```python Python
+unsubscribers = await client.maker.stream_quotes_for_all_routes(
+    from_ticker="BTC",
+    to_ticker="USDT",
+    amount=100000,
+    on_update=lambda route, quote: print(f"Route {route}: price={quote['price']}")
+)
+# 返回：dict[str, Callable]
+```
+</CodeGroup>
+
+### `getAvailableRoutes` / `get_available_routes`
+
+在订阅之前，先查询某个交易对可用的路由。
+
+<CodeGroup>
+```typescript TypeScript
+const routes = await client.maker.getAvailableRoutes('BTC', 'USDT');
+// 返回：Array<{ from_layer: string; to_layer: string }>
+for (const route of routes) {
+  console.log(`${route.from_layer} -> ${route.to_layer}`);
+}
+```
+
+```python Python
+routes = await client.maker.get_available_routes("BTC", "USDT")
+for route in routes:
+    print(f"{route['from_layer']} -> {route['to_layer']}")
+```
+</CodeGroup>
+
+## 底层 WSClient 接口
+
+如需完全控制，可直接使用 `WSClient`。
+
+### 连接
+
+<CodeGroup>
+```typescript TypeScript
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+
+await ws.connect();
+console.log(`Connected: ${ws.isConnected()}`);
+
+// 完成后
+ws.disconnect();
+```
+
+```python Python
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+
+await ws.connect()
+print(f"Connected: {ws.is_connected()}")
+
+# 完成后
+ws.disconnect()
+```
+</CodeGroup>
+
+### 事件 {#events}
+
+使用 `on` / `off` 订阅事件：
+
+| 事件 | 数据 | 说明 |
+|-------|------|-------------|
+| `connected` | -- | 连接已建立 |
+| `disconnected` | -- | 连接已关闭 |
+| `reconnecting` | `attempt: number` | 正在尝试重连 |
+| `quoteResponse` / `quote_response` | `QuoteResponse` | 收到新报价 |
+| `connectionEstablished` / `connection_established` | connection data | 服务端已确认连接 |
+| `pong` | `PongResponse` | 收到 pong |
+| `error` | `Error` | 发生错误 |
+| `maxReconnectExceeded` / `max_reconnect_exceeded` | -- | 已达到最大重连次数 |
+
+<CodeGroup>
+```typescript TypeScript
+ws.on('connected', () => console.log('Connected'));
+ws.on('disconnected', () => console.log('Disconnected'));
+ws.on('reconnecting', (attempt) => console.log(`Reconnecting: attempt ${attempt}`));
+ws.on('quoteResponse', (quote) => console.log(`Quote: ${quote.price}`));
+ws.on('error', (error) => console.error(`Error: ${error.message}`));
+ws.on('maxReconnectExceeded', () => console.log('Max reconnects exceeded'));
+
+// 取消订阅
+const handler = (quote) => { /* ... */ };
+ws.on('quoteResponse', handler);
+ws.off('quoteResponse', handler);
+```
+
+```python Python
+ws.on("connected", lambda: print("Connected"))
+ws.on("disconnected", lambda: print("Disconnected"))
+ws.on("reconnecting", lambda attempt: print(f"Reconnecting: attempt {attempt}"))
+ws.on("quote_response", lambda quote: print(f"Quote: {quote['price']}"))
+ws.on("error", lambda err: print(f"Error: {err}"))
+ws.on("max_reconnect_exceeded", lambda: print("Max reconnects exceeded"))
+
+# 取消订阅
+handler = lambda quote: ...
+ws.on("quote_response", handler)
+ws.off("quote_response", handler)
+```
+</CodeGroup>
+
+### 请求报价
+
+<CodeGroup>
+```typescript TypeScript
+ws.requestQuote({
+  from_asset: 'BTC',
+  to_asset: 'USDT',
+  from_amount: 100000,
+  from_layer: 'BTC_LN',
+  to_layer: 'RGB_LN'
+});
+```
+
+```python Python
+ws.request_quote({
+    "from_asset": "BTC",
+    "to_asset": "USDT",
+    "from_amount": 100000,
+    "from_layer": "BTC_LN",
+    "to_layer": "RGB_LN"
+})
+```
+</CodeGroup>
+
+### Ping 与保活
+
+WSClient 会按配置的间隔自动向服务端发送 ping。你也可以手动发送：
+
+<CodeGroup>
+```typescript TypeScript
+ws.ping();
+```
+
+```python Python
+ws.ping()
+```
+</CodeGroup>
+
+## 配置
+
+WSClient 支持以下配置选项：
+
+| 选项 | 默认值 | 说明 |
+|--------|---------|-------------|
+| `maxReconnectAttempts` / `max_reconnect_attempts` | `5` | 最大重连尝试次数 |
+| `reconnectDelay` / `reconnect_delay` | `1000ms` / `1.0s` | 两次重连之间的基础延迟（采用指数退避） |
+| `pingInterval` / `ping_interval` | `30000ms` / `30.0s` | 保活 ping 的发送间隔 |
+
+重连采用指数退避：`delay * 2^attempt`。
+
+## WebSocket 协议
+
+WebSocket 使用 JSON 消息协议：
+
+### 消息类型
+
+| Action | 方向 | 说明 |
+|--------|-----------|-------------|
+| `quote_request` | 客户端 -> 服务端 | 请求价格报价 |
+| `quote_response` | 服务端 -> 客户端 | 报价更新 |
+| `ping` | 客户端 -> 服务端 | 保活 ping |
+| `pong` | 服务端 -> 客户端 | 保活响应 |
+| `connection_established` | 服务端 -> 客户端 | 连接已确认 |
+| `error` | 服务端 -> 客户端 | 错误消息 |
+
+### QuoteResponse 字段
+
+| 字段 | 类型 | 说明 |
+|-------|------|-------------|
+| `action` | string | 始终为 `quote_response` |
+| `from_asset` | SwapLegData | 交换中源侧的完整定义 |
+| `to_asset` | SwapLegData | 交换中目标侧的完整定义 |
+| `price` | number | 1 个完整单位 `from_asset` 的价格，以 `to_asset` 的最小单位表示 |
+| `rfq_id` | string | 询价 ID（传给 `initSwap`） |
+| `timestamp` | number | 服务端时间戳 |
+| `expires_at` | number | 报价过期时间戳 |
+| `fee` | Fee | 费用明细 |
+
+每个 `SwapLegData` 对象描述交换中的一侧：
+
+| 字段 | 类型 | 说明 |
+|-------|------|-------------|
+| `asset_id` | string | 资产的唯一标识（例如 `BTC`、RGB 合约 ID） |
+| `name` | string | 资产全称（例如 `Bitcoin`） |
+| `ticker` | string | 展示用代码（例如 `BTC`、`USDT`） |
+| `layer` | string | 结算分层协议（例如 `BTC_LN`、`RGB_LN`） |
+| `amount` | number | 以最小单位表示的原始数量 |
+| `precision` | number | 该资产的小数位数（例如 BTC 为 8） |
+
+## 最佳实践
+
+<AccordionGroup>
+  <Accordion title="妥善处理断开连接">
+    订阅 `disconnected` 和 `reconnecting` 事件。WSClient 会以指数退避自动重连，但你仍应处理超出最大尝试次数的情况。
+  </Accordion>
+
+  <Accordion title="尽量使用高层接口">
+    `streamQuotesByTicker` 会替你完成路由发现、连接管理和报价分发。只有在需要自定义控制时才使用底层的 `WSClient`。
+  </Accordion>
+
+  <Accordion title="用完后及时取消订阅">
+    不再需要报价时，务必调用 `streamQuotes` / `streamQuotesByTicker` 返回的取消订阅函数，以避免内存泄漏和不必要的网络流量。
+  </Accordion>
+
+  <Accordion title="使用报价中的 rfq_id 发起交换">
+    每条报价响应中的 `rfq_id` 就是传给 `initSwap`（`POST /api/v1/swaps/init`）的值。请使用最新的报价，以确保汇率仍然有效。
+  </Accordion>
+</AccordionGroup>
+
+## 后续步骤
+
+<CardGroup cols={2}>
+  <Card title="示例" icon="file-code" href="/cn/sdk/examples">
+    在完整的端到端示例中查看 WebSocket 推送用法
+  </Card>
+  <Card title="客户端参考" icon="code" href="/cn/sdk/api-reference">
+    MakerClient 上所有推送方法的完整参考
+  </Card>
+  <Card title="类型定义" icon="brackets-curly" href="/cn/sdk/types">
+    QuoteResponse、QuoteRequest 及其他 WebSocket 类型定义
+  </Card>
+  <Card title="最佳实践" icon="star" href="/cn/sdk/best-practices">
+    重连策略与生产环境实践模式
+  </Card>
+</CardGroup>

@@ -1,0 +1,141 @@
+---
+title: "KaleidoSwap 扩展：安装"
+sidebarTitle: "安装"
+description: "在浏览器中安装 KaleidoSwap 多协议比特币钱包扩展：封闭测试申请、开发者模式手动加载、校验下载文件，以及后续版本的更新方法。"
+---
+
+## 浏览器要求
+
+KaleidoSwap 扩展基于 Manifest V3 构建。首个封闭测试版以 Chromium 兼容的 zip 压缩包形式分发，需通过开发者模式安装。
+
+| 浏览器 | 是否支持 |
+|---------|-----------|
+| **Google Chrome** | 封闭测试目标浏览器 |
+| **Brave** | 封闭测试目标浏览器 |
+| **Edge** | 封闭测试目标浏览器 |
+| **Opera** | 封闭测试目标浏览器 |
+| **Firefox** | 除非提供 Firefox 构建版本，否则不在首个封闭测试范围内 |
+| **Safari** | 暂不支持 |
+
+## 安装
+
+### 封闭测试 zip 包（开发者模式）
+
+KaleidoSwap 扩展的首个版本是仅限邀请的封闭测试。目前还没有浏览器商店上架，扩展源码仓库也尚未公开。受邀测试者会从 KaleidoSwap 团队收到一个专属下载链接，形如 `https://kaleidoswap.com/dl?t=...`。该链接始终提供最新的测试构建，请保留这封邮件——每次更新都用同一个链接。
+
+<Warning>
+只安装通过 KaleidoSwap 官方邀请或支持渠道分享的测试压缩包。不要安装来源未经验证的转发压缩包。你的下载链接是专属于你的，请当作私密信息对待。
+</Warning>
+
+<Steps>
+  <Step title="下载测试版 zip 包">
+    打开测试邀请中的下载链接，它会以 zip 压缩包形式提供当前构建。
+  </Step>
+
+  <Step title="校验下载的文件">
+    同一个链接上还提供了公布的校验和以及维护者的分离签名：
+
+    ```bash
+    # 当前构建的 SHA-256 校验和
+    curl -s "https://kaleidoswap.com/dl?t=YOUR_TOKEN&file=sha256"
+    ```
+
+    将其与你下载的压缩包对比：
+
+    ```bash
+    shasum -a 256 kaleidoswap-extension-beta-latest.zip
+    ```
+
+    如果还要校验签名，使用 `&file=asc` 获取签名文件，并用 KaleidoSwap 发布签名密钥（`696F19C9DA0ADBE8B38E5346E007BFF05941433B`）验证：
+
+    ```bash
+    curl -s "https://kaleidoswap.com/dl?t=YOUR_TOKEN&file=asc" -o kaleidoswap-extension.zip.asc
+    gpg --verify kaleidoswap-extension.zip.asc kaleidoswap-extension-beta-latest.zip
+    ```
+  </Step>
+
+  <Step title="解压压缩包">
+    把压缩包解压到本机一个固定的文件夹中。扩展安装期间请不要移动这个文件夹，因为浏览器会从该文件夹加载扩展。
+  </Step>
+
+  <Step title="打开扩展管理页面">
+    在 Chromium 系浏览器中访问 `chrome://extensions`。
+  </Step>
+
+  <Step title="启用开发者模式">
+    打开右上角的**开发者模式**（Developer mode）开关。
+  </Step>
+
+  <Step title="加载已解压的扩展">
+    点击**加载已解压的扩展程序**（Load unpacked），选择包含 `manifest.json` 的解压文件夹。
+  </Step>
+
+  <Step title="固定扩展图标">
+    把 KaleidoSwap 图标固定到工具栏，方便随时打开。
+  </Step>
+</Steps>
+
+## 暂不可用的渠道
+
+| 渠道 | 状态 |
+|---------|--------|
+| **浏览器商店** | 首个封闭测试期间不可用 |
+| **源码构建** | 扩展源码开放之前不可用 |
+
+<Note>
+封闭测试者只应安装自己专属下载链接提供的 zip 包。扩展仓库公开后，我们会补充源码构建说明。
+</Note>
+
+## 首次启动
+
+安装完成后，点击工具栏中的 KaleidoSwap 图标，钱包会在浏览器**侧边栏**（side panel）中打开（在不支持侧边栏 API 的浏览器上，会退回到工具栏弹出窗口）。首次启动时，扩展会引导你完成**初始设置流程**：
+
+<img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap 扩展首次启动界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+1. **欢迎界面** - 创建新钱包或导入已有助记词
+2. **设置密码** - 创建一个安全密码来保护本地钱包
+3. **备份助记词** - 保存控制 Spark、Arkade 和 Nostr 身份的助记词
+4. **可选的 RLN 设置** - 连接 RGB Lightning Node，或跳过并稍后再连接
+5. **完成** - 进入钱包仪表盘
+
+更多信息请参见[快速开始](/cn/extensions/kaleidoswap-extension/getting-started)。
+
+## 权限
+
+KaleidoSwap 扩展会申请以下 Chrome 扩展权限：
+
+| 权限 | 用途 |
+|-----------|---------|
+| **Storage** | 在本地存储加密的钱包数据、偏好设置和账户配置 |
+| **Tabs** | 协调审批和确认窗口 |
+| **Alarms** | 运行计划中的钱包／会话任务 |
+| **Notifications** | 在支持的情况下就钱包事件通知用户 |
+| **Clipboard Read** | 读取粘贴的发票、地址和连接字符串 |
+| **Side Panel** | 在浏览器侧边栏中打开钱包 |
+| **Declarative Net Request（含主机访问）** | 为钱包自身发往已授权主机的 API 调用调整请求头 |
+
+manifest 中还为钱包实际访问的接口端点声明了 `host_permissions`：KaleidoSwap 服务、区块浏览器与索引器、RGB proxy、Spark/Flashnet、Arkade 以及价格 API。
+
+<Note>
+KaleidoSwap 扩展把加密后的助记词存储在 `chrome.storage.local` 中。只有你主动连接的账户和服务才会产生网络请求。
+</Note>
+
+## 更新
+
+封闭测试构建不会通过浏览器商店自动更新。有新测试版时，重新打开你的下载链接——它始终提供当前构建——解压后回到 `chrome://extensions`，在 KaleidoSwap 扩展卡片上点击**重新加载**（Reload）。如果你把新构建解压到了另一个文件夹，请先移除旧的已解压扩展，再加载新文件夹。
+
+由于测试构建使用固定的扩展 ID（`mmldlmkphefjjbpbajnhnkbiahiabiog`），你的账户、余额和设置会在更新后保留。无论如何，请把助记词放在手边。
+
+## 卸载
+
+要移除 KaleidoSwap 扩展，请按照浏览器提供的说明操作。
+
+<Warning>
+卸载扩展会删除所有本地存储的钱包数据。卸载前请确认已备份助记词，以及所有 RGB Lightning Node 相关的备份材料。
+</Warning>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

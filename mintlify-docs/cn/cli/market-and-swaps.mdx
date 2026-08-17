@@ -1,6 +1,7 @@
 ---
 title: '市场与交换'
-description: '在 CLI 中浏览 KaleidoSwap 市场、请求报价，并跨比特币分层协议执行订单、原子交换或本地节点交换流程'
+sidebarTitle: '市场与交换'
+description: '在 CLI 中浏览 KaleidoSwap 市场、请求报价，并跨比特币分层协议执行原子交换或本地节点交换流程'
 ---
 
 ## 市场数据
@@ -24,11 +25,24 @@ kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB
 
 重要的报价选项：
 
-- `--from-amount` 或 `--to-amount`
+- `--from-amount` 或 `--to-amount` —— 二者只能传其一，因为报价只锚定一侧
 - `--from-layer`
 - `--to-layer`
 
-市场报价支持的分层值包括 `BTC_LN`、`RGB_LN` 和 `BTC_ONCHAIN`。
+<Note>
+  **这里的金额是显示单位。** `--from-amount 0.001` 表示 0.001 BTC，而不是 1000 聪。[钱包、资产与支付](/cn/cli/wallet-assets-payments)中描述的原始整数单位适用于 `asset` 与 `payment` 命令，不适用于报价和交换。
+</Note>
+
+### 分层取值
+
+可接受的取值取决于具体命令：
+
+| 命令 | 分层 |
+|------|------|
+| `market quote` | `BTC_LN`、`RGB_LN`、`BTC_ONCHAIN` |
+| `swap atomic init`、`swap atomic run` | `BTC_L1`、`BTC_LN`、`RGB_L1`、`RGB_LN` |
+
+两个选项都是可选的：省略时，分层由请求的交易对方向推导。
 
 ## 交换的两种范围
 
@@ -47,7 +61,7 @@ kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB
 
 | 命令 | 用途 |
 |--------|---------|
-| `kaleido swap atomic init <pair>` | 初始化原子交换 |
+| `kaleido swap atomic init <pair>` | 初始化原子交换（`--yes` 接受报价，非交互模式下必需） |
 | `kaleido swap atomic execute` | 执行已初始化的交换（`--swapstring`、`--taker-pubkey`、`--payment-hash`，省略时会提示输入；`--auto-whitelist`） |
 | `kaleido swap atomic status <payment-hash>` | 跟踪原子交换状态 |
 | `kaleido swap atomic run <pair>` | 用一条命令依次完成 init、whitelist 和 execute |
@@ -78,6 +92,14 @@ kaleido swap atomic run BTC/USDT --to-amount 5
 | `kaleido node swap list` | 列出节点已知的交换 |
 
 当你希望把每个步骤单独暴露出来时，这条路径适合调试、演示和更底层的协议操作。
+
+swapstring 由六个用斜杠分隔的字段组成，CLI 在加入白名单前会先校验：
+
+```text
+<from_amount>/<from_asset>/<to_amount>/<to_asset>/<expiry>/<payment_hash>
+```
+
+在命令行上务必加引号，让 shell 原样传递。校验报错的含义见[故障排查](/cn/cli/troubleshooting#market-and-swaps)。
 
 ## 推荐的交易流程
 

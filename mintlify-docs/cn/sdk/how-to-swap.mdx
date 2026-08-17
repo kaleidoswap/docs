@@ -1,5 +1,5 @@
 ---
-title: "使用 SDK 创建原子交换"
+title: "如何使用 KaleidoSDK 进行交换"
 sidebarTitle: "如何交换"
 description: "用 KaleidoSDK 创建并执行比特币原子交换：从询价、初始化、白名单授权到执行与结算跟踪，逐步走通多协议交换的完整流程"
 ---
@@ -182,20 +182,3 @@ print(status.swap.status if status.swap else None)
 </CodeGroup>
 
 如果某笔转移待处理的时间超出预期，`client.rln.refreshTransfers()` / `refresh_transfers()` 可以推进待处理的 RGB 转移，而 `client.rln.listSwaps()` 能让你看到节点自身的视图。各类失败情形见 [故障排查](/cn/sdk/troubleshooting#swap-issues)。
-
-## 后续步骤
-
-<CardGroup cols={2}>
-  <Card title="错误处理" icon="triangle-exclamation" href="/cn/sdk/error-handling">
-    异常层级结构，以及围绕每一步的重试模式。
-  </Card>
-  <Card title="交换协议" icon="arrows-rotate" href="/cn/api-reference/swap-protocol">
-    底层 HTLC 流程，逐个接口端点讲解，并附时序图。
-  </Card>
-  <Card title="WebSocket" icon="tower-broadcast" href="/cn/sdk/websocket">
-    流式接收实时报价，而不必逐条请求。
-  </Card>
-  <Card title="客户端参考" icon="code" href="/cn/sdk/api-reference">
-    `client.maker` 与 `client.rln` 上的全部方法。
-  </Card>
-</CardGroup>

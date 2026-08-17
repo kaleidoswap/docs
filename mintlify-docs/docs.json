@@ -39,7 +39,8 @@
                 "icon": "book",
                 "pages": [
                   "whats-kaleidoswap/glossary",
-                  "whats-kaleidoswap/troubleshooting"
+                  "whats-kaleidoswap/troubleshooting",
+                  "whats-kaleidoswap/additional-resources"
                 ]
               }
             ]
@@ -181,19 +182,20 @@
                 "icon": "flag",
                 "pages": [
                   "sdk/introduction",
+                  "sdk/installation",
                   "sdk/getting-started"
                 ]
               },
               {
-                "group": "Version & Compatibility",
-                "icon": "check-double",
+                "group": "API Surfaces",
+                "icon": "layer-group",
                 "pages": [
                   "sdk/maker-api-compatibility",
                   "sdk/rln-api-compatibility"
                 ]
               },
               {
-                "group": "Core Reference",
+                "group": "Modules",
                 "icon": "code",
                 "pages": [
                   "sdk/api-reference",
@@ -208,8 +210,7 @@
                 "pages": [
                   "sdk/how-to-swap",
                   "sdk/examples",
-                  "sdk/best-practices",
-                  "sdk/error-handling"
+                  "sdk/best-practices"
                 ]
               },
               {
@@ -233,11 +234,12 @@
                 "icon": "flag",
                 "pages": [
                   "cli/introduction",
+                  "cli/installation",
                   "cli/getting-started"
                 ]
               },
               {
-                "group": "Local Node Operations",
+                "group": "Node Operations",
                 "icon": "server",
                 "pages": [
                   "cli/node-environments",
@@ -245,7 +247,7 @@
                 ]
               },
               {
-                "group": "Trading & Channels",
+                "group": "Channels & Trading",
                 "icon": "arrows-rotate",
                 "pages": [
                   "cli/channels-lsp",
@@ -256,7 +258,10 @@
                 "group": "Reference",
                 "icon": "book",
                 "pages": [
-                  "cli/command-reference"
+                  "cli/command-reference",
+                  "cli/faq",
+                  "cli/troubleshooting",
+                  "cli/additional-resources"
                 ]
               }
             ]
@@ -276,8 +281,7 @@
                 "group": "Guides",
                 "icon": "book-open",
                 "pages": [
-                  "api-reference/swap-protocol",
-                  "api-reference/error-handling"
+                  "api-reference/swap-protocol"
                 ]
               },
               {
@@ -288,6 +292,15 @@
                   "api-reference/rgb-lsps1-apis",
                   "api-reference/market-apis",
                   "api-reference/swap-apis"
+                ]
+              },
+              {
+                "group": "Reference",
+                "icon": "book",
+                "pages": [
+                  "api-reference/faq",
+                  "api-reference/troubleshooting",
+                  "api-reference/additional-resources"
                 ]
               }
             ]
@@ -304,6 +317,11 @@
               "anchor": "Download Desktop App",
               "href": "https://github.com/kaleidoswap/desktop-app/releases",
               "icon": "download"
+            },
+            {
+              "anchor": "Build with the SDK",
+              "href": "/sdk/installation",
+              "icon": "code"
             },
             {
               "anchor": "Website",
@@ -346,7 +364,8 @@
                 "icon": "book",
                 "pages": [
                   "cn/whats-kaleidoswap/glossary",
-                  "cn/whats-kaleidoswap/troubleshooting"
+                  "cn/whats-kaleidoswap/troubleshooting",
+                  "cn/whats-kaleidoswap/additional-resources"
                 ]
               }
             ]
@@ -488,19 +507,20 @@
                 "icon": "flag",
                 "pages": [
                   "cn/sdk/introduction",
+                  "cn/sdk/installation",
                   "cn/sdk/getting-started"
                 ]
               },
               {
-                "group": "版本与兼容性",
-                "icon": "check-double",
+                "group": "API 界面",
+                "icon": "layer-group",
                 "pages": [
                   "cn/sdk/maker-api-compatibility",
                   "cn/sdk/rln-api-compatibility"
                 ]
               },
               {
-                "group": "核心参考",
+                "group": "模块",
                 "icon": "code",
                 "pages": [
                   "cn/sdk/api-reference",
@@ -515,8 +535,7 @@
                 "pages": [
                   "cn/sdk/how-to-swap",
                   "cn/sdk/examples",
-                  "cn/sdk/best-practices",
-                  "cn/sdk/error-handling"
+                  "cn/sdk/best-practices"
                 ]
               },
               {
@@ -540,11 +559,12 @@
                 "icon": "flag",
                 "pages": [
                   "cn/cli/introduction",
+                  "cn/cli/installation",
                   "cn/cli/getting-started"
                 ]
               },
               {
-                "group": "本地节点操作",
+                "group": "节点操作",
                 "icon": "server",
                 "pages": [
                   "cn/cli/node-environments",
@@ -552,7 +572,7 @@
                 ]
               },
               {
-                "group": "交易与通道",
+                "group": "通道与交易",
                 "icon": "arrows-rotate",
                 "pages": [
                   "cn/cli/channels-lsp",
@@ -563,7 +583,10 @@
                 "group": "参考",
                 "icon": "book",
                 "pages": [
-                  "cn/cli/command-reference"
+                  "cn/cli/command-reference",
+                  "cn/cli/faq",
+                  "cn/cli/troubleshooting",
+                  "cn/cli/additional-resources"
                 ]
               }
             ]
@@ -583,8 +606,7 @@
                 "group": "指南",
                 "icon": "book-open",
                 "pages": [
-                  "cn/api-reference/swap-protocol",
-                  "cn/api-reference/error-handling"
+                  "cn/api-reference/swap-protocol"
                 ]
               },
               {
@@ -595,6 +617,15 @@
                   "cn/api-reference/rgb-lsps1-apis",
                   "cn/api-reference/market-apis",
                   "cn/api-reference/swap-apis"
+                ]
+              },
+              {
+                "group": "参考",
+                "icon": "book",
+                "pages": [
+                  "cn/api-reference/faq",
+                  "cn/api-reference/troubleshooting",
+                  "cn/api-reference/additional-resources"
                 ]
               }
             ]
@@ -613,6 +644,11 @@
               "icon": "download"
             },
             {
+              "anchor": "使用 SDK 构建",
+              "href": "/cn/sdk/installation",
+              "icon": "code"
+            },
+            {
               "anchor": "官网",
               "href": "https://kaleidoswap.com",
               "icon": "globe"
@@ -627,8 +663,8 @@
         "navbar": {
           "links": [
             {
-              "label": "技术支持",
-              "href": "https://docs.google.com/forms/d/e/1FAIpQLSewf4-AJZxuoI878-TRex91kRH04l-9s5XC51UHW6140xXKVA/viewform"
+              "label": "构建",
+              "href": "/cn/sdk/installation"
             }
           ],
           "primary": {
@@ -658,8 +694,8 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "https://docs.google.com/forms/d/e/1FAIpQLSewf4-AJZxuoI878-TRex91kRH04l-9s5XC51UHW6140xXKVA/viewform"
+        "label": "Build",
+        "href": "/sdk/installation"
       }
     ],
     "primary": {
@@ -668,6 +704,16 @@
       "href": "https://kaleidoswap.com/products"
     }
   },
+  "redirects": [
+    {
+      "source": "/sdk/error-handling",
+      "destination": "/sdk/troubleshooting"
+    },
+    {
+      "source": "/cn/sdk/error-handling",
+      "destination": "/cn/sdk/troubleshooting"
+    }
+  ],
   "footer": {
     "socials": {
       "x": "https://x.com/kaleidoswap",

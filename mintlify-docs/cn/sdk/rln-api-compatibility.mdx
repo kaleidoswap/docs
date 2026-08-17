@@ -1,9 +1,11 @@
 ---
-title: 'RLN API 兼容性'
+title: 'RLN API'
 description: "查看每个 KaleidoSDK 版本对应的 RGB Lightning Node (RLN) API 版本，以及 client.rln 暴露的节点侧接口端点分类。"
 ---
 
 import { sdkVersion, rlnApiVersion } from "/snippets/versions.mdx";
+
+RLN（RGB Lightning Node）API 由你所配置的 RGB Lightning Node 直接提供，支持钱包操作、闪电通道管理以及节点间的交换协调。
 
 ## 兼容性
 
@@ -15,11 +17,7 @@ SDK 会自动支持最新发布的 RLN API。请始终保持 SDK 与 RGB Lightni
 要查看最新的 RLN API 变更和更新内容，请参阅 [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) 或你自己的节点文档。
 </Note>
 
-## RLN API 总览
-
-RLN（RGB Lightning Node）API 由你所配置的 RGB Lightning Node 直接提供，支持钱包操作、闪电通道管理以及节点间的交换协调。
-
-## RLN API 分类
+## 分类
 
 | 分类 | 用途 | 示例 |
 |---|---|---|
@@ -29,52 +27,4 @@ RLN（RGB Lightning Node）API 由你所配置的 RGB Lightning Node 直接提�
 | **Payments** | 支付执行 | 支付发票、协调交换、节点间交易 |
 | **Node Info** | 节点状态与配置 | 公钥、同步状态、能力信息 |
 
-## 访问 RLN 操作
-
-在使用 RLN 操作前，请确认已配置好节点：
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',  // RLN 操作必需
-});
-
-// 检查节点是否已配置
-if (client.hasNode()) {
-  // 通过 client.rln 访问 RLN API
-  const nodeInfo = await client.rln.getNodeInfo();
-  const balance = await client.rln.getBtcBalance();
-  const channels = await client.rln.listChannels();
-} else {
-  console.log('Node not configured - RLN operations unavailable');
-}
-```
-
-```python Python
-import asyncio
-from kaleido_sdk import KaleidoClient
-
-
-async def main():
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com",
-        node_url="http://localhost:3001"  # RLN 操作必需
-    )
-
-    # 检查节点是否已配置
-    if client.has_node():
-        # 通过 client.rln 访问 RLN API
-        node_info = await client.rln.get_node_info()
-        balance = await client.rln.get_btc_balance()
-        channels = await client.rln.list_channels()
-    else:
-        print("Node not configured - RLN operations unavailable")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-</CodeGroup>
+这些分类都通过 `client.rln` 访问，前提是客户端配置了 `nodeUrl` / `node_url`：若未配置，TypeScript 会抛出 `ConfigError`，Python 会抛出 `NodeNotConfiguredError`。配置步骤与节点检查见[快速上手](/cn/sdk/getting-started)，全部方法见[客户端参考](/cn/sdk/api-reference)。

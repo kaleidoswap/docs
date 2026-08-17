@@ -1,7 +1,7 @@
 ---
 title: "KaleidoSDK 故障排查"
 sidebarTitle: "故障排查"
-description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本不匹配、交换报错等，每一项都给出可直接照做的排查步骤"
+description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本不匹配、交换报错等，每一项都给出可直接照做的排查步骤，并附完整的错误层级与重试模式"
 ---
 
 ## 安装问题
@@ -27,11 +27,13 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
     4. 试试：`pip install kaleido-sdk --no-cache-dir`
   </Accordion>
 
-  <Accordion title="安装完成后仍找不到模块" icon="magnifying-glass">
-    **症状：** `Cannot find module 'kaleido-sdk'` 或 `ModuleNotFoundError`
+  <Accordion title="找不到模块，或报 ERR_REQUIRE_ESM" icon="magnifying-glass">
+    **症状：** `Cannot find module 'kaleido-sdk'`、`ERR_REQUIRE_ESM`、import 语法报错，或 `ModuleNotFoundError`
+
+    **原因（TypeScript）：** SDK 仅支持 ESM，而旧的 `"moduleResolution": "node"` 设置会忽略包的 `exports` 字段。
 
     **解决办法：**
-    - **TypeScript：** SDK 仅支持 ESM，因此 `tsconfig.json` 需要 `"moduleResolution": "bundler"`、`"node16"` 或 `"nodenext"`。旧的 `"node"` 设置会忽略包的 `exports` 字段，无法解析该模块
+    - **TypeScript：** 在 `tsconfig.json` 中将 `"moduleResolution"` 设为 `"bundler"`、`"node16"` 或 `"nodenext"`，并让项目本身使用 ESM —— 在 `package.json` 中设置 `"type": "module"`，或使用 `.mts` 扩展名。如果必须继续使用 CommonJS，请改用动态导入：`const sdk = await import('kaleido-sdk')`
     - **Python：** 确认你处在正确的虚拟环境中
     - 确认包已安装：`npm list kaleido-sdk` 或 `pip show kaleido-sdk`
   </Accordion>
@@ -128,7 +130,7 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
     **解决办法：**
     1. 增大超时时间：`timeout: 60`（单位为秒）
     2. 检查网络连通性
-    3. 用 `error.isRetryable()` 实现重试逻辑 —— 参见[错误处理](/cn/sdk/error-handling#retry-patterns)
+    3. 用 `error.isRetryable()` 实现重试逻辑 —— 参见[重试模式](#retry-patterns)
   </Accordion>
 
   <Accordion title="RateLimitError：429 Too Many Requests" icon="gauge-high">
@@ -246,10 +248,10 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
   </Accordion>
 </AccordionGroup>
 
-## TypeScript 特有问题
+## 语言相关问题 {#language-specific-issues}
 
 <AccordionGroup>
-  <Accordion title="OpenAPI 类型引发的类型错误" icon="code">
+  <Accordion title="OpenAPI 类型引发的类型错误（TypeScript）" icon="code">
     **症状：** TypeScript 编译器报告类型不兼容
 
     **解决办法：**
@@ -261,21 +263,7 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
     3. 如果启用了 strict 模式，可能需要显式处理 `undefined`
   </Accordion>
 
-  <Accordion title="ESM / CommonJS 问题" icon="file-code">
-    **症状：** `ERR_REQUIRE_ESM` 或 import 语法报错
-
-    **解决办法：**
-    1. SDK 仅支持 ESM。请确认你的项目使用 ESM：
-       - 在 `package.json` 中设置 `"type": "module"`
-       - 或者使用 `.mts` 文件扩展名
-    2. 如果必须使用 CommonJS，请改用动态导入：`const sdk = await import('kaleido-sdk')`
-  </Accordion>
-</AccordionGroup>
-
-## Python 特有问题
-
-<AccordionGroup>
-  <Accordion title="Pydantic 校验错误" icon="circle-exclamation">
+  <Accordion title="Pydantic 校验错误（Python）" icon="circle-exclamation">
     **症状：** 解析 API 响应时 Pydantic 抛出 `ValidationError`
 
     **解决办法：**
@@ -284,7 +272,7 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
     3. API 可能已经更新 —— 试着升级 SDK：`pip install --upgrade kaleido-sdk`
   </Accordion>
 
-  <Accordion title="httpx 连接错误" icon="network-wired">
+  <Accordion title="httpx 连接错误（Python）" icon="network-wired">
     **症状：** `httpx.ConnectError` 或类似报错
 
     **解决办法：**
@@ -294,94 +282,232 @@ description: "定位并解决 KaleidoSDK 的常见问题：连接失败、版本
   </Accordion>
 </AccordionGroup>
 
-## 调试
+## 错误参考 {#error-reference}
 
-### 开启详细日志
+两个 SDK 使用几乎完全一致的错误类层级。所有错误都继承自 `KaleidoError`，因此只要捕获它，就不会有 SDK 错误漏网：
+
+```
+KaleidoError (基类)
+├── APIError (HTTP 400-599)
+│   └── RateLimitError (HTTP 429，仅 TypeScript)
+├── RateLimitError (HTTP 429，Python —— 直接继承 KaleidoError)
+├── NetworkError (连接问题)
+├── ValidationError (HTTP 400, 422)
+├── TimeoutError (HTTP 408, 504)
+├── WebSocketError (WebSocket 问题)
+├── NotFoundError (HTTP 404)
+├── ConfigError (配置问题)
+├── SwapError (交换操作失败)
+├── NodeNotConfiguredError (节点未配置)
+├── QuoteExpiredError (报价已过期)
+└── InsufficientBalanceError (余额不足)
+```
+
+写处理逻辑之前，有两处差异值得注意：
+
+- **`RateLimitError`** 在 TypeScript 中继承 `APIError`，而在 Python 中直接继承 `KaleidoError` —— Python 里的 `except APIError` 处理块**捕获不到**速率限制错误。
+- **未配置节点 URL** 在 Python 中抛出 `NodeNotConfiguredError`，而在 TypeScript 中抛出 `ConfigError`（"Node API not configured. Provide \"nodeUrl\" when creating the client."）。
+
+### KaleidoError 属性 {#kaleidoerror-properties}
+
+无论具体是哪个类，每个错误都带有以下属性：
+
+| 属性 | 类型 | 说明 |
+|----------|------|-------------|
+| `code` | `string` | 供程序化处理使用的错误码 |
+| `message` | `string` | 便于阅读的错误信息 |
+| `statusCode` / `status_code` | `number?` | HTTP 状态码（如适用） |
+| `details` | `string?` | 额外的错误详情 |
+| `isRetryable()` / `is_retryable()` | `boolean` | 该错误是否可以安全重试 |
+
+### 错误类 {#error-classes}
+
+| 类 | 什么时候抛出 | 额外属性 |
+|-------|-------------|-----------------------|
+| `APIError` | HTTP 400-599 | TypeScript：`details`。Python：`response_body` |
+| `RateLimitError` | HTTP 429 | `retryAfter` / `retry_after` —— 需等待的秒数 |
+| `NetworkError` | DNS 解析失败、连接被拒绝等连接性故障 | — |
+| `ValidationError` | HTTP 400、422 —— 包含解析后的 FastAPI 校验详情 | — |
+| `TimeoutError` | HTTP 408、504 | — |
+| `WebSocketError` | WebSocket 连接或通信失败 | — |
+| `NotFoundError` | HTTP 404 | — |
+| `ConfigError` | SDK 配置无效，例如 URL 格式错误。在 TypeScript 中，未配置 `nodeUrl` 时调用 `client.rln.*` 也会抛出它 | — |
+| `SwapError` | 交换操作失败 | `swapId` / `swap_id` |
+| `NodeNotConfiguredError` | 仅 Python —— 未配置 `node_url` 时调用 `client.rln.*` | — |
+| `QuoteExpiredError` | 在 `expires_at` 之后使用 `rfq_id` | — |
+| `InsufficientBalanceError` | 余额不足以完成该操作 | `requiredAmount` / `required_amount`、`availableAmount` / `available_amount`、`asset` |
+
+哪些错误可以安全重试，取决于状态码而不是类本身 —— 见下方的 [HTTP 错误映射](#http-error-mapping)。
+
+### HTTP 错误映射 {#http-error-mapping}
+
+SDK 通过 `mapHttpError` / `map_http_error` 自动把 HTTP 错误映射为带类型的异常：
+
+| HTTP 状态码 | 错误类 | 是否可重试 |
+|------------|-------------|-----------|
+| 400, 422 | `ValidationError` | 否 —— 请求本身就有问题 |
+| 404 | `NotFoundError` | 否 |
+| 408, 504 | `TimeoutError` | 是，始终可重试 |
+| 429 | `RateLimitError` | TypeScript：可以，等待 `retryAfter` 之后重试。Python：`is_retryable()` 返回 `False` —— 需要你自己按 `retry_after` 退避 |
+| 500, 502, 503 | `APIError` | 是 —— 服务端故障可能自行恢复 |
+| 其他 4xx | `APIError` | 否 |
+| 网络故障 | `NetworkError` | 是，始终可重试 |
+
+不要把这张表硬编码进你自己的重试逻辑，而应调用 `isRetryable()` / `is_retryable()` —— 它精确编码了这些规则，并会随映射关系的演进保持正确。
+
+### 完整的错误处理 {#comprehensive-error-handling}
+
+从最具体的类向最一般的类逐层分支，并以 `KaleidoError` 收尾，以免有错误漏网。子类必须写在父类之前 —— 在 TypeScript 中 `RateLimitError` 属于 `APIError`，如果 `APIError` 分支写在前面，它会把前者一并吞掉。
 
 <CodeGroup>
 ```typescript TypeScript
-// 使用 Node.js 自带的调试能力
-// 设置环境变量：NODE_DEBUG=http
-// 或者用浏览器 DevTools 检查网络请求
-```
+import { KaleidoError, RateLimitError, QuoteExpiredError } from 'kaleido-sdk';
 
-```python Python
-import logging
-
-# 为 httpx 开启调试日志
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger("httpx").setLevel(logging.DEBUG)
-logging.getLogger("websockets").setLevel(logging.DEBUG)
-```
-</CodeGroup>
-
-### 校验配置
-
-<CodeGroup>
-```typescript TypeScript
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',
-});
-
-console.log(`Has node: ${client.hasNode()}`);
-
-// 测试连通性
 try {
-  const assets = await client.maker.listAssets();
-  console.log(`API connected: ${assets.assets.length} assets`);
+  const quote = await client.maker.getQuote({ /* ... */ });
+  const swap = await client.maker.initSwap({ /* ... */ });
 } catch (error) {
-  console.error('API connection failed:', error);
-}
-
-if (client.hasNode()) {
-  try {
-    const nodeInfo = await client.rln.getNodeInfo();
-    console.log(`Node connected: ${nodeInfo.pubkey}`);
-  } catch (error) {
-    console.error('Node connection failed:', error);
+  if (error instanceof QuoteExpiredError) {
+    // 重新获取报价后重试
+  } else if (error instanceof RateLimitError) {
+    await new Promise(r => setTimeout(r, (error.retryAfter ?? 5) * 1000));
+  } else if (error instanceof KaleidoError && error.isRetryable()) {
+    // 退避后重试 —— 见下方的重试模式
+  } else if (error instanceof KaleidoError) {
+    console.error(`SDK error [${error.code}]: ${error.message}`);
   }
 }
 ```
 
 ```python Python
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",
+import asyncio
+
+from kaleido_sdk import (
+    KaleidoError,
+    PairQuoteRequest,
+    QuoteExpiredError,
+    RateLimitError,
+    SwapRequest,
 )
 
-print(f"Has node: {client.has_node()}")
-
 try:
-    assets = await client.maker.list_assets()
-    print(f"API connected: {len(assets.assets)} assets")
-except Exception as e:
-    print(f"API connection failed: {e}")
-
-if client.has_node():
-    try:
-        node_info = await client.rln.get_node_info()
-        print(f"Node connected: {node_info.pubkey}")
-    except Exception as e:
-        print(f"Node connection failed: {e}")
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+    swap = await client.maker.init_swap(SwapRequest(...))
+except QuoteExpiredError:
+    # 重新获取报价后重试
+    pass
+except RateLimitError as e:
+    await asyncio.sleep(e.retry_after or 5)
+except KaleidoError as e:
+    if e.is_retryable():
+        # 退避后重试 —— 见下方的重试模式
+        pass
+    else:
+        print(f"SDK error [{e.code}]: {e}")
 ```
 </CodeGroup>
 
+只有当某个类的处理方式确实不同时，才值得为它单独开一个分支 —— 比如用 `InsufficientBalanceError` 展示差额，用 `ValidationError` 指出出错的字段。其余情况已经被 `isRetryable()` 判断和兵底分支覆盖。
+
+### 重试模式 {#retry-patterns}
+
+使用 `isRetryable()` 实现自动重试：
+
+<CodeGroup>
+```typescript TypeScript
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof KaleidoError && error.isRetryable() && attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+const pairs = await withRetry(() => client.maker.listPairs());
+```
+
+```python Python
+import asyncio
+
+async def with_retry(fn, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return await fn()
+        except KaleidoError as e:
+            if e.is_retryable() and attempt < max_retries - 1:
+                delay = 2 ** attempt
+                await asyncio.sleep(delay)
+                continue
+            raise
+    raise RuntimeError("Max retries exceeded")
+
+pairs = await with_retry(lambda: client.maker.list_pairs())
+```
+</CodeGroup>
+
+## 调试
+
+### 开启详细日志
+
+Python 可以直接使用底层 `httpx` 与 `websockets` 的日志器：
+
+```python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("websockets").setLevel(logging.DEBUG)
+```
+
+TypeScript 没有针对传输层的同类开关。创建客户端时传入更低的 `logLevel` 可以拿到 SDK 自身的输出 —— 见[配置](/cn/sdk/installation#configuration)；要看具体的请求，请使用 `NODE_DEBUG=http`，或浏览器 DevTools 的网络面板。
+
+### 校验配置
+
+当调用失败但还定位不到具体错误时，按顺序检查这四项：
+
+<Steps>
+  <Step title="API URL 能否解析">
+    在浏览器中打开 `<baseUrl>/api/v1/market/assets`。`/api/v1` 由 SDK 自动追加，因此配置值本身不能包含它。
+  </Step>
+
+  <Step title="客户端是否看得到节点">
+    只要缺少 `nodeUrl` / `node_url`，`client.hasNode()` / `client.has_node()` 就返回 `false`，所有 `client.rln.*` 调用都会因此失败。
+  </Step>
+
+  <Step title="节点是否响应">
+    `client.rln.getNodeInfo()` / `get_node_info()` 能返回 pubkey，就证明节点既可达又已解锁。
+  </Step>
+
+  <Step title="两者是否在同一网络">
+    signet 的 `baseUrl` 配上主网节点，得到的是令人困惑的空结果，而不是一个清晰的错误。
+  </Step>
+</Steps>
+
 ## 获取帮助
 
-如果是疑问而不是报错，请查阅[常见问题](/cn/sdk/faq)。其他情况请通过下面你偏好的渠道反馈问题，并附上：
+如果是疑问而不是报错，请查阅[常见问题](/cn/sdk/faq)；上游文档与相关链接见[更多资源](/cn/sdk/additional-resources)。
+
+其他情况请通过下面你偏好的渠道反馈问题，并附上：
 
 1. SDK 版本（`getVersion()` / `get_version()`）
 2. 语言与运行时版本（Node.js / Python）
 3. 错误信息与堆栈跟踪
 4. 可复现问题的最小代码
-5. 运行环境（regtest / signet / 主网）
+5. 运行环境（signet / 主网）
 
 <CardGroup cols={3}>
   <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
     向社区提问。
   </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
     在相应的仓库中报告缺陷。
   </Card>
   <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">

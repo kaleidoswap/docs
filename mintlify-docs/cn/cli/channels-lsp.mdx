@@ -1,5 +1,6 @@
 ---
 title: '通道与 LSP 流程'
+sidebarTitle: '通道与 LSP'
 description: '在 KaleidoCLI 中直接开通闪电通道，或使用 KaleidoSwap 闪电服务提供商（LSP）的通道订单流程获取入向流动性'
 ---
 
@@ -11,9 +12,9 @@ description: '在 KaleidoCLI 中直接开通闪电通道，或使用 KaleidoSwap
 |--------|---------|
 | `kaleido channel list` | 列出当前通道 |
 | `kaleido channel open <peer>` | 向某个对等节点开通通道 |
-| `kaleido channel close <channel-id>` | 关闭通道 |
+| `kaleido channel close <channel-id> --peer <pubkey>` | 关闭通道 |
 
-对等节点参数使用 `pubkey@host:port` 格式。
+对等节点参数使用 `pubkey@host:port` 格式。关闭通道同时需要通道 ID 和 `--peer`；只有在对端无响应时才加 `--force` 做单方面关闭，因为它会把资金锁定到时间锁到期为止。
 
 ## 开通通道
 
@@ -50,9 +51,9 @@ kaleido channel open 03abc...@peer.host:9735 \
 
 | 命令 | 用途 |
 |--------|---------|
-| `kaleido channel order create <client-pubkey>` | 创建通道订单 |
+| `kaleido channel order create [client-pubkey]` | 创建通道订单，默认使用本地节点公钥 |
 | `kaleido channel order get <order-id>` | 获取订单状态与详情 |
-| `kaleido channel order pay <order-id>` | 用本地钱包资金支付订单 |
+| `kaleido channel order pay <order-id>` | 用本地钱包资金支付订单（`--onchain` 或 `--offchain`） |
 | `kaleido channel order decide <order-id>` | 提交费率决定 |
 | `kaleido channel order estimate-fees` | 估算开通费用 |
 
@@ -64,17 +65,28 @@ kaleido channel order create 03abc... \
   --client-balance 500000
 ```
 
+公钥是可选的，默认使用你的本地节点，因此为自己订购时，`kaleido channel order create --lsp-balance 1000000 --client-balance 500000` 是等价写法。
+
 常用选项：
 
-- `--confirmations`
-- `--funding-within`
-- `--expiry-blocks`
-- `--refund-address`
+- `--confirmations`，默认 6
+- `--funding-within`，默认 144 个区块
+- `--expiry-blocks`，至少为 1
+- `--refund-address`，默认使用本地节点的地址
 - `--announce` 或 `--private`
 - `--asset-id`
-- `--lsp-asset-amount`
-- `--client-asset-amount`
+- `--lsp-asset-amount`，与 `--asset-id` 同时使用时必填
+- `--client-asset-amount`，不得超过 `--lsp-asset-amount`
 - `--email`
+- `--yes`、`-y` 接受获取到的 RFQ 价格，非交互模式下必需
+
+### 支付订单
+
+```bash
+kaleido channel order pay <order-id> --access-token <token> --offchain
+```
+
+用 `--onchain` 或 `--offchain` 选择资金来源；交互模式下 CLI 会询问，但在 `--agent` 或 `--json` 模式下必须恰好指定其一，并同时传入 `--yes`。链上支付可用 `--fee-rate` 指定 sat/vbyte。
 
 染色通道订单示例：
 
@@ -107,4 +119,4 @@ kaleido channel order estimate-fees --lsp-balance 1000000 --client-balance 50000
 kaleido channel order create 03abc... --lsp-balance 1000000 --client-balance 500000
 ```
 
-服务端交易流程通常与通道和流动性管理同时进行，详见[市场与交换](/cn/cli/market-and-swaps)。
+服务端交易流程通常与通道和流动性管理同时进行，详见[市场与交换](/cn/cli/market-and-swaps)；通道或订单无法完成时，请查阅[故障排查](/cn/cli/troubleshooting#channels-and-lsp-orders)。

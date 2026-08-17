@@ -105,7 +105,7 @@ HTTP status codes follow standard conventions:
 | `500` | Internal server error |
 | `503` | Service unavailable — maker or LSP node temporarily unreachable |
 
-See [Error Handling](/api-reference/error-handling) for a complete list of error codes.
+See [Troubleshooting](/api-reference/troubleshooting) for the complete list of error codes and the fix for each failure.
 
 ---
 
@@ -117,14 +117,8 @@ Rate limits apply to all API endpoints. Requests that exceed the limit receive a
 
 ## Using the SDK
 
-Instead of calling the REST API directly, you can use the official KaleidoSDK libraries that wrap these endpoints with type safety and convenience methods:
+Instead of calling the REST API directly, you can use the official KaleidoSDK libraries, which wrap these endpoints with type safety and convenience methods in both TypeScript and Python.
 
-<CardGroup cols={2}>
-  <Card title="TypeScript SDK" icon="js" href="/sdk/introduction">
-    Auto-generated typed client from the OpenAPI spec with `client.maker.*` and `client.rln.*` sub-clients
-  </Card>
-
-  <Card title="Python SDK" icon="python" href="/sdk/introduction">
-    Synchronous Python client with Pydantic models, using the same sub-client architecture
-  </Card>
-</CardGroup>
+<Card title="KaleidoSDK" icon="code" href="/sdk/introduction">
+  Typed clients generated from the same OpenAPI specs, with `client.maker.*` and `client.rln.*` sub-clients.
+</Card>

@@ -1,5 +1,6 @@
 ---
 title: '节点环境'
+sidebarTitle: '环境'
 description: '用 KaleidoCLI 创建、运行、切换和维护命名的本地多资产闪电节点环境，为比特币分层协议开发与测试提供隔离的节点栈'
 ---
 
@@ -17,19 +18,25 @@ description: '用 KaleidoCLI 创建、运行、切换和维护命名的本地多
 
 ```text
 ~/.kaleido/
+├── config.json
 ├── default/
 │   ├── docker-compose.yml
 │   └── volumes/
-└── staging/
+│       └── dataldk0/
+└── testenv/
     ├── docker-compose.yml
     └── volumes/
+        ├── dataldk0/
+        └── dataldk1/
 ```
+
+环境中的每个节点都是一个 `rgb_node_<n>` 服务，各自拥有数据卷。本地运行的只有节点本身：bitcoind、索引器和 RGB 代理都是远程服务。
 
 ## 创建环境
 
 ```bash
 kaleido node create
-kaleido node create staging
+kaleido node create testenv
 ```
 
 向导会依次询问：
@@ -62,12 +69,14 @@ kaleido node create staging
 
 ```bash
 kaleido node use default
-kaleido node use staging --node 2
+kaleido node use testenv --node 2
 ```
+
+节点 1 使用守护进程端口 3001 和对等端口 9735，节点 2 使用 3002 和 9736，依此类推，起点是创建时选定的基础端口。`kaleido node list` 会用 `●` 标记当前生效的节点。
 
 它是 Docker 管理的环境与所有依赖节点的命令（如 `wallet`、`asset`、`channel` 和 `payment`）之间的桥梁。
 
-## 初始化与解锁
+## 初始化与解锁 {#initialize-and-unlock}
 
 新环境启动后，对钱包执行一次初始化：
 
@@ -86,19 +95,39 @@ kaleido node init
 kaleido node unlock
 ```
 
-值得关注的解锁选项：
+解锁同时决定节点使用哪些比特币服务。交互模式下运行时，它会先让你选择服务配置档 —— signet 默认值、regtest 默认值或自定义 —— 再询问节点如何跟随链。
 
-- `--password`
-- `--bitcoind-user`
-- `--bitcoind-pass`
-- `--bitcoind-host`
-- `--bitcoind-port`
-- `--indexer-url`
-- `--proxy-endpoint`
-- `--announce-alias`
-- `--announce-address`
+### 跟链模式
 
-默认情况下，该命令使用 CLI 提供的 KaleidoSwap signet 服务。
+| 模式 | 行为 |
+|------|------|
+| `--chain-sync block`（默认） | 通过 RPC 从 bitcoind 读取区块 |
+| `--chain-sync transaction` | 只依赖索引器跟随链，完全不需要 bitcoind |
+
+使用 `transaction` 时，所有 `--bitcoind-*` 选项都会被忽略：
+
+```bash
+kaleido node unlock --chain-sync transaction --indexer-url https://esplora.signet.kaleidoswap.com
+```
+
+### 解锁选项
+
+| 选项 | 用途 |
+|------|------|
+| `--password`、`-p` | 钱包密码，省略时会安全提示输入 |
+| `--chain-sync` | 如上，取值 `block` 或 `transaction` |
+| `--bitcoind-user`、`--bitcoind-pass` | bitcoind RPC 凭据 |
+| `--bitcoind-host`、`--bitcoind-port` | bitcoind RPC 端点 |
+| `--indexer-url` | Esplora（`https://…`）或 Electrum（`host:port`） |
+| `--proxy-endpoint` | RGB 代理端点 |
+| `--announce-alias` | 对外公告的闪电节点别名 |
+| `--announce-address` | 用于对等发现的公网地址，可重复传入 |
+
+默认情况下，该命令使用 KaleidoSwap 的 signet 服务。脚本化解锁时请显式传入密码并关闭提示：
+
+```bash
+kaleido --agent node unlock --password <password>
+```
 
 ## 查看状态与上锁
 

@@ -281,6 +281,58 @@ Add a server to an MCP host such as Claude Desktop. `npx` works for the publishe
 ```
 </CodeGroup>
 
+## First Run
+
+Go read-only first, then quoting, then execution. Every step after the first one moves real value.
+
+<Steps>
+  <Step title="Add the gateway to your host">
+    Drop the `kaleido-mcp` block into your MCP host's config, pointing `KALEIDOSWAP_API_URL` at a test environment and `SPARK_NETWORK` at `REGTEST`. The full JSON is in [Client Configuration](#client-configuration) above.
+  </Step>
+
+  <Step title="Restart the host">
+    MCP hosts read their config at startup. A running client will not pick up a new server until you restart it.
+  </Step>
+
+  <Step title="Call a read-only tool">
+    Start with something that cannot move funds. Ask for market data, which needs no seed and no node:
+
+    ```
+    What is the current Bitcoin price and the Fear and Greed index?
+    ```
+
+    That exercises `l402_get_price` and `l402_get_sentiment`. If it answers, the connection works.
+  </Step>
+
+  <Step title="Check the wallet is wired">
+    Now confirm the wallet tools resolve:
+
+    ```
+    Show me my Spark balance and my Spark address.
+    ```
+
+    This calls `spark_get_balance` and `spark_get_address`. An error here is a seed or network problem, not a connection problem.
+  </Step>
+
+  <Step title="Quote before you trade">
+    Ask for a price without placing anything:
+
+    ```
+    Quote 100000 sats of BTC into USDT. Do not place an order.
+    ```
+
+    `kaleidoswap_get_quote` returns an `rfq_id`, raw amounts, the fee, and an expiry. Read the raw amounts carefully: they are in the asset's smallest unit, not display units.
+  </Step>
+
+  <Step title="Execute only once the quote looks right">
+    An atomic swap needs the DEX tools and the wallet tools together, and the node must hold the asset in a channel. The [cross-server sequence](#atomic-swap-across-servers) below shows each call in order.
+  </Step>
+</Steps>
+
+<Warning>
+  A generic MCP host is the least protected path. `kaleido-mcp` does not encode a confirmation flag, so if your client auto-approves tool calls, an LLM can spend from the configured wallet without asking you. Use a test network seed until you know how your client handles approvals.
+</Warning>
+
 ## Atomic Swap Across Servers
 
 An atomic swap needs the DEX tools and the wallet tools together. `kaleido-mcp` speaks to the maker via its `kaleidoswap_*` tools and drives the taker node via its `wdk_*` tools. Nothing is custodied at any step, and the HTLC settles on Lightning.

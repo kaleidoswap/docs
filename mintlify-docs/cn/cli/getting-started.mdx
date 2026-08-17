@@ -1,38 +1,10 @@
 ---
 title: "KaleidoCLI：快速开始"
 sidebarTitle: "快速开始"
-description: '安装 KaleidoCLI，完成首次运行设置，并配置默认的 API 与节点端点，几分钟内即可在终端使用比特币分层协议交易'
+description: '完成 KaleidoCLI 首次运行设置，保存默认的 API 与节点端点，并执行第一批市场与节点命令'
 ---
 
-## 环境要求
-
-- Python 3.10 或更高版本
-- 推荐使用 [`uv`](https://docs.astral.sh/uv/)，也可以使用 `pip`
-- 使用 `node` 命令以及任何本地 RLN 工作流都需要 Docker 与 Docker Compose
-
-## 安装
-
-### 使用 `uv` 全局安装
-
-```bash
-uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
-```
-
-这种方式无需先克隆仓库即可安装 `kaleido` 可执行文件。
-
-### 从本地代码副本安装
-
-```bash
-git clone https://github.com/kaleidoswap/kaleido-cli
-cd kaleido-cli
-make install
-```
-
-### 从代码副本引导安装
-
-```bash
-python install.py
-```
+这是从装好 CLI 到跑通第一批命令的路径。如果还没有安装，请先阅读[安装](/cn/cli/installation)。
 
 ## 首次运行设置
 
@@ -122,20 +94,6 @@ kaleido node init
 kaleido node unlock
 kaleido node info
 kaleido wallet address
-```
-
-## Shell 补全
-
-为当前 shell 安装补全：
-
-```bash
-kaleido --install-completion
-```
-
-或者打印补全脚本以便手动安装：
-
-```bash
-kaleido --show-completion
 ```
 
 ## 何时覆盖配置

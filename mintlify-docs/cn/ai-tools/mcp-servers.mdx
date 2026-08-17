@@ -281,6 +281,58 @@ PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
 ```
 </CodeGroup>
 
+## 首次运行 {#first-run}
+
+顺序是先只读，再报价，最后执行 —— 因为除第一步之外，每一步都会动用真实价值。
+
+<Steps>
+  <Step title="把网关添加到宿主客户端">
+    把 `kaleido-mcp` 配置块加入你的 MCP 宿主配置，将 `KALEIDOSWAP_API_URL` 指向测试环境，并把 `SPARK_NETWORK` 设为 `REGTEST`。完整 JSON 见上面的[客户端配置](#client-configuration)。
+  </Step>
+
+  <Step title="重启宿主客户端">
+    MCP 宿主只在启动时读取配置。已经在运行的客户端不会自动识别新服务器，必须重启。
+  </Step>
+
+  <Step title="调用一个只读工具">
+    先从不会动用资金的操作开始。请求行情数据，它既不需要种子也不需要节点：
+
+    ```
+    What is the current Bitcoin price and the Fear and Greed index?
+    ```
+
+    这会触发 `l402_get_price` 和 `l402_get_sentiment`。只要有回答，连接就是通的。
+  </Step>
+
+  <Step title="确认钱包已接好">
+    接着确认钱包工具能正常解析：
+
+    ```
+    Show me my Spark balance and my Spark address.
+    ```
+
+    这会调用 `spark_get_balance` 和 `spark_get_address`。这一步报错说明是种子或网络问题，而不是连接问题。
+  </Step>
+
+  <Step title="交易前先报价">
+    只询价，不下单：
+
+    ```
+    Quote 100000 sats of BTC into USDT. Do not place an order.
+    ```
+
+    `kaleidoswap_get_quote` 会返回一个 `rfq_id`、原始数量、费用和过期时间。请仔细核对原始数量：它们以资产的最小单位计价，不是显示单位。
+  </Step>
+
+  <Step title="报价确认无误后再执行">
+    一笔原子交换需要 DEX 工具和钱包工具配合，并且节点必须在通道中持有该资产。下面的[跨服务器调用顺序](#atomic-swap-across-servers)按顺序列出了每一次调用。
+  </Step>
+</Steps>
+
+<Warning>
+  通用 MCP 宿主是保护最弱的一条路径。`kaleido-mcp` 不编码确认标志，所以如果你的客户端自动批准工具调用，LLM 就能不经询问地从配置的钱包中花钱。在完全弄清客户端如何处理批准之前，请只使用测试网络种子。
+</Warning>
+
 ## 跨服务器的原子交换 {#atomic-swap-across-servers}
 
 一笔原子交换需要 DEX 工具和钱包工具配合。`kaleido-mcp` 用它的 `kaleidoswap_*` 工具与做市方通信，并用 `wdk_*` 工具驱动接单方节点。任何一步都不涉及托管，HTLC 在闪电网络上结算。

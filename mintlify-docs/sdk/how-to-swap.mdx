@@ -1,5 +1,5 @@
 ---
-title: "Create Atomic Swaps with the SDK"
+title: "How to Swap with KaleidoSDK"
 sidebarTitle: "How to Swap"
 description: "Create and execute Bitcoin atomic swaps with the KaleidoSDK in a step-by-step guide that runs from quote to settlement"
 ---
@@ -182,20 +182,3 @@ print(status.swap.status if status.swap else None)
 </CodeGroup>
 
 If a transfer sits pending longer than expected, `client.rln.refreshTransfers()` / `refresh_transfers()` advances pending RGB transfers, and `client.rln.listSwaps()` gives you the node's own view. See [Troubleshooting](/sdk/troubleshooting#swap-issues) for the failure modes.
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Error Handling" icon="triangle-exclamation" href="/sdk/error-handling">
-    The exception hierarchy and retry patterns around each step.
-  </Card>
-  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
-    The HTLC flow underneath, endpoint by endpoint, with the sequence diagram.
-  </Card>
-  <Card title="WebSocket" icon="tower-broadcast" href="/sdk/websocket">
-    Stream live quotes instead of requesting them one at a time.
-  </Card>
-  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
-    Every method on `client.maker` and `client.rln`.
-  </Card>
-</CardGroup>

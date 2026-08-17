@@ -1,0 +1,67 @@
+---
+title: "KaleidoCLI：安装"
+sidebarTitle: "安装"
+description: '通过一行式安装脚本、uv 或本地代码副本安装 KaleidoCLI，并附环境要求与 shell 补全设置'
+---
+
+CLI 从源码安装。它没有发布到 PyPI，因此 `pip install kaleido-cli` 找不到这个包。
+
+## 环境要求
+
+- Python 3.10 或更高版本
+- 使用 `node` 命令以及任何本地 RLN 工作流都需要 Docker 与 Docker Compose
+- `curl` 或 `wget`，仅在使用一行式 shell 安装脚本时需要
+
+## 安装 CLI {#install-the-cli}
+
+### 一行式安装脚本
+
+适用于 macOS、Linux 与 WSL：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.sh | sh
+```
+
+只有 Python、没有 `curl` 或 `wget` 时：
+
+```bash
+python3 -c "import urllib.request; exec(urllib.request.urlopen('https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.py').read())"
+```
+
+安装脚本优先使用 `uv tool install`，否则会创建一个隔离的 Kaleido 虚拟环境，并把 `kaleido` 启动器写入用户脚本目录。它不会向系统 Python 安装任何包。
+
+### 使用 `uv` 全局安装
+
+```bash
+uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+```
+
+这种方式无需先克隆仓库即可安装 `kaleido` 可执行文件。重新执行同一条命令即可更新。
+
+### 从本地代码副本安装
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-cli
+cd kaleido-cli
+./install.sh
+```
+
+`make install` 通过 `uv tool` 完成同样的事，`python install.py` 则是适用于 Windows 的跨平台方式。
+
+如果安装后 shell 找不到 `kaleido`，安装脚本会打印需要加入 `PATH` 的目录 —— 详见[故障排查](/cn/cli/troubleshooting#installation-issues)。
+
+## Shell 补全 {#shell-completion}
+
+为当前 shell 安装补全：
+
+```bash
+kaleido --install-completion
+```
+
+或者打印补全脚本以便手动安装：
+
+```bash
+kaleido --show-completion
+```
+
+`kaleido` 进入 `PATH` 之后，请继续阅读[快速开始](/cn/cli/getting-started)完成首次运行设置。

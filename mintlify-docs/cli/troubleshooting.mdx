@@ -1,0 +1,476 @@
+---
+title: "KaleidoCLI Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Diagnose common KaleidoCLI errors — installation, Docker environments, node connectivity, assets, channels, and swaps — with the exact message and the fix for each"
+---
+
+## Installation Issues
+
+<AccordionGroup>
+  <Accordion title="kaleido: command not found" icon="terminal">
+    **Symptoms:** the install finished, but the shell cannot find `kaleido`
+
+    **Cause:** the directory holding the launcher is not on your `PATH`. The installer says so on its last line: `If 'kaleido' is not found yet, add <dir> to your PATH and restart your shell.`
+
+    **Solutions:**
+    1. Restart the shell first — a new entry on `PATH` is not visible to an already-running session
+    2. For a `uv` install, confirm the tool directory is on `PATH`: `uv tool dir` and `uv tool list`
+    3. For the bootstrap installer, add the printed directory to `PATH` in your shell profile (`~/.bashrc`, `~/.zshrc`)
+    4. On Windows, use WSL — the shell bootstrap targets macOS, Linux, and WSL
+  </Accordion>
+
+  <Accordion title="pip install kaleido-cli cannot find the package" icon="cube">
+    **Symptoms:** `ERROR: Could not find a version that satisfies the requirement kaleido-cli`
+
+    **Cause:** the CLI is not published on PyPI. It installs from source only.
+
+    **Solution:**
+
+    ```bash
+    uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+    ```
+
+    Or use the bootstrap installer, which prefers `uv` and falls back to an isolated virtual environment. See [Installation](/cli/installation).
+  </Accordion>
+
+  <Accordion title="Kaleido CLI requires Python 3.10 or newer" icon="python">
+    **Symptoms:** the installer stops with that message
+
+    **Solutions:**
+    1. Check what you have: `python3 --version`
+    2. Install a newer Python, or let `uv` manage it: `uv python install 3.12`
+    3. Re-run the installer once `python3` resolves to 3.10 or newer
+  </Accordion>
+</AccordionGroup>
+
+## Setup And Environments
+
+<AccordionGroup>
+  <Accordion title="Docker is not installed or not in PATH." icon="docker">
+    **Symptoms:** that message from any `node` lifecycle command, or from bare `kaleido setup`
+
+    **Cause:** the CLI shells out to `docker compose`, so both the binary and a running daemon are required.
+
+    **Solutions:**
+    1. Verify the client and the daemon: `docker version` — the "Server" block must be present
+    2. Start Docker Desktop, or `sudo systemctl start docker` on Linux
+    3. Confirm the Compose v2 plugin is available: `docker compose version`
+    4. If you do not want Docker at all, run market-only setup: `kaleido setup --mode market --defaults`
+  </Accordion>
+
+  <Accordion title="No docker-compose.yml found in …" icon="file-circle-xmark">
+    **Symptoms:** `No docker-compose.yml found in <dir>`, followed by `Run 'kaleido node create' to generate it.`, or `Environment directory not found: <dir>`
+
+    **Causes:**
+    - The environment was never created, or was created under a different base directory
+    - `spawn-dir` in the config points somewhere else than where the environment lives
+
+    **Solutions:**
+    1. List what the CLI can actually see: `kaleido node list`
+    2. Check the base directory: `kaleido config show` — environments live under `spawn-dir`, default `~/.kaleido`
+    3. Recreate it: `kaleido node create <name>`
+  </Accordion>
+
+  <Accordion title="Multiple environments exist — specify one:" icon="layer-group">
+    **Symptoms:** a lifecycle command refuses and lists the available environments
+
+    **Cause:** the environment name is auto-detected only when exactly one exists.
+
+    **Solution:** name it explicitly.
+
+    ```bash
+    kaleido node list
+    kaleido node up testenv
+    kaleido node logs testenv --service rgb_node_1
+    ```
+
+    The related message `No environments found. Run 'kaleido node create' first.` means the opposite problem — nothing has been created yet.
+  </Accordion>
+
+  <Accordion title="Environment '<name>' already exists at …" icon="copy">
+    **Symptoms:** `kaleido setup` stops with that message and `Choose a different environment name with --env-name to create a new node.`
+
+    **Solutions:**
+    1. Reuse the existing environment: `kaleido node up <name>` then `kaleido node use <name>`
+    2. Or create a separate one: `kaleido setup --env-name taker-2`
+
+    The interactive `kaleido node create` offers to overwrite the compose file instead, which leaves the data volumes untouched.
+  </Accordion>
+
+  <Accordion title="Containers start but the node never answers" icon="heart-pulse">
+    **Symptoms:** `node up` succeeds, `node info` fails
+
+    **Solutions:**
+    1. Check container state: `kaleido node ps <name>`
+    2. Read the node's own logs: `kaleido node logs <name> --service rgb_node_1 --no-follow`
+    3. Look for a port conflict — node 1 binds 3001 and 9735, node 2 binds 3002 and 9736. If something else holds those ports, recreate the environment with different base ports through `kaleido node create`
+    4. Give the node a moment after `up`: it has to open its database before serving requests
+  </Accordion>
+</AccordionGroup>
+
+## Node Connectivity
+
+<AccordionGroup>
+  <Accordion title="Node URL not configured." icon="link-slash">
+    **Symptoms:** that message plus `Use --node-url or: kaleido config set node-url http://localhost:3001`
+
+    **Cause:** the command needs a node, and no node URL was found in flags, environment, or config.
+
+    **Solutions:**
+    1. Point at an environment's node: `kaleido node use <name>`
+    2. Or set it directly: `kaleido config set node-url http://localhost:3001`
+    3. Or override for one command: `kaleido --node-url http://localhost:3002 wallet balance`
+  </Accordion>
+
+  <Accordion title="Connection refused, or the wrong node answers" icon="plug-circle-xmark">
+    **Symptoms:** a connection error from `wallet`, `asset`, `channel`, or `payment`, or balances that belong to a different node
+
+    **Causes:**
+    - The containers are not running
+    - `node-url` still points at the node you used last
+    - `KALEIDO_NODE_URL` is exported in the shell and silently overrides the stored config
+
+    **Solutions:**
+    1. Confirm which node is active: `kaleido config show`, and `kaleido node list` — the active one is marked `●`
+    2. Start the environment: `kaleido node up <name>`
+    3. Check for a stale override: `echo $KALEIDO_NODE_URL`
+    4. Remember the precedence: flag, then environment variable, then config
+  </Accordion>
+
+  <Accordion title="Node N does not exist in '<name>' — environment has M node(s)." icon="hashtag">
+    **Symptoms:** `kaleido node use <name> --node 2` refuses
+
+    **Cause:** `--node` is a 1-based index into the nodes the compose file actually defines.
+
+    **Solution:** run `kaleido node list` to see how many nodes the environment has. To get more, recreate it and answer the node-count prompt with a higher number.
+
+    The related `No nodes found in environment '<name>'. Is the compose file present?` means the compose file exists but defines no `rgb_node_*` service.
+  </Accordion>
+
+  <Accordion title="Error unlocking wallet, or every call reports the wallet is locked" icon="lock">
+    **Symptoms:** `Error unlocking wallet: …`, or node commands failing right after a restart
+
+    **Causes:**
+    - The node was restarted and never unlocked — `unlock` is needed every time
+    - The bitcoind or indexer the unlock request points at is unreachable
+    - The wallet was never initialised on this node
+
+    **Solutions:**
+    1. Unlock it: `kaleido node unlock`
+    2. If the services are the problem, follow the chain from the indexer instead of a bitcoind:
+
+       ```bash
+       kaleido node unlock --chain-sync transaction --indexer-url https://esplora.signet.kaleidoswap.com
+       ```
+    3. If it was never initialised, run `kaleido node init` once first
+    4. Confirm the result with `kaleido node info`
+  </Accordion>
+
+  <Accordion title="Error initializing wallet" icon="wallet">
+    **Symptoms:** `Error initializing wallet: …`
+
+    **Causes:**
+    - The wallet was already initialised on this node — `init` runs once per node, not once per session
+    - A restore was attempted with an invalid `--mnemonic`
+
+    **Solutions:**
+    1. If the node is already initialised, skip straight to `kaleido node unlock`
+    2. To start over from a clean node, `kaleido node clean <name>` deletes the volumes — irreversibly — and then `init` can run again
+    3. When restoring, quote the mnemonic so the shell does not split it: `--mnemonic "word1 word2 …"`
+  </Accordion>
+</AccordionGroup>
+
+## Wallet And Assets
+
+<AccordionGroup>
+  <Accordion title="Sends fail even though the balance looks sufficient" icon="coins">
+    **Symptoms:** an insufficient-funds error from `wallet send` or `asset send`
+
+    **Causes:**
+    - The balance is not confirmed yet
+    - There are no spare UTXOs to allocate for the RGB assignment
+    - The fee could not be covered on top of the amount
+
+    **Solutions:**
+    1. Check what is actually spendable: `kaleido wallet balance` and `kaleido wallet utxos`
+    2. Create colored UTXOs before RGB operations: `kaleido wallet create-utxos --num 10 --size 3000`
+    3. Fund the node from the [Mutiny faucet](https://faucet.mutinynet.com/) on signet, using an address from `kaleido wallet address`
+    4. Check the going rate with `kaleido wallet estimate-fee --blocks 6` and pass `--fee-rate` explicitly
+  </Accordion>
+
+  <Accordion title="RGB transfers stay pending" icon="hourglass-half">
+    **Symptoms:** `kaleido asset transfers <asset-id>` shows a transfer that never settles
+
+    **Solutions:**
+    1. Advance pending transfers: `kaleido asset refresh`
+    2. Resynchronise the RGB wallet: `kaleido asset sync`
+    3. Inspect the state again: `kaleido asset transfers <asset-id>`
+    4. Only if a transfer is genuinely dead, release its allocations: `kaleido asset fail-transfers --batch-idx <idx>`
+
+    If you have been passing `--skip-sync`, drop it: the command is returning cached state on purpose.
+  </Accordion>
+
+  <Accordion title="File not found, or Invalid JSON, on asset send-batch" icon="file-code">
+    **Symptoms:** `File not found: <path>` or `Invalid JSON: …`
+
+    **Cause:** `asset send-batch` takes a path to a JSON file describing the recipients, not inline flags.
+
+    **Solution:**
+
+    ```bash
+    kaleido asset send-batch ./transfers.json
+    ```
+
+    Check the path relative to your current directory, and validate the file before retrying.
+  </Accordion>
+
+  <Accordion title="PATH argument is required in non-interactive mode." icon="box-archive">
+    **Symptoms:** `wallet backup` or `wallet restore` refuses under `--agent`
+
+    **Cause:** the destination path is a positional argument, and prompts are disabled.
+
+    **Solution:** pass it explicitly, along with the password.
+
+    ```bash
+    kaleido --agent wallet backup ~/kaleido-backup.zip --password <password>
+    ```
+
+    Restore overwrites the current node data, so run it deliberately.
+  </Accordion>
+</AccordionGroup>
+
+## Channels And LSP Orders
+
+<AccordionGroup>
+  <Accordion title="Peer must be in pubkey@host:port format in non-interactive mode." icon="circle-nodes">
+    **Symptoms:** `channel open` or `peer connect` refuses
+
+    **Cause:** the peer was passed as a bare pubkey. Interactively the CLI asks for the address; non-interactively it requires the full form.
+
+    **Solutions:**
+    1. Use the complete peer string: `kaleido channel open 03abc...@peer.host:9735 --capacity 100000`
+    2. Connect first and confirm reachability: `kaleido peer connect 03abc...@peer.host:9735` then `kaleido peer list`
+
+    Related non-interactive refusals: `PEER argument is required in non-interactive mode.` and `--capacity is required in non-interactive mode.`
+  </Accordion>
+
+  <Accordion title="--asset-amount requires --asset-id." icon="link">
+    **Symptoms:** a colored-channel command refuses before contacting the node
+
+    **Cause:** asset amounts are meaningless without the asset they refer to. The same rule applies to `--push-asset-amount`, and to `--lsp-asset-amount` / `--client-asset-amount` on LSP orders.
+
+    **Solution:**
+
+    ```bash
+    kaleido channel open 03abc...@peer.host:9735 \
+      --capacity 100000 \
+      --asset-id rgb:abc... \
+      --asset-amount 5000
+    ```
+
+    On LSP orders, `--lsp-asset-amount is required when --asset-id is set.` and `--client-asset-amount must be less than or equal to --lsp-asset-amount.` are the two constraints to respect.
+  </Accordion>
+
+  <Accordion title="--peer is required in non-interactive mode. (channel close)" icon="scissors">
+    **Symptoms:** `channel close <channel-id>` refuses
+
+    **Cause:** closing needs both the channel ID and the peer pubkey.
+
+    **Solution:**
+
+    ```bash
+    kaleido channel list
+    kaleido channel close <channel-id> --peer 03abc...
+    ```
+
+    Add `--force` only when the peer is unresponsive: a unilateral close locks funds until the timelock expires.
+  </Accordion>
+
+  <Accordion title="Asset '<asset-id>' is not available from the LSP." icon="ban">
+    **Symptoms:** `channel order create` or `estimate-fees` refuses the asset
+
+    **Cause:** the LSP only opens colored channels for the assets it supports.
+
+    **Solution:** list what it offers and use one of those asset IDs.
+
+    ```bash
+    kaleido channel lsp info
+    ```
+
+    `LSP did not report a connection URL.` points at the other side of the same conversation — the LSP metadata came back without a peer address, so the order cannot proceed.
+  </Accordion>
+
+  <Accordion title="An order is not awaiting a wallet payment" icon="receipt">
+    **Symptoms:** `channel order pay` returns `This order is not awaiting a wallet payment. Current payment state: <state>`
+
+    **Causes:**
+    - The order was already paid
+    - It expired before funding
+    - It is waiting on a rate decision rather than a payment
+
+    **Solutions:**
+    1. Read the current state: `kaleido channel order get <order-id> --access-token <token>`
+    2. If it is waiting on a rate, decide: `kaleido channel order decide <order-id> --accept`
+    3. If it expired, create a new order — `--funding-within` and `--expiry-blocks` control those windows
+    4. Non-interactively, pick the funding source explicitly, or you will get `Specify exactly one of --onchain or --offchain in non-interactive mode.`
+  </Accordion>
+</AccordionGroup>
+
+## Market And Swaps
+
+<AccordionGroup>
+  <Accordion title="Pair '<pair>' not found." icon="magnifying-glass">
+    **Symptoms:** `Pair 'BTC/USD' not found. Use 'kaleido market pairs' to list available pairs.`
+
+    **Causes:**
+    - A typo, or a ticker that is not listed
+    - The pair is written the wrong way round — order matters
+
+    **Solutions:**
+    1. List them: `kaleido market pairs`
+    2. Use the exact `BASE/QUOTE` ticker from that output
+
+    `No trading pairs are currently available.` is different: the maker returned an empty list, so the problem is upstream rather than in your command.
+  </Accordion>
+
+  <Accordion title="Provide exactly one of --from-amount or --to-amount." icon="calculator">
+    **Symptoms:** a quote or swap command refuses, or `Provide --from-amount or --to-amount in non-interactive mode.`
+
+    **Cause:** a quote is anchored on one side only — you fix what you send or what you receive, and the maker prices the other.
+
+    **Solutions:**
+    1. Pass exactly one of the two
+    2. Remember these are **display units**: `--from-amount 0.001` is 0.001 BTC, not 1000 sat
+    3. If the amount is rejected as invalid, check the pair's limits in `kaleido market pairs`
+  </Accordion>
+
+  <Accordion title="Swapstring must contain 6 slash-separated fields." icon="triangle-exclamation">
+    **Symptoms:** that message, or `Swapstring fields must not be empty or whitespace.`, or `Swapstring contains invalid numeric fields.`
+
+    **Cause:** the swapstring was truncated or mangled. Its shape is:
+
+    ```text
+    <from_amount>/<from_asset>/<to_amount>/<to_asset>/<expiry>/<payment_hash>
+    ```
+
+    **Solutions:**
+    1. Copy the whole string from the `swap atomic init` output, without wrapping it across lines
+    2. Quote it, so the shell does not touch it: `--swapstring '30/rgb:abc.../10/rgb:def.../600/<hash>'`
+    3. Or skip the manual step entirely with `kaleido swap atomic run <pair>`
+  </Accordion>
+
+  <Accordion title="Auto-whitelist validation failed" icon="shield-halved">
+    **Symptoms:** `Auto-whitelist validation failed: …`, or messages like `Swapstring from_amount 30 does not match quote amount 31.`
+
+    **Cause:** before whitelisting on your node, the CLI checks the swapstring against the quote you accepted. A mismatch means the swapstring belongs to a different swap, or the quote moved.
+
+    **Solutions:**
+    1. Re-run `swap atomic init` and use the swapstring and payment hash from that same response — never mix them across runs
+    2. Do not reuse an old swapstring after a re-quote
+    3. `Maker returned no swap payload for --payment-hash; refusing to auto-whitelist.` means the maker has no swap for that payment hash: check it with `kaleido swap atomic status <payment-hash>`
+  </Accordion>
+
+  <Accordion title="Execute fails because the swap was never whitelisted" icon="list-check">
+    **Symptoms:** `swap atomic init` succeeded, `swap atomic execute` fails
+
+    **Cause:** the taker node has to accept the swap before the maker can settle it, and that step runs against your node, not the maker.
+
+    **Solution:** the three steps must run in order.
+
+    ```bash
+    kaleido swap atomic init BTC/USDT --to-amount 5
+    kaleido node swap whitelist --swapstring '<swapstring>'
+    kaleido swap atomic execute --swapstring '<swapstring>' --taker-pubkey <pubkey> --payment-hash <hash>
+    ```
+
+    Or let the CLI do it: add `--auto-whitelist` to `execute`, or use `kaleido swap atomic run <pair>`.
+  </Accordion>
+
+  <Accordion title="A swap stays pending after execute" icon="clock-rotate-left">
+    **Symptoms:** `execute` returned, but the assets have not arrived
+
+    **Solutions:**
+    1. Poll the maker's view: `kaleido swap atomic status <payment-hash>`
+    2. Poll your node's view: `kaleido node swap status <payment-hash> --taker`
+    3. List what the node knows: `kaleido node swap list`
+    4. Advance pending RGB transfers: `kaleido asset refresh`
+
+    Insufficient outbound capacity on the leg you are sending is the usual cause. Check `kaleido channel list` for capacity on that specific asset, not just the total balance.
+  </Accordion>
+</AccordionGroup>
+
+## Scripting And Automation
+
+<AccordionGroup>
+  <Accordion title="A command hangs instead of returning" icon="pause">
+    **Symptoms:** a script stalls with no output
+
+    **Cause:** the command is waiting on an interactive prompt that nothing will answer.
+
+    **Solution:** run it with `--agent`, which turns every prompt into an error instead:
+
+    ```bash
+    kaleido --agent --json wallet balance
+    ```
+
+    You will then get an explicit refusal such as `PAIR argument is required in non-interactive mode.` or `<option> is required in non-interactive mode.`, naming exactly what to pass.
+  </Accordion>
+
+  <Accordion title="--yes is required in non-interactive mode" icon="check-double">
+    **Symptoms:** one of `--yes is required in non-interactive mode to accept the quoted price.`, `… to accept the RFQ price.`, `… to pay the order.`, or the JSON-mode variants
+
+    **Cause:** anything that spends money or accepts a price asks for confirmation, and there is no one to ask.
+
+    **Solutions:**
+    1. Add `--yes` once you are satisfied with the parameters
+    2. Price-check first with `kaleido market quote` or `kaleido channel order estimate-fees`, then execute with `--yes`
+    3. `kaleido node clean` and `kaleido config reset` take `--yes` too
+  </Accordion>
+
+  <Accordion title="Mutually exclusive flags" icon="code-branch">
+    **Symptoms:** `Must specify exactly one of --accept or --reject`, `Must specify at most one of --taker or --maker`, or `Specify exactly one of --onchain or --offchain in non-interactive mode.`
+
+    **Cause:** these pairs are choices, not toggles, and the CLI refuses to guess when neither or both are given.
+
+    **Solution:** pass exactly one. Interactively, omitting both makes the CLI prompt instead.
+  </Accordion>
+</AccordionGroup>
+
+## Debugging
+
+When a command fails and the message is not enough, work outward from the CLI's own view of the world:
+
+```bash
+kaleido config show                              # which API and node URL are in use
+kaleido node list                                # environments, and which node is active
+kaleido node ps <name>                           # container state
+kaleido node logs <name> --service rgb_node_1 --no-follow
+kaleido node info                                # is the node reachable and unlocked
+kaleido --json <failing command>                 # the raw API response
+```
+
+Check `echo $KALEIDO_NODE_URL` and `echo $KALEIDO_API_URL` as well: an exported variable overrides the stored config and is easy to forget.
+
+## Get Help
+
+Check the [FAQ](/cli/faq) for questions rather than errors, and [Additional Resources](/cli/additional-resources) for upstream documentation and links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. How you installed the CLI, and the output of `uv tool list` (there is no `--version` flag)
+2. Python version (`python --version`) and your operating system
+3. The exact command you ran, plus its output with `--json` added
+4. Whether the node is a local Docker environment or a remote one, and the network
+5. `kaleido config show` and `kaleido node ps` output, with passwords removed
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

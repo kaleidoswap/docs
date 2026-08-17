@@ -13,23 +13,6 @@ description: '使用 KaleidoCLI 在终端管理本地多资产闪电节点，并
 
 同一个二进制文件既支持交互式终端使用，也支持脚本化自动化。
 
-## 为什么使用它
-
-<CardGroup cols={2}>
-  <Card title="引导式设置" icon="rocket" href="/cn/cli/getting-started">
-    在同一个设置流程中，选择仅市场模式或搭建本地节点环境。
-  </Card>
-  <Card title="命名环境" icon="server" href="/cn/cli/node-environments">
-    让多套本地节点栈相互隔离，并用一条命令切换当前活动节点。
-  </Card>
-  <Card title="钱包与 RGB 操作" icon="wallet" href="/cn/cli/wallet-assets-payments">
-    处理 BTC、RGB 资产、发票、转账、备份和闪电支付。
-  </Card>
-  <Card title="交易与交换" icon="arrows-rotate" href="/cn/cli/market-and-swaps">
-    查询交易对与报价，并执行原子交换或本地节点交换流程。
-  </Card>
-</CardGroup>
-
 ## 全局标志
 
 所有命令组都继承同一组根标志：
@@ -64,6 +47,8 @@ CLI 还会读取以下环境变量：
 
 ## 命令组
 
+全部功能分为十个命令组。每一组都在[命令](/cn/cli/command-reference)中逐个子命令展开，并列出参数与标志 —— 下面这张表就是那部分内容的索引。
+
 | 组 | 用途 |
 |------|---------|
 | `setup` | 首次运行设置，用于仅市场模式或本地节点模式 |
@@ -86,9 +71,3 @@ kaleido --json market quote BTC/USDT --from-amount 0.001
 ```
 
 当命令应当在缺少输入时直接失败、而不是弹出提示时，请使用 `--agent`。
-
-## 后续步骤
-
-- 如果你是第一次安装 CLI，请从[快速开始](/cn/cli/getting-started)开始。
-- 如果你需要本地 RLN 节点栈，请参阅[节点环境](/cn/cli/node-environments)。
-- 完整的命令地图请查看[命令参考](/cn/cli/command-reference)。

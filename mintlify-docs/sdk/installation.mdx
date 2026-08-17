@@ -1,0 +1,146 @@
+---
+title: "KaleidoSDK: Installation"
+sidebarTitle: "Installation"
+description: "Install the KaleidoSDK for TypeScript or Python, with runtime requirements, the client configuration fields, environment variables, and the available API environments"
+---
+
+`kaleido-sdk` (TypeScript) and `kaleido_sdk` (Python) are generated from the same Maker API and RGB Lightning Node specs, then wrapped with handwritten clients:
+
+- `client.maker` for KaleidoSwap market, swap, and LSPS1 endpoints
+- `client.rln` for RGB Lightning Node wallet, channel, payment, and swap endpoints
+
+Both ship from the same repository and share a version number, so a given release behaves identically in either language.
+
+<Note>
+  For which SDK version works with which API, see [Maker API Compatibility](/sdk/maker-api-compatibility) and [RLN API Compatibility](/sdk/rln-api-compatibility).
+</Note>
+
+## Install the Package
+
+<CodeGroup>
+```bash npm
+npm install kaleido-sdk
+```
+
+```bash pnpm
+pnpm add kaleido-sdk
+```
+
+```bash yarn
+yarn add kaleido-sdk
+```
+
+```bash pip
+pip install kaleido-sdk
+```
+</CodeGroup>
+
+### Requirements
+
+<Tabs>
+  <Tab title="TypeScript">
+    - Node.js 18 or higher
+    - TypeScript 5.x recommended
+  </Tab>
+  <Tab title="Python">
+    - Python 3.10 or higher
+    - Runtime dependencies are installed automatically
+  </Tab>
+</Tabs>
+
+## Configuration
+
+### TypeScript
+
+`KaleidoClient.create()` accepts a `KaleidoConfig` object:
+
+```typescript
+import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+  apiKey: process.env.KALEIDO_API_KEY,
+  timeout: 30,
+  logLevel: LogLevel.INFO,
+});
+```
+
+Supported config fields:
+
+- `baseUrl?`: Maker API base URL. Defaults to `https://api.signet.kaleidoswap.com`
+- `nodeUrl?`: RGB Lightning Node URL
+- `apiKey?`: optional API key
+- `nodeApiKey?`: optional bearer token for authenticated RLN node requests
+- `timeout?`: request timeout in seconds
+- `logLevel?`: SDK log level
+- `logger?`: custom logger implementation
+
+### Python
+
+`KaleidoClient.create()` accepts keyword arguments:
+
+```python
+import logging
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+    api_key=None,
+    timeout=30.0,
+    max_retries=3,
+    cache_ttl=60,
+    log_level=logging.INFO,
+)
+```
+
+Python supports the same connection settings plus:
+
+- `max_retries`: retry budget for the HTTP client
+- `cache_ttl`: cache TTL in seconds
+- `log_level`: standard Python logging level
+
+## Environment Variables
+
+The SDK does not auto-load environment variables, but these names are used by the examples and work well as a convention:
+
+| Variable | Typical use |
+|----------|-------------|
+| `KALEIDO_API_URL` | Maker API base URL |
+| `KALEIDO_NODE_URL` | RGB Lightning Node URL |
+| `KALEIDO_API_KEY` | API key |
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.signet.kaleidoswap.com',
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+  apiKey: process.env.KALEIDO_API_KEY,
+});
+```
+
+```python Python
+import os
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url=os.environ.get("KALEIDO_API_URL", "https://api.signet.kaleidoswap.com"),
+    node_url=os.environ.get("KALEIDO_NODE_URL"),
+    api_key=os.environ.get("KALEIDO_API_KEY"),
+)
+```
+</CodeGroup>
+
+## Available Environments
+
+Pass the API URL as `baseUrl` / `base_url`; the SDK appends the `/api/v1` path itself. No API key is required on the test networks.
+
+| Environment | API URL | WebSocket URL | Status |
+|-------------|---------|---------------|--------|
+| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` | Live (default) |
+| **Mainnet** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` | Coming soon |
+
+With the package installed, continue to [Getting Started](/sdk/getting-started) to create a client and request your first quote.

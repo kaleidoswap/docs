@@ -8,9 +8,9 @@ description: "运行一个非托管的自主代理：用原子交换再平衡比
 
 它管理闪电与 RGB 钱包、在 KaleidoSwap DEX 上执行原子 HTLC 交换、运行投资组合再平衡与 DCA 策略、维持闪电通道流动性健康，同时还能作为交互式的钱包助手聊天使用 —— 所有这些都由一个 LLM（Claude 或 OpenAI）基于 [KaleidoCLI](/cn/cli/introduction) 和 MCP 工具调用进行推理来驱动。
 
-<Info>
+<Note>
   KaleidoAgent 是一个独立的常驻服务。它目前**没有**嵌入 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的 `Engine`，而是运行自己的代理循环。关于正在考虑的收敛路径，请见 [KaleidoMind 的关系说明](/cn/ai-tools/kaleido-mind#relationship-to-kaleidoagent)。
-</Info>
+</Note>
 
 ## 能力
 
@@ -74,7 +74,7 @@ KaleidoAgent 把 `kaleido-mcp`（[统一的 MCP 服务器](/cn/ai-tools/mcp-serv
 
 每个循环都由一个 [skill](/cn/ai-tools/skills) 驱动。
 
-## 风险控制
+## 风险控制 {#risk-controls}
 
 风险上限位于 `agent.config.json` 的 `portfolio` 之下。每笔交换提交之前都会校验它们。
 
@@ -109,7 +109,7 @@ KaleidoAgent 把 `kaleido-mcp`（[统一的 MCP 服务器](/cn/ai-tools/mcp-serv
 
 ## 运行起来 {#run-it}
 
-前置条件：Node.js 20 或更高版本、位于 `$PATH` 中的 [KaleidoCLI](/cn/cli/getting-started)、[Nanobot](https://nanobot.dev) 运行时，以及一个 Anthropic 或 OpenAI API 密钥。
+前置条件：Node.js 20 或更高版本、位于 `$PATH` 中的 [KaleidoCLI](/cn/cli/installation)、[Nanobot](https://nanobot.dev) 运行时，以及一个 Anthropic 或 OpenAI API 密钥。
 
 <Steps>
   <Step title="克隆并安装">
@@ -157,6 +157,36 @@ docker compose --env-file .env.container -f docker-compose.container.yml up -d
 <Warning>
   `agent.config.json` 中保存着真实的 BIP-39 助记词。请先在测试网络上起步，在配置验证通过之前保持 `dry_run` 开启，并且永远不要提交或分享这个文件。
 </Warning>
+
+## 首次运行 {#first-run}
+
+代理跑起来之后，先手动触发一轮循环、读清楚它的决策，再让它真正开始交易。
+
+<Steps>
+  <Step title="确认 dry run 仍然开启">
+    `agent.config.json` 中的 `portfolio.dry_run` 默认为 `true`。先别动它。代理会完成推理、决策并汇报一笔交易，但不会真正提交。
+  </Step>
+
+  <Step title="手动触发一轮循环">
+    不必等定时任务，可以直接让[状态 API](#status-api) 跑一轮：
+
+    ```bash
+    curl -X POST http://localhost:4242/run \
+      -H 'Content-Type: application/json' \
+      -d '{"task_id":"rebalance"}'
+    ```
+
+    然后读取 `GET /status`，查看它的决策、它看到的余额，以及 token 开销。如果你启动了仪表盘，`http://localhost:5173` 上会显示同一轮运行。
+  </Step>
+
+  <Step title="检查风险上限">
+    确认 `max_swap_usd`、`min_btc_reserve_sats` 和 `stop_loss_btc_sats` 与你在测试网络上能接受的损失相符。每笔交换提交之前都会校验这些参数，见上面的[风险控制](#risk-controls)。
+  </Step>
+
+  <Step title="确认无误后再关闭 dry run">
+    当连续几轮的 dry-run 决策都看起来正确后，再把 `portfolio.dry_run` 设为 `false`。
+  </Step>
+</Steps>
 
 ## 状态 API {#status-api}
 

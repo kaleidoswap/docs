@@ -1,6 +1,7 @@
 ---
 title: 'Market And Swaps'
-description: 'Browse KaleidoSwap markets, request quotes, and run order, atomic, or local node swap flows from the CLI'
+sidebarTitle: 'Market & Swaps'
+description: 'Browse KaleidoSwap markets, request quotes, and run atomic or local node swap flows from the CLI'
 ---
 
 ## Market Data
@@ -24,11 +25,24 @@ kaleido market quote BTC/USDT --to-amount 500 --from-layer BTC_LN --to-layer RGB
 
 Important quote options:
 
-- `--from-amount` or `--to-amount`
+- `--from-amount` or `--to-amount` — exactly one of the two, since a quote is anchored on one side only
 - `--from-layer`
 - `--to-layer`
 
-Supported layer values include `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN` for market quotes.
+<Note>
+  **Amounts here are display units.** `--from-amount 0.001` means 0.001 BTC, not 1000 sat. The raw integer amounts described in [Wallet, Assets, And Payments](/cli/wallet-assets-payments) apply to `asset` and `payment` commands, not to quotes and swaps.
+</Note>
+
+### Layer values
+
+The accepted set depends on the command:
+
+| Command | Layers |
+|---------|--------|
+| `market quote` | `BTC_LN`, `RGB_LN`, `BTC_ONCHAIN` |
+| `swap atomic init`, `swap atomic run` | `BTC_L1`, `BTC_LN`, `RGB_L1`, `RGB_LN` |
+
+Both options are optional: when omitted, the layers are derived from the requested pair direction.
 
 ## Swap Scopes
 
@@ -47,7 +61,7 @@ Use `swap atomic` when the maker side is remote but execution uses your local no
 
 | Command | Purpose |
 |--------|---------|
-| `kaleido swap atomic init <pair>` | Initialize the atomic swap |
+| `kaleido swap atomic init <pair>` | Initialize the atomic swap (`--yes` accepts the quoted price, required non-interactively) |
 | `kaleido swap atomic execute` | Execute the initialized swap (`--swapstring`, `--taker-pubkey`, `--payment-hash`, prompted if omitted; `--auto-whitelist`) |
 | `kaleido swap atomic status <payment-hash>` | Track atomic swap status |
 | `kaleido swap atomic run <pair>` | Run init, whitelist, and execute in one command |
@@ -78,6 +92,14 @@ Use `node swap` for low-level RLN swap steps (these live under the `node` comman
 | `kaleido node swap list` | List swaps known to the node |
 
 This path is useful for debugging, demos, and lower-level protocol operations where you want each step exposed separately.
+
+A swapstring carries six slash-separated fields, and the CLI validates them before whitelisting:
+
+```text
+<from_amount>/<from_asset>/<to_amount>/<to_asset>/<expiry>/<payment_hash>
+```
+
+Always quote it on the command line so the shell leaves it intact. See [Troubleshooting](/cli/troubleshooting#market-and-swaps) for what the validation errors mean.
 
 ## Recommended Trade Flow
 

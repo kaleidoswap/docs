@@ -1,0 +1,123 @@
+---
+title: "KaleidoSwap 扩展资源"
+sidebarTitle: "扩展资源"
+description: "KaleidoSwap 全部链接汇总：源码仓库、各比特币层级的协议参考、集成标准、测试网络以及支持渠道。"
+---
+
+本页把各产品标签页中的链接汇总到了一起。每个产品也保留了自己的一份，只覆盖该接入方式所需的内容：[桌面应用](/cn/desktop-app/support/additional-resources)、[浏览器扩展](/cn/extensions/kaleidoswap-extension/additional-resources)、[AI 工具](/cn/ai-tools/additional-resources)和 [KaleidoSDK](/cn/sdk/additional-resources)。
+
+## 源码仓库
+
+KaleidoSwap 所有开源的部分都在 [KaleidoSwap 组织](https://github.com/kaleidoswap)下。浏览器扩展是例外：在封闭 Beta 期间，它的仓库是私有的。
+
+<CardGroup cols={2}>
+  <Card title="desktop-app" icon="desktop" href="https://github.com/kaleidoswap/desktop-app">
+    桌面应用的源码、发布版本和问题追踪。
+  </Card>
+  <Card title="kaleido-sdk" icon="code" href="https://github.com/kaleidoswap/kaleido-sdk">
+    TypeScript 与 Python 两套实现的源码、发布版本和问题追踪。
+  </Card>
+  <Card title="kaleido-cli" icon="terminal" href="https://github.com/kaleidoswap/kaleido-cli">
+    在终端里运行节点并交易的命令行客户端。
+  </Card>
+  <Card title="kaleido-agent" icon="robot" href="https://github.com/kaleidoswap/kaleido-agent">
+    自主代理，包含它的仪表盘、状态 API，以及每轮循环加载的 `skills/` 目录。
+  </Card>
+  <Card title="kaleido-mind" icon="brain" href="https://github.com/kaleidoswap/kaleido-mind">
+    本地端引擎：分层漏斗、recipe 引擎、工具契约、记忆与检索，以及评测框架。
+  </Card>
+  <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
+    把所有领域收拢到一个连接背后的 MCP 网关。
+  </Card>
+  <Card title="rgb-lightning-node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    SDK 和钱包工具所驱动的节点。这是 KaleidoSwap 的分支；[上游项目](https://github.com/RGB-Tools/rgb-lightning-node)由 RGB Tools 维护。
+  </Card>
+  <Card title="specs" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    所有客户端生成 API 类型所依据的 OpenAPI 规范，这也是各语言请求与响应结构保持一致的原因。
+  </Card>
+</CardGroup>
+
+## 协议文档
+
+KaleidoSwap 钱包派生账户所在的各个层级，以及各自的上游参考。
+
+<CardGroup cols={2}>
+  <Card title="RGB 协议" icon="gem" href="https://docs.rgb.info">
+    客户端验证与资产接口，涵盖无需节点的 RGB-L1 以及闪电网络上的 RGB。
+  </Card>
+  <Card title="Spark" icon="bolt-lightning" href="https://docs.spark.money">
+    基于状态链的转账、闪电收发，以及 Spark 账户背后的代币。
+  </Card>
+  <Card title="Arkade" icon="alien-8bit" href="https://docs.arkadeos.com">
+    VTXO、进出场（boarding/offboarding），以及 Arkade 账户背后的批量结算模型。
+  </Card>
+  <Card title="Liquid" icon="droplet" href="https://docs.liquid.net">
+    L-BTC 与 USDt 等发行资产背后的联邦侧链。
+  </Card>
+</CardGroup>
+
+## 集成标准
+
+KaleidoSwap 向其他软件暴露的接口所遵循的规范。
+
+<CardGroup cols={2}>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    每个 KaleidoSwap [MCP 服务器](/cn/ai-tools/mcp-servers)都实现的工具协议。
+  </Card>
+  <Card title="WebLN" icon="bolt" href="https://www.webln.dev/">
+    闪电网络的浏览器 provider 标准，注入在 `window.webln`。
+  </Card>
+  <Card title="NIP-07" icon="signature" href="https://github.com/nostr-protocol/nips/blob/master/07.md">
+    页面内的 Nostr 签名，注入在 `window.nostr`。
+  </Card>
+  <Card title="NIP-46" icon="tower-broadcast" href="https://github.com/nostr-protocol/nips/blob/master/46.md">
+    通过 `bunker://` 字符串、经由中继完成的 Nostr Connect 远程签名。
+  </Card>
+  <Card title="QVAC SDK" icon="microchip" href="https://www.npmjs.com/package/@qvac/sdk">
+    KaleidoMind 用于 LLM、嵌入、语音转文字和文字转语音的本地端推理运行时。
+  </Card>
+</CardGroup>
+
+这些浏览器 provider 如何暴露给网页，见 [DApp 连接](/cn/extensions/kaleidoswap-extension/dapp-connectivity)。
+
+## 开发与测试
+
+<CardGroup cols={2}>
+  <Card title="Mutiny 水龙头" icon="faucet" href="https://faucet.mutinynet.com/">
+    获取 Signet 比特币，用于给节点充值和开测试通道。
+  </Card>
+
+  <Card title="Mutinynet 区块浏览器" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    查看 signet 上的交易、区块与通道开启。
+  </Card>
+</CardGroup>
+
+## 获取帮助
+
+报错请先看[故障排查](/cn/whats-kaleidoswap/troubleshooting)，术语请看[术语表](/cn/whats-kaleidoswap/glossary)。每个产品在自己的「参考」分组下也各有一份 FAQ 和故障排查。
+
+反馈问题时，请附上你使用的产品与版本、所在网络（Signet 或主网）、复现步骤，以及错误信息或截图。各产品页面还列出了值得附带的额外信息，比如日志文件位置和查看版本的命令。
+
+| 产品 | 问题追踪 |
+|---------|---------------|
+| 桌面应用 | [desktop-app/issues](https://github.com/kaleidoswap/desktop-app/issues) |
+| KaleidoSDK | [kaleido-sdk/issues](https://github.com/kaleidoswap/kaleido-sdk/issues) |
+| KaleidoCLI | [kaleido-cli/issues](https://github.com/kaleidoswap/kaleido-cli/issues) |
+| AI 工具 | 出问题的那个仓库：[kaleido-agent](https://github.com/kaleidoswap/kaleido-agent/issues)、[kaleido-mind](https://github.com/kaleidoswap/kaleido-mind/issues) 或 [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp/issues) |
+| 浏览器扩展 | Beta 期间仓库私有，请通过 Telegram 或邮件反馈 |
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap">
+    问题、拉取请求和全部源码。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持。
+  </Card>
+</CardGroup>
+
+<Warning>
+  **绝不要把私钥或助记词分享给任何人，包括技术支持人员。** 正规的技术支持永远不会索取这些信息。
+</Warning>

@@ -1,0 +1,123 @@
+---
+title: "KaleidoSwap Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Every KaleidoSwap link in one place: source repositories, protocol references across Bitcoin layers, integration standards, test networks, and support channels"
+---
+
+This page collects the links from every product tab in one list. Each product also keeps its own, scoped to what that surface needs: [Desktop App](/desktop-app/support/additional-resources), [Extension](/extensions/kaleidoswap-extension/additional-resources), [AI Tools](/ai-tools/additional-resources), and [KaleidoSDK](/sdk/additional-resources).
+
+## Source Repositories
+
+Everything KaleidoSwap ships in the open lives under the [KaleidoSwap organisation](https://github.com/kaleidoswap). The Extension is the exception: its repository is private while the beta is closed.
+
+<CardGroup cols={2}>
+  <Card title="desktop-app" icon="desktop" href="https://github.com/kaleidoswap/desktop-app">
+    Source, releases, and issue tracking for the Desktop App.
+  </Card>
+  <Card title="kaleido-sdk" icon="code" href="https://github.com/kaleidoswap/kaleido-sdk">
+    Source, releases, and issue tracking for both the TypeScript and Python implementations.
+  </Card>
+  <Card title="kaleido-cli" icon="terminal" href="https://github.com/kaleidoswap/kaleido-cli">
+    The command-line client for running a node and trading from a terminal.
+  </Card>
+  <Card title="kaleido-agent" icon="robot" href="https://github.com/kaleidoswap/kaleido-agent">
+    The autonomous agent, its dashboard and status API, and the `skills/` directory every loop loads from.
+  </Card>
+  <Card title="kaleido-mind" icon="brain" href="https://github.com/kaleidoswap/kaleido-mind">
+    The on-device engine: tiered funnel, recipe engine, tool contract, memory and retrieval, and the eval harness.
+  </Card>
+  <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
+    The MCP gateway that composes every domain behind one connection.
+  </Card>
+  <Card title="rgb-lightning-node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    The node the SDK and the wallet tools drive. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
+  </Card>
+  <Card title="specs" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    The OpenAPI specifications every client generates its API types from, which is what keeps request and response shapes identical across languages.
+  </Card>
+</CardGroup>
+
+## Protocol Documentation
+
+The layers a KaleidoSwap wallet derives accounts on, and the upstream reference for each.
+
+<CardGroup cols={2}>
+  <Card title="RGB Protocol" icon="gem" href="https://docs.rgb.info">
+    Client-side validation and asset interfaces, for both node-less RGB-L1 and RGB over Lightning.
+  </Card>
+  <Card title="Spark" icon="bolt-lightning" href="https://docs.spark.money">
+    Statechain-based transfers, Lightning send and receive, and the tokens behind the Spark account.
+  </Card>
+  <Card title="Arkade" icon="alien-8bit" href="https://docs.arkadeos.com">
+    VTXOs, boarding and offboarding, and the batch settlement model behind the Arkade account.
+  </Card>
+  <Card title="Liquid" icon="droplet" href="https://docs.liquid.net">
+    The federated sidechain behind L-BTC and issued assets such as USDt.
+  </Card>
+</CardGroup>
+
+## Integration Standards
+
+Specifications for the interfaces KaleidoSwap exposes to other software.
+
+<CardGroup cols={2}>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    The tool protocol every KaleidoSwap [MCP server](/ai-tools/mcp-servers) implements.
+  </Card>
+  <Card title="WebLN" icon="bolt" href="https://www.webln.dev/">
+    The browser provider standard for Lightning, injected at `window.webln`.
+  </Card>
+  <Card title="NIP-07" icon="signature" href="https://github.com/nostr-protocol/nips/blob/master/07.md">
+    In-page Nostr signing, injected at `window.nostr`.
+  </Card>
+  <Card title="NIP-46" icon="tower-broadcast" href="https://github.com/nostr-protocol/nips/blob/master/46.md">
+    Nostr Connect remote signing over relays, via a `bunker://` string.
+  </Card>
+  <Card title="QVAC SDK" icon="microchip" href="https://www.npmjs.com/package/@qvac/sdk">
+    The on-device inference runtime KaleidoMind uses for LLM, embeddings, speech to text, and text to speech.
+  </Card>
+</CardGroup>
+
+See [DApp connectivity](/extensions/kaleidoswap-extension/dapp-connectivity) for how the browser providers are exposed to web pages.
+
+## Development & Testing
+
+<CardGroup cols={2}>
+  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
+    Get Signet Bitcoin to fund a node and open test channels.
+  </Card>
+
+  <Card title="Mutinynet Explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    Inspect Signet transactions, blocks, and channel opens.
+  </Card>
+</CardGroup>
+
+## Get Help
+
+Check the [Troubleshooting](/whats-kaleidoswap/troubleshooting) page for errors and the [Glossary](/whats-kaleidoswap/glossary) for terminology. Each product also keeps its own FAQ and troubleshooting under its Reference group.
+
+When reporting a problem, include the product and version you are running, the network you are on (Signet or mainnet), the steps to reproduce, and the error message or a screenshot. The product-specific pages list the extra details worth attaching, such as log file locations and version commands.
+
+| Product | Issue tracker |
+|---------|---------------|
+| Desktop App | [desktop-app/issues](https://github.com/kaleidoswap/desktop-app/issues) |
+| KaleidoSDK | [kaleido-sdk/issues](https://github.com/kaleidoswap/kaleido-sdk/issues) |
+| KaleidoCLI | [kaleido-cli/issues](https://github.com/kaleidoswap/kaleido-cli/issues) |
+| AI Tools | The repository for the surface that failed: [kaleido-agent](https://github.com/kaleidoswap/kaleido-agent/issues), [kaleido-mind](https://github.com/kaleidoswap/kaleido-mind/issues), or [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp/issues) |
+| Extension | Private repository during the beta, use Telegram or email |
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap">
+    Issues, pull requests, and the full source.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>
+
+<Warning>
+  **Never share your private keys or mnemonic seed with anyone, including support staff.** Legitimate support will never ask for this information.
+</Warning>

@@ -19,18 +19,18 @@ SDK 提供 WebSocket 支持，用于实时报价推送。WebSocket 客户端会�
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id');
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id")
 ```
 </CodeGroup>
 
 URL 中包含一个客户端 ID，用于会话跟踪。`enableWebSocket` 方法返回一个 `WSClient` 实例。
 
 <Note>
-本页示例使用 signet，它同时也是 SDK 的默认环境。请让 WebSocket URL 与 `baseUrl` 指向的环境保持一致。参阅 [可用环境](/cn/sdk/getting-started#available-environments)。
+本页示例使用 signet，它同时也是 SDK 的默认环境。请让 WebSocket URL 与 `baseUrl` 指向的环境保持一致。参阅 [可用环境](/cn/sdk/installation#available-environments)。
 </Note>
 
 ## 高层接口
@@ -170,7 +170,7 @@ for route in routes:
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client');
 
 await ws.connect();
 console.log(`Connected: ${ws.isConnected()}`);
@@ -180,7 +180,7 @@ ws.disconnect();
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client")
 
 await ws.connect()
 print(f"Connected: {ws.is_connected()}")
@@ -324,7 +324,7 @@ WebSocket 使用 JSON 消息协议：
 | `amount` | number | 以最小单位表示的原始数量 |
 | `precision` | number | 该资产的小数位数（例如 BTC 为 8） |
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 <AccordionGroup>
   <Accordion title="妥善处理断开连接">

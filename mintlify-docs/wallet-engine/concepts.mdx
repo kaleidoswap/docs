@@ -12,9 +12,10 @@ The contract is decomposed into a small required core (`ICoreProtocolAdapter`) p
 
 | Group | Covers |
 |---|---|
-| `IOnchainOperations` | on-chain addresses, UTXOs, fee estimation |
+| `IOnchainOperations` | raw BTC sends, transaction broadcast |
+| `ISimplicityOperations` | Liquid PSET review and signing, Simplicity compilation (experimental) |
 | `IRgbOperations` | RGB assets, invoices, transfers |
-| `ISparkOperations` | Spark-specific token records |
+| `ISparkOperations` | Spark invoices, L1 deposit claim and sweep |
 | `IArkadeOperations` | VTXO lifecycle, boarding |
 | `ISigningOperations` | message and PSBT signing |
 | `IBackupOperations` | backup and restore |
@@ -122,16 +123,12 @@ const quote = await swap.getQuote({
   fromAmount: 100,
 })
 
-const result = await swap.executeSwap({
-  ...quote,
-  receiverAddress: 'lnbc1…',
-  receiverAddressFormat: 'BOLT11',
-})
+const result = await swap.executeSwap(quote)
 
 await swap.getSwapStatus(result.swapId)  // pending → confirmed / failed
 ```
 
-`executeSwap` refuses to proceed without the approved quote's `rfqId` and amounts, and rejects a quote that has already expired. The maker binds execution to that `rfqId` and those exact raw amounts — there is no server-side re-quote, so both legs settle at what the user approved or the swap fails with no funds moved.
+`executeSwap` refuses to proceed without the approved quote's `rfqId` and amounts, and rejects a quote that has already expired. The maker binds execution to that `rfqId` and those exact raw amounts — there is no server-side re-quote, so both legs settle at what the user approved or the swap fails with no funds moved. Both legs settle against the account the swap was constructed with — there is no per-swap receiver address.
 
 A second venue sits alongside the RFQ rail for BTC ↔ L-BTC **chain swaps** over the Boltz protocol against a KaleidoSwap maker. RGB always stays on the RFQ path. The engine deliberately never funds a lockup itself: `createSwap` returns the maker's binding amounts and the address to pay, and the host performs the send with its own adapter.
 

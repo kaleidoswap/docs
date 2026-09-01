@@ -6,7 +6,7 @@ description: "The headless core behind KaleidoSwap's wallets — one adapter con
 
 `@kaleidorg/wallet-engine` is the headless core you build a multi-protocol Bitcoin wallet on. It hides the differences between Bitcoin L2s behind one interface, keeps app code identical across React Native, browser extension and Node hosts, and ships the hard parts — routing, unified receive, swaps, lite/advanced UX — as reusable primitives.
 
-It powers the KaleidoSwap [browser extension](/extensions/introduction), the `rate` mobile wallet, and the [desktop agent](/desktop-app/getting-started/introduction).
+It powers the KaleidoSwap [browser extension](/extensions/introduction) and the `rate` mobile wallet.
 
 <Warning>
   **Alpha — experimental.** The engine moves real funds across Bitcoin L2s. Interfaces are unstable and nothing has been independently audited. Do not use it with mainnet funds you cannot afford to lose.
@@ -61,7 +61,7 @@ Add a protocol and all four pick it up with no changes to existing protocol code
 The engine consumes [`kaleido-sdk`](/sdk/introduction) internally for the KaleidoSwap protocol. Consumers of the engine never import `kaleido-sdk` directly.
 
 ```
-your app          rate · extension · desktop
+your app          rate · extension
    ↓
 wallet-engine     router · unified receive · manifest · disclosure · adapters
    ↓

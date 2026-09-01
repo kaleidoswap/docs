@@ -1,0 +1,128 @@
+---
+title: "Getting Started with the Wallet Engine"
+sidebarTitle: "Getting Started"
+description: "Install @kaleidorg/wallet-engine, run the offline tour, and drive your first cross-protocol route and unified receive URI"
+---
+
+## Run it before you install it
+
+The fastest way to see the shape is the tour — the real router, manifest and unified receive against in-memory stub adapters. No node, no credentials, no network, no protocol SDKs.
+
+```bash
+git clone https://github.com/kaleidoswap/wallet-engine && cd wallet-engine
+npm install
+npm run example:tour
+```
+
+It prints the capability manifest, routes three destinations, builds a BIP321 URI, and collapses four balances into lite mode. Swapping the stub adapters for `createWdkRegistry` is the only change between that and a wallet that moves funds.
+
+## Installation
+
+<CodeGroup>
+```bash pnpm
+pnpm add @kaleidorg/wallet-engine
+```
+
+```bash npm
+npm install @kaleidorg/wallet-engine
+```
+
+```bash yarn
+yarn add @kaleidorg/wallet-engine
+```
+</CodeGroup>
+
+### Requirements
+
+- Node.js 20 or higher
+- TypeScript 5.x recommended
+- ESM only
+
+### Protocol SDKs are optional peer dependencies
+
+The only hard dependencies are the pure-crypto primitives (`@noble/*`, `@scure/*`). Every protocol SDK is an optional `peerDependency` — install only the ones whose adapters you use.
+
+Importing the root barrel pulls in **no** protocol SDK, and each adapter lazy-loads its SDK inside `connect()`, so a missing peer only errors when you actually load that adapter's subpath. This is what lets an MV3 extension host import the engine without carrying every L2 SDK.
+
+| You import… | Also install |
+|---|---|
+| `@kaleidorg/wallet-engine/adapters/wdk` (Spark) | `@tetherto/wdk-wallet-spark` |
+| `…/adapters/wdk` (RGB/RLN) | `@kaleidorg/wdk-wallet-rln` |
+| `…/adapters/wdk/wasm-liquid` | `@kaleidorg/wdk-wallet-liquid` |
+| `…/adapters/wdk/wasm-rgb` | `@utexo/rgb-lib-wasm` |
+| `…/adapters/wdk` (Arkade) | `@arkade-os/wdk` |
+| `…/swap` | `@kaleidorg/wdk-protocol-swap-kaleidoswap` (+ `@kaleidorg/swap-sdk` for the Boltz chain-swap venue) |
+| `…/format` | `kaleido-sdk` |
+
+```bash
+# RGB/RLN + Liquid only, for example
+pnpm add @kaleidorg/wallet-engine @kaleidorg/wdk-wallet-rln @kaleidorg/wdk-wallet-liquid
+```
+
+<Note>
+  **Migration (≤ beta.53 → beta.54):** protocol SDKs moved from `dependencies` to optional `peerDependencies`. They are no longer installed transitively — add the packages for the adapters you use to your own `package.json`.
+</Note>
+
+## Your first wallet
+
+```ts
+import {
+  ProtocolManager,
+  CrossProtocolRouter,
+  buildUnifiedReceiveURI,
+  aggregateForLite,
+} from '@kaleidorg/wallet-engine'
+// Adapters live behind the SDK-bearing subpath, so the root stays SDK-free.
+import { createWdkRegistry } from '@kaleidorg/wallet-engine/adapters/wdk'
+
+// 1. Build a registry of WDK-backed adapters (pick the protocols you want).
+const registry = createWdkRegistry({ enabled: ['RGB_LN', 'LIQUID', 'SPARK'] })
+
+// 2. Connect each protocol (config carries the mnemonic + endpoints).
+await registry.get('RGB_LN')!.connect({ protocol: 'RGB_LN', network: 'mainnet' /* … */ })
+await registry.get('LIQUID')!.connect({ protocol: 'LIQUID', network: 'mainnet' /* … */ })
+
+// 3. Drive everything through the manager — no protocol SDK in app code.
+const manager = new ProtocolManager({ defaultProtocol: 'RGB_LN' })
+for (const a of registry.getAll()) manager.registerAdapter(a)
+
+const assets = await manager.listAllAssets()   // unified across protocols
+const lite = aggregateForLite(assets)          // { btc, usd, other }
+
+// 4. Let the router choose which protocol pays a destination.
+const router = new CrossProtocolRouter(registry)
+const { best, routes } = router.resolveSend('lnbc1…')
+
+// 5. One QR any wallet can pay; Kaleido wallets read the richer params.
+const uri = buildUnifiedReceiveURI({
+  btcAddress: 'bc1q…',
+  lightningInvoice: 'lnbc1…',
+  rgbInvoice: 'rgb:…',
+  liquidAddress: 'lq1…',
+})
+```
+
+## Inject your platform
+
+The engine never touches platform APIs. Each host injects storage, a CSPRNG and a clock once at startup, which is what lets the same engine run unchanged on React Native (SecureStore/MMKV), the extension (`chrome.storage`) and Node.
+
+```ts
+import { setPlatform, consoleLogger } from '@kaleidorg/wallet-engine'
+
+setPlatform({
+  storage: myStorageProvider,   // IStorageProvider
+  runtime: myRuntimeProvider,   // IRuntimeProvider — randomness, clock
+  logger: consoleLogger,
+})
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Core Concepts" icon="cube" href="/wallet-engine/concepts">
+    How routing, unified receive and disclosure actually work.
+  </Card>
+  <Card title="Add a Protocol" icon="puzzle-piece" href="/wallet-engine/adding-a-protocol">
+    Implement the contract, add one manifest entry, done.
+  </Card>
+</CardGroup>

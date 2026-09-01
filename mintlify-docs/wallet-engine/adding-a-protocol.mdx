@@ -1,0 +1,113 @@
+---
+title: "Adding a Protocol"
+sidebarTitle: "Add a Protocol"
+description: "Implement IProtocolAdapter, add one capability manifest entry, register it — the router, unified receive and lite mode pick it up with no changes to existing code"
+---
+
+Adding a protocol touches three files and edits **no** existing protocol's code path. If your change required editing another protocol, the design was circumvented — reconsider it.
+
+## 1. Implement the contract
+
+Start from [`examples/minimal-adapter/MemoAdapter.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/examples/minimal-adapter/MemoAdapter.ts) — the complete `IProtocolAdapter` contract against an in-memory wallet, in about 170 dependency-free lines. It is the smallest thing that satisfies the contract and is meant to be copied.
+
+```ts
+import type { ICoreProtocolAdapter, IRgbOperations } from '@kaleidorg/wallet-engine'
+
+export class MyAdapter implements ICoreProtocolAdapter & IRgbOperations {
+  readonly protocolName = 'MYPROTO'
+  readonly supportedLayers = ['MYPROTO_L2']
+  readonly version = '1.0.0'
+  readonly capabilities = PROTOCOL_OPERATIONS.MYPROTO
+
+  async connect(config: ProtocolConfig) {
+    // Lazy-load your SDK HERE, never at module scope — that's what keeps the
+    // root barrel importable by hosts that don't use your protocol.
+    const { MySdk } = await import('my-protocol-sdk')
+    this.sdk = new MySdk(config)
+  }
+  // …
+}
+```
+
+Declaring the capability groups you support (`& IRgbOperations`) gives you *required* rather than optional methods, so the compiler catches a half-implemented group.
+
+<Warning>
+  **No SDK types cross the contract.** Translate your SDK's shapes into the domain types in `src/types/`. SDK objects may be read loosely inside your adapter, but only domain types may leave it.
+</Warning>
+
+## 2. Describe it in the manifest
+
+Add **one** entry to `PROTOCOL_CAPABILITIES` in [`src/capabilities/index.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/src/capabilities/index.ts), and one to `PROTOCOL_OPERATIONS` in `operations.ts`.
+
+```ts
+MYPROTO: {
+  protocol: 'MYPROTO',
+  layers: ['MYPROTO_L2'],
+  supportsOnchain: false,
+  supportsLightning: true,
+  supportsAssets: true,
+  supportsSwaps: false,
+  zeroFee: false,
+  staticReceiveAddress: true,
+  boarding: false,
+  invoiceExpiry: true,
+  needsChannelLiquidity: false,
+  wdkModule: '@you/wdk-wallet-myproto',
+  maturity: 'beta',
+},
+```
+
+This is the step that does the work. The router, the UI and lite aggregation read these flags — they never ask "which protocol is this?"
+
+<Note>
+  When you find yourself wanting a new method on `IProtocolAdapter` for your protocol alone, you want a capability flag here instead.
+</Note>
+
+## 3. Teach the classifier your address format
+
+If your protocol introduces a destination format the engine can't recognise, add it to [`src/router/destination.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/src/router/destination.ts) with the protocols capable of paying it:
+
+```ts
+if (/^myproto1[a-z0-9]{20,}$/i.test(dest)) {
+  return {
+    kind: 'MYPROTO',
+    layer: 'MYPROTO_L2',
+    format: 'MYPROTO_ADDRESS',
+    candidates: ['MYPROTO'],
+    value: dest,
+  }
+}
+```
+
+`candidates` is the *possible* set. Whether a candidate is a **direct** route is then verified against the manifest, so a protocol never claims it can settle something its flags say it can't.
+
+## 4. Register it
+
+```ts
+manager.registerAdapter(new MyAdapter())
+```
+
+Or add it to `createWdkRegistry` if it is WDK-backed.
+
+## What you get for free
+
+Once those three files are in place, with no further changes:
+
+- `CrossProtocolRouter` considers your protocol for every compatible destination, and ranks it against the others by the user's route preference.
+- `buildUnifiedReceiveURI` can carry your rail in the same QR as the rest.
+- `aggregateForLite` folds your BTC balance into the single lite "BTC" figure.
+- Every screen in a consuming wallet renders your protocol using the manifest flags.
+
+## Verify it
+
+```bash
+npm run build   # tsc must stay clean
+npm test        # vitest
+npm run example:tour
+```
+
+The [tour](https://github.com/kaleidoswap/wallet-engine/tree/main/examples/tour) is the fastest check that your manifest entry behaves: it prints the capability table, routes several destinations and shows which protocols were considered.
+
+<Note>
+  Pure modules — router, disclosure, receive, capabilities — must stay fully covered by tests. See [CONTRIBUTING.md](https://github.com/kaleidoswap/wallet-engine/blob/main/CONTRIBUTING.md) and [AGENTS.md](https://github.com/kaleidoswap/wallet-engine/blob/main/AGENTS.md), the latter being the invariant list for coding agents working in the repo.
+</Note>

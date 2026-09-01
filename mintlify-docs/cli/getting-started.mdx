@@ -1,38 +1,10 @@
 ---
 title: "KaleidoCLI: Getting Started"
 sidebarTitle: "Getting Started"
-description: 'Install the KaleidoCLI, run first-time setup, and configure your default API and node endpoints'
+description: 'Run KaleidoCLI first-time setup, store your default API and node endpoints, and issue your first market and node commands'
 ---
 
-## Requirements
-
-- Python 3.10 or newer
-- [`uv`](https://docs.astral.sh/uv/) recommended, or `pip`
-- Docker and Docker Compose for `node` commands and any local RLN workflow
-
-## Installation
-
-### Install globally with `uv`
-
-```bash
-uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
-```
-
-This installs the `kaleido` executable without cloning the repository first.
-
-### Install from a local checkout
-
-```bash
-git clone https://github.com/kaleidoswap/kaleido-cli
-cd kaleido-cli
-make install
-```
-
-### Bootstrap from a checkout
-
-```bash
-python install.py
-```
+This is the path from an installed CLI to your first commands. If you have not installed it yet, start with [Installation](/cli/installation).
 
 ## First-Run Setup
 
@@ -122,20 +94,6 @@ kaleido node init
 kaleido node unlock
 kaleido node info
 kaleido wallet address
-```
-
-## Shell Completion
-
-Install completion for your current shell with:
-
-```bash
-kaleido --install-completion
-```
-
-Or print the completion script for manual installation:
-
-```bash
-kaleido --show-completion
 ```
 
 ## When To Override Config

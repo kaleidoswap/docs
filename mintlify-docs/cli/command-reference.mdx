@@ -1,5 +1,6 @@
 ---
 title: 'Command Reference'
+sidebarTitle: 'Commands'
 description: 'Full command map for the KaleidoCLI, including nested command groups and the most important flags'
 ---
 
@@ -19,6 +20,8 @@ kaleido [global options] <command> [subcommand] [args]
 | `--api-url` | Override the configured API URL |
 | `--install-completion` | Install shell completion |
 | `--show-completion` | Print shell completion |
+
+There is no `--version` flag. Global flags go before the sub-command: `kaleido --json market pairs`, not `kaleido market pairs --json`.
 
 ## Top-Level Commands
 
@@ -63,7 +66,7 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--node-url`, `--create-node`, `
 | `kaleido node info` | Show node details |
 | `kaleido node network` | Show network information |
 | `kaleido node init` | Initialize the wallet |
-| `kaleido node unlock` | Unlock the wallet |
+| `kaleido node unlock` | Unlock the wallet (`--chain-sync block\|transaction`, `--bitcoind-*`, `--indexer-url`, `--proxy-endpoint`, `--announce-alias`, `--announce-address`) |
 | `kaleido node lock` | Lock the wallet |
 | `kaleido node shutdown` | Gracefully shut down the node |
 
@@ -74,7 +77,7 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--node-url`, `--create-node`, `
 | `kaleido node swap pubkey` | Print the taker public key |
 | `kaleido node swap init` | Start a local maker-init swap flow (`--from-asset`, `--qty-from`, `--to-asset`, `--qty-to`, `--timeout`) |
 | `kaleido node swap whitelist --swapstring '<swapstring>'` | Whitelist a swap on the taker side |
-| `kaleido node swap execute` | Execute a local node swap |
+| `kaleido node swap execute` | Execute a local node swap (`--swapstring`, `--payment-secret`, `--taker-pubkey`) |
 | `kaleido node swap status <payment-hash>` | Check local node swap status (`--taker` or `--maker`) |
 | `kaleido node swap list` | List swaps known to the node |
 
@@ -83,14 +86,14 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--node-url`, `--create-node`, `
 | Command | Summary |
 |--------|---------|
 | `kaleido wallet address` | New BTC deposit address |
-| `kaleido wallet balance` | BTC balance |
-| `kaleido wallet send <amount> <address>` | Send BTC |
-| `kaleido wallet utxos` | List UTXOs |
-| `kaleido wallet create-utxos` | Create UTXOs for RGB usage (`--up-to`, `--fee-rate`, `--skip-sync`) |
+| `kaleido wallet balance` | BTC balance (`--skip-sync`) |
+| `kaleido wallet send <amount> <address>` | Send BTC (`--fee-rate`, `--skip-sync`) |
+| `kaleido wallet utxos` | List UTXOs (`--skip-sync`) |
+| `kaleido wallet create-utxos` | Create UTXOs for RGB usage (`--num/-n`, `--size`, `--up-to`, `--fee-rate`, `--skip-sync`) |
 | `kaleido wallet transactions` | Transaction history |
 | `kaleido wallet backup <path>` | Backup wallet data |
 | `kaleido wallet restore <path>` | Restore wallet data |
-| `kaleido wallet change-password` | Change wallet password |
+| `kaleido wallet change-password` | Change wallet password (`--old-password`, `--new-password`) |
 | `kaleido wallet estimate-fee` | Estimate fee rate (`--blocks/-b`, default 6) |
 
 ## `asset`
@@ -100,14 +103,14 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--node-url`, `--create-node`, `
 | `kaleido asset list` | List assets |
 | `kaleido asset balance <asset-id>` | Asset balance |
 | `kaleido asset metadata <asset-id>` | Asset metadata |
-| `kaleido asset invoice <asset-id>` | Create an RGB invoice |
-| `kaleido asset send <asset-id> <amount> <invoice>` | Send RGB assets |
-| `kaleido asset send-batch` | Send to many recipients |
+| `kaleido asset invoice <asset-id>` | Create an RGB invoice (`--amount/-a`, `--min-confirmations`, `--duration`, `--transport-endpoint`) |
+| `kaleido asset send <asset-id> <amount> <invoice>` | Send RGB assets (`--fee-rate`, `--min-confirmations`, `--donation`, `--transport-endpoint`, `--witness-amount-sat`, `--witness-blinding`, `--skip-sync`) |
+| `kaleido asset send-batch <json-file>` | Send to many recipients, from a JSON file |
 | `kaleido asset transfers <asset-id>` | Transfer history |
-| `kaleido asset refresh` | Refresh pending transfers |
+| `kaleido asset refresh` | Refresh pending transfers (`--skip-sync`) |
 | `kaleido asset sync` | Sync RGB wallet |
-| `kaleido asset fail-transfers` | Mark pending transfers as failed |
-| `kaleido asset media` | Fetch asset media |
+| `kaleido asset fail-transfers` | Mark pending transfers as failed (`--batch-idx`, `--no-asset-only`, `--skip-sync`) |
+| `kaleido asset media <digest>` | Fetch asset media by SHA-256 digest |
 
 ### `asset issue`
 
@@ -117,15 +120,15 @@ Key flags: `--mode`, `--defaults`, `--api-url`, `--node-url`, `--create-node`, `
 | `kaleido asset issue cfa` | Issue a collectible fungible asset |
 | `kaleido asset issue uda` | Issue a unique digital asset |
 
-All `issue` subcommands accept `--precision` for the number of decimal places.
+All `issue` subcommands accept `--precision` for the number of decimal places, and express `--supply` in the smallest raw unit. `cfa` and `uda` also accept `--description` and `--file`.
 
 ## `channel`
 
 | Command | Summary |
 |--------|---------|
 | `kaleido channel list` | List channels |
-| `kaleido channel open <peer>` | Open a channel |
-| `kaleido channel close <channel-id>` | Close a channel (requires `--peer <pubkey>`) |
+| `kaleido channel open <peer>` | Open a channel (`--capacity/-c`, `--push-msat`, `--asset-id`, `--asset-amount`, `--push-asset-amount`, `--public/--private`, `--with-anchors`, `--fee-base-msat`, `--fee-proportional-millionths`, `--temporary-channel-id`) |
+| `kaleido channel close <channel-id>` | Close a channel (requires `--peer <pubkey>`; `--force` for a unilateral close) |
 
 ### `channel order`
 
@@ -135,7 +138,7 @@ All `issue` subcommands accept `--precision` for the number of decimal places.
 | `kaleido channel order get <order-id>` | Fetch order status (`--access-token`) |
 | `kaleido channel order pay <order-id>` | Pay for a channel order (`--access-token`; non-interactively pass `--onchain` or `--offchain`, plus `--fee-rate` and `--yes`) |
 | `kaleido channel order decide <order-id>` | Submit a rate decision (`--accept` or `--reject`, `--access-token`) |
-| `kaleido channel order estimate-fees` | Estimate channel-order fees |
+| `kaleido channel order estimate-fees` | Estimate channel-order fees (`--lsp-balance`, `--client-balance`, `--asset-id`, `--lsp-asset-amount`, `--client-asset-amount`, `--expiry-blocks`, `--token`, `--rfq-id`) |
 
 ### `channel lsp`
 
@@ -170,7 +173,7 @@ All `issue` subcommands accept `--precision` for the number of decimal places.
 |--------|---------|
 | `kaleido market assets` | List assets |
 | `kaleido market pairs` | List pairs |
-| `kaleido market quote <pair>` | Request a quote |
+| `kaleido market quote <pair>` | Request a quote (`--from-amount`/`--to-amount`, `--from-layer`, `--to-layer`) |
 | `kaleido market info` | Maker node information |
 | `kaleido market routes <pair>` | Available routes |
 
@@ -180,7 +183,7 @@ All `issue` subcommands accept `--precision` for the number of decimal places.
 
 | Command | Summary |
 |--------|---------|
-| `kaleido swap atomic init <pair>` | Initialize an atomic swap |
+| `kaleido swap atomic init <pair>` | Initialize an atomic swap (`--from-amount`/`--to-amount`, `--from-layer`, `--to-layer`, `--yes/-y`) |
 | `kaleido swap atomic execute` | Execute the swap (`--swapstring`, `--taker-pubkey`, `--payment-hash`, prompted if omitted; `--auto-whitelist` whitelists on the local node first) |
 | `kaleido swap atomic status <payment-hash>` | Atomic swap status |
 | `kaleido swap atomic run <pair>` | Run the full atomic flow |
@@ -191,10 +194,33 @@ All `issue` subcommands accept `--precision` for the number of decimal places.
 |--------|---------|
 | `kaleido config show` | Print current config |
 | `kaleido config set <key> <value>` | Update one config key |
-| `kaleido config reset` | Reset config to defaults |
+| `kaleido config reset` | Reset config to defaults (`--yes/-y`) |
 | `kaleido config path` | Print config file path |
 
 Valid config keys: `node-url`, `api-url`, `network`, `spawn-dir`
+
+## Amounts And Layers
+
+| Commands | Amount unit |
+|----------|-------------|
+| `market quote`, `swap atomic init`, `swap atomic run` | Display units — `--from-amount 0.001` is 0.001 BTC |
+| `asset invoice`, `asset send`, `payment *` | Raw integer units, per the asset's precision |
+| `wallet send`, `wallet create-utxos`, `channel open --capacity` | Satoshis |
+
+Layer values also differ by command: `market quote` accepts `BTC_LN`, `RGB_LN`, and `BTC_ONCHAIN`, while `swap atomic init` and `swap atomic run` accept `BTC_L1`, `BTC_LN`, `RGB_L1`, and `RGB_LN`.
+
+## Short Aliases
+
+| Alias | Option | Used by |
+|-------|--------|---------|
+| `-p` | `--password` | `node init`, `node unlock`, `wallet backup`, `wallet restore` |
+| `-y` | `--yes` | `node clean`, `config reset`, `channel order create`, `channel order pay`, `swap atomic init`, `swap atomic run` |
+| `-n` | `--node` / `--num` | `node use` / `wallet create-utxos` |
+| `-s` | `--service` | `node logs` |
+| `-c` | `--capacity` | `channel open` |
+| `-a` | `--amount` / `--amount-msat` | `asset invoice` / `payment invoice` |
+| `-e` | `--expiry` | `payment invoice` |
+| `-b` | `--blocks` | `wallet estimate-fee` |
 
 ## Machine-Readable Mode
 
@@ -204,3 +230,5 @@ Every command group can be combined with `--json`:
 kaleido --json wallet balance
 kaleido --json market quote BTC/USDT --from-amount 0.001
 ```
+
+Pair it with `--agent` in scripts so a missing value fails fast instead of waiting on a prompt, and add `--yes` to anything that spends funds or accepts a price. See [Troubleshooting](/cli/troubleshooting#scripting-and-automation).

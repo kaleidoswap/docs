@@ -1,0 +1,203 @@
+---
+title: "KaleidoCLI 常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoCLI 的常见问题：Docker 依赖、金额单位、交换范围、密钥保管、配置优先级，以及在脚本与自动化场景中的用法"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="我必须安装 Docker 和本地节点吗？" icon="server">
+    只有需要连接节点的命令才需要。
+
+    | 命令组 | 是否需要节点 |
+    |--------|--------------|
+    | `market`、`config`、`channel lsp`、`channel order get` / `decide` | 不需要 —— 它们只访问 KaleidoSwap API |
+    | `node`、`wallet`、`asset`、`channel`、`peer`、`payment`、`swap atomic` | 需要 |
+
+    只装一个 CLI，就可以浏览交易对并请求报价：
+
+    ```bash
+    kaleido setup --mode market --defaults
+    kaleido market pairs
+    ```
+
+    Docker 只用于 `node` 管理的本地环境。如果你已经在别处运行 RGB 闪电节点，用 `--node-url` 指过去即可，完全不需要 Docker。
+  </Accordion>
+
+  <Accordion title="该用 kaleido setup 还是 kaleido node create？" icon="rocket">
+    `setup` 是首次使用的入口，`node create` 是创建更多环境的向导。
+
+    - **`kaleido setup`** 把 API 和节点默认值写入 `~/.kaleido/config.json`；在 `local` 模式下还会用默认端口创建并启动一个环境。不带参数的 `kaleido setup` 以非交互方式运行，因此 Docker 必须已经在运行。
+    - **`kaleido node create [name]`** 会依次询问基础目录、名称、节点数量、网络和基础端口。需要第二个环境或非默认端口时用它。
+
+    详见[快速开始](/cn/cli/getting-started)与[节点环境](/cn/cli/node-environments)。
+  </Accordion>
+
+  <Accordion title="为什么我的金额差了好几个数量级？" icon="calculator">
+    因为不同命令使用两套不同的单位约定。
+
+    | 命令 | 单位 |
+    |------|------|
+    | `market quote`、`swap atomic init`、`swap atomic run` | **显示单位** —— `--from-amount 0.001` 表示 0.001 BTC |
+    | `asset invoice`、`asset send`、`payment invoice`、`payment send`、`payment keysend` | **原始整数单位** —— 由资产精度决定换算关系 |
+    | `wallet send`、`wallet create-utxos`、`channel open --capacity` | 聪（satoshi） |
+
+    所以报价用 `--from-amount 0.001` 是对的，而 `kaleido asset send rgb:abc... 100 rgb:invoice...` 发送的是 100 个原始单位，不是 100 个显示单位。发送前先用 `kaleido asset metadata <asset-id>` 确认精度。
+  </Accordion>
+
+  <Accordion title="swap atomic 和 node swap 有什么区别？" icon="code-compare">
+    它们是同一套协议的两种作用范围。
+
+    | 范围 | maker 一侧 | 适用场景 |
+    |------|-----------|----------|
+    | `kaleido swap atomic …` | 远端的 KaleidoSwap maker | 真实交易，用本地节点作为 taker |
+    | `kaleido node swap …` | 你自己的节点 | 调试、演示，以及逐步手动执行协议步骤 |
+
+    日常交易用 `kaleido swap atomic run <pair>` 即可，它把 init、whitelist 和 execute 合并成一条命令。详见[市场与交换](/cn/cli/market-and-swaps)。
+  </Accordion>
+
+  <Accordion title="可以传哪些 layer 值？" icon="layer-group">
+    可接受的取值取决于具体命令：
+
+    - `market quote` —— `BTC_LN`、`RGB_LN`、`BTC_ONCHAIN`
+    - `swap atomic init` 与 `swap atomic run` —— `BTC_L1`、`BTC_LN`、`RGB_L1`、`RGB_LN`
+
+    `--from-layer` 和 `--to-layer` 都是可选的：省略时，layer 由请求的交易对方向推导。需要指定具体路径时再显式传入，例如通过闪电发送、通过 RGB on Lightning 接收：
+
+    ```bash
+    kaleido market quote BTC/USDT --from-amount 0.001 --from-layer BTC_LN --to-layer RGB_LN
+    ```
+  </Accordion>
+
+  <Accordion title="CLI 会保管我的密钥吗？" icon="key">
+    **不会。** CLI 只是两套 HTTP API 之上的终端客户端。助记词在你运行 `kaleido node init` 时于 RGB 闪电节点内部生成，所有签名也都在节点里完成。CLI 无法转移节点未授权的任何资金。
+
+    用 `--password` 传入的钱包密码会留在 shell 历史里 —— 重要场景请使用交互式输入，并把 `kaleido wallet backup` 的备份妥善保存。
+  </Accordion>
+
+  <Accordion title="为什么每次重启后都要解锁？" icon="lock-open">
+    节点的密钥在静态时是加密的，因此启动后处于锁定状态。`kaleido node init` 每个节点只需运行一次，`kaleido node unlock` 则每次重启后都要运行。
+
+    解锁同时决定节点使用哪些比特币服务。交互模式下 CLI 会提供三种配置档 —— signet 默认值、regtest 默认值或自定义 —— 并询问节点如何跟随链：
+
+    - `--chain-sync block`（默认）通过 RPC 从 bitcoind 读取区块
+    - `--chain-sync transaction` 只依赖索引器跟随链，完全不需要 bitcoind
+
+    使用 `--chain-sync transaction` 时，`--bitcoind-*` 选项会被忽略。详见[节点环境](/cn/cli/node-environments#initialize-and-unlock)。
+  </Accordion>
+
+  <Accordion title="配置以谁为准 —— 标志、环境变量还是配置文件？" icon="sliders">
+    优先级从高到低：
+
+    1. 命令行标志：`--node-url`、`--api-url`
+    2. 环境变量：`KALEIDO_NODE_URL`、`KALEIDO_API_URL`
+    3. `~/.kaleido/config.json` 中保存的配置
+
+    用 `kaleido config show` 查看已保存的配置，用 `kaleido config path` 查看文件路径。注意 `kaleido node use <name>` 写入的是保存的配置，因此对同时传了 `--node-url` 的命令不起作用。
+  </Accordion>
+
+  <Accordion title="可以同时运行多个节点吗？" icon="layer-group">
+    可以。每个环境都是独立的 Docker Compose 项目，拥有自己的 compose 文件、数据卷和端口，而且一个环境内可以有多个节点。
+
+    ```bash
+    kaleido node create testenv     # 在向导的节点数量提示处填 2
+    kaleido node list               # ● 标记当前生效的节点
+    kaleido node use testenv --node 2
+    ```
+
+    节点 1 使用守护进程端口 3001 和对等端口 9735，节点 2 使用 3002 和 9736，依此类推。只有一个环境时，`up`、`stop`、`logs`、`clean` 等命令会自动识别；有多个时必须指定名称。
+  </Accordion>
+
+  <Accordion title="node stop、down 和 clean 有什么区别？" icon="trash">
+    区别在于删除的范围：
+
+    | 命令 | 容器 | 网络 | 数据卷 |
+    |------|------|------|--------|
+    | `kaleido node stop` | 停止 | 保留 | 保留 |
+    | `kaleido node down` | 删除 | 删除 | 保留 |
+    | `kaleido node clean` | 删除 | 删除 | **删除** |
+
+    `clean` 不可撤销：它会先关停环境，再删除数据卷，钱包也在其中。如果节点里还有你需要的东西，先执行 `kaleido wallet backup`。
+  </Accordion>
+
+  <Accordion title="为什么操作 RGB 资产前要先创建 UTXO？" icon="coins">
+    RGB 的分配绑定在特定的比特币输出上，因此节点需要空闲的「有色」UTXO 才能发行、接收或发送资产。链上余额即使充足，如果只集中在一个大 UTXO 上也不够用。
+
+    ```bash
+    kaleido wallet create-utxos --num 10 --size 3000
+    ```
+
+    在大量 RGB 操作之前一次性准备好，不要用一个建一个。`--up-to` 会把 `--num` 的含义从「新建这么多个」改为「补齐到总共这么多个」。
+  </Accordion>
+
+  <Accordion title="如何在脚本或 agent 中驱动 CLI？" icon="robot">
+    三个标志就够了：
+
+    - `--json` 返回原始 JSON 而不是表格，便于交给 `jq`
+    - `--agent` 关闭所有交互提示，缺少参数时直接报错而不是阻塞
+    - `--yes` 自动确认报价、付款和破坏性操作
+
+    ```bash
+    kaleido --json --agent market quote BTC/USDT --from-amount 0.001 | jq '.to_asset.amount'
+    kaleido --agent swap atomic run BTC/USDT --from-amount 0.001 --yes
+    ```
+
+    非交互模式下 CLI 宁可报错也不会猜测，例如 `--yes is required in non-interactive mode to accept the quoted price.`。详见[故障排查](/cn/cli/troubleshooting#scripting-and-automation)。
+  </Accordion>
+
+  <Accordion title="CLI 是基于 KaleidoSDK 构建的吗？" icon="code">
+    是的 —— 它封装了 Python 版 SDK（`kaleido-sdk`），这也是命令输出与 API 模型高度一致的原因。实际影响有三点：
+
+    - 请求使用 30 秒超时，最多重试 3 次
+    - 错误以 `Error: <message>` 的形式呈现，来自底层 SDK 异常，因此 [SDK 错误参考](/cn/sdk/troubleshooting#error-reference)解释了失败的含义
+    - `market quote` 的显示金额使用与 SDK 相同的精度换算工具
+
+    如果你要开发应用而不是执行命令，请直接使用 [KaleidoSDK](/cn/sdk/introduction)。
+  </Accordion>
+
+  <Accordion title="该选 CLI、SDK 还是桌面应用？" icon="scale-balanced">
+    | 工具 | 最适合 |
+    |------|--------|
+    | [KaleidoCLI](/cn/cli/introduction) | 在终端运行节点、编写脚本、CI 以及 agent 驱动的流程 |
+    | [KaleidoSDK](/cn/sdk/introduction) | 用 TypeScript 或 Python 开发应用 |
+    | [桌面应用](/cn/desktop-app/getting-started/introduction) | 提供同样交易与通道功能的图形化钱包 |
+
+    三者驱动的是同一套 API，所以用 CLI 创建的节点也能从 SDK 使用，反之亦然。
+  </Accordion>
+
+  <Accordion title="如何安装、更新，以及查看版本？" icon="download">
+    CLI 从源码安装 —— 它没有发布到 PyPI，因此 `pip install kaleido-cli` 找不到这个包。请使用引导安装脚本或 `uv`：
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.sh | sh
+    uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+    ```
+
+    重新执行同一条命令即可更新，`uv` 安装会替换已有的工具。CLI 没有 `kaleido --version` 标志，因此请以 `uv tool list` 的输出或安装时的提交号来说明版本。完整方式见[安装](/cn/cli/installation)。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请查阅[故障排查](/cn/cli/troubleshooting)；上游文档与相关链接见[更多资源](/cn/cli/additional-resources)。
+
+其他情况请通过下面你偏好的渠道反馈问题，并附上：
+
+1. CLI 的安装方式，以及 `uv tool list` 的输出（没有 `--version` 标志）
+2. Python 版本（`python --version`）与操作系统
+3. 你执行的完整命令，以及加上 `--json` 后的输出
+4. 节点是本地 Docker 环境还是远程节点，以及所在网络
+5. `kaleido config show` 与 `kaleido node ps` 的输出，去掉其中的密码
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    在相应的仓库中报告缺陷。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

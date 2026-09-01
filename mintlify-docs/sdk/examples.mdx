@@ -59,7 +59,7 @@ const client = KaleidoClient.create({
   baseUrl: 'https://api.signet.kaleidoswap.com',
 });
 
-client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id');
 
 const stop = await client.maker.streamQuotesByTicker(
   'BTC',
@@ -81,7 +81,7 @@ client = KaleidoClient.create(
     base_url="https://api.signet.kaleidoswap.com"
 )
 
-client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id")
 
 stop = await client.maker.stream_quotes_by_ticker(
     "BTC",

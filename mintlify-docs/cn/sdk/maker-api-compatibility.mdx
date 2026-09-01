@@ -1,17 +1,19 @@
 ---
-title: 'Maker API 兼容性'
+title: 'Maker API'
 description: "了解 KaleidoSDK 版本如何跟随 Maker API 演进，以及 SDK 通过 client.maker 暴露的接口端点分组和调用方式。"
 ---
+
+Maker API 由 KaleidoSwap 托管，通过网络直接访问，你自己不需要运行任何基础设施。它提供市场数据与报价、做市方一侧的原子交换协调，以及 LSPS1 通道订购。
 
 ## 兼容性
 
 SDK 始终跟随**最新的 Maker API** 版本：这一侧不需要管理版本配对关系。请让两者都保持更新，以便使用受支持的接口端点，并第一时间用上新功能。
 
 <Note>
-要查看当前的 Maker API 版本和更新内容，请参阅 [Maker API 更新日志](https://github.com/kaleidoswap/maker-api/releases) 或你自己的 API 文档。
+当前的 Maker API 接口详情见 [API 参考](/cn/api-reference/introduction)。SDK 类型所基于的 OpenAPI 规范发布在 [kaleidoswap/specs](https://github.com/kaleidoswap/specs)。
 </Note>
 
-## API 接口端点分组
+## 接口端点分组
 
 Maker API 提供以下接口端点分组：
 
@@ -25,46 +27,4 @@ Maker API 提供以下接口端点分组：
 基于订单的交换接口端点（`/api/v1/swaps/orders/*`）已下线，对应的 SDK 方法在 **0.1.13** 中被移除。请改用原子交换流程 —— 参阅 [如何交换](/cn/sdk/how-to-swap)。
 </Note>
 
-## 使用 Maker API
-
-在 SDK 中使用 Maker API 功能：
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
-
-// 通过 client.maker 访问 Maker API
-const assets = await client.maker.listAssets();
-const pairs = await client.maker.listPairs();
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
-});
-```
-
-```python Python
-import asyncio
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
-
-async def main():
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com"
-    )
-
-    # 通过 client.maker 访问 Maker API
-    assets = await client.maker.list_assets()
-    pairs = await client.maker.list_pairs()
-    quote = await client.maker.get_quote(
-        PairQuoteRequest(
-            from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
-            to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-        )
-    )
-
-asyncio.run(main())
-```
-</CodeGroup>
+所有分组都通过 `client.maker` 访问，除了客户端上的 `baseUrl` 之外不需要任何额外配置。第一次调用见[快速上手](/cn/sdk/getting-started)，全部方法见[客户端参考](/cn/sdk/api-reference)。

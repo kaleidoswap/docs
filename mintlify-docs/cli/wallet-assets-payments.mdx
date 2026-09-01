@@ -1,5 +1,6 @@
 ---
 title: 'Wallet, Assets, And Payments'
+sidebarTitle: 'Wallet & Assets'
 description: 'Manage bitcoin, Bitcoin L2 assets, Lightning invoices, and node backups through the KaleidoCLI'
 ---
 
@@ -11,6 +12,10 @@ These command groups require an active and unlocked node:
 kaleido node use default
 kaleido node unlock
 ```
+
+<Note>
+  **Units on this page.** `wallet` amounts are satoshis, and `asset` and `payment` amounts are raw integer units, where the asset's precision decides the conversion — check it with `kaleido asset metadata <asset-id>`. Display amounts such as `--from-amount 0.001` appear only on [market and swap commands](/cli/market-and-swaps).
+</Note>
 
 ## BTC Wallet
 
@@ -28,23 +33,42 @@ kaleido node unlock
 | `kaleido wallet backup <path>` | Create an encrypted wallet backup |
 | `kaleido wallet restore <path>` | Restore from a backup archive |
 | `kaleido wallet change-password` | Rotate the wallet password |
+`balance`, `utxos`, and `transactions` accept `--skip-sync` to return cached state without syncing first.
+
 ### Examples
 
 ```bash
 kaleido wallet address
 kaleido wallet balance
-kaleido wallet send 50000 bc1q...
+kaleido wallet send 50000 bc1q... --fee-rate 2
+kaleido wallet estimate-fee --blocks 6
+```
+
+### Colored UTXOs
+
+RGB assignments live on specific Bitcoin outputs, so the node needs spare UTXOs before it can issue, receive, or send an asset:
+
+```bash
 kaleido wallet create-utxos --num 10 --size 3000
 ```
+
+| Option | Purpose |
+|--------|---------|
+| `--num`, `-n` | How many UTXOs to create |
+| `--size` | Size of each UTXO in satoshis |
+| `--up-to` | Treat `--num` as a total to top up to, rather than a count to add |
+| `--fee-rate` | On-chain fee rate in sat/vbyte |
+| `--skip-sync` | Skip the blockchain sync before creating them |
 
 ### Backup and restore
 
 ```bash
 kaleido wallet backup ~/kaleido-backup.zip
 kaleido wallet restore ~/kaleido-backup.zip
+kaleido wallet change-password --old-password <old> --new-password <new>
 ```
 
-Both commands accept `--password`. Restore overwrites the current node data, so use it deliberately.
+`backup` and `restore` both accept `--password`, `-p`. Restore overwrites the current node data, so use it deliberately.
 
 ## RGB Assets
 
@@ -57,7 +81,7 @@ Both commands accept `--password`. Restore overwrites the current node data, so 
 | `kaleido asset metadata <asset-id>` | Show asset metadata |
 | `kaleido asset invoice <asset-id>` | Create an RGB invoice |
 | `kaleido asset send <asset-id> <amount> <invoice>` | Send RGB assets |
-| `kaleido asset send-batch` | Send to multiple RGB recipients in one transaction |
+| `kaleido asset send-batch <json-file>` | Send to multiple RGB recipients in one transaction, from a JSON file |
 | `kaleido asset transfers <asset-id>` | Inspect transfer history |
 | `kaleido asset refresh` | Refresh pending transfers |
 | `kaleido asset sync` | Synchronize the RGB wallet |
@@ -80,6 +104,8 @@ Use:
 - `cfa` for collectible fungible assets
 - `uda` for unique digital assets
 
+All three accept `--precision` for the number of decimal places, and `--supply` is expressed in the smallest raw unit. `cfa` and `uda` also accept `--description`.
+
 ### Asset invoice and send examples
 
 ```bash
@@ -93,7 +119,26 @@ Notable `asset send` options:
 - `--min-confirmations`
 - `--donation`
 - `--transport-endpoint`
+- `--witness-amount-sat` and `--witness-blinding`
 - `--skip-sync`
+
+### Batch sends
+
+`asset send-batch` takes a path to a JSON file describing the recipients, not inline flags:
+
+```bash
+kaleido asset send-batch ./transfers.json
+```
+
+### Keeping transfers moving
+
+```bash
+kaleido asset refresh
+kaleido asset sync
+kaleido asset transfers rgb:abc123...
+```
+
+Run `refresh` to advance pending transfers and `sync` to resynchronise the RGB wallet. Only when a transfer is genuinely dead should you release its allocations with `kaleido asset fail-transfers`, which accepts `--batch-idx` to target one batch, `--no-asset-only` to limit it to transfers with no asset, and `--skip-sync`.
 
 ## Lightning And RGB+LN Payments
 
@@ -133,4 +178,4 @@ When paying zero-amount invoices, provide `--amount-msat`. For RGB+LN payments, 
 - Use `--skip-sync` only when stale wallet or transfer state is acceptable.
 - Create extra UTXOs before heavy RGB activity to avoid running out of usable colored outputs.
 
-See [Channels And LSP Flows](/cli/channels-lsp) next if you are managing channels or ordering inbound liquidity.
+See [Channels And LSP Flows](/cli/channels-lsp) next if you are managing channels or ordering inbound liquidity, or [Troubleshooting](/cli/troubleshooting#wallet-and-assets) if a balance, transfer, or send is not behaving.

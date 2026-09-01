@@ -23,16 +23,6 @@ description: "KaleidoSwap AI 工具的相关链接：各个源码仓库、MCP �
   </Card>
 </CardGroup>
 
-### 单域 MCP 服务器
-
-| 仓库 | 工具前缀 | 领域 |
-|-----------|-------------|--------|
-| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node 钱包、通道、原子交换接单方 |
-| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark 钱包、闪电网络、代币转账、BTC 桥接 |
-| [wdk-wallet-liquid-mcp](https://github.com/kaleidoswap/wdk-wallet-liquid-mcp) | `liquid_*` | Liquid 钱包、L-BTC 与资产余额、保密发送 |
-| [kaleidoswap-mcp](https://github.com/kaleidoswap/kaleidoswap-mcp) _（已归档）_ | `kaleidoswap_*` | 已被 kaleido-mcp 中的 `kaleidoswap_*` 工具取代 |
-| [l402-gateway-mcp](https://github.com/kaleidoswap/l402-gateway-mcp) _（已归档）_ | `mpp_*`、`l402_*` | 已被 kaleido-mcp 中的 `mpp_*` / `l402_*` 工具取代 |
-
 ## 协议规范
 
 <CardGroup cols={2}>
@@ -50,42 +40,32 @@ description: "KaleidoSwap AI 工具的相关链接：各个源码仓库、MCP �
   </Card>
 </CardGroup>
 
-## KaleidoSwap 参考文档
+## 获取帮助
 
-先读这几篇，代理工具会好理解得多，因为那些工具只是它们之上的一层薄封装。
+如果遇到的是报错，请查看[故障排查](/cn/ai-tools/troubleshooting)；如果是疑问，请查看[常见问题](/cn/ai-tools/faq)。
 
-<CardGroup cols={2}>
-  <Card title="交换协议" icon="arrows-rotate" href="/cn/api-reference/swap-protocol">
-    原子 HTLC 流程如何结算，也就是交换工具所编排的那套流程。
-  </Card>
-  <Card title="RGB LSPS1 API" icon="code" href="/cn/api-reference/rgb-lsps1-apis">
-    `kaleidoswap_lsp_*` 背后的通道下单接口端点。
-  </Card>
-  <Card title="CLI" icon="terminal" href="/cn/cli/introduction">
-    KaleidoAgent 调用的那个可执行文件，也是节点生命周期工具的来源。
-  </Card>
-  <Card title="SDK" icon="code" href="/cn/sdk/introduction">
-    直接从 TypeScript 或 Python 调用交换基础设施，跳过代理这一层。
-  </Card>
-</CardGroup>
+其他情况请通过下面任一渠道反馈问题，并附上：
 
-## 产品与社区
+1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
+2. 你所在的网络（regtest、signet 或主网）
+3. 失败的工具名称和报错文本
+4. 宿主与运行时版本（MCP 客户端、Node.js）
+5. 你的配置，并移除其中的种子和所有密钥
 
-<CardGroup cols={2}>
-  <Card title="AI 工具产品页" icon="sparkles" href="https://kaleidoswap.com/products/ai-tools">
-    产品概览，以及每个 skill 的可阅读与可下载版本。
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
   </Card>
-  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
-    社区支持与讨论。
-  </Card>
-  <Card title="GitHub" icon="github" href="https://github.com/kaleidoswap">
-    Issue、Pull Request 和完整源码。
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    在相关仓库提交缺陷报告。
   </Card>
   <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
     紧急问题的直接支持渠道。
   </Card>
 </CardGroup>
 
-<Note>
-  反馈某个 AI 接入方式的问题时，请附上失败的工具名称、你所在的网络，以及移除了种子和所有 API 密钥的配置。请先查看[故障排查](/cn/ai-tools/troubleshooting)。
-</Note>
+---
+
+<Card title="AI 工具产品页" icon="sparkles" href="https://kaleidoswap.com/products/ai-tools">
+  产品概览，以及每个 skill 的可阅读与可下载版本。
+</Card>

@@ -1,9 +1,11 @@
 ---
-title: 'RLN API Compatibility'
+title: 'RLN API'
 description: "Which RGB Lightning Node (RLN) API version each KaleidoSDK release targets, with the node-side endpoint categories client.rln exposes"
 ---
 
 import { sdkVersion, rlnApiVersion } from "/snippets/versions.mdx";
+
+The RLN (RGB Lightning Node) API is provided directly by your configured RGB Lightning Node. It enables wallet operations, Lightning channel management, and node-to-node swap coordination.
 
 ## Compatibility
 
@@ -15,11 +17,7 @@ The SDK automatically supports the most recent RLN API release. Always keep your
 To check the latest RLN API changes and updates, refer to the [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) or your node documentation.
 </Note>
 
-## RLN API Overview
-
-The RLN (RGB Lightning Node) API is provided directly by your configured RGB Lightning Node. It enables wallet operations, Lightning channel management, and node-to-node swap coordination.
-
-## RLN API Categories
+## Categories
 
 | Category | Purpose | Examples |
 |---|---|---|
@@ -29,52 +27,4 @@ The RLN (RGB Lightning Node) API is provided directly by your configured RGB Lig
 | **Payments** | Payment execution | Pay invoices, coordinate swaps, node-to-node transactions |
 | **Node Info** | Node status and configuration | Pubkey, sync status, capabilities |
 
-## Accessing RLN Operations
-
-Before using RLN operations, ensure your node is configured:
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',  // Required for RLN operations
-});
-
-// Check if node is configured
-if (client.hasNode()) {
-  // Access RLN API through client.rln
-  const nodeInfo = await client.rln.getNodeInfo();
-  const balance = await client.rln.getBtcBalance();
-  const channels = await client.rln.listChannels();
-} else {
-  console.log('Node not configured - RLN operations unavailable');
-}
-```
-
-```python Python
-import asyncio
-from kaleido_sdk import KaleidoClient
-
-
-async def main():
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com",
-        node_url="http://localhost:3001"  # Required for RLN operations
-    )
-
-    # Check if node is configured
-    if client.has_node():
-        # Access RLN API through client.rln
-        node_info = await client.rln.get_node_info()
-        balance = await client.rln.get_btc_balance()
-        channels = await client.rln.list_channels()
-    else:
-        print("Node not configured - RLN operations unavailable")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-</CodeGroup>
+These are reached through `client.rln`, which requires a `nodeUrl` / `node_url` on the client: without one, TypeScript throws `ConfigError` and Python raises `NodeNotConfiguredError`. See [Getting Started](/sdk/getting-started) for the setup and the node checks, and the [Client Reference](/sdk/api-reference) for every method.

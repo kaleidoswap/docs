@@ -1,0 +1,67 @@
+---
+title: "KaleidoCLI: Installation"
+sidebarTitle: "Installation"
+description: 'Install the KaleidoCLI with the one-line installer, uv, or a local checkout, with the runtime requirements and shell completion'
+---
+
+The CLI is installed from source. It is not published on PyPI, so `pip install kaleido-cli` will not find it.
+
+## Requirements
+
+- Python 3.10 or newer
+- Docker and Docker Compose for `node` commands and any local RLN workflow
+- `curl` or `wget`, only for the one-line shell installer
+
+## Install the CLI
+
+### One-line installer
+
+For macOS, Linux, and WSL:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.sh | sh
+```
+
+With Python alone, and no `curl` or `wget`:
+
+```bash
+python3 -c "import urllib.request; exec(urllib.request.urlopen('https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.py').read())"
+```
+
+The installer prefers `uv tool install` when available, and otherwise creates an isolated Kaleido virtual environment with a `kaleido` launcher in your user script directory. It never installs into the system Python.
+
+### Install globally with `uv`
+
+```bash
+uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+```
+
+This installs the `kaleido` executable without cloning the repository first. Re-run the same command to update.
+
+### Install from a local checkout
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-cli
+cd kaleido-cli
+./install.sh
+```
+
+`make install` does the same through `uv tool`, and `python install.py` is the cross-platform path for Windows.
+
+If your shell cannot find `kaleido` after installing, the installer prints the directory to add to your `PATH` — see [Troubleshooting](/cli/troubleshooting#installation-issues).
+
+## Shell Completion
+
+Install completion for your current shell with:
+
+```bash
+kaleido --install-completion
+```
+
+Or print the completion script for manual installation:
+
+```bash
+kaleido --show-completion
+```
+
+With `kaleido` on your `PATH`, continue to [Getting Started](/cli/getting-started) to run first-time setup.

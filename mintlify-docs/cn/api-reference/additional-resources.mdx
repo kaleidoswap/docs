@@ -1,0 +1,111 @@
+---
+title: "比特币交换 API：更多资源"
+sidebarTitle: "更多资源"
+description: "面向 KaleidoSwap API 集成方的链接汇总：OpenAPI 规范、SDK 与命令行工具、节点与协议参考、测试网络以及支持渠道。"
+---
+
+## 规范与客户端
+
+<CardGroup cols={2}>
+  <Card title="OpenAPI 规范" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    KaleidoSwap API 的带版本规范，每次发布时更新。直接对比两个版本，而不是在运行时才发现变化。
+  </Card>
+
+  <Card title="TypeScript 与 Python SDK" icon="code" href="/cn/sdk/introduction">
+    由这些规范生成的类型化客户端，把 Maker API 和你的节点分别封装在 `client.maker.*` 与 `client.rln.*` 之后。
+  </Card>
+
+  <Card title="命令行工具" icon="terminal" href="/cn/cli/introduction">
+    从终端驱动节点、取报价、做交换 —— 在动手写客户端之前手动摸清 API 的好办法。
+  </Card>
+
+  <Card title="快速开始" icon="rocket" href="/cn/api-reference/getting-started">
+    基础 URL、认证、请求格式、版本管理与速率限制。
+  </Card>
+</CardGroup>
+
+## 协议参考
+
+<CardGroup cols={2}>
+  <Card title="交换协议" icon="arrows-rotate" href="/cn/api-reference/swap-protocol">
+    完整的原子 HTLC 流程，附时序图以及每一步所用的接口端点。
+  </Card>
+
+  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    提供 RLN API 并负责把 swapstring 加入白名单的节点。这是 KaleidoSwap 的分支；[上游项目](https://github.com/RGB-Tools/rgb-lightning-node)由 RGB Tools 维护。
+  </Card>
+
+  <Card title="LSPS1（bLIP-51）" icon="scroll" href="https://github.com/lightning/blips/blob/master/blip-0051.md">
+    我们的[通道订单接口端点](/cn/api-reference/rgb-lsps1-apis)所实现的 Channel Requests 规范，并在此基础上扩展了 RGB 资产分配。
+  </Card>
+
+  <Card title="RGB 协议文档" icon="gem" href="https://docs.rgb.info">
+    客户端校验、资产接口，以及 API 返回的 `rgb:` 合约 ID 背后的规范本身。
+  </Card>
+</CardGroup>
+
+## 环境与测试
+
+上主网之前请先在 signet 上集成。目前无需 API 密钥，匿名请求仍会被正常处理。
+
+| 环境 | REST 基础 URL | WebSocket |
+|-------------|---------------|-----------|
+| **signet（MutinyNet）** | `https://api.signet.kaleidoswap.com/api/v1` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+| **主网** | `https://api.kaleidoswap.com/api/v1`（即将推出） | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}`（即将推出） |
+
+资产 ID 在不同环境之间不通用 —— 请从 `GET /api/v1/market/assets` 读取，并按环境区分配置。
+
+<CardGroup cols={2}>
+  <Card title="Mutiny 水龙头" icon="faucet" href="https://faucet.mutinynet.com/">
+    获取 signet 比特币，用于给节点充值和开通测试通道。
+  </Card>
+
+  <Card title="Mutinynet 区块浏览器" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    在链上确认交换是否已结算、通道开启是否已确认。
+  </Card>
+
+  <Card title="节点托管" icon="server" href="/cn/desktop-app/getting-started/node-hosting">
+    交换接口端点所需的 RGB Lightning Node 的部署方案。
+  </Card>
+</CardGroup>
+
+## 相关文档
+
+<CardGroup cols={2}>
+  <Card title="故障排查" icon="triangle-exclamation" href="/cn/api-reference/troubleshooting">
+    三种错误信封、状态码语义、重试策略，以及每种症状对应的修复方法。
+  </Card>
+
+  <Card title="SDK 示例" icon="file-code" href="/cn/sdk/examples">
+    原子交换流程的端到端代码 —— 如果你更愿意读能跑的代码而不是接口表格。
+  </Card>
+
+  <Card title="架构" icon="diagram-project" href="/cn/whats-kaleidoswap/architecture">
+    做市方、LSP 和你的节点各自处在什么位置。
+  </Card>
+
+  <Card title="术语表" icon="book" href="/cn/whats-kaleidoswap/glossary">
+    RFQ、swapstring、HTLC、层，以及这些接口端点默认你已经知道的其他术语。
+  </Card>
+</CardGroup>
+
+## 获取帮助
+
+如果遇到的是报错，请查阅[故障排查](/cn/api-reference/troubleshooting)；如果是疑问，请看[常见问题](/cn/api-reference/faq)。
+
+其他情况请从下面的渠道中选择一个反馈问题，并附上：
+
+1. 请求 URL 与 HTTP 方法
+2. 请求负载（请隐去 API 密钥）
+3. 完整的错误响应，包含 `request_id`
+4. 请求的时间戳
+5. 运行环境（signet / 主网）
+
+<CardGroup cols={2}>
+  <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
+    向社群提问。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

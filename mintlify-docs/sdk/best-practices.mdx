@@ -8,31 +8,9 @@ description: "Guidelines for building production apps with the KaleidoSDK, cover
 
 ### Use Environment Variables
 
-Keep configuration out of source code:
+Keep configuration out of source code. The SDK does not auto-load environment variables — read them yourself and pass them to `create()`.
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: process.env.KALEIDO_API_URL!,
-  nodeUrl: process.env.KALEIDO_NODE_URL,
-  apiKey: process.env.KALEIDO_API_KEY,
-});
-```
-
-```python Python
-import os
-
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url=os.environ["KALEIDO_API_URL"],
-    node_url=os.environ.get("KALEIDO_NODE_URL"),
-    api_key=os.environ.get("KALEIDO_API_KEY"),
-)
-```
-</CodeGroup>
+For the conventional variable names and a full snippet in both languages, see [Installation](/sdk/installation#environment-variables).
 
 ### Use a Singleton Client
 
@@ -77,7 +55,7 @@ def get_client() -> KaleidoClient:
 
 ### Always Handle Errors
 
-Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Error Handling](/sdk/error-handling#comprehensive-error-handling) has the exhaustive version.
+Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Troubleshooting](/sdk/troubleshooting#comprehensive-error-handling) has the exhaustive version.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -118,7 +96,7 @@ except KaleidoError as e:
 
 Never retry blindly. Every error exposes `isRetryable()` / `is_retryable()`, which already encodes which failures can succeed on a second attempt — use it instead of matching on status codes yourself.
 
-For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Error Handling](/sdk/error-handling#retry-patterns).
+For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Troubleshooting](/sdk/troubleshooting#retry-patterns).
 
 ## Async Patterns
 
@@ -172,108 +150,29 @@ for name, fn in [
 
 ### Always Use Raw Units for API Calls
 
-The API works with raw (smallest unit) amounts. Convert display amounts before sending:
+The API works in raw (smallest unit) amounts, never display amounts. Convert with `parseRawAmount` / `parse_raw_amount` before building a quote request, and convert back with `toDisplayAmount` / `to_display_amount` before showing anything to the user.
 
-<CodeGroup>
-```typescript TypeScript
-import { parseRawAmount } from 'kaleido-sdk';
-
-// User enters 0.001 BTC
-const userInput = 0.001;
-const rawAmount = parseRawAmount(userInput, 8);  // 100000
-
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: rawAmount },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-});
-```
-
-```python Python
-from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, parse_raw_amount
-
-# User enters 0.001 BTC
-user_input = 0.001
-raw_amount = parse_raw_amount(user_input, 8)  # 100000
-
-quote = await client.maker.get_quote(PairQuoteRequest(
-    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=raw_amount),
-    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN)
-))
-```
-</CodeGroup>
+Both functions are documented in [Utilities](/sdk/utilities#amount-conversion).
 
 ### Use PrecisionHandler for Multi-Asset Apps
 
-When working with multiple assets, use `PrecisionHandler` to avoid precision errors:
+With more than one asset in play, passing a precision by hand on every call is how rounding bugs get in. `PrecisionHandler` reads the precision from asset metadata, so you convert by asset ID instead.
 
-<CodeGroup>
-```typescript TypeScript
-import { createPrecisionHandler } from 'kaleido-sdk';
-
-const handler = createPrecisionHandler(mappedAssets);
-
-// Convert safely using asset ID
-const raw = handler.toRawAmount(userInput, assetId);
-const display = handler.toDisplayAmount(rawFromApi, assetId);
-```
-
-```python Python
-from kaleido_sdk import create_precision_handler
-
-handler = create_precision_handler(mapped_assets)
-raw = handler.to_raw_amount(user_input, asset_id)
-display = handler.to_display_amount(raw_from_api, asset_id)
-```
-</CodeGroup>
+See [Utilities](/sdk/utilities#precisionhandler) for how to create one and the full method list.
 
 ## Node Operations
 
-### Check Node Before Using RLN
+`client.rln` is only usable when the client was created with a node URL, so guard every node call with `hasNode()` / `has_node()`. In Python, accessing `client.rln` without a node URL raises `NodeNotConfiguredError`.
 
-Always verify the node is configured:
-
-<CodeGroup>
-```typescript TypeScript
-if (!client.hasNode()) {
-  throw new Error('Node URL required for this operation');
-}
-
-const balance = await client.rln.getBtcBalance();
-```
-
-```python Python
-if not client.has_node():
-    raise RuntimeError("Node URL required for this operation")
-
-balance = await client.rln.get_btc_balance()
-```
-</CodeGroup>
+See [Getting Started](/sdk/getting-started#node-configuration-checks) for the guard pattern in both languages.
 
 ## WebSocket
 
 ### Unsubscribe When Done
 
-Always clean up WebSocket subscriptions:
+`streamQuotes` / `streamQuotesByTicker` return an unsubscribe function. Call it as soon as you stop needing quotes — on unmount, on navigation, or when the user closes the pair. Skipping it leaks memory and keeps quote traffic flowing that nobody reads.
 
-<CodeGroup>
-```typescript TypeScript
-const unsubscribe = await client.maker.streamQuotesByTicker(
-  'BTC', 'USDT', 100000, onQuote
-);
-
-// Clean up when component unmounts or user navigates away
-unsubscribe();
-```
-
-```python Python
-unsubscribe = await client.maker.stream_quotes_by_ticker(
-    "BTC", "USDT", 100000, on_quote
-)
-
-# Clean up when done
-unsubscribe()
-```
-</CodeGroup>
+See [WebSocket](/sdk/websocket#best-practices) for this and the other streaming guidelines.
 
 ### Handle Reconnection
 

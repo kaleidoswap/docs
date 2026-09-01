@@ -4,6 +4,15 @@ sidebarTitle: "客户端参考"
 description: "KaleidoSDK 中 KaleidoClient、MakerClient 与 RlnClient 的完整参考，涵盖各个方法、参数与返回类型。"
 ---
 
+## 总览 {#overview}
+
+`KaleidoClient` 是唯一的入口。创建一次之后，通过它的两个子客户端进行操作：
+
+- **`client.maker`** —— KaleidoSwap 托管的 [Maker API](/cn/sdk/maker-api-compatibility)：市场数据、报价、原子交换、LSPS1 通道订购
+- **`client.rln`** —— 你自己的 [RGB Lightning Node](/cn/sdk/rln-api-compatibility)：钱包、RGB 资产、通道、发票、支付
+
+`client.maker` 只需要 `baseUrl`，而 `client.rln` 还需要 `nodeUrl` / `node_url`。下文每个方法都同时给出 TypeScript 与 Python 两种形式。
+
 ## 客户端初始化
 
 <CodeGroup>

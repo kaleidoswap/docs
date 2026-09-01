@@ -50,7 +50,7 @@ CJK = "[一-鿿]"
 # titles that are nothing but product names / acronyms correctly stay English
 PROPER_ONLY = re.compile(
     r"^(?:Kaleido\w*|KaleidoSwap|Nostr|Wallet|Connect|SDK|CLI|API|NWC|RGB|MCP|"
-    r"LSPS1|RLN|Bitcoin|Lightning|FAQ|WebSocket|REST|Taproot|Assets|"
+    r"LSPS1|RLN|Maker|Bitcoin|Lightning|FAQ|WebSocket|REST|Taproot|Assets|"
     r"[-–&/()0-9.]+)(?:\s+|$)"
 )
 

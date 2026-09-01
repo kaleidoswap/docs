@@ -105,7 +105,7 @@ HTTP 状态码遵循标准约定：
 | `500` | 服务器内部错误 |
 | `503` | 服务不可用 —— 做市方或 LSP 节点暂时无法访问 |
 
-完整的错误码列表见[错误处理](/cn/api-reference/error-handling)。
+完整的错误码列表以及每种故障的修复方法见[故障排查](/cn/api-reference/troubleshooting)。
 
 ---
 
@@ -117,14 +117,8 @@ HTTP 状态码遵循标准约定：
 
 ## 使用 SDK
 
-除了直接调用 REST API，你也可以使用官方 KaleidoSDK 库，它们对这些接口端点做了封装，提供类型安全和便捷方法：
+除了直接调用 REST API，你也可以使用官方 KaleidoSDK 库：它们对这些接口端点做了封装，在 TypeScript 和 Python 中都提供类型安全和便捷方法。
 
-<CardGroup cols={2}>
-  <Card title="TypeScript SDK" icon="js" href="/cn/sdk/introduction">
-    从 OpenAPI 规范自动生成的类型化客户端，提供 `client.maker.*` 和 `client.rln.*` 子客户端
-  </Card>
-
-  <Card title="Python SDK" icon="python" href="/cn/sdk/introduction">
-    同步 Python 客户端，使用 Pydantic 模型，采用相同的子客户端架构
-  </Card>
-</CardGroup>
+<Card title="KaleidoSDK" icon="code" href="/cn/sdk/introduction">
+  由同一份 OpenAPI 规范生成的类型化客户端，提供 `client.maker.*` 和 `client.rln.*` 子客户端。
+</Card>

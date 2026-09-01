@@ -1,0 +1,205 @@
+---
+title: "KaleidoCLI FAQ"
+sidebarTitle: "FAQ"
+description: "Common questions about the KaleidoCLI, covering Docker requirements, amount units, swap scopes, custody, configuration precedence, and scripted use"
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Do I need Docker and a local node?" icon="server">
+    Only for the commands that talk to a node.
+
+    | Command groups                                                         | Needs a node                              |
+    | ---------------------------------------------------------------------- | ----------------------------------------- |
+    | `market`, `config`, `channel lsp`, `channel order get` / `decide`      | No — these only reach the KaleidoSwap API |
+    | `node`, `wallet`, `asset`, `channel`, `peer`, `payment`, `swap atomic` | Yes                                       |
+
+    You can browse pairs and request quotes with nothing installed but the CLI itself:
+
+    ```bash
+    kaleido setup --mode market --defaults
+    kaleido market pairs
+    ```
+
+    Docker is needed only for the Docker-backed environments that `node` manages. If you already run an RGB Lightning Node elsewhere, point the CLI at it with `--node-url` and skip Docker entirely.
+  </Accordion>
+
+  <Accordion title="Should I use kaleido setup or kaleido node create?" icon="rocket">
+    `setup` is the first-run path, `node create` is the wizard for additional environments.
+
+    * **`kaleido setup`** saves your API and node defaults to `~/.kaleido/config.json` and, in `local` mode, creates and starts one environment with default ports. Bare `kaleido setup` runs non-interactively, so Docker must already be running.
+    * **`kaleido node create [name]`** prompts for base directory, name, node count, network, and base ports. Use it when you want a second environment or non-default ports.
+
+    See [Getting Started](/cli/getting-started) and [Node Environments](/cli/node-environments).
+  </Accordion>
+
+  <Accordion title="Why are my swap amounts off by orders of magnitude?" icon="calculator">
+    Because two different unit conventions are in play, depending on the command.
+
+    | Commands                                                                            | Unit                                                                 |
+    | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+    | `market quote`, `swap atomic init`, `swap atomic run`                               | **Display units** — `--from-amount 0.001` means 0.001 BTC            |
+    | `asset invoice`, `asset send`, `payment invoice`, `payment send`, `payment keysend` | **Raw integer units** — the asset's precision decides the conversion |
+    | `wallet send`, `wallet create-utxos`, `channel open --capacity`                     | Satoshis                                                             |
+
+    So `--from-amount 0.001` is right for a quote, while `kaleido asset send rgb:abc... 100 rgb:invoice...` sends 100 raw units, not 100 display units. Check an asset's precision with `kaleido asset metadata <asset-id>` before sending.
+  </Accordion>
+
+  <Accordion title="What is the difference between swap atomic and node swap?" icon="code-compare">
+    They are two different scopes over the same protocol.
+
+    | Scope                   | Maker side                   | Use it for                                               |
+    | ----------------------- | ---------------------------- | -------------------------------------------------------- |
+    | `kaleido swap atomic …` | The remote KaleidoSwap maker | Real trades, using your local node as taker              |
+    | `kaleido node swap …`   | Your own node                | Debugging, demos, and driving each protocol step by hand |
+
+    For a normal trade, `kaleido swap atomic run <pair>` wraps init, whitelist, and execute in one command. See [Market And Swaps](/cli/market-and-swaps).
+  </Accordion>
+
+  <Accordion title="Which layer values can I pass?" icon="layer-group">
+    The accepted set depends on the command:
+
+    * `market quote` — `BTC_LN`, `RGB_LN`, `BTC_ONCHAIN`
+    * `swap atomic init` and `swap atomic run` — `BTC_L1`, `BTC_LN`, `RGB_L1`, `RGB_LN`
+
+    Both `--from-layer` and `--to-layer` are optional: when omitted, the layers are derived from the requested pair direction. Pass them explicitly when you need a specific route, such as sending over Lightning and receiving over RGB on Lightning:
+
+    ```bash
+    kaleido market quote BTC/USDT --from-amount 0.001 --from-layer BTC_LN --to-layer RGB_LN
+    ```
+  </Accordion>
+
+  <Accordion title="Does the CLI hold my keys?" icon="key">
+    **No.** The CLI is a terminal client over two HTTP APIs. The mnemonic is generated inside the RGB Lightning Node when you run `kaleido node init`, and every signature happens there. Nothing in the CLI can move funds the node has not authorised.
+
+    Wallet passwords passed with `--password` land in your shell history — prefer the interactive prompt for anything you care about, and keep backups from `kaleido wallet backup` somewhere safe.
+  </Accordion>
+
+  <Accordion title="Why do I have to unlock after every restart?" icon="lock-open">
+    The node keeps its keys encrypted at rest, so it starts locked. `kaleido node init` runs once per node; `kaleido node unlock` runs after every restart.
+
+    Unlock also tells the node which Bitcoin services to use. Interactively the CLI offers three profiles — signet defaults, regtest defaults, or custom — and asks how the node should follow the chain:
+
+    * `--chain-sync block` (default) reads blocks from a bitcoind over RPC
+    * `--chain-sync transaction` follows the chain from the indexer only, with no bitcoind at all
+
+    With `--chain-sync transaction`, the `--bitcoind-*` options are ignored. See [Node Environments](/cli/node-environments#initialize-and-unlock).
+  </Accordion>
+
+  <Accordion title="Which configuration wins — flag, environment variable, or config file?" icon="sliders">
+    In this order, highest first:
+
+    1. Command-line flags: `--node-url`, `--api-url`
+    2. Environment variables: `KALEIDO_NODE_URL`, `KALEIDO_API_URL`
+    3. Stored config in `~/.kaleido/config.json`
+
+    Inspect the stored layer with `kaleido config show` and its path with `kaleido config path`. Note that `kaleido node use <name>` writes to the stored config, so it has no effect on a command that also passes `--node-url`.
+  </Accordion>
+
+  <Accordion title="Can I run several nodes at once?" icon="layer-group">
+    Yes. Each environment is a separate Docker Compose project with its own compose file, volumes, and ports, and one environment can hold several nodes.
+
+    ```bash
+    kaleido node create testenv     # ask for 2 nodes at the wizard prompt
+    kaleido node list               # ● marks the active node
+    kaleido node use testenv --node 2
+    ```
+
+    Node 1 gets daemon port 3001 and peer port 9735, node 2 gets 3002 and 9736, and so on. When exactly one environment exists, commands like `up`, `stop`, `logs`, and `clean` auto-detect it; with several, you must name one.
+  </Accordion>
+
+  <Accordion title="What is the difference between node stop, down, and clean?" icon="trash">
+    How much they destroy:
+
+    | Command              | Containers | Networks | Data volumes |
+    | -------------------- | ---------- | -------- | ------------ |
+    | `kaleido node stop`  | Stopped    | Kept     | Kept         |
+    | `kaleido node down`  | Removed    | Removed  | Kept         |
+    | `kaleido node clean` | Removed    | Removed  | **Deleted**  |
+
+    `clean` is irreversible: it takes the environment down and then deletes the data volumes, wallet included. Take a `kaleido wallet backup` first if the node holds anything you need.
+  </Accordion>
+
+  <Accordion title="Why do I need to create UTXOs for RGB assets?" icon="coins">
+    RGB assignments live on specific Bitcoin outputs, so the node needs spare "colored" UTXOs to allocate before it can issue, receive, or send an asset. A funded on-chain balance sitting in one large UTXO is not enough.
+
+    ```bash
+    kaleido wallet create-utxos --num 10 --size 3000
+    ```
+
+    Create them ahead of heavy RGB activity rather than one at a time. `--up-to` changes `--num` from "create this many" to "top up to this many in total".
+  </Accordion>
+
+  <Accordion title="How do I drive the CLI from a script or an agent?" icon="robot">
+    Three flags cover it:
+
+    * `--json` returns raw JSON instead of tables, for piping into `jq`
+    * `--agent` disables every interactive prompt, so a missing value fails instead of blocking
+    * `--yes` accepts quotes, payments, and destructive confirmations that would otherwise prompt
+
+    ```bash
+    kaleido --json --agent market quote BTC/USDT --from-amount 0.001 | jq '.to_asset.amount'
+    kaleido --agent swap atomic run BTC/USDT --from-amount 0.001 --yes
+    ```
+
+    In non-interactive mode the CLI refuses rather than guessing, with messages like `--yes is required in non-interactive mode to accept the quoted price.` See [Troubleshooting](/cli/troubleshooting#scripting-and-automation).
+  </Accordion>
+
+  <Accordion title="Is the CLI built on the KaleidoSDK?" icon="code">
+    Yes — it wraps the Python SDK (`kaleido-sdk`), which is why command output maps so closely onto the API models. Practical consequences:
+
+    * Requests use a 30-second timeout and up to 3 retries
+    * Errors surface as `Error: <message>` from the underlying SDK exception, so the [SDK error reference](/sdk/troubleshooting#error-reference) explains what a failure means
+    * `market quote` display amounts are converted with the same precision helpers the SDK exposes
+
+    If you are building an application rather than running commands, use the [KaleidoSDK](/sdk/introduction) directly.
+  </Accordion>
+
+  <Accordion title="CLI, SDK, or Desktop App?" icon="scale-balanced">
+    | Tool                                                     | Best for                                                              |
+    | -------------------------------------------------------- | --------------------------------------------------------------------- |
+    | [KaleidoCLI](/cli/introduction)                          | Running a node, scripting, CI, and agent-driven flows from a terminal |
+    | [KaleidoSDK](/sdk/introduction)                          | Building an application in TypeScript or Python                       |
+    | [Desktop App](/desktop-app/getting-started/introduction) | A graphical wallet with the same trading and channel features         |
+
+    They all drive the same two APIs, so a node created with the CLI can be used from the SDK, and the other way round.
+  </Accordion>
+
+  <Accordion title="How do I install it, update it, and check which version I have?" icon="download">
+    The CLI is installed from source — it is not published on PyPI, so `pip install kaleido-cli` will not find it. Use the bootstrap installer or `uv`:
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.sh | sh
+    uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+    ```
+
+    Update by re-running the same command; `uv` installs replace the existing tool. There is no `kaleido --version` flag, so report your version as the output of `uv tool list` or the commit you installed from. Full options in [Installation](/cli/installation).
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check the [Troubleshooting](/cli/troubleshooting) for errors rather than questions, and [Additional Resources](/cli/additional-resources) for upstream documentation and links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. How you installed the CLI, and the output of `uv tool list` (there is no `--version` flag)
+2. Python version (`python --version`) and your operating system
+3. The exact command you ran, plus its output with `--json` added
+4. Whether the node is a local Docker environment or a remote one, and the network
+5. `kaleido config show` and `kaleido node ps` output, with passwords removed
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    Report a bug on the relevant repository.
+  </Card>
+
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

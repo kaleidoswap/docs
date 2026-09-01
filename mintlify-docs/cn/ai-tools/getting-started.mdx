@@ -1,10 +1,10 @@
 ---
 title: "AI 工具：快速上手"
 sidebarTitle: "快速上手"
-description: "把 AI 代理接入比特币：从测试网络上的第一次只读工具调用，到验证过一笔报价之后再开启真实执行。"
+description: "选择把 AI 代理接入比特币的方式：MCP 服务器、KaleidoAgent 还是 KaleidoMind，以及每一种的前置条件和花费把关机制。"
 ---
 
-这是从「装好工具」到「验证一笔交换」的完整路径。顺序是先只读，再报价，最后执行 —— 因为除第一步之外，每一步都会动用真实价值。
+四种接入方式把同一套比特币工具交给模型，区别主要在于谁来跑代理循环、以及什么东西拦住一笔花费。这一页负责在它们之间做选择：先要准备什么、哪一种适合你，以及每一种如何为动用资金的调用把关。
 
 ## 开始之前
 
@@ -26,87 +26,9 @@ description: "把 AI 代理接入比特币：从测试网络上的第一次只�
 | 在本地端通过聊天或语音操作钱包 | [KaleidoMind](/cn/ai-tools/kaleido-mind) |
 | 不改代码就调整代理行为 | [Skills](/cn/ai-tools/skills) |
 
-## 首次运行：MCP 服务器
+无论你选择哪一种接入方式，首次运行都遵循同样的顺序：先只读调用，再钱包调用，然后报价，最后才是执行。这个顺序既是谨慎，也是诊断手段。只读那一步失败说明是连接问题，钱包那一步失败说明是种子或网络问题，而能走到报价的，这两类问题都已经排除了。
 
-<Steps>
-  <Step title="把网关添加到宿主客户端">
-    把 `kaleido-mcp` 配置块加入你的 MCP 宿主配置，将 `KALEIDOSWAP_API_URL` 指向测试环境，并把 `SPARK_NETWORK` 设为 `REGTEST`。完整 JSON 见 [MCP 服务器页面](/cn/ai-tools/mcp-servers#client-configuration)。
-  </Step>
-
-  <Step title="重启宿主客户端">
-    MCP 宿主只在启动时读取配置。已经在运行的客户端不会自动识别新服务器，必须重启。
-  </Step>
-
-  <Step title="调用一个只读工具">
-    先从不会动用资金的操作开始。请求行情数据，它既不需要种子也不需要节点：
-
-    ```
-    What is the current Bitcoin price and the Fear and Greed index?
-    ```
-
-    这会触发 `l402_get_price` 和 `l402_get_sentiment`。只要有回答，连接就是通的。
-  </Step>
-
-  <Step title="确认钱包已接好">
-    接着确认钱包工具能正常解析：
-
-    ```
-    Show me my Spark balance and my Spark address.
-    ```
-
-    这会调用 `spark_get_balance` 和 `spark_get_address`。这一步报错说明是种子或网络问题，而不是连接问题。
-  </Step>
-
-  <Step title="交易前先报价">
-    只询价，不下单：
-
-    ```
-    Quote 100000 sats of BTC into USDT. Do not place an order.
-    ```
-
-    `kaleidoswap_get_quote` 会返回一个 `rfq_id`、原始数量、费用和过期时间。请仔细核对原始数量：它们以资产的最小单位计价，不是显示单位。
-  </Step>
-
-  <Step title="报价确认无误后再执行">
-    一笔原子交换需要 DEX 工具和钱包工具配合，并且节点必须在通道中持有该资产。[跨服务器调用顺序](/cn/ai-tools/mcp-servers#atomic-swap-across-servers)按顺序列出了每一次调用。
-  </Step>
-</Steps>
-
-## 首次运行：KaleidoAgent
-
-<Steps>
-  <Step title="保持 dry run 开启">
-    `agent.config.json` 中的 `portfolio.dry_run` 默认为 `true`。先别动它。代理会完成推理、决策并汇报一笔交易，但不会真正提交。
-  </Step>
-
-  <Step title="启动代理">
-    ```bash
-    npm start
-    ```
-
-    这会同时启动代理和监听 `http://localhost:4242` 的状态 API。若要使用仪表盘，另外运行 `npm run dev:webapp` 并打开 `http://localhost:5173`。
-  </Step>
-
-  <Step title="手动触发一轮循环">
-    不必等定时任务，可以直接让状态 API 跑一轮：
-
-    ```bash
-    curl -X POST http://localhost:4242/run \
-      -H 'Content-Type: application/json' \
-      -d '{"task_id":"rebalance"}'
-    ```
-
-    然后读取 `GET /status`，查看它的决策、它看到的余额，以及 token 开销。
-  </Step>
-
-  <Step title="检查风险上限">
-    确认 `max_swap_usd`、`min_btc_reserve_sats` 和 `stop_loss_btc_sats` 与你在测试网络上能接受的损失相符。每笔交换提交之前都会校验这些参数。
-  </Step>
-
-  <Step title="确认无误后再关闭 dry run">
-    当连续几轮的 dry-run 决策都看起来正确后，再把 `portfolio.dry_run` 设为 `false`。
-  </Step>
-</Steps>
+每种接入方式都有自己的操作指引：[MCP 服务器](/cn/ai-tools/mcp-servers#first-run)和 [KaleidoAgent](/cn/ai-tools/kaleido-agent#first-run)。KaleidoMind 是嵌入宿主运行的库，本身不独立运行，所以它的首次运行就是[桌面应用的安装流程](/cn/desktop-app/getting-started/installation)。[Skills](/cn/ai-tools/skills) 改变的是代理在这些接入方式上的行为，它本身不是一种接入方式。
 
 ## 确认机制长什么样
 
@@ -114,9 +36,9 @@ description: "把 AI 代理接入比特币：从测试网络上的第一次只�
 
 | 接入方式 | 把关机制 |
 |---------|------|
-| **KaleidoMind** | 结构性把关。每个会动用资金的工具都标记了 `requiresConfirmation`，引擎会暂停并等待宿主的确认面板。模型无法绕过 |
-| **KaleidoAgent** | 策略性把关。`dry_run` 加上 `agent.config.json` 中的风险上限，在提交前校验 |
-| **通用宿主中的 MCP 服务器** | 取决于你的宿主客户端。多数 MCP 客户端会为每次工具调用弹出确认，但那是客户端的行为，不是服务器的 |
+| **[KaleidoMind](/cn/ai-tools/kaleido-mind)** | 结构性把关。每个会动用资金的工具都标记了 `requiresConfirmation`，引擎会暂停并等待宿主的确认面板。模型无法绕过 |
+| **[KaleidoAgent](/cn/ai-tools/kaleido-agent)** | 策略性把关。`dry_run` 加上 `agent.config.json` 中的风险上限，在提交前校验 |
+| **[MCP 服务器](/cn/ai-tools/mcp-servers)** | 取决于你的宿主客户端。多数 MCP 客户端会为每次工具调用弹出确认，但那是客户端的行为，不是服务器的 |
 
 <Warning>
   通用 MCP 宿主是保护最弱的一条路径。如果你的客户端自动批准工具调用，LLM 就能不经询问地从配置的钱包中花钱。在完全弄清客户端如何处理批准之前，请只使用测试网络种子。

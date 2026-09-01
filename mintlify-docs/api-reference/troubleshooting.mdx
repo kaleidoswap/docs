@@ -1,0 +1,424 @@
+---
+title: "Swap API Errors & Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "How the KaleidoSwap API reports errors and how to fix them, covering the three error envelopes, HTTP status codes, symptom-by-symptom solutions, and retry strategy"
+---
+
+The KaleidoSwap API uses standard HTTP status codes and structured error bodies to report the outcome of a request. This page covers how to read an error, what each status code means, and the fix for the failures integrations actually hit. For questions rather than failures, see the [FAQ](/api-reference/faq).
+
+---
+
+## Error Response Format
+
+The API returns **three distinct error envelopes** depending on where the request failed. A client that handles all three is a client that never has to guess.
+
+### Application errors
+
+Business and application errors (invalid parameters, missing resources, conflicts, rate limits, server errors) return a structured envelope:
+
+```json
+{
+  "error_code": "PAIR_NOT_FOUND",
+  "message": "Trading pair not found: BTC/USDT",
+  "details": {},
+  "request_id": "req_01HV8Q9X7G0Q7Y3Z"
+}
+```
+
+- `error_code` (`string`): Stable, machine-readable error code (e.g. `PAIR_NOT_FOUND`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`).
+- `message` (`string`): Human-readable description of the error.
+- `details` (`object`): Optional structured context about the error (may be empty).
+- `request_id` (`string`): Request correlation identifier — include it when contacting support.
+
+Branch on `error_code`, never on `message`. The codes are stable; the wording is not.
+
+### Request-validation errors (HTTP 422)
+
+Requests that fail schema validation *before* reaching application logic return FastAPI's validation envelope with HTTP `422`:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "rfq_id"],
+      "msg": "Field required",
+      "type": "missing"
+    }
+  ]
+}
+```
+
+- `detail` (`array<object>`): One entry per validation failure.
+  - `loc` (`array<(string | integer)>`): Path to the offending field.
+  - `msg` (`string`): Validation error message.
+  - `type` (`string`): FastAPI/Pydantic validation error type.
+
+### Legacy errors
+
+A few endpoints still return some `400` responses as a bare detail object, **without** `error_code` or `request_id` — for example an unsupported route on `POST /market/quote` or a malformed `pair_ticker` filter on `GET /market/pairs`:
+
+```json
+{
+  "detail": "Route not supported for this pair. From: BTC_LN, To: RGB_LN"
+}
+```
+
+- `detail` (`string`): Human-readable description of the error.
+
+Clients handling `400` responses should accept both the structured envelope and this legacy shape.
+
+---
+
+## HTTP Status Codes
+
+| Status | Meaning | Retry? |
+|--------|---------|--------|
+| `200` | Success — the request completed and returned the expected response | — |
+| `400` | Bad request — the request is malformed or contains invalid parameters | No, fix the request |
+| `401` | Unauthorized — the Bearer API key is missing or invalid (returned once API-key enforcement is enabled) | No, attach a valid key |
+| `403` | Forbidden — the key is not allowed from this origin | No |
+| `404` | Not found — the endpoint or resource does not exist | No |
+| `422` | Unprocessable entity — schema validation failed | No, the same payload always fails |
+| `429` | Too many requests — the rate limit was exceeded | Yes, after backing off |
+| `500` | Internal server error — an unexpected error occurred on the server | Yes, with backoff |
+| `502` | Bad gateway — the server received an invalid response from an upstream server | Yes, with backoff |
+| `503` | Service unavailable — the maker or LSP node is temporarily unreachable, or under maintenance or overload | Yes, with backoff |
+
+The `4xx` class means the request needs changing; the `5xx` class means the request was fine and something upstream was not. Only the `5xx` class plus `429` are worth retrying — see [Retry and Resilience](#retry-and-resilience).
+
+---
+
+## Requests and Authentication
+
+<AccordionGroup>
+  <Accordion title="400 Bad Request" icon="circle-xmark">
+    **Symptoms:** `400`, with either an `error_code` envelope or a bare `detail` string
+
+    **Cause:** missing or invalid parameters in the request.
+
+    **Solutions:**
+    1. Verify the payload and confirm every required field is present with valid data
+    2. Make your handler accept **both** `400` shapes — read `error_code` if present, fall back to `detail`
+    3. For `{"detail": "Route not supported for this pair..."}`, check the pair's actual `routes` with `POST /api/v1/market/pairs/routes` and send a `from_asset.layer` → `to_asset.layer` combination that appears there
+    4. For pair filters, `pair_ticker` must be `BASE/QUOTE` (e.g. `BTC/USDT`), and single-pair identifiers are mutually exclusive
+  </Accordion>
+
+  <Accordion title="401 Unauthorized" icon="ban">
+    **Symptoms:** requests that used to work start returning `401`, or `401` on first call with a key attached
+
+    **Causes:**
+    - API-key enforcement has been enabled for your environment and no valid key is being sent
+    - The header is malformed — it must be `Authorization: Bearer <token>`, not the bare token
+    - The key lacks the scope for that endpoint (`quote:read` for market data, `swap:execute` for swap init/execute)
+
+    **Solutions:**
+    1. Log the exact `Authorization` header your client sends and check for a missing `Bearer ` prefix or a trailing newline
+    2. If the call is a swap init or execute, confirm the key carries `swap:execute` and not only `quote:read`
+    3. Verify the key is valid and has not been revoked
+    4. If you have no key yet, note that anonymous access still works on Signet — a `401` means enforcement is live for you
+  </Accordion>
+
+  <Accordion title="403 Forbidden" icon="shield-halved">
+    **Symptoms:** `403` on an endpoint that accepts your key elsewhere
+
+    **Cause:** the key is valid but not allowed from this origin.
+
+    **Solution:** call from an allowed origin, or request that the origin be added. This is the failure mode you hit when a key intended for a backend is used from a browser or a new deployment host — see also the CORS note in the [FAQ](/api-reference/faq).
+  </Accordion>
+
+  <Accordion title="422 Unprocessable Entity" icon="circle-exclamation">
+    **Symptoms:** `422` with a `detail` **array** rather than an `error_code`
+
+    **Cause:** the request failed schema validation before reaching application logic, so no business error was produced.
+
+    **Solution:** read `detail[].loc` — it is the exact path to the offending field. `["body", "rfq_id"]` with `"type": "missing"` means you omitted `rfq_id` entirely; a `"type"` of `int_parsing` usually means an amount was sent as a string. Do not treat `422` as retryable: the same payload will always fail.
+  </Accordion>
+
+  <Accordion title="404 on an asset, pair, or endpoint you expect to exist" icon="magnifying-glass">
+    **Symptoms:** `PAIR_NOT_FOUND`, `NOT_FOUND`, or an empty `assets` array for a ticker you know is supported
+
+    **Causes:**
+    - The endpoint URL or a resource identifier is wrong
+    - The asset or pair is inactive, and `GET /market/pairs` filters to active pairs by default (`active_only=true`)
+    - You filtered by `asset_id` where the maker expects the RGB contract ID exactly, including the `rgb:` prefix
+    - You are on the wrong environment — asset IDs are **not** portable between Signet and mainnet
+
+    **Solutions:**
+    1. Check the endpoint path and resource identifiers, including the `/api/v1` prefix
+    2. Re-query with `active_only=false` to see whether the pair exists but is disabled
+    3. Discover IDs from `GET /api/v1/market/assets` rather than hardcoding them, and key your config by environment
+    4. Check `total` in the response — it is the count of all matches, so a `total` above your page size means you are looking at pagination, not absence
+  </Accordion>
+
+  <Accordion title="429 Too Many Requests" icon="gauge-high">
+    **Symptoms:** `RATE_LIMIT_EXCEEDED`, typically while polling for prices
+
+    **Cause:** too many requests in a short period.
+
+    **Solutions:**
+    1. Read `X-RateLimit-Remaining` and `X-RateLimit-Reset` and back off before you are cut off, rather than reacting to the `429`
+    2. Retry after the indicated wait time, if one is provided
+    3. Stop polling `POST /market/quote` in a loop — open the WebSocket and send a `quote_request` when you actually need a new price
+    4. Cache `market/assets` and `market/pairs`; both are safe to cache and change rarely
+    5. Remember the limits are per IP *and* per endpoint *and* global, so a noisy neighbour behind the same NAT can consume your budget
+  </Accordion>
+
+  <Accordion title="500, 502, or 503" icon="server">
+    **Symptoms:** `INTERNAL_ERROR`, or `503` on endpoints that were working a minute ago
+
+    **Causes:**
+    - `500` — an unexpected error on the server
+    - `502` — an invalid response from an upstream server
+    - `503` — the maker or the LSP node is temporarily unreachable, under maintenance, or overloaded
+
+    None of these mean your request was malformed.
+
+    **Solutions:**
+    1. Retry with exponential backoff and jitter; these are the transient class of failures
+    2. Do **not** blind-retry a `/swaps/execute` call on a timeout — poll `POST /api/v1/swaps/atomic/status` first to see whether it actually landed
+    3. If it persists, report it with the `request_id` from the error body
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Quotes and Amounts
+
+<AccordionGroup>
+  <Accordion title="Quote expired before I could init the swap" icon="hourglass-end">
+    **Symptoms:** `/swaps/init` rejects an `rfq_id` that was valid moments ago
+
+    **Cause:** the quote's `expires_at` has passed. The window is tens of seconds, not minutes.
+
+    **Solutions:**
+    1. Quote as late as possible — immediately before init, never before a confirmation screen the user might sit on
+    2. Keep the whole init → whitelist → execute sequence tight; it all runs against one quote
+    3. If a user hesitates, discard the `rfq_id` and request a fresh quote when they resume
+  </Accordion>
+
+  <Accordion title="Amount rejected as invalid" icon="calculator">
+    **Symptoms:** `VALIDATION_ERROR` or a `400` mentioning the amount
+
+    **Causes:**
+    - Below `min_amount` or above `max_amount` for that **layer** — the limits live per-layer in each asset's `endpoints` array, not on the asset itself
+    - Display units sent instead of raw units
+    - An amount on both legs, or on neither
+
+    **Solutions:**
+    1. Read the limits from the matching `endpoints` entry for the layer you are routing over
+    2. Send BTC legs in millisatoshis and RGB legs in raw units per the asset's `precision` — see the [FAQ](/api-reference/faq)
+    3. Set exactly one of `from_asset.amount` (forward quote) or `to_asset.amount` (reverse quote)
+  </Accordion>
+
+  <Accordion title="Amounts or prices are off by orders of magnitude" icon="magnifying-glass-dollar">
+    **Symptoms:** the quote is arithmetically "wrong" by a factor of 1,000 or 100,000,000
+
+    **Causes:**
+    - A BTC leg treated as satoshis when the API means millisatoshis
+    - One asset's precision applied to another — precision is per asset, and BTC and USDT do not share one
+    - `price` read as a display rate; it is one whole `from_asset` unit expressed in the smallest unit of `to_asset`
+
+    **Solutions:**
+    1. Display `to_asset.amount` from the response — the fee is already folded into it — instead of recomputing from `price`
+    2. Pull `precision` per asset from `GET /api/v1/market/assets` and never hardcode a divisor
+    3. Sanity-check a small quote round-trip on Signet before wiring the conversion into a UI
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Swaps
+
+<AccordionGroup>
+  <Accordion title="/swaps/execute fails after a successful init" icon="triangle-exclamation">
+    **Symptoms:** `init` returned a `swapstring`, but `execute` fails
+
+    **Cause:** the `swapstring` was never whitelisted on your own node, so the taker side cannot honour the HTLC. This is the single most common integration failure, because the middle step is not a Maker API call.
+
+    **Solution:** the three steps must run in order, against two different servers:
+
+    1. `POST /api/v1/swaps/init` on the **Maker API** → returns `swapstring`, `payment_hash`, `access_token`
+    2. Whitelist the `swapstring` via the `/taker` API of **your own RGB Lightning Node**
+    3. `POST /api/v1/swaps/execute` on the **Maker API** with `swapstring`, `taker_pubkey`, and `payment_hash`
+
+    Also confirm `taker_pubkey` is your node's pubkey and that the `payment_hash` matches the one from init. See [Swap Protocol](/api-reference/swap-protocol).
+  </Accordion>
+
+  <Accordion title="404 Swap not found when polling status" icon="lock">
+    **Symptoms:** `POST /api/v1/swaps/atomic/status` returns `404` for a swap you know exists
+
+    **Cause:** a missing or invalid `access_token`. The `404` is deliberately uniform — it does not distinguish "wrong token" from "no such swap", so the endpoint cannot be used to probe payment hashes.
+
+    **Solutions:**
+    1. Send both `payment_hash` **and** the `access_token` returned by `/swaps/init`
+    2. If the token was never persisted, it cannot be recovered — it is returned only once. Store it with the payment hash at init time
+    3. Check you are polling the environment the swap was created on
+  </Accordion>
+
+  <Accordion title="Swap stuck on Pending" icon="clock-rotate-left">
+    **Symptoms:** `execute` returned `200`, but the status stays `Pending` and the assets have not arrived
+
+    **Causes:**
+    - The HTLC is still in flight — `execute` returning is not settlement
+    - No route with enough capacity on the asset leg
+    - Pending RGB transfers on your node have not been advanced
+
+    **Solutions:**
+    1. Keep polling `/swaps/atomic/status`; the terminal states are `Succeeded`, `Expired`, and `Failed`
+    2. On your node, refresh transfers and check outbound capacity on the specific asset — not just the total balance
+    3. Compare `expires_at` on the swap object against the current time to know how long the HTLC still has
+  </Accordion>
+
+  <Accordion title="Swap ended as Expired or Failed" icon="circle-xmark">
+    **Symptoms:** status moves to `Expired` or `Failed`
+
+    **Causes:**
+    - `Expired` — the HTLC timeout elapsed before both sides completed, usually because whitelisting or execute came too late
+    - `Failed` — the HTLC could not be routed or settled, typically a capacity or liquidity problem
+
+    **Solutions:**
+    1. Your funds are not at risk: an incomplete atomic swap returns both sides' funds automatically. Do not re-send funds manually
+    2. Retry from a **fresh quote** — the old `rfq_id` and `swapstring` are spent
+    3. If it fails repeatedly on the same pair, check capacity on that asset's channel and order more liquidity via [LSPS1](/api-reference/rgb-lsps1-apis)
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## WebSocket
+
+WebSocket errors are not HTTP responses — they arrive as JSON messages on the open socket, and on a critical error the server may close the connection outright.
+
+<AccordionGroup>
+  <Accordion title="Connected, but no quote_response arrives" icon="signal-slash">
+    **Symptoms:** the socket is open and the `quote_request` was sent, but no `quote_response` comes back
+
+    **Cause:** the request failed. Failures come back as a message with an `error` field instead of a `quote_response`, so a client that only listens for `quote_response` sees silence.
+
+    **Solutions:**
+    1. Log every inbound frame, not just the ones you expect, and handle the `error` shape
+    2. Check the usual culprits: unknown asset, a route the pair does not support, an amount outside the per-layer limits
+    3. Confirm you set exactly one of `from_amount` / `to_amount`
+  </Accordion>
+
+  <Accordion title="The price stops updating" icon="arrows-rotate">
+    **Symptoms:** the first quote arrives, then nothing changes
+
+    **Cause:** the protocol is request/response — there is no subscription. The server answers the message you sent, and does not push updates.
+
+    **Solution:** send a new `quote_request` whenever you need a current price, and drive it from your own interval or from user action.
+  </Accordion>
+
+  <Accordion title="Connection drops repeatedly" icon="plug-circle-xmark">
+    **Symptoms:** the socket closes unexpectedly, sometimes mid-flow
+
+    **Reconnection strategy** — when a connection closes unexpectedly:
+
+    1. Wait a few seconds (5–10 s)
+    2. Re-establish the connection
+    3. Re-issue any pending `quote_request` messages to obtain fresh quotes — quotes do not survive the reconnect
+
+    **Also check:**
+    - Send periodic `ping` messages and expect a `pong`; an idle connection through a proxy is a connection about to be closed
+    - Use a fresh unique `{client_id}` per session, and verify the URL is `wss://`, not `ws://`
+    - If you are behind a corporate proxy that strips WebSocket upgrades, fall back to `POST /market/quote`
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Channel Orders (LSPS1)
+
+<AccordionGroup>
+  <Accordion title="estimate_fees or create_order rejects a missing rfq_id" icon="receipt">
+    **Symptoms:** the call fails when you include `client_asset_amount`
+
+    **Cause:** when `client_asset_amount > 0` the client is *purchasing* assets, so a fresh `rfq_id` from `POST /api/v1/market/quote` is required to price them.
+
+    **Solutions:**
+    1. Quote first, then pass that `rfq_id` into `estimate_fees` / `create_order`
+    2. Requote if the quote expired between the two calls
+    3. Omit `client_asset_amount` entirely if you only want LSP-side liquidity — no quote is needed then
+  </Accordion>
+
+  <Accordion title="Order rejected on channel size or asset amount" icon="ruler">
+    **Symptoms:** `create_order` fails validation on balances or asset amounts
+
+    **Cause:** the request falls outside the LSP's advertised limits.
+
+    **Solutions:**
+    1. Read `options` from `GET /api/v1/lsps1/get_info` and stay inside `min_channel_balance_sat` / `max_channel_balance_sat`, the initial-balance bounds, and `max_channel_expiry_blocks`
+    2. Check the per-asset caps in the same response — `min_initial_lsp_amount` / `max_initial_lsp_amount` are per asset and can be `0`, which means that side is not available for it
+    3. Connect to the peer at `lsp_connection_url` before ordering, so the channel has somewhere to open
+  </Accordion>
+
+  <Accordion title="Order sits in PENDING_RATE_DECISION" icon="scale-balanced">
+    **Symptoms:** the channel never opens and `order_state` is `PENDING_RATE_DECISION`
+
+    **Cause:** the market rate moved significantly before the payment settled, so the LSP paused the order instead of opening a channel at a stale price. It is waiting on you.
+
+    **Solution:** call `POST /api/v1/lsps1/rate_decision` with the `order_id`, the order's `access_token`, and `accept_new_rate` — `true` to proceed at the current rate, `false` to trigger a refund to `refund_onchain_address`. Refunds return a `refund_txid`. Calling this endpoint on an order in any other state returns `400`.
+  </Accordion>
+
+  <Accordion title="get_order returns 400 or 404" icon="key">
+    **Symptoms:** you cannot read back an order you created
+
+    **Cause:** unlike swaps, these two are distinguishable — an invalid `access_token` returns `400`, an unknown `order_id` returns `404`.
+
+    **Solution:** store the `access_token` from `create_order` alongside the `order_id`; it is returned only at creation and is required by both `get_order` and `rate_decision`. Set `email` on the order if you want notifications as a backstop.
+  </Accordion>
+
+  <Accordion title="Order paid but the channel is not usable yet" icon="hourglass-half">
+    **Symptoms:** payment settled, `order_state` is `CHANNEL_OPENING`
+
+    **Solutions:**
+    1. Keep polling `get_order` — it is safe to poll, and `channel` stays `null` until the channel exists
+    2. Compare `required_channel_confirmations` against the current height from `GET /api/v1/lsps1/network_info`
+    3. Note that payment expiries live under `payment.bolt11.expires_at` and `payment.onchain.expires_at`, and the channel's own expiry under `channel.expires_at` — there is no top-level `expires_at` to read
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Retry and Resilience {#retry-and-resilience}
+
+Design the client so a bad response is a handled case rather than a crash.
+
+1. **Handle errors gracefully.** Parse all three envelopes, branch on `error_code`, and surface something actionable instead of propagating a raw failure to the user.
+2. **Retry only what is retryable.** Transient failures — `500`, `502`, `503`, and `429` — are worth another attempt with **exponential backoff and jitter**. Client errors (`400`, `401`, `403`, `404`, `422`) will fail identically no matter how many times you send them.
+3. **Respect the rate limits.** Read the `X-RateLimit-*` headers and stay under the ceiling rather than discovering it. Cache static data such as assets and pairs.
+4. **Treat swap execution as non-idempotent.** A timeout on `/swaps/execute` is not proof of failure — poll `/swaps/atomic/status` before re-sending anything.
+5. **Cap total attempts.** An unbounded retry loop against a `503` becomes your own denial of service.
+
+---
+
+## Before You Report
+
+A reproducible report is usually diagnosed in one round trip.
+
+1. **Check your logs** for the full error response, not just the status code — application errors carry a `request_id` that correlates your request with our logs.
+2. **Validate the inputs**: confirm every parameter and payload field meets the endpoint's requirements, and that amounts are in raw units.
+3. **Reproduce with `curl`**, with any API key redacted.
+4. **Confirm the base URL** includes `/api/v1` and points at the environment you think it does.
+5. **Try the interactive playground** on the endpoint pages, which runs against Signet — if the same call succeeds there, the difference is in your client.
+
+## Get Help
+
+Check the [FAQ](/api-reference/faq) for questions rather than errors, and [Additional Resources](/api-reference/additional-resources) for specifications and upstream links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Request URL and HTTP method
+2. Request payload (redact any API key)
+3. Full error response, including `request_id`
+4. Timestamp of the request
+5. Environment (Signet / Mainnet)
+
+<CardGroup cols={2}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

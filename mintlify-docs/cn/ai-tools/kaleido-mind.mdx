@@ -8,9 +8,9 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 
 它的设计出发点是一个硬性约束：本地端的小模型在多步规划上既慢又不可靠。KaleidoMind 索性不让它们做这件事。
 
-<Info>
+<Note>
   KaleidoMind 不会独立运行，它是一个由宿主嵌入的库：[Rate 移动钱包](https://github.com/kaleidoswap/Rate)（React Native，完全本地端 QVAC）、[桌面应用](/cn/desktop-app/getting-started/introduction)的 Tauri sidecar，或者一套评测与基准测试框架。**[KaleidoAgent](/cn/ai-tools/kaleido-agent) 目前并未使用这个库**，它有自己独立的代理循环。详见下文[与 KaleidoAgent 的关系](#relationship-to-kaleidoagent)。
-</Info>
+</Note>
 
 ## 分层漏斗
 

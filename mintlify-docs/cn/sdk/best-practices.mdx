@@ -8,31 +8,9 @@ description: "用 KaleidoSDK 构建生产级应用的实践指南：客户端初
 
 ### 使用环境变量
 
-不要把配置写进源码：
+不要把配置写进源码。SDK 不会自动加载环境变量 —— 请自行读取后传给 `create()`。
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: process.env.KALEIDO_API_URL!,
-  nodeUrl: process.env.KALEIDO_NODE_URL,
-  apiKey: process.env.KALEIDO_API_KEY,
-});
-```
-
-```python Python
-import os
-
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url=os.environ["KALEIDO_API_URL"],
-    node_url=os.environ.get("KALEIDO_NODE_URL"),
-    api_key=os.environ.get("KALEIDO_API_KEY"),
-)
-```
-</CodeGroup>
+约定的变量名以及两种语言的完整示例见[安装](/cn/sdk/installation#environment-variables)。
 
 ### 使用单例客户端
 
@@ -77,7 +55,7 @@ def get_client() -> KaleidoClient:
 
 ### 始终处理错误
 
-把 SDK 调用包在 try/catch 中，并针对具体错误类型分别处理。下面给出的是最起码值得区分的几类；完整版本见 [错误处理](/cn/sdk/error-handling#comprehensive-error-handling)。
+把 SDK 调用包在 try/catch 中，并针对具体错误类型分别处理。下面给出的是最起码值得区分的几类；完整版本见[故障排查](/cn/sdk/troubleshooting#comprehensive-error-handling)。
 
 <CodeGroup>
 ```typescript TypeScript
@@ -118,7 +96,7 @@ except KaleidoError as e:
 
 不要盲目重试。每个错误都提供 `isRetryable()` / `is_retryable()`，其中已经编码了哪些失败在第二次尝试时可能成功 —— 请使用它，而不要自己去匹配状态码。
 
-完整的异常层级结构、按状态码划分的可重试性表格，以及现成的指数退避封装，见 [错误处理](/cn/sdk/error-handling#retry-patterns)。
+完整的异常层级结构、按状态码划分的可重试性表格，以及现成的指数退避封装，见[故障排查](/cn/sdk/troubleshooting#retry-patterns)。
 
 ## 异步模式
 
@@ -172,108 +150,29 @@ for name, fn in [
 
 ### 调用 API 时一律使用原始单位
 
-API 使用原始（最小单位）金额。发送前请先转换展示金额：
+API 只接受原始（最小单位）金额，不接受展示金额。构造报价请求前用 `parseRawAmount` / `parse_raw_amount` 转换，展示给用户前再用 `toDisplayAmount` / `to_display_amount` 转换回来。
 
-<CodeGroup>
-```typescript TypeScript
-import { parseRawAmount } from 'kaleido-sdk';
-
-// 用户输入 0.001 BTC
-const userInput = 0.001;
-const rawAmount = parseRawAmount(userInput, 8);  // 100000
-
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: rawAmount },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-});
-```
-
-```python Python
-from kaleido_sdk import Layer, PairQuoteRequest, SwapLegInput, parse_raw_amount
-
-# 用户输入 0.001 BTC
-user_input = 0.001
-raw_amount = parse_raw_amount(user_input, 8)  # 100000
-
-quote = await client.maker.get_quote(PairQuoteRequest(
-    from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=raw_amount),
-    to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN)
-))
-```
-</CodeGroup>
+这两个函数的说明见[工具函数](/cn/sdk/utilities#amount-conversion)。
 
 ### 多资产应用请使用 PrecisionHandler
 
-处理多种资产时，使用 `PrecisionHandler` 避免精度错误：
+一旦涉及多种资产，每次调用都手工传入精度正是舍入错误的来源。`PrecisionHandler` 会从资产元数据中读取精度，让你按资产 ID 转换。
 
-<CodeGroup>
-```typescript TypeScript
-import { createPrecisionHandler } from 'kaleido-sdk';
-
-const handler = createPrecisionHandler(mappedAssets);
-
-// 按资产 ID 安全转换
-const raw = handler.toRawAmount(userInput, assetId);
-const display = handler.toDisplayAmount(rawFromApi, assetId);
-```
-
-```python Python
-from kaleido_sdk import create_precision_handler
-
-handler = create_precision_handler(mapped_assets)
-raw = handler.to_raw_amount(user_input, asset_id)
-display = handler.to_display_amount(raw_from_api, asset_id)
-```
-</CodeGroup>
+如何创建以及完整方法列表见[工具函数](/cn/sdk/utilities#precisionhandler)。
 
 ## 节点操作
 
-### 使用 RLN 前先检查节点
+只有在创建客户端时提供了节点 URL，`client.rln` 才可用，因此每次节点调用前都要用 `hasNode()` / `has_node()` 做检查。在 Python 中，未配置节点 URL 时访问 `client.rln` 会抛出 `NodeNotConfiguredError`。
 
-务必确认节点已配置：
-
-<CodeGroup>
-```typescript TypeScript
-if (!client.hasNode()) {
-  throw new Error('Node URL required for this operation');
-}
-
-const balance = await client.rln.getBtcBalance();
-```
-
-```python Python
-if not client.has_node():
-    raise RuntimeError("Node URL required for this operation")
-
-balance = await client.rln.get_btc_balance()
-```
-</CodeGroup>
+两种语言的检查写法见[快速上手](/cn/sdk/getting-started#node-configuration-checks)。
 
 ## WebSocket
 
 ### 用完后取消订阅
 
-务必清理 WebSocket 订阅：
+`streamQuotes` / `streamQuotesByTicker` 会返回一个取消订阅函数。一旦不再需要报价就立刻调用它 —— 组件卸载时、页面跳转时，或用户关闭该交易对时。不调用会造成内存泄漏，并让无人读取的报价流量持续占用连接。
 
-<CodeGroup>
-```typescript TypeScript
-const unsubscribe = await client.maker.streamQuotesByTicker(
-  'BTC', 'USDT', 100000, onQuote
-);
-
-// 组件卸载或用户离开页面时清理
-unsubscribe();
-```
-
-```python Python
-unsubscribe = await client.maker.stream_quotes_by_ticker(
-    "BTC", "USDT", 100000, on_quote
-)
-
-# 用完后清理
-unsubscribe()
-```
-</CodeGroup>
+这一条以及其他流式订阅的注意事项见 [WebSocket](/cn/sdk/websocket#best-practices)。
 
 ### 处理重连
 

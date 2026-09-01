@@ -1,5 +1,6 @@
 ---
 title: 'Node Environments'
+sidebarTitle: 'Environments'
 description: 'Create, run, switch, and maintain named local multi-asset Lightning node environments with the KaleidoCLI'
 ---
 
@@ -17,19 +18,25 @@ Example layout:
 
 ```text
 ~/.kaleido/
+├── config.json
 ├── default/
 │   ├── docker-compose.yml
 │   └── volumes/
-└── staging/
+│       └── dataldk0/
+└── testenv/
     ├── docker-compose.yml
     └── volumes/
+        ├── dataldk0/
+        └── dataldk1/
 ```
+
+Each node in an environment is a `rgb_node_<n>` service with its own data volume. Only the node itself runs locally: bitcoind, the indexer, and the RGB proxy are remote services.
 
 ## Create An Environment
 
 ```bash
 kaleido node create
-kaleido node create staging
+kaleido node create testenv
 ```
 
 The wizard prompts for:
@@ -62,8 +69,10 @@ Use `kaleido node use` to update the configured node URL:
 
 ```bash
 kaleido node use default
-kaleido node use staging --node 2
+kaleido node use testenv --node 2
 ```
+
+Node 1 listens on daemon port 3001 and peer port 9735, node 2 on 3002 and 9736, and so on from the base ports chosen at creation. `kaleido node list` marks the active node with `●`.
 
 This is the bridge between Docker-managed environments and all node-dependent commands such as `wallet`, `asset`, `channel`, and `payment`.
 
@@ -86,19 +95,39 @@ After every restart, unlock the wallet:
 kaleido node unlock
 ```
 
-Notable unlock options:
+Unlock is also where the node learns which Bitcoin services to use. Run interactively, it offers a service profile — signet defaults, regtest defaults, or custom — and then asks how the node should follow the chain.
 
-- `--password`
-- `--bitcoind-user`
-- `--bitcoind-pass`
-- `--bitcoind-host`
-- `--bitcoind-port`
-- `--indexer-url`
-- `--proxy-endpoint`
-- `--announce-alias`
-- `--announce-address`
+### Chain sync mode
 
-By default, the command uses the KaleidoSwap signet services exposed by the CLI.
+| Mode | Behaviour |
+|------|-----------|
+| `--chain-sync block` (default) | Reads blocks from a bitcoind over RPC |
+| `--chain-sync transaction` | Follows the chain from the indexer alone, with no bitcoind |
+
+With `transaction`, every `--bitcoind-*` option is ignored:
+
+```bash
+kaleido node unlock --chain-sync transaction --indexer-url https://esplora.signet.kaleidoswap.com
+```
+
+### Unlock options
+
+| Option | Purpose |
+|--------|---------|
+| `--password`, `-p` | Wallet password, prompted securely if omitted |
+| `--chain-sync` | `block` or `transaction`, as above |
+| `--bitcoind-user`, `--bitcoind-pass` | bitcoind RPC credentials |
+| `--bitcoind-host`, `--bitcoind-port` | bitcoind RPC endpoint |
+| `--indexer-url` | Esplora (`https://…`) or Electrum (`host:port`) |
+| `--proxy-endpoint` | RGB proxy endpoint |
+| `--announce-alias` | Lightning peer alias to announce |
+| `--announce-address` | Public address for peer discovery, repeatable |
+
+By default the command uses the KaleidoSwap signet services. For a scripted unlock, pass the password explicitly and disable prompts:
+
+```bash
+kaleido --agent node unlock --password <password>
+```
 
 ## Inspect And Lock
 

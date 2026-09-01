@@ -1,0 +1,73 @@
+---
+title: "KaleidoCLI: Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Links for KaleidoCLI users — the tooling behind a local node, protocol references, test networks, and support channels"
+---
+
+## Tooling
+
+<CardGroup cols={2}>
+  <Card title="uv" icon="bolt" href="https://docs.astral.sh/uv/">
+    The Python tool manager behind `uv tool install`, and the simplest way to keep the `kaleido` binary isolated and current.
+  </Card>
+
+  <Card title="Docker Compose" icon="docker" href="https://docs.docker.com/compose/">
+    What `kaleido node` drives underneath. Useful when you need to inspect a generated environment by hand.
+  </Card>
+</CardGroup>
+
+## Protocol References
+
+<CardGroup cols={2}>
+  <Card title="MCP Servers" icon="plug" href="/ai-tools/mcp-servers">
+    `kaleido-mcp` shells out to this same `kaleido` binary, exposing node lifecycle and trading as tools an LLM can call.
+  </Card>
+
+  <Card title="RGB LSPS1 APIs" icon="server" href="/api-reference/rgb-lsps1-apis">
+    The channel-ordering interface behind `channel order` and `channel lsp`.
+  </Card>
+
+  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    The node every `node`, `wallet`, `asset`, `channel`, and `payment` command drives. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
+  </Card>
+
+  <Card title="RGB Protocol Documentation" icon="gem" href="https://docs.rgb.info">
+    Client-side validation, asset interfaces, and the `nia` / `cfa` / `uda` schemas `asset issue` writes to.
+  </Card>
+</CardGroup>
+
+## Development & Testing
+
+<CardGroup cols={2}>
+  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
+    Get signet Bitcoin to fund a node and open test channels. Pair it with `kaleido wallet address`.
+  </Card>
+
+  <Card title="Mutinynet Explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    Look up the transactions behind `wallet transactions` and `asset transfers`.
+  </Card>
+</CardGroup>
+
+## Get Help
+
+Check [Troubleshooting](/cli/troubleshooting) for errors and the [FAQ](/cli/faq) for questions.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. How you installed the CLI, and the output of `uv tool list` (there is no `--version` flag)
+2. Python version (`python --version`) and your operating system
+3. The exact command you ran, plus its output with `--json` added
+4. Whether the node is a local Docker environment or a remote one, and the network
+5. `kaleido config show` and `kaleido node ps` output, with passwords removed
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

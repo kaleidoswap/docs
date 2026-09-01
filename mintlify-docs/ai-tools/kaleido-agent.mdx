@@ -8,9 +8,9 @@ description: "Run an autonomous non-custodial agent that rebalances a Bitcoin L2
 
 It manages a Lightning and RGB wallet, executes atomic HTLC swaps on the KaleidoSwap DEX, runs portfolio rebalancing and DCA strategies, keeps Lightning channel liquidity healthy, and serves as an interactive wallet-assistant chat, all driven by an LLM (Claude or OpenAI) reasoning over [KaleidoCLI](/cli/introduction) and MCP tool calls.
 
-<Info>
+<Note>
   KaleidoAgent is a separate, always-on server. It does **not** currently embed [KaleidoMind](/ai-tools/kaleido-mind)'s `Engine` and runs its own agent loop instead. See [KaleidoMind's relationship note](/ai-tools/kaleido-mind#relationship-to-kaleidoagent) for the convergence path being considered.
-</Info>
+</Note>
 
 ## Capabilities
 
@@ -109,7 +109,7 @@ Same 5-step HTLC protocol as elsewhere in the KaleidoSwap stack, driven via `kal
 
 ## Run It
 
-Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/getting-started) in `$PATH`, the [Nanobot](https://nanobot.dev) runtime, and an Anthropic or OpenAI API key.
+Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/installation) in `$PATH`, the [Nanobot](https://nanobot.dev) runtime, and an Anthropic or OpenAI API key.
 
 <Steps>
   <Step title="Clone and install">
@@ -157,6 +157,36 @@ docker compose --env-file .env.container -f docker-compose.container.yml up -d
 <Warning>
   `agent.config.json` holds a real BIP-39 mnemonic. Start on test networks, keep `dry_run` enabled until the setup is verified, and never commit or share the file.
 </Warning>
+
+## First Run
+
+With the agent running, drive one loop by hand and read what it decided before letting it trade for real.
+
+<Steps>
+  <Step title="Confirm dry run is still on">
+    `portfolio.dry_run` defaults to `true` in `agent.config.json`. Leave it there. The agent will reason, decide, and report a trade without submitting it.
+  </Step>
+
+  <Step title="Trigger a loop by hand">
+    Rather than waiting on the schedule, ask the [status API](#status-api) to run one:
+
+    ```bash
+    curl -X POST http://localhost:4242/run \
+      -H 'Content-Type: application/json' \
+      -d '{"task_id":"rebalance"}'
+    ```
+
+    Then read `GET /status` to see the decision, the balances it saw, and the token cost. The dashboard on `http://localhost:5173` shows the same run if you started it.
+  </Step>
+
+  <Step title="Review the risk limits">
+    Confirm `max_swap_usd`, `min_btc_reserve_sats`, and `stop_loss_btc_sats` match what you are willing to lose on a test network. These are checked before any swap is submitted, see [Risk Controls](#risk-controls) above.
+  </Step>
+
+  <Step title="Only then disable dry run">
+    Set `portfolio.dry_run` to `false` when the dry-run decisions have looked correct across several runs.
+  </Step>
+</Steps>
 
 ## Status API
 

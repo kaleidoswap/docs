@@ -13,23 +13,6 @@ description: 'Use the KaleidoCLI to manage local multi-asset Lightning nodes and
 
 The same binary supports both interactive terminal use and scripted automation.
 
-## Why Use It
-
-<CardGroup cols={2}>
-  <Card title="Guided Setup" icon="rocket" href="/cli/getting-started">
-    Start in market-only mode or provision a local node environment from one setup flow.
-  </Card>
-  <Card title="Named Environments" icon="server" href="/cli/node-environments">
-    Keep multiple local node stacks isolated and switch the active node with one command.
-  </Card>
-  <Card title="Wallet And RGB Ops" icon="wallet" href="/cli/wallet-assets-payments">
-    Work with BTC, RGB assets, invoices, transfers, backups, and Lightning payments.
-  </Card>
-  <Card title="Trading And Swaps" icon="arrows-rotate" href="/cli/market-and-swaps">
-    Query pairs and quotes, and run atomic or local node swap flows.
-  </Card>
-</CardGroup>
-
 ## Global Flags
 
 All command groups inherit the same root flags:
@@ -64,6 +47,8 @@ Command-line flags take precedence over environment variables and stored config.
 
 ## Command Groups
 
+Work is split across ten groups. Each one is documented subcommand by subcommand, with its arguments and flags, in [Commands](/cli/command-reference) — this table is the map of what you will find there.
+
 | Group | Purpose |
 |------|---------|
 | `setup` | First-run setup for market-only or local-node use |
@@ -86,9 +71,3 @@ kaleido --json market quote BTC/USDT --from-amount 0.001
 ```
 
 Use `--agent` when the command must fail instead of prompting for missing input.
-
-## Next Steps
-
-- Start with [Getting Started](/cli/getting-started) if you are installing the CLI for the first time.
-- See [Node Environments](/cli/node-environments) if you need a local RLN stack.
-- Use [Command Reference](/cli/command-reference) for the full command map.

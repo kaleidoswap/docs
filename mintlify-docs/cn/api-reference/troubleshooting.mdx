@@ -1,0 +1,424 @@
+---
+title: "交换 API 错误与故障排查"
+sidebarTitle: "故障排查"
+description: "KaleidoSwap API 如何报告错误以及如何修复：三种错误信封、HTTP 状态码、按症状排查的解决方法以及重试策略。"
+---
+
+KaleidoSwap API 使用标准 HTTP 状态码和结构化错误响应体来报告请求结果。本页说明如何读懂一个错误、每个状态码的含义，以及集成方实际会遇到的那些故障该怎么修。如果是疑问而不是故障，请看[常见问题](/cn/api-reference/faq)。
+
+---
+
+## 错误响应格式
+
+API 会根据请求在哪一环失败，返回**三种不同的错误信封**。能处理全部三种的客户端，就永远不需要靠猜。
+
+### 应用错误
+
+业务与应用错误（参数无效、资源缺失、冲突、速率限制、服务器错误）返回结构化信封：
+
+```json
+{
+  "error_code": "PAIR_NOT_FOUND",
+  "message": "Trading pair not found: BTC/USDT",
+  "details": {},
+  "request_id": "req_01HV8Q9X7G0Q7Y3Z"
+}
+```
+
+- `error_code`（`string`）：稳定的、机器可读的错误码（例如 `PAIR_NOT_FOUND`、`VALIDATION_ERROR`、`NOT_FOUND`、`RATE_LIMIT_EXCEEDED`、`INTERNAL_ERROR`）。
+- `message`（`string`）：人类可读的错误描述。
+- `details`（`object`）：关于该错误的可选结构化上下文（可能为空）。
+- `request_id`（`string`）：请求关联标识符 —— 联系支持时请附上。
+
+请基于 `error_code` 分支判断，不要基于 `message`。错误码是稳定的，文案不是。
+
+### 请求校验错误（HTTP 422）
+
+在进入应用逻辑*之前*就没通过 schema 校验的请求，会返回 FastAPI 的校验信封，HTTP 状态码为 `422`：
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "rfq_id"],
+      "msg": "Field required",
+      "type": "missing"
+    }
+  ]
+}
+```
+
+- `detail`（`array<object>`）：每个校验失败项一条。
+  - `loc`（`array<(string | integer)>`）：出错字段的路径。
+  - `msg`（`string`）：校验错误信息。
+  - `type`（`string`）：FastAPI/Pydantic 的校验错误类型。
+
+### 遗留错误
+
+少数接口端点的部分 `400` 响应仍是一个裸的 detail 对象，**不含** `error_code` 或 `request_id` —— 例如 `POST /market/quote` 上不受支持的路由，或 `GET /market/pairs` 上格式错误的 `pair_ticker` 过滤条件：
+
+```json
+{
+  "detail": "Route not supported for this pair. From: BTC_LN, To: RGB_LN"
+}
+```
+
+- `detail`（`string`）：人类可读的错误描述。
+
+处理 `400` 响应的客户端应同时兼容结构化信封和这种遗留结构。
+
+---
+
+## HTTP 状态码
+
+| 状态码 | 含义 | 可重试？ |
+|--------|---------|--------|
+| `200` | 成功 —— 请求已完成并返回预期响应 | —— |
+| `400` | 请求错误 —— 请求格式有误或参数无效 | 否，修正请求 |
+| `401` | 未授权 —— Bearer API 密钥缺失或无效（开启强制校验后返回） | 否，附上有效密钥 |
+| `403` | 禁止访问 —— 该密钥不允许从此来源使用 | 否 |
+| `404` | 资源不存在 —— 接口端点或资源不存在 | 否 |
+| `422` | 无法处理的实体 —— schema 校验失败 | 否，同样的负载永远失败 |
+| `429` | 请求过多 —— 超出速率限制 | 是，退避之后 |
+| `500` | 服务器内部错误 —— 服务端出现意外错误 | 是，带退避 |
+| `502` | 网关错误 —— 服务器从上游服务器收到了无效响应 | 是，带退避 |
+| `503` | 服务不可用 —— 做市方或 LSP 节点暂时无法访问，或正在维护/过载 | 是，带退避 |
+
+`4xx` 类表示请求本身需要修改；`5xx` 类表示请求没问题，是上游出了状况。只有 `5xx` 类加上 `429` 值得重试 —— 见[重试与健壮性](#retry-and-resilience)。
+
+---
+
+## 请求与认证
+
+<AccordionGroup>
+  <Accordion title="400 请求错误" icon="circle-xmark">
+    **现象：** 返回 `400`，响应体可能是 `error_code` 信封，也可能是一个裸的 `detail` 字符串
+
+    **原因：** 请求中的参数缺失或无效。
+
+    **解决方法：**
+    1. 核对负载，确认每个必填字段都存在且取值合法
+    2. 让处理逻辑同时兼容**两种** `400` 结构 —— 有 `error_code` 就读它，否则回退到 `detail`
+    3. 对于 `{"detail": "Route not supported for this pair..."}`，用 `POST /api/v1/market/pairs/routes` 查询该交易对实际支持的 `routes`，并发送其中出现过的 `from_asset.layer` → `to_asset.layer` 组合
+    4. 对于交易对过滤，`pair_ticker` 必须是 `BASE/QUOTE` 格式（例如 `BTC/USDT`），且单一交易对标识符之间互斥
+  </Accordion>
+
+  <Accordion title="401 未授权" icon="ban">
+    **现象：** 原本正常的请求开始返回 `401`，或首次带密钥调用就返回 `401`
+
+    **原因：**
+    - 你所在环境已开启 API 密钥强制校验，而请求未携带有效密钥
+    - 请求头格式有误 —— 必须是 `Authorization: Bearer <token>`，而不是裸 token
+    - 密钥缺少该接口端点所需的作用域（市场数据需要 `quote:read`，交换发起/执行需要 `swap:execute`）
+
+    **解决方法：**
+    1. 打印客户端实际发出的 `Authorization` 请求头，检查是否漏了 `Bearer ` 前缀或多了换行符
+    2. 如果调用的是交换发起或执行，确认密钥带有 `swap:execute` 而不只是 `quote:read`
+    3. 确认密钥有效且未被吊销
+    4. 如果你还没有密钥：signet 上匿名访问仍然可用 —— 收到 `401` 说明强制校验对你已经生效
+  </Accordion>
+
+  <Accordion title="403 禁止访问" icon="shield-halved">
+    **现象：** 某个接口端点返回 `403`，而同一密钥在别处可用
+
+    **原因：** 密钥本身有效，但不允许从此来源使用。
+
+    **解决方法：** 换用允许的来源调用，或申请把该来源加入允许列表。当为后端签发的密钥被从浏览器或一台新的部署主机上使用时，就会遇到这种失败 —— 另见[常见问题](/cn/api-reference/faq)中关于 CORS 的说明。
+  </Accordion>
+
+  <Accordion title="422 无法处理的实体" icon="circle-exclamation">
+    **现象：** 返回 `422`，且 `detail` 是一个**数组**而不是 `error_code`
+
+    **原因：** 请求在进入业务逻辑之前就没通过 schema 校验，因此没有产生业务错误。
+
+    **解决方法：** 读 `detail[].loc` —— 它就是出错字段的确切路径。`["body", "rfq_id"]` 配合 `"type": "missing"` 说明你完全没传 `rfq_id`；`"type"` 为 `int_parsing` 通常意味着金额被当作字符串发送了。不要把 `422` 当作可重试错误：同样的负载永远会失败。
+  </Accordion>
+
+  <Accordion title="明明存在的资产、交易对或接口端点却返回 404" icon="magnifying-glass">
+    **现象：** 返回 `PAIR_NOT_FOUND`、`NOT_FOUND`，或你确知受支持的 ticker 返回了空的 `assets` 数组
+
+    **原因：**
+    - 接口端点 URL 或某个资源标识符有误
+    - 该资产或交易对处于非活跃状态，而 `GET /market/pairs` 默认只返回活跃交易对（`active_only=true`）
+    - 你用 `asset_id` 过滤，但做市方要求完全一致的 RGB 合约 ID，包括 `rgb:` 前缀
+    - 你连到了错误的环境 —— 资产 ID 在 signet 和主网之间**不通用**
+
+    **解决方法：**
+    1. 检查接口端点路径和资源标识符，包括 `/api/v1` 前缀
+    2. 用 `active_only=false` 重新查询，看该交易对是否存在但被停用
+    3. 从 `GET /api/v1/market/assets` 动态发现 ID，不要硬编码，并按环境区分配置
+    4. 检查响应里的 `total` —— 它是全部匹配项的数量，因此 `total` 大于你的分页大小说明你看到的是分页，而不是「不存在」
+  </Accordion>
+
+  <Accordion title="429 请求过多" icon="gauge-high">
+    **现象：** 返回 `RATE_LIMIT_EXCEEDED`，通常发生在轮询价格时
+
+    **原因：** 短时间内发送了过多请求。
+
+    **解决方法：**
+    1. 读取 `X-RateLimit-Remaining` 和 `X-RateLimit-Reset`，在被切断之前就主动退避，而不是等 `429` 才反应
+    2. 如果响应给出了等待时间，请在该时间之后重试
+    3. 不要循环轮询 `POST /market/quote` —— 打开 WebSocket，在确实需要新价格时再发 `quote_request`
+    4. 缓存 `market/assets` 和 `market/pairs`；两者都可安全缓存，且很少变化
+    5. 记住限制是**同时**按 IP、按接口端点和按全局计算的，所以同一 NAT 后面一个吵闹的邻居可能会吃掉你的额度
+  </Accordion>
+
+  <Accordion title="500、502 或 503" icon="server">
+    **现象：** 返回 `INTERNAL_ERROR`，或者一分钟前还正常的接口端点返回 `503`
+
+    **原因：**
+    - `500` —— 服务端出现意外错误
+    - `502` —— 从上游服务器收到了无效响应
+    - `503` —— 做市方或 LSP 节点暂时无法访问、正在维护或已过载
+
+    这几种都不表示你的请求格式有误。
+
+    **解决方法：**
+    1. 使用带抖动的指数退避重试；这类失败属于瞬时故障
+    2. 超时后**不要**盲目重试 `/swaps/execute` —— 先轮询 `POST /api/v1/swaps/atomic/status`，确认这笔调用是否其实已经生效
+    3. 如果持续出现，请附上错误体中的 `request_id` 反馈给我们
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 报价与金额
+
+<AccordionGroup>
+  <Accordion title="还没发起交换，报价就过期了" icon="hourglass-end">
+    **现象：** `/swaps/init` 拒绝了一个片刻之前还有效的 `rfq_id`
+
+    **原因：** 报价的 `expires_at` 已过。这个窗口以数十秒计，不是数分钟。
+
+    **解决方法：**
+    1. 尽可能晚地取报价 —— 紧贴发起之前，绝不要在用户可能久留的确认界面之前
+    2. 让发起 → 白名单 → 执行整条链路保持紧凑；它们全都基于同一个报价
+    3. 如果用户犹豫，丢弃这个 `rfq_id`，等他继续时再请求新报价
+  </Accordion>
+
+  <Accordion title="金额被判定为无效" icon="calculator">
+    **现象：** 返回 `VALIDATION_ERROR`，或一个提到金额的 `400`
+
+    **原因：**
+    - 低于该**层**的 `min_amount` 或高于 `max_amount` —— 这些限制按层存放在每个资产的 `endpoints` 数组里，而不在资产本身上
+    - 发送了展示单位而不是原始单位
+    - 两侧都填了金额，或两侧都没填
+
+    **解决方法：**
+    1. 从你所路由的那一层对应的 `endpoints` 条目中读取限制
+    2. BTC 一侧用毫聪，RGB 一侧用该资产 `precision` 对应的原始单位 —— 见[常见问题](/cn/api-reference/faq)
+    3. `from_asset.amount`（正向报价）和 `to_asset.amount`（反向报价）中恰好填一个
+  </Accordion>
+
+  <Accordion title="金额或价格差了几个数量级" icon="magnifying-glass-dollar">
+    **现象：** 报价在算术上「不对」，差了 1,000 倍或 1 亿倍
+
+    **原因：**
+    - BTC 一侧被当作聪处理，而 API 指的是毫聪
+    - 把一个资产的精度用在了另一个资产上 —— 精度是按资产定义的，BTC 和 USDT 并不共用一个
+    - 把 `price` 当成了展示汇率；它是一个完整单位的 `from_asset` 以 `to_asset` 最小单位表示的价格
+
+    **解决方法：**
+    1. 展示响应中的 `to_asset.amount` —— 手续费已经计入其中 —— 而不要用 `price` 反算
+    2. 从 `GET /api/v1/market/assets` 逐个资产读取 `precision`，绝不硬编码换算系数
+    3. 在把换算逻辑接入界面之前，先在 signet 上用一笔小额报价做一次往返验证
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 交换
+
+<AccordionGroup>
+  <Accordion title="发起成功，但 /swaps/execute 失败" icon="triangle-exclamation">
+    **现象：** `init` 返回了 `swapstring`，但 `execute` 失败
+
+    **原因：** 这个 `swapstring` 从未在你自己的节点上加入白名单，因此接单方一侧无法履行 HTLC。这是最常见的集成故障，因为中间那一步并不是 Maker API 调用。
+
+    **解决方法：** 三个步骤必须按顺序执行，且分布在两台不同的服务器上：
+
+    1. 在 **Maker API** 上调用 `POST /api/v1/swaps/init` → 返回 `swapstring`、`payment_hash`、`access_token`
+    2. 通过**你自己的 RGB Lightning Node** 的 `/taker` API 把 `swapstring` 加入白名单
+    3. 在 **Maker API** 上调用 `POST /api/v1/swaps/execute`，带上 `swapstring`、`taker_pubkey` 和 `payment_hash`
+
+    同时确认 `taker_pubkey` 是你节点的 pubkey，且 `payment_hash` 与发起时返回的一致。参见[交换协议](/cn/api-reference/swap-protocol)。
+  </Accordion>
+
+  <Accordion title="轮询状态时返回 404 Swap not found" icon="lock">
+    **现象：** 对一笔你确知存在的交换，`POST /api/v1/swaps/atomic/status` 返回 `404`
+
+    **原因：** `access_token` 缺失或无效。这个 `404` 是刻意统一的 —— 它不区分「token 错误」和「不存在这笔交换」，这样该接口就无法被用来探测 payment hash。
+
+    **解决方法：**
+    1. 同时发送 `payment_hash` **和** `/swaps/init` 返回的 `access_token`
+    2. 如果 token 当时没有保存下来，它无法找回 —— 它只返回一次。请在发起时就把它和 payment hash 一起存好
+    3. 确认你轮询的环境与这笔交换创建时所在的环境一致
+  </Accordion>
+
+  <Accordion title="交换卡在 Pending" icon="clock-rotate-left">
+    **现象：** `execute` 返回了 `200`，但状态一直是 `Pending`，资产也没到账
+
+    **原因：**
+    - HTLC 还在途中 —— `execute` 返回并不等于结算完成
+    - 资产一侧没有容量足够的路由
+    - 你节点上待处理的 RGB 转账尚未推进
+
+    **解决方法：**
+    1. 继续轮询 `/swaps/atomic/status`；终态是 `Succeeded`、`Expired` 和 `Failed`
+    2. 在你的节点上刷新转账，并检查该资产的出向容量 —— 不要只看总余额
+    3. 用交换对象上的 `expires_at` 与当前时间对比，判断 HTLC 还剩多少时间
+  </Accordion>
+
+  <Accordion title="交换以 Expired 或 Failed 结束" icon="circle-xmark">
+    **现象：** 状态变为 `Expired` 或 `Failed`
+
+    **原因：**
+    - `Expired` —— 双方完成之前 HTLC 超时已过，通常是白名单或执行来得太晚
+    - `Failed` —— HTLC 无法路由或结算，通常是容量或流动性问题
+
+    **解决方法：**
+    1. 你的资金没有风险：未完成的原子交换会自动把双方资金退回。不要手动重新打款
+    2. 用**新的报价**重试 —— 旧的 `rfq_id` 和 `swapstring` 已经作废
+    3. 如果同一交易对反复失败，检查该资产通道上的容量，并通过 [LSPS1](/cn/api-reference/rgb-lsps1-apis) 订购更多流动性
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## WebSocket
+
+WebSocket 的错误不是 HTTP 响应 —— 它们以 JSON 消息的形式抵达已打开的连接；遇到严重错误时，服务器可能直接关闭连接。
+
+<AccordionGroup>
+  <Accordion title="已连接，但收不到 quote_response" icon="signal-slash">
+    **现象：** 连接已打开、`quote_request` 已发出，但没有 `quote_response` 返回
+
+    **原因：** 请求失败了。失败会以带 `error` 字段的消息返回，而不是 `quote_response`，因此只监听 `quote_response` 的客户端看到的就是「一片安静」。
+
+    **解决方法：**
+    1. 打印所有入站帧，而不只是你期待的那些，并处理 `error` 结构
+    2. 检查常见原因：未知资产、该交易对不支持的路由、超出按层限制的金额
+    3. 确认 `from_amount` / `to_amount` 中恰好设置了一个
+  </Accordion>
+
+  <Accordion title="价格不再更新" icon="arrows-rotate">
+    **现象：** 第一条报价到了，之后就再没有变化
+
+    **原因：** 这个协议是请求/响应式的 —— 没有订阅机制。服务器只回答你发出的那条消息，不会主动推送更新。
+
+    **解决方法：** 每当你需要当前价格时就发一条新的 `quote_request`，由你自己的定时器或用户操作来驱动。
+  </Accordion>
+
+  <Accordion title="连接反复断开" icon="plug-circle-xmark">
+    **现象：** 连接意外关闭，有时发生在流程中途
+
+    **重连策略** —— 当连接意外关闭时：
+
+    1. 等待几秒（5–10 秒）
+    2. 重新建立连接
+    3. 重新发送所有待处理的 `quote_request` 以获取新报价 —— 报价不会跨越重连留存
+
+    **另外检查：**
+    - 定期发送 `ping` 并期待 `pong`；经过代理的空闲连接就是一条即将被关闭的连接
+    - 每个会话使用一个新的唯一 `{client_id}`，并确认 URL 是 `wss://` 而不是 `ws://`
+    - 如果你处在会剥离 WebSocket 升级的企业代理之后，请退回到 `POST /market/quote`
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 通道订单（LSPS1）
+
+<AccordionGroup>
+  <Accordion title="estimate_fees 或 create_order 提示缺少 rfq_id" icon="receipt">
+    **现象：** 一旦带上 `client_asset_amount`，调用就失败
+
+    **原因：** 当 `client_asset_amount > 0` 时，客户端是在*购买*资产，因此需要一个来自 `POST /api/v1/market/quote` 的新鲜 `rfq_id` 来定价。
+
+    **解决方法：**
+    1. 先取报价，再把这个 `rfq_id` 传给 `estimate_fees` / `create_order`
+    2. 如果报价在两次调用之间过期了，重新取一次
+    3. 如果你只想要 LSP 一侧的流动性，就完全不要传 `client_asset_amount` —— 那种情况下不需要报价
+  </Accordion>
+
+  <Accordion title="订单因通道大小或资产数量被拒" icon="ruler">
+    **现象：** `create_order` 在余额或资产数量上校验失败
+
+    **原因：** 请求超出了 LSP 公布的限制。
+
+    **解决方法：**
+    1. 读取 `GET /api/v1/lsps1/get_info` 返回的 `options`，把参数控制在 `min_channel_balance_sat` / `max_channel_balance_sat`、初始余额上下界以及 `max_channel_expiry_blocks` 之内
+    2. 检查同一响应中按资产给出的上限 —— `min_initial_lsp_amount` / `max_initial_lsp_amount` 是按资产定义的，且可能为 `0`，那表示该资产不支持这一侧
+    3. 下单之前先连接 `lsp_connection_url` 对应的 peer，这样通道才有地方开
+  </Accordion>
+
+  <Accordion title="订单停在 PENDING_RATE_DECISION" icon="scale-balanced">
+    **现象：** 通道始终没有开通，而 `order_state` 是 `PENDING_RATE_DECISION`
+
+    **原因：** 付款结算之前市场汇率出现了明显变动，因此 LSP 暂停了订单，而不是按过时价格开通通道。它在等你决定。
+
+    **解决方法：** 调用 `POST /api/v1/lsps1/rate_decision`，带上 `order_id`、该订单的 `access_token` 和 `accept_new_rate` —— `true` 表示按当前汇率继续，`false` 表示触发退款到 `refund_onchain_address`。退款会返回 `refund_txid`。对处于其他状态的订单调用该接口会返回 `400`。
+  </Accordion>
+
+  <Accordion title="get_order 返回 400 或 404" icon="key">
+    **现象：** 你无法读回自己创建的订单
+
+    **原因：** 与交换不同，这两种情况是可区分的 —— `access_token` 无效返回 `400`，`order_id` 不存在返回 `404`。
+
+    **解决方法：** 把 `create_order` 返回的 `access_token` 和 `order_id` 一起保存；它只在创建时返回，而 `get_order` 和 `rate_decision` 都需要它。如果想要一层兜底提醒，可以在下单时设置 `email`。
+  </Accordion>
+
+  <Accordion title="已付款，但通道还不能用" icon="hourglass-half">
+    **现象：** 付款已结算，`order_state` 为 `CHANNEL_OPENING`
+
+    **解决方法：**
+    1. 继续轮询 `get_order` —— 它可以安全轮询，且在通道存在之前 `channel` 一直是 `null`
+    2. 用 `GET /api/v1/lsps1/network_info` 返回的当前高度与 `required_channel_confirmations` 对比
+    3. 注意付款的过期时间在 `payment.bolt11.expires_at` 和 `payment.onchain.expires_at` 下，通道自身的过期时间在 `channel.expires_at` 下 —— 顶层没有 `expires_at` 可读
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 重试与健壮性 {#retry-and-resilience}
+
+把客户端设计成「坏响应是一种已处理的情况」，而不是一次崩溃。
+
+1. **优雅地处理错误。** 解析全部三种信封，基于 `error_code` 分支判断，并给出可操作的提示，而不是把原始故障直接抛给用户。
+2. **只重试值得重试的。** 瞬时故障 —— `500`、`502`、`503` 和 `429` —— 值得再试一次，请使用**带抖动的指数退避**。客户端错误（`400`、`401`、`403`、`404`、`422`）无论发多少次，结果都一样。
+3. **尊重速率限制。** 读取 `X-RateLimit-*` 请求头，主动待在上限之内，而不是靠撞上限来发现它。缓存资产、交易对之类的静态数据。
+4. **把交换执行当作非幂等操作。** `/swaps/execute` 超时并不能证明它失败了 —— 在重新发送任何东西之前，先轮询 `/swaps/atomic/status`。
+5. **限制总重试次数。** 面对 `503` 的无限重试循环，会变成你对自己发起的拒绝服务。
+
+---
+
+## 反馈之前
+
+一份可复现的报告通常一个来回就能定位。
+
+1. **查看日志**中完整的错误响应，而不只是状态码 —— 应用错误会带上 `request_id`，它把你的请求和我们的日志关联起来。
+2. **校验输入**：确认每个参数和负载字段都符合该接口端点的要求，且金额使用的是原始单位。
+3. **用 `curl` 复现**，并隐去 API 密钥。
+4. **确认基础 URL** 包含 `/api/v1`，并且指向你以为的那个环境。
+5. **试一下接口端点页面的交互式演练场**（运行在 signet）—— 如果同样的调用在那里成功，差异就在你的客户端里。
+
+## 获取帮助
+
+如果是疑问而不是报错，请查看[常见问题](/cn/api-reference/faq)；规范与上游链接见[更多资源](/cn/api-reference/additional-resources)。
+
+其他情况请从下面的渠道中选择一个反馈问题，并附上：
+
+1. 请求 URL 与 HTTP 方法
+2. 请求负载（请隐去 API 密钥）
+3. 完整的错误响应，包含 `request_id`
+4. 请求的时间戳
+5. 运行环境（signet / 主网）
+
+<CardGroup cols={2}>
+  <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
+    向社群提问。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

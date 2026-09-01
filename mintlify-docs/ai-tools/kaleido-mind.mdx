@@ -8,9 +8,9 @@ description: "On-device reasoning engine behind agentic KaleidoSwap wallets, wit
 
 The design starts from a hard constraint: small on-device models are slow and unreliable at multi-step planning. KaleidoMind avoids asking them to do that work.
 
-<Info>
+<Note>
   KaleidoMind does not run by itself, it is a library embedded by a host: the [Rate mobile wallet](https://github.com/kaleidoswap/Rate) (React Native, fully on-device QVAC), the [Desktop App](/desktop-app/getting-started/introduction)'s Tauri sidecar, or an eval and benchmark harness. **[KaleidoAgent](/ai-tools/kaleido-agent) does not currently use this library**, it has its own separate agent loop. See [Relationship to KaleidoAgent](#relationship-to-kaleidoagent) below.
-</Info>
+</Note>
 
 ## The Tiered Funnel
 

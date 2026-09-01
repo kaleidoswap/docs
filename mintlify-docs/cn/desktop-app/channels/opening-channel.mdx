@@ -1,0 +1,52 @@
+---
+title: 开通闪电通道
+description: "在 KaleidoSwap 桌面应用中开通闪电通道：选择对等节点、设定通道容量，并可在开通时加入比特币分层协议资产，让同一条通道支持多资产交易"
+---
+
+KaleidoSwap 既支持单独使用闪电网络，也支持在闪电网络之上使用 RGB 资产。前者适用于常规的闪电网络操作，后者用于在闪电网络上操作 RGB 资产。
+
+## 开通通道
+
+以下流程用于在你的节点上开通一条闪电通道。如第 4 步所述，你可以选择在通道中加入 RGB 资产，也可以不加入。
+
+1. 打开 **「通道」(Channels)** 页面，选择 **「开通通道」(Open Channel)** 标签页。
+2. **选择对等节点**：输入对等节点的节点 ID 或公钥，或直接从推荐节点中选择。 <img src="/assets/images/desktop-app/16_peer_connection.png" alt="对等节点选择界面，包含节点 ID 输入框和推荐的闪电网络节点" width={1332} height={757} />
+3. 指定分配给通道的比特币数量，这个数量就是通道的总容量。 <img src="/assets/images/desktop-app/17_channel_amount.png" alt="通道容量设置界面，包含比特币金额输入框" width={954} height={870} />
+4. [可选] **添加 RGB 资产**，操作如下：
+   - 点击「添加资产」(Add Asset)。
+   - 选择要加入通道的 RGB 资产。注意：只有你事先已经收到或发行过的资产，才能用来开通通道。如果你想加入的是钱包中尚未出现过的资产——首次使用的用户通常都是这种情况——更合适的做法是改为[购买通道](/cn/desktop-app/channels/order-new-channel)。
+   - 设定每种资产分配到通道中的数量。
+如果你打算用这条通道交换一种或多种 RGB 资产，这一步是必需的。 <img src="/assets/images/desktop-app/18_add_rgb_asset.png" alt="在新建闪电通道中添加 RGB 资产" width={958} height={706} />
+5. 选择 **交易费率**(Transaction Fee Rate)，然后点击「下一步」(Next)。
+6. **仔细核对**所有信息：
+   - 比特币数量。
+   - RGB 资产数量（如有）。
+   - 对等节点信息。
+7. **开通通道**：点击「确认」(Confirm) 启动通道开通流程。
+
+## 通道开通流程
+
+新开通的通道要投入使用，整体流程如下：
+
+1. **确认**：应用会显示一个包含通道详情的确认界面。
+2. **资金交易**：资金交易会被广播到比特币网络。
+3. **等待期**：等待所需的确认数（大约 6 个区块，在主网上约为一小时）。
+4. **通道激活**：确认完成后，通道即可使用。
+
+## 重要提示
+
+- 最小通道容量：50,000 聪
+- 所需确认数：大约 6 个区块
+- 通道容量在开通后无法修改
+- 通道开通后无法再追加 RGB 资产——请在创建通道时一并加入
+- 开通过程中请保持节点在线
+
+---
+
+*下一步：[购买新通道](/cn/desktop-app/channels/order-new-channel)*
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 和 Linux 的最新版 KaleidoSwap 桌面应用。
+</Card>

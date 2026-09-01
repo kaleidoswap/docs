@@ -1,0 +1,282 @@
+---
+title: "KaleidoSDK 工具函数"
+sidebarTitle: "工具函数"
+description: "KaleidoSDK 提供的辅助函数：金额换算、精度处理，以及跨比特币与比特币二层资产的资产与交易对映射"
+---
+
+## 金额换算 {#amount-conversion}
+
+### `parseRawAmount` / `parse_raw_amount`
+
+把展示金额转换为原始（最小）单位，例如把 BTC 转换为聪。
+
+<CodeGroup>
+```typescript TypeScript
+import { parseRawAmount } from 'kaleido-sdk';
+
+const sats = parseRawAmount(0.001, 8);   // 100000
+const usdt = parseRawAmount(10.50, 2);   // 1050
+```
+
+```python Python
+from kaleido_sdk import parse_raw_amount
+
+sats = parse_raw_amount(0.001, 8)   # 100000
+usdt = parse_raw_amount(10.50, 2)   # 1050
+```
+</CodeGroup>
+
+### `toDisplayAmount` / `to_display_amount`
+
+把原始（最小单位）金额转换回展示金额。
+
+<CodeGroup>
+```typescript TypeScript
+import { toDisplayAmount } from 'kaleido-sdk';
+
+const display = toDisplayAmount(50000000, 8);  // 0.5
+```
+
+```python Python
+from kaleido_sdk import to_display_amount
+
+display = to_display_amount(50000000, 8)  # 0.5
+```
+</CodeGroup>
+
+## PrecisionHandler
+
+`PrecisionHandler` 负责多个资产的金额换算，它会利用资产元数据自动查找精度。
+
+### 创建 PrecisionHandler
+
+<CodeGroup>
+```typescript TypeScript
+import { createPrecisionHandler } from 'kaleido-sdk';
+
+// 带有 asset_id 和 precision 的 MappedAsset 对象
+const assets = [
+  { asset_id: 'btc-asset-id', ticker: 'BTC', precision: 8, /* ... */ },
+  { asset_id: 'usdt-asset-id', ticker: 'USDT', precision: 2, /* ... */ },
+];
+
+const handler = createPrecisionHandler(assets);
+```
+
+```python Python
+from kaleido_sdk import create_precision_handler
+
+assets = [
+    {"asset_id": "btc-asset-id", "ticker": "BTC", "precision": 8},
+    {"asset_id": "usdt-asset-id", "ticker": "USDT", "precision": 2},
+]
+
+handler = create_precision_handler(assets)
+```
+</CodeGroup>
+
+### 方法
+
+#### `toRawAmount` / `to_raw_amount`
+
+按资产的精度把展示金额转换为原始金额。
+
+<CodeGroup>
+```typescript TypeScript
+const raw = handler.toRawAmount(0.5, 'btc-asset-id');  // 50000000
+```
+
+```python Python
+raw = handler.to_raw_amount(0.5, "btc-asset-id")  # 50000000
+```
+</CodeGroup>
+
+#### `toDisplayAmount` / `to_display_amount`
+
+把原始金额转换为展示金额。
+
+<CodeGroup>
+```typescript TypeScript
+const display = handler.toDisplayAmount(50000000, 'btc-asset-id');  // 0.5
+```
+
+```python Python
+display = handler.to_display_amount(50000000, "btc-asset-id")  # 0.5
+```
+</CodeGroup>
+
+#### `getAssetPrecision` / `get_asset_precision`
+
+获取指定资产的精度。
+
+<CodeGroup>
+```typescript TypeScript
+const precision = handler.getAssetPrecision('btc-asset-id');  // 8
+```
+
+```python Python
+precision = handler.get_asset_precision("btc-asset-id")  # 8
+```
+</CodeGroup>
+
+#### `formatDisplayAmount` / `format_display_amount`
+
+按正确的小数位数格式化展示金额。
+
+<CodeGroup>
+```typescript TypeScript
+const formatted = handler.formatDisplayAmount(0.5, 'btc-asset-id');  // "0.50000000"
+```
+
+```python Python
+formatted = handler.format_display_amount(0.5, "btc-asset-id")  # "0.50000000"
+```
+</CodeGroup>
+
+#### `validateOrderSize` / `validate_order_size`
+
+对照最小/最大限额校验订单金额。
+
+<CodeGroup>
+```typescript TypeScript
+const result = handler.validateOrderSize(0.001, btcAsset);
+// 返回：{ valid: boolean, error?: string, rawAmount, minRawAmount, maxRawAmount }
+```
+
+```python Python
+result = handler.validate_order_size(0.001, btc_asset)
+# 返回：ValidationResult { valid, error, raw_amount, min_raw_amount, max_raw_amount }
+```
+</CodeGroup>
+
+#### `getOrderSizeLimits` / `get_order_size_limits`
+
+获取某个资产的最小/最大订单规模。
+
+<CodeGroup>
+```typescript TypeScript
+const limits = handler.getOrderSizeLimits(btcAsset);
+// 返回：{ minDisplayAmount, maxDisplayAmount, minRawAmount, maxRawAmount, precision }
+```
+
+```python Python
+limits = handler.get_order_size_limits(btc_asset)
+# 返回：OrderSizeLimits { min_display_amount, max_display_amount, min_raw_amount, max_raw_amount, precision }
+```
+</CodeGroup>
+
+## AssetPairMapper（TypeScript）
+
+`AssetPairMapper` 用于从 `listPairs` 的响应中查找资产和交易对。该工具仅在 TypeScript SDK 中提供。
+
+### 创建 Mapper
+
+```typescript
+import { createAssetPairMapper } from 'kaleido-sdk';
+
+const pairsResponse = await client.maker.listPairs();
+const mapper = createAssetPairMapper(pairsResponse);
+```
+
+### 方法
+
+#### `findByTicker`
+
+按代码（ticker）查找资产。
+
+```typescript
+const btc = mapper.findByTicker('BTC');
+// 返回：MappedAsset | undefined
+```
+
+#### `findById`
+
+按资产 ID 查找资产。
+
+```typescript
+const asset = mapper.findById('btc-asset-id');
+// 返回：MappedAsset | undefined
+```
+
+#### `getAllAssets`
+
+获取所有资产。
+
+```typescript
+const allAssets = mapper.getAllAssets();
+// 返回：MappedAsset[]
+```
+
+#### `canTrade` / `canTradeByTicker`
+
+检查两个资产之间能否交易。
+
+```typescript
+const canTrade = mapper.canTrade('btc-asset-id', 'usdt-asset-id');  // boolean
+const canTradeByTicker = mapper.canTradeByTicker('BTC', 'USDT');     // boolean
+```
+
+#### `getTradingPartners`
+
+获取所有可与给定资产交易的资产。
+
+```typescript
+const partners = mapper.getTradingPartners('btc-asset-id');
+// 返回：MappedAsset[]
+```
+
+#### `getActivePairs`
+
+获取所有处于活跃状态的交易对。
+
+```typescript
+const activePairs = mapper.getActivePairs();
+// 返回：TradingPairResponseModel[]
+```
+
+#### `findPairByTickers`
+
+按基础资产与计价资产的代码查找指定交易对。
+
+```typescript
+const pair = mapper.findPairByTickers('BTC', 'USDT');
+// 返回：TradingPairResponseModel | undefined
+```
+
+## SDK 信息
+
+### `getVersion` / `get_version`
+
+获取 SDK 的版本字符串。
+
+<CodeGroup>
+```typescript TypeScript
+import { getVersion } from 'kaleido-sdk';
+console.log(getVersion());  // "0.1.0" —— 返回的是硬编码值，并非实际的包版本
+```
+
+```python Python
+from kaleido_sdk import get_version
+print(get_version())  # "0.1.18"
+```
+</CodeGroup>
+
+<Note>
+TypeScript 的 `getVersion()` 目前返回硬编码的 `"0.1.0"`，而不是已安装的包版本。要读取真实版本，请在 `package.json` 中查看 `kaleido-sdk` 依赖项。
+</Note>
+
+### `getSdkName` / `get_sdk_name`
+
+获取 SDK 的包名。
+
+<CodeGroup>
+```typescript TypeScript
+import { getSdkName } from 'kaleido-sdk';
+console.log(getSdkName());  // "kaleido-sdk"
+```
+
+```python Python
+from kaleido_sdk import get_sdk_name
+print(get_sdk_name())  # "kaleido-sdk"
+```
+</CodeGroup>

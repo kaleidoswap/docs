@@ -1,0 +1,47 @@
+---
+title: 创建新钱包
+description: "在 KaleidoSwap 桌面应用中创建新钱包：生成助记词、设置密码、初始化节点，并安全备份密钥，逐步完成整个流程。"
+---
+
+首次启动应用时，你需要选择钱包要连接的节点类型。有两个选项：使用远程节点，或使用本地节点。前者需要你连接到一个已在运行的 RGB Lightning Node，后者会在当前设备上自动初始化一个节点并把数据存在本地。本指南演示本地节点的流程，因为这是开始体验 KaleidoSwap 应用最简单的方式。
+
+<img src="/assets/images/desktop-app/0_home.png" alt="KaleidoSwap 桌面应用启动界面，显示节点连接选项" width={1919} height={985} />
+
+## 创建新钱包
+
+要开始创建流程，先选择「创建新钱包」(Create New Wallet) 选项：
+
+<img src="/assets/images/desktop-app/1_create_new_wallet.png" alt="KaleidoSwap 桌面应用中的创建新钱包选项" width={1919} height={988} />
+
+然后按以下步骤操作：
+
+1. **为账户命名**，并**选择要使用的网络**。网络选择器提供 regtest（及其 Local、Docker 和 Bitfinex 变体）、signet、Mutinynet 和测试网作为测试环境。主网暂不可选。
+<img src="/assets/images/desktop-app/2_creation_step1.png" alt="钱包创建第 1 步：填写账户名称并选择网络" width={1919} height={985} />
+2. **设置安全密码**：输入一个强密码来保护钱包，然后点击「初始化节点」(Initialize Node)。这会在你的机器上启动节点初始化。 
+<img src="/assets/images/desktop-app/3_creation_step2.png" alt="钱包创建第 2 步：设置安全密码并初始化节点" width={1919} height={986} />
+3. **备份**：节点初始化完成后，抄下界面给出的助记词并妥善保存。
+<img src="/assets/images/desktop-app/4_creation_step3.png" alt="钱包创建第 3 步：需要抄写的助记词备份短语" width={1919} height={988} />
+4. **验证**助记词：出于安全考虑，应用会要求你重新输入助记词。
+<img src="/assets/images/desktop-app/5_creation_step4.png" alt="钱包创建第 4 步：助记词验证" width={1918} height={987} />
+
+之后需要稍等一会儿来解锁新的本地节点，随后你就会进入 KaleidoSwap 主页，可以开始使用了！
+
+
+
+## 选择账户
+
+如果你不是要创建新账户，而是要选择一个已有账户，可以在左侧菜单中从之前保存的账户里选择，即使该账户尚未初始化也可以。步骤如下：
+
+1. **选择账户** (Select Account)：在左侧菜单中选择。
+2. 确认账户无误后，点击**选择节点** (Select Node)。
+3. **解锁钱包** (Unlock Wallet)：输入此前设置的密码，解锁本地 RGB Lightning Node 实例。
+
+请注意，由于 RGB 闪电网络代码目前存在的限制，解锁节点可能需要一些时间。
+
+<img src="/assets/images/desktop-app/6_home_with_account.png" alt="KaleidoSwap 主界面，左侧菜单显示已保存的账户" width={1919} height={987} />
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

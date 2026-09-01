@@ -1,0 +1,313 @@
+---
+title: "闪电通道订单 API"
+sidebarTitle: "通道订单"
+description: "通过 LSPS1（Lightning Service Provider Specification）向闪电服务提供商订购通道并管理流动性，支持多资产通道。"
+---
+
+## 总览
+
+RGB LSPS1 API 让客户端能够向闪电服务提供商（LSP）订购带 RGB 资产分配的闪电通道。在以下场景下使用这些接口端点：
+
+- **开通预分配 RGB 资产的通道** —— LSP 开通通道，并在 LSP 一侧预先注入所请求的资产数量。
+- **查询 LSP 能力** —— 在创建订单前查看支持的资产、通道大小上下限和费用结构。
+- **跟踪通道订单状态** —— 轮询订单，直到通道确认并开通。
+
+当你通过默认 LSP 开通通道时，KaleidoSwap 桌面应用会使用这些接口端点。SDK 用户可以通过 `client.maker.createLspOrder()` 直接调用。
+
+**基础 URL：** `https://api.signet.kaleidoswap.com/api/v1`（Signet）
+
+---
+
+## 获取 LSP 信息
+
+### 接口端点
+**`GET /api/v1/lsps1/get_info`**
+
+### 说明
+获取 RGB 闪电服务提供商的信息，包括可用资产、流动性选项和通道配置。
+
+### 响应结构
+- **`lsp_connection_url`**：LSP 节点的连接 URI（`pubkey@host:port`）—— 订购通道前请先连接该对等节点。
+- **`options`**：订单和通道的配置项。
+- **`assets`**：由该 LSP 管理的资产列表。
+
+### 响应示例
+```json
+{
+  "lsp_connection_url": "034eedc97802d7e2766704bd06d6bfded8aa2d35a1a007e277fd7278f3dc962706@lsp.signet.kaleidoswap.com:9735",
+  "options": {
+    "min_required_channel_confirmations": 0,
+    "min_funding_confirms_within_blocks": 0,
+    "min_onchain_payment_confirmations": 0,
+    "supports_zero_channel_reserve": true,
+    "min_onchain_payment_size_sat": 0,
+    "max_channel_expiry_blocks": 30160,
+    "min_initial_client_balance_sat": 0,
+    "max_initial_client_balance_sat": 100000000,
+    "min_initial_lsp_balance_sat": 0,
+    "max_initial_lsp_balance_sat": 100000000,
+    "min_channel_balance_sat": 50000,
+    "max_channel_balance_sat": 100000000
+  },
+  "assets": [
+    {
+      "name": "Tether USD",
+      "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
+      "ticker": "USDT",
+      "precision": 6,
+      "issued_supply": 100000000000,
+      "min_initial_client_amount": 0,
+      "max_initial_client_amount": 0,
+      "min_initial_lsp_amount": 0,
+      "max_initial_lsp_amount": 1000000,
+      "min_channel_amount": 0,
+      "max_channel_amount": 1000000
+    }
+  ]
+}
+```
+
+---
+
+## 获取网络信息
+
+### 接口端点
+**`GET /api/v1/lsps1/network_info`**
+
+### 说明
+获取 LSP 节点当前的区块高度和所在网络。可安全轮询并缓存。
+
+### 响应示例
+```json
+{
+  "network": "Signet",
+  "height": 805434
+}
+```
+
+---
+
+## 费用预估
+
+### 接口端点
+
+`POST /api/v1/lsps1/estimate_fees`
+
+### 说明
+
+在不创建订单的情况下预估通道订单的费用。当客户端购买资产时（`client_asset_amount > 0`），需要提供一个来自 `/market/quote` 的新鲜 `rfq_id`，以便将资产价格计入总额。
+
+### 请求体
+
+| Field                            | Type    | 说明                                                |
+|----------------------------------|---------|------------------------------------------------------------|
+| `lsp_balance_sat`                | Integer | 通道 LSP 一侧的余额，单位为聪。       |
+| `client_balance_sat`             | Integer | 通道客户端一侧的余额，单位为聪。    |
+| `channel_expiry_blocks`          | Integer | 通道在多少个区块后过期。          |
+| `token`（可选）               | String  | 折扣码或推荐码。                                |
+| `asset_id`（可选）            | String  | 该通道使用的 RGB 资产 ID。                       |
+| `lsp_asset_amount`（可选）    | Integer | LSP 一侧的 RGB 资产数量。                      |
+| `client_asset_amount`（可选） | Integer | 客户端一侧的 RGB 资产数量。                   |
+| `rfq_id`（可选）              | String  | 报价 ID —— 当 `client_asset_amount > 0` 时必填。        |
+
+### 响应示例
+```json
+{
+  "setup_fee": 1000,
+  "capacity_fee": 1500,
+  "duration_fee": 500,
+  "total_fee": 3000,
+  "applied_discount": null,
+  "discount_code": null
+}
+```
+
+---
+
+## 创建订单
+
+### 接口端点
+
+`POST /api/v1/lsps1/create_order`
+
+### 说明
+
+向 RGB 闪电服务提供商创建一个新的通道订单。
+
+### 请求体
+
+| Field                            | Type    | 说明                                                |
+|----------------------------------|---------|------------------------------------------------------------|
+| `client_pubkey`                  | String  | 客户端的公钥（必填）。                       |
+| `lsp_balance_sat`                | Integer | 通道 LSP 一侧的余额，单位为聪。       |
+| `client_balance_sat`             | Integer | 通道客户端一侧的余额，单位为聪。    |
+| `required_channel_confirmations` | Integer | 该通道所需的确认数。          |
+| `funding_confirms_within_blocks` | Integer | 注资应在多少个区块内确认。 |
+| `channel_expiry_blocks`          | Integer | 通道在多少个区块后过期。          |
+| `token`（可选）               | String  | 应用于订单费用的折扣码或推荐码。      |
+| `refund_onchain_address`（可选） | String | 订单失败或被拒时用于退款的链上地址。 |
+| `announce_channel`               | Boolean | 是否公开公告该通道。                  |
+| `asset_id`（可选）            | String  | 该通道使用的 RGB 资产 ID。                       |
+| `lsp_asset_amount`（可选）    | Integer | LSP 一侧的 RGB 资产数量。                      |
+| `client_asset_amount`（可选） | Integer | 客户端一侧的 RGB 资产数量。                   |
+| `rfq_id`（可选）              | String  | 来自 `/market/quote` 的报价 ID。**当 `client_asset_amount > 0` 时必填** —— 此时客户端在购买资产，订单必须由一份新鲜报价支撑。 |
+| `email`（可选）               | String  | 用于接收订单通知的邮箱地址。                     |
+
+### 请求示例
+
+```json
+{
+  "client_pubkey": "03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad",
+  "lsp_balance_sat": 100000,
+  "client_balance_sat": 50000,
+  "required_channel_confirmations": 3,
+  "funding_confirms_within_blocks": 144,
+  "channel_expiry_blocks": 4032,
+  "announce_channel": true,
+  "asset_id": "rgb:$i4cFKwt-2C5LZ3X-l$kOTGN-O6l1AOP-aP9COyn-7IeBkEM",
+  "lsp_asset_amount": 5000,
+  "client_asset_amount": 2500,
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "refund_onchain_address": "tb1qexampleaddress0000000000000000000000000",
+  "email": "ops@example.com"
+}
+```
+
+### 响应体
+
+| Field                             | Type             | 说明                                                    |
+|-----------------------------------|------------------|----------------------------------------------------------------|
+| `order_id`                        | String           | 所创建订单的唯一标识符。                       |
+| `client_pubkey`                   | String           | 客户端的公钥。                                  |
+| `lsp_balance_sat`                 | Integer          | 通道 LSP 一侧的余额，单位为聪。       |
+| `client_balance_sat`              | Integer          | 通道客户端一侧的余额，单位为聪。    |
+| `required_channel_confirmations`  | Integer          | 该通道所需的确认数。          |
+| `funding_confirms_within_blocks`  | Integer          | 注资应在多少个区块内确认。 |
+| `channel_expiry_blocks`           | Integer          | 通道在多少个区块后过期。          |
+| `token`                           | String / Null    | 与该订单关联的 token（如已提供）。             |
+| `created_at`                      | String date-time | 订单创建的时间戳。                                   |
+| `announce_channel`                | Boolean          | 该通道是否会被公开公告。                |
+| `order_state`                     | String           | 订单当前状态：`CREATED`、`CHANNEL_OPENING`、`COMPLETED`、`FAILED` 或 `PENDING_RATE_DECISION`。 |
+| `payment`                         | Object           | 支付详情，包括费用、发票或链上地址。支付过期时间位于 `payment.bolt11.expires_at` 和 `payment.onchain.expires_at`，顶层没有 `expires_at` 字段。 |
+| `channel`（可选）              | Object / Null    | 通道已创建时的通道详情（其过期时间为 `channel.expires_at`）。 |
+| `asset_id`（可选）             | String / Null    | 该通道使用的 RGB 资产 ID。                       |
+| `lsp_asset_amount`（可选）     | Integer / Null   | LSP 一侧的 RGB 资产数量。                      |
+| `client_asset_amount`（可选） | Integer / Null   | 客户端一侧的 RGB 资产数量。                   |
+| `rfq_id`（可选）               | String / Null    | 创建该订单时所依据的报价 ID。                    |
+| `asset_price_sat`（可选）      | Integer / Null   | 为 `client_asset_amount` 支付的 BTC 价格（单位为聪）。        |
+| `failure_reason`（可选）       | String / Null    | 当 `order_state` 为 `FAILED` 时，订单失败的原因。       |
+| `access_token`                    | String           | **调用 `get_order` 和 `rate_decision` 所需的单订单 token。仅在创建时返回一次 —— 请与订单 ID 一起保存。** |
+
+### 响应示例
+
+```json
+{
+  "order_id": "string",
+  "client_pubkey": "string",
+  "lsp_balance_sat": 0,
+  "client_balance_sat": 0,
+  "required_channel_confirmations": 0,
+  "funding_confirms_within_blocks": 0,
+  "channel_expiry_blocks": 0,
+  "token": "",
+  "created_at": "2024-12-18T19:09:19.868Z",
+  "announce_channel": true,
+  "order_state": "CREATED",
+  "payment": {
+    "bolt11": {
+      "state": "EXPECT_PAYMENT",
+      "expires_at": "2024-12-18T19:09:19.868Z",
+      "fee_total_sat": 0,
+      "order_total_sat": 0,
+      "invoice": "string"
+    },
+    "onchain": {
+      "state": "EXPECT_PAYMENT",
+      "expires_at": "2024-12-18T19:09:19.868Z",
+      "fee_total_sat": 0,
+      "order_total_sat": 0,
+      "address": "string",
+      "min_fee_for_0conf": 0,
+      "min_onchain_payment_confirmations": 0,
+      "refund_onchain_address": "string"
+    }
+  },
+  "channel": null,
+  "asset_id": "string",
+  "lsp_asset_amount": 0,
+  "client_asset_amount": 0,
+  "rfq_id": "8e6635fb-ab37-4aed-89f4-bc9c98fb8b49",
+  "asset_price_sat": 0,
+  "failure_reason": null,
+  "access_token": "ord_live_3rCkP9dG7mN4"
+}
+```
+---
+
+## 查询订单
+
+### 接口端点
+
+`POST /api/v1/lsps1/get_order`
+
+### 说明
+获取某个已存在订单的信息。该接口端点可安全轮询。
+
+### 请求体
+| Field          |  Type    | 说明                                              |
+|----------------|----------|----------------------------------------------------------|
+| `order_id`     |  String  | 订单的唯一标识符。                          |
+| `access_token` |  String  | `create_order` 返回的单订单访问 token。   |
+
+### 请求示例
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "access_token": "ord_live_3rCkP9dG7mN4"
+}
+```
+
+`access_token` 无效时返回 `400` 错误；`order_id` 未知时返回 `404`。
+
+### 响应示例
+响应结构与 `create_order` 接口端点完全相同。
+
+---
+
+## 汇率决定
+
+### 接口端点
+
+`POST /api/v1/lsps1/rate_decision`
+
+### 说明
+
+解决资产订单上的重新定价事件。如果在支付结算前市场汇率出现明显波动，LSP 不会直接开通通道，而是将订单置为 `PENDING_RATE_DECISION` 状态。客户端随后必须选择接受新汇率（订单按新价格继续），或拒绝新汇率（向 `refund_onchain_address` 发起退款）。
+
+### 请求体
+| Field             |  Type    | 说明                                                       |
+|-------------------|----------|-------------------------------------------------------------------|
+| `order_id`        |  String  | 订单的唯一标识符。                                   |
+| `access_token`    |  String  | `create_order` 返回的单订单访问 token。            |
+| `accept_new_rate` |  Boolean | `true` 表示接受新汇率，`false` 表示申请退款。       |
+
+### 请求示例
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "access_token": "ord_live_3rCkP9dG7mN4",
+  "accept_new_rate": true
+}
+```
+
+### 响应示例
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "decision_accepted": true,
+  "message": "Rate accepted. Order will proceed with current market rate.",
+  "refund_txid": null
+}
+```
+
+对不处于 `PENDING_RATE_DECISION` 状态的订单调用该接口端点会返回 `400` 错误。当申请退款并处理完成后，`refund_txid` 会携带链上交易 ID。

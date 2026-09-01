@@ -1,0 +1,204 @@
+---
+title: "KaleidoAgent：自主运行的比特币二层交易代理"
+sidebarTitle: "KaleidoAgent"
+description: "运行一个非托管的自主代理：用原子交换再平衡比特币二层投资组合、按需购买通道流动性，并了解其能力、风控与配置方式。"
+---
+
+[KaleidoAgent](https://github.com/kaleidoswap/kaleido-agent) 是一个自主运行的非托管比特币二层代理。它不涉及任何外部托管：密钥始终留在本地 WDK 钱包和 RGB Lightning Node 中，每笔交易都以闪电网络上的原子 HTLC 交换结算。
+
+它管理闪电与 RGB 钱包、在 KaleidoSwap DEX 上执行原子 HTLC 交换、运行投资组合再平衡与 DCA 策略、维持闪电通道流动性健康，同时还能作为交互式的钱包助手聊天使用 —— 所有这些都由一个 LLM（Claude 或 OpenAI）基于 [KaleidoCLI](/cn/cli/introduction) 和 MCP 工具调用进行推理来驱动。
+
+<Note>
+  KaleidoAgent 是一个独立的常驻服务。它目前**没有**嵌入 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的 `Engine`，而是运行自己的代理循环。关于正在考虑的收敛路径，请见 [KaleidoMind 的关系说明](/cn/ai-tools/kaleido-mind#relationship-to-kaleidoagent)。
+</Note>
+
+## 能力
+
+| 领域 | 代理做什么 |
+|------|---------------------|
+| **投资组合管理** | 检测 BTC、USDT (RGB) 和 XAUT (RGB) 之间的配置偏移，然后用原子交换再平衡 |
+| **定投（DCA）** | 按计划执行固定金额买入，可选启用基于 EMA 的逻辑，在拉升时跳过、在回调时加倍 |
+| **通道管理** | 监控节点健康度与出向流动性，清理卡住的 RGB 转移，通过 LSPS1 购买通道 |
+| **跨二层调度** | 在闪电网络、RGB 通道、Spark 和链上 BTC 之间转移资产 |
+| **钱包助手** | 以对话方式查询余额、生成发票、发送资金以及执行需确认的交换 |
+| **MPP / L402 支付** | 通过闪电网络为 HTTP 402 付费数据 API 付费，并发现按次计费的接口端点 |
+| **每日报告** | 在 UTC 00:00 输出投资组合快照、交易历史和行情数据 |
+
+## 架构
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        KaleidoAgent                          │
+│                                                                │
+│  index.ts (Node.js bootstrap)                                 │
+│    │                                                          │
+│    ├── NanobotManager ──► Nanobot gateway                     │
+│    │     │  (core runtime: scheduling, LLM, MCP, Telegram)    │
+│    │     │                                                    │
+│    │     └── MCP servers (managed by Nanobot)                 │
+│    │           └── kaleido (kaleido-mcp), unified wallet+DEX │
+│    │                                                          │
+│    ├── StatusServer :4242  (bridge API for webapp)            │
+│    │     ├── NanobotTaskRunner  (triggers agent tasks)         │
+│    │     ├── NanobotChatRunner  (wallet assistant chat)        │
+│    │     └── WalletBridge       (live balance cache)           │
+│    │                                                          │
+│    └── Scheduler  (manual / startup task triggers)             │
+│                                                                │
+│  React Dashboard :5173  (Vite + Tailwind)                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Nanobot 是核心运行时。** 它负责代理执行、cron 定时调度、MCP 工具集成、Telegram 消息和记忆。Node.js 只是一层很薄的桥接：启动 Nanobot，并在 `:4242` 上提供本地控制面板 API。
+
+## 两种执行模式
+
+| 模式 | 工作方式 | 适用场景 |
+|------|-------------|-------------|
+| `skill` _（默认）_ | `SKILL.md` 文件作为系统提示词加载，MCP 服务器由 Nanobot 直接管理：`kaleido`（统一的 `kaleido-mcp`）提供钱包、DEX 和支付工具，再加上用于本地代理控制的 `kaleido_control` | 轻量，Node.js 不需要直连 MCP |
+| `mcp` | Node.js 通过 `McpManager` 直接连接 [MCP 服务器](/cn/ai-tools/mcp-servers)，并内联调用它们的工具 | 调试，或需要从 Node.js 精细控制工具的场景 |
+
+## MCP 服务器接线
+
+KaleidoAgent 把 `kaleido-mcp`（[统一的 MCP 服务器](/cn/ai-tools/mcp-servers)）注册为主要工具源，一条连接就能拿到 `spark_*`、`wdk_*`/`rln_*`、`kaleidoswap_*`、`mpp_*`/`l402_*` 和 `kaleido_node_*` 工具。历史上它的配置还直接引用了现已归档的独立服务器 `kaleidoswap-mcp` 和 `l402-gateway-mcp`；由于这两者都已被 `kaleido-mcp` 取代（见[已退役的服务器](/cn/ai-tools/mcp-servers#retired-servers)），新配置应只依赖 `kaleido-mcp`，不要再单独接入它们。
+
+远程的第三方 MCP 服务器同样可以注册，但会先做 API 密钥检查。例如 Bitrefill 礼品卡 MCP 只在存在 `BITREFILL_API_KEY` 环境变量时才注册，因为上游接口端点会拒绝匿名连接。
+
+## 自主循环
+
+| 循环 | 默认间隔 | Skill | 用途 |
+|------|-----------------|-------|---------|
+| `rebalance` | 按需或 cron | `portfolio-manager` | 偏移检测，随后执行原子交换 |
+| `heartbeat` | 5 分钟 | `channel-manager` | 节点健康度、RGB flush、LSPS1 通道购买 |
+| `daily_summary` | UTC 00:00 | `kaleidoagent` | 投资组合快照、交易历史、行情数据 |
+
+每个循环都由一个 [skill](/cn/ai-tools/skills) 驱动。
+
+## 风险控制 {#risk-controls}
+
+风险上限位于 `agent.config.json` 的 `portfolio` 之下。每笔交换提交之前都会校验它们。
+
+| 参数 | 默认值 | 作用 |
+|-----------|---------|--------|
+| `dry_run` | `true` | 只模拟决策，不真正执行交换 |
+| `max_swap_usd` | `200` | 限制单笔交易的美元价值上限 |
+| `min_btc_reserve_sats` | `50000` | RLN 节点与 Spark 合计的最低 BTC 余额 |
+| `stop_loss_btc_sats` | `30000` | 低于该 BTC 阈值时停止所有交易 |
+| `rebalance_threshold_pct` | `5` | 触发交换所需的最小偏移百分比 |
+| `max_concurrent_orders` | `3` | 限制同时挂出的订单数量 |
+
+## 交易模式
+
+| 模式 | 结算方式 |
+|------|-----------|
+| `atomic` | 原子 HTLC 交换，无需存入地址，在闪电网络上结算 |
+| `rest` | 基于存入的 REST 订单 |
+| `both` | 优先原子交换，REST 作为回退 |
+
+## 原子交换流程
+
+与 KaleidoSwap 技术栈中其他部分相同的 5 步 HTLC 协议，通过 `kaleido-mcp` 或 CLI 驱动：
+
+```
+1. kaleidoswap_get_quote      → rfq_id + amounts
+2. kaleidoswap_atomic_init    → swapstring + payment_hash
+3. wdk_atomic_taker           → whitelist HTLC on RLN node
+4. kaleidoswap_atomic_execute → HTLC settlement triggered
+5. kaleidoswap_atomic_status  → poll → Succeeded
+```
+
+## 运行起来 {#run-it}
+
+前置条件：Node.js 20 或更高版本、位于 `$PATH` 中的 [KaleidoCLI](/cn/cli/installation)、[Nanobot](https://nanobot.dev) 运行时，以及一个 Anthropic 或 OpenAI API 密钥。
+
+<Steps>
+  <Step title="克隆并安装">
+    ```bash
+    git clone https://github.com/kaleidoswap/kaleido-agent.git
+    cd kaleido-agent
+    npm run install:all
+    ```
+  </Step>
+  <Step title="设置 API 密钥">
+    在仓库根目录创建 `.env` 文件，填入 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY`。用 `AGENT_PROVIDER` 在 `anthropic` 和 `openai` 之间选择：
+
+    ```bash
+    ANTHROPIC_API_KEY=sk-ant-...
+    AGENT_PROVIDER=anthropic
+    ```
+  </Step>
+  <Step title="配置钱包与投资组合">
+    编辑 `agent.config.json`：
+
+    - `mcp.kaleido.env.WDK_SEED`，钱包助记词。
+    - `mcp.kaleido.env.RLN_NODE_URL`，RGB Lightning Node 的 URL。
+    - `mcp.spark.env.WDK_SPARK_SEED`，可选的独立 Spark 种子。
+    - `portfolio.targets`，BTC、USDT 和 XAUT 之间的目标配置比例。
+    - `portfolio.dry_run`，在配置验证通过之前保持 `true`。
+
+    主要配置都在 `agent.config.json` 中：模型选择、MCP 服务器命令与环境变量、投资组合目标与风险上限、调度间隔，以及启用的 skill 列表。完整 schema 和环境变量参考见[仓库 README](https://github.com/kaleidoswap/kaleido-agent#configuration)。
+  </Step>
+  <Step title="构建并启动">
+    ```bash
+    npm run build:all
+    npm start
+    ```
+
+    `npm start` 会启动代理及其本地状态 API，地址为 `http://localhost:4242`。仪表盘单独提供：运行 `npm run dev:webapp`（或用 `npm run start:webapp` 运行已构建的 webapp），在 `http://localhost:5173` 上访问。若想让代理以后台进程运行，请改用 `npm run daemon:start`。
+  </Step>
+</Steps>
+
+如需隔离部署，把 `.env.container.example` 复制为 `.env.container`，然后启动容器栈：
+
+```bash
+docker compose --env-file .env.container -f docker-compose.container.yml up -d
+```
+
+<Warning>
+  `agent.config.json` 中保存着真实的 BIP-39 助记词。请先在测试网络上起步，在配置验证通过之前保持 `dry_run` 开启，并且永远不要提交或分享这个文件。
+</Warning>
+
+## 首次运行 {#first-run}
+
+代理跑起来之后，先手动触发一轮循环、读清楚它的决策，再让它真正开始交易。
+
+<Steps>
+  <Step title="确认 dry run 仍然开启">
+    `agent.config.json` 中的 `portfolio.dry_run` 默认为 `true`。先别动它。代理会完成推理、决策并汇报一笔交易，但不会真正提交。
+  </Step>
+
+  <Step title="手动触发一轮循环">
+    不必等定时任务，可以直接让[状态 API](#status-api) 跑一轮：
+
+    ```bash
+    curl -X POST http://localhost:4242/run \
+      -H 'Content-Type: application/json' \
+      -d '{"task_id":"rebalance"}'
+    ```
+
+    然后读取 `GET /status`，查看它的决策、它看到的余额，以及 token 开销。如果你启动了仪表盘，`http://localhost:5173` 上会显示同一轮运行。
+  </Step>
+
+  <Step title="检查风险上限">
+    确认 `max_swap_usd`、`min_btc_reserve_sats` 和 `stop_loss_btc_sats` 与你在测试网络上能接受的损失相符。每笔交换提交之前都会校验这些参数，见上面的[风险控制](#risk-controls)。
+  </Step>
+
+  <Step title="确认无误后再关闭 dry run">
+    当连续几轮的 dry-run 决策都看起来正确后，再把 `portfolio.dry_run` 设为 `false`。
+  </Step>
+</Steps>
+
+## 状态 API {#status-api}
+
+代理在端口 `4242` 上提供一个仅限本机访问的控制 API，供仪表盘使用，也可以直接调用。
+
+| 接口端点 | 方法 | 用途 |
+|----------|--------|---------|
+| `/health` | GET | 服务健康状况 |
+| `/status` | GET | 运行时长、余额、最近运行记录、token 开销 |
+| `/wallets` | GET | Spark 与 RLN 的实时余额快照 |
+| `/run` | POST | 触发一个任务，例如 `{ "task_id": "rebalance" }` |
+| `/chat` | POST | 钱包助手对话 |
+| `/config` | GET/POST | 读取或更新代理配置 |
+| `/tasks` | GET/POST | 列出或创建定时任务 |
+| `/skills` | GET/PATCH | 列出 skills，启用或禁用某一个 |

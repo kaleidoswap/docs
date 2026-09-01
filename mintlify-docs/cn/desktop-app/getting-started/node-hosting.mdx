@@ -1,0 +1,341 @@
+---
+title: "自托管多资产闪电节点"
+sidebarTitle: "节点托管"
+description: "为 KaleidoSwap 自托管多资产闪电节点：Docker 部署、VPS 直装、防火墙配置，以及从桌面应用远程连接节点的完整步骤。"
+---
+
+本指南介绍如何自行托管 RGB Lightning Node 供 KaleidoSwap 使用。自托管让你完全掌控自己的节点，对熟悉服务器运维的用户来说是很好的选择。
+
+## 概览
+
+RGB Lightning Node（RLN）是一种专用的闪电网络节点，支持在闪电网络上使用 RGB 资产。它让你可以：
+
+- 创建包含 RGB 资产的支付通道
+- 跨多条通道路由以 RGB 资产计价的支付
+- 以与普通比特币闪电支付相同的体验和安全性转移 RGB 资产
+
+## 托管方式对比
+
+托管 RGB Lightning Node 有几种方式，各有优势和要求：
+
+| 托管方式 | 优势 | 注意事项 | 技术门槛 |
+|----------------|------------|----------------|---------------------|
+| **Docker** | 部署简单、环境隔离、升级方便 | 需要了解 Docker | 中 |
+| **直接安装** | 完全掌控、没有容器化开销 | 需手动配置依赖、防火墙等 | 高 |
+| **托管服务商** | 无需技术配置、有专业支持 | 控制权较少、需订阅付费 | 低 |
+
+选择最符合你技术水平和需求的方式：
+
+- **基于 Docker 安装**：适合大多数用户 —— 部署简单，可选择运行完整基础设施或仅运行节点。
+- **在 VPS 上直接安装**：适合需要完全掌控系统配置的高级用户。
+- **托管方案（ThunderStack）**：适合希望以最小技术投入获得专业运维方案的用户。
+
+## 网络选项
+
+无论采用哪种托管方式，你都可以让节点运行在不同的比特币网络上：
+
+| 网络 | 说明 | 适用场景 |
+|---------|-------------|----------|
+| **signet（Mutinynet）** | 自定义 signet，出块时间 30 秒 | 测试和开发的理想选择 |
+| **测试网** | 比特币全球测试网 | 在更大范围的网络中测试 |
+| **regtest** | 本地测试网络 | 开发与隔离测试 |
+| **主网** | 比特币生产网络 | 生产使用（即将支持） |
+
+使用我们的 Docker 方案，你可以轻松为上述任一网络运行自己的 Bitcoin Core 和 Electrs 实例，从而完全掌控自己的技术栈。
+
+## 信任考量
+
+你选择自行运行哪些基础设施组件、又连接哪些外部服务，直接决定了所需的信任程度：
+
+- **零信任配置**：自行运行 Bitcoin Core、Electrs、RGB Proxy 和 RGB Lightning Node
+- **最小信任配置**：只运行 RGB Lightning Node，其他服务连接托管实例
+
+## 方案 1：基于 Docker 安装
+
+我们的 Docker 方案是运行 RGB Lightning Node 最简单的途径。你可以运行完整技术栈，也可以只运行节点组件。
+
+### 前置条件
+
+- 已安装 Docker 和 Docker Compose
+- 至少 4GB 内存和 50GB 存储
+- 具备基本的终端命令知识
+
+### 用 Makefile 快速开始
+
+最简单的上手方式是使用仓库内置的 Makefile：
+
+1. 克隆仓库：
+
+```bash
+git clone https://github.com/kaleidoswap/docker-images.git
+cd docker-images
+```
+
+2. 选择运行方式：
+
+```bash
+# 查看所有可用命令
+make help
+
+# 仅运行 RGB Lightning Node（随后连接外部服务）
+make node-only
+
+# 运行完整技术栈（所有组件运行在 signet 上）
+make full
+
+# 查看所有服务的日志
+make logs
+```
+
+关于各命令和选项的更多信息，请查看 [README.md 文件](https://github.com/kaleidoswap/docker-images/blob/main/README.md)。
+
+## 方案 2：在 VPS 上直接安装
+
+如果你是希望完全掌控服务器环境的高级用户，可以把 RGB Lightning Node 直接安装在 VPS 或裸金属服务器上。
+
+### 前置条件
+
+- 一台运行 Linux 的 VPS 或服务器（推荐 Ubuntu/Debian）
+- Rust 开发环境
+- 正确配置的防火墙（开放 3001 端口用于 API，9735 端口用于闪电网络）
+- 足够存放区块链数据的存储空间
+
+### 安装
+
+1. 克隆仓库：
+
+```bash
+git clone https://github.com/RGB-Tools/rgb-lightning-node --recurse-submodules --shallow-submodules
+cd rgb-lightning-node
+```
+
+2. 安装二进制文件：
+
+```bash
+cargo install --locked --path .
+```
+
+3. 启动节点：
+
+```bash
+rgb-lightning-node <data-dir>/ --daemon-listening-port 3001 \
+--disable-authentication \
+--ldk-peer-listening-port 9735 \
+--network <network>
+```
+
+替换：
+- `<data-dir>` 换成你选定的数据目录 
+- `<network>` 换成 `regtest`、`testnet` 或 `signet`（用于 Mutinynet）
+
+4. 解锁节点时，你需要提供：
+
+- Bitcoin RPC 连接信息
+- 索引器 URL
+- RGB proxy 接口端点
+
+### VPS 防火墙配置
+在 VPS 上运行时，你需要配置防火墙以放行必要的连接
+
+```bash
+# 放行 SSH
+ufw allow ssh
+
+# 放行 RGB Lightning Node API
+ufw allow 3001/tcp
+
+# 放行闪电网络 P2P 连接
+ufw allow 9735/tcp
+
+# 启用防火墙
+ufw enable
+```
+
+### 作为系统服务运行
+
+生产环境建议创建一个 systemd 服务：
+
+```bash
+sudo nano /etc/systemd/system/rgb-lightning-node.service
+```
+
+填入以下内容：
+
+```
+[Unit]
+Description=RGB Lightning Node
+After=network.target
+
+[Service]
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME
+ExecStart=/home/YOUR_USERNAME/.cargo/bin/rgb-lightning-node /home/YOUR_USERNAME/rgbln-data/ --daemon-listening-port 3001 --ldk-peer-listening-port 9735 --network signet
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启用并启动服务：
+
+```bash
+sudo systemctl enable rgb-lightning-node
+sudo systemctl start rgb-lightning-node
+```
+
+## 方案 3：托管服务商（ThunderStack） {#option-3-hosted-provider-thunderstack}
+
+如果你想要专业运维的方案，又不愿承担自托管的技术负担，[ThunderStack](https://thunderstack.org/product) 提供基于云的 RGB Lightning Node 托管服务。
+
+### ThunderStack 是什么？
+
+ThunderStack 是一套基于云的方案，为 RGB 和闪电网络应用提供顺畅的节点管理。它带来高可用性、更强的安全性和便捷的管理，同时免去自托管的技术负担。
+
+### 主要特性
+
+- **7×24 可用**：始终在线的基础设施保障业务不中断
+- **免维护**：把节点运维的复杂性交给 ThunderStack
+- **可扩展**：随需求变化按需增减节点
+- **安全**：采用 mTLS、Cognito 等先进安全协议做访问控制
+- **易于集成**：支持 API、Webhook 和 SDK，便于集成
+
+### ThunderStack 与自托管对比
+
+| 维度 | ThunderStack | 自托管 |
+|--------|-------------|--------------|
+| 技术门槛 | 极低 | 中到高 |
+| 部署耗时 | 几分钟 | 数小时到数天 |
+| 维护 | 由 ThunderStack 负责 | 由用户负责 |
+| 控制权 | 仅限 API 范围 | 完全掌控 |
+| 成本 | 订阅制 | 基础设施开销 |
+| 在线率 | 专业 SLA 保障 | 取决于你的部署 |
+
+如果你更看重便捷、可靠和专业支持，选择 ThunderStack；如果你更看重完全掌控、可定制和尽量少的第三方信任，选择自托管。
+
+## 网络环境
+
+### 不同网络的连接信息
+
+#### regtest 环境
+
+在 regtest 上测试时，可以使用以下连接信息：
+
+```json
+{
+  "password": "<YOUR_NODE_PASSWORD>",
+  "bitcoind_rpc_username": "user",
+  "bitcoind_rpc_password": "password",
+  "bitcoind_rpc_host": "regtest-bitcoind.rgbtools.org",
+  "bitcoind_rpc_port": 80,
+  "indexer_url": "electrum.rgbtools.org:50041",
+  "proxy_endpoint": "rpcs://proxy.iriswallet.com/0.2/json-rpc"
+}
+```
+
+#### 测试网环境
+
+在 testnet3 上测试时，可以使用：
+
+```json
+{
+  "password": "<YOUR_NODE_PASSWORD>",
+  "bitcoind_rpc_username": "user",
+  "bitcoind_rpc_password": "password",
+  "bitcoind_rpc_host": "electrum.iriswallet.com",
+  "bitcoind_rpc_port": 18332,
+  "indexer_url": "ssl://electrum.iriswallet.com:50013",
+  "proxy_endpoint": "rpcs://proxy.iriswallet.com/0.2/json-rpc"
+}
+```
+
+#### signet（Mutinynet）环境
+
+在 signet 上测试时，可以使用：
+
+```json
+{
+  "password": "<YOUR_NODE_PASSWORD>",
+  "bitcoind_rpc_username": "user",
+  "bitcoind_rpc_password": "default_password",
+  "bitcoind_rpc_host": "bitcoind.signet.kaleidoswap.com",
+  "bitcoind_rpc_port": 38332,
+  "indexer_url": "https://esplora.signet.kaleidoswap.com",
+  "proxy_endpoint": "rpcs://proxy.iriswallet.com/0.2/json-rpc"
+}
+```
+
+## Mutinynet：专为测试打造的自定义比特币 signet
+
+[Mutinynet](https://github.com/MutinyWallet/mutiny-net) 是一个自定义的比特币 signet 网络，专为测试闪电网络应用而设计。它提供：
+
+- 极快的出块速度（每块 30 秒，主网为 10 分钟）
+- 稳定的测试网环境，无需争抢区块空间
+- 预先配置好，与 RGB Lightning Node 兼容
+- 非常适合在闪电网络上测试 RGB 资产
+
+**Mutinynet 相关资源：**
+
+- [Mutinynet 浏览器与内存池](https://mutinynet.com/) - 查看区块、交易和内存池
+- [Mutinynet 水龙头](https://faucet.mutinynet.com/) - 获取免费测试币用于开发
+- [Mutinynet GitHub 仓库](https://github.com/MutinyWallet/mutiny-net) - 技术文档和源码
+
+## 节点操作
+
+节点运行起来之后，可以通过 REST API 操作。
+
+### API 概览
+
+节点提供一套完整的 API 来管理你的节点：
+
+- 通道管理：开通/关闭通道，连接/断开对等节点
+- 资产操作：发行、发送和管理 RGB 资产
+- 支付处理：创建/支付发票、keysend 等
+- 节点信息与控制
+
+详细的 API 文档见 [OpenAPI 规范](https://rgb-tools.github.io/rgb-lightning-node)。
+
+### 基本操作
+
+以下是一些常见操作：
+
+#### 获取比特币地址
+```bash
+curl -X POST http://localhost:3001/address
+```
+
+#### 获取节点信息
+```bash
+curl http://localhost:3001/nodeinfo
+```
+
+#### 查询比特币余额
+```bash
+curl -X POST -H "Content-type: application/json" \
+    -d '{}' http://localhost:3001/btcbalance
+```
+
+## 硬件要求
+
+为获得最佳性能：
+
+| 环境 | CPU | 内存 | 存储 | 网络 |
+|-------------|-----|-----|---------|---------|
+| 测试（Mutinynet） | 2 核 | 4GB | 25GB | 10Mbps |
+| 测试网 | 2 核 | 4GB | 50GB | 10Mbps |
+| 生产 | 4 核以上 | 8GB 以上 | 500GB 以上 SSD | 100Mbps 以上 |
+
+## 安全考量
+
+自托管节点时请注意：
+
+1. **防火墙配置**：只暴露必要端口（3001 用于 API，9735 用于闪电网络对等连接）
+2. **认证**：使用强密码，并考虑增加 API 认证
+3. **备份**：定期备份节点的数据目录
+4. **更新**：保持所有组件更新，及时修补安全漏洞
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

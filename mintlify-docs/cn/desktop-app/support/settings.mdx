@@ -1,0 +1,108 @@
+---
+title: "桌面应用设置"
+sidebarTitle: "设置"
+description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位与语言、做市商与 LSP 接入，以及节点连接、安全备份和节点状态等各项设置"
+---
+
+设置面板可从应用右上角的下拉菜单打开。它分为 **应用设置**(Application Settings)、**做市商与 LSP 设置**(Maker & LSP Settings) 和 **节点连接设置**(Node Connection Settings) 三部分，旁边还有 **安全与备份**(Security & Backup) 和 **节点状态**(Node Status) 面板。多数修改在点击 **「保存」(Save)** 后生效；节点连接设置下的修改还需要重启节点。
+
+## 应用设置
+
+<img src="/assets/images/desktop-app/27_settings.png" alt="应用设置面板" width={1498} height={863} />
+
+### 功能 (Capabilities / App Mode)
+
+**作用：** 决定显示 KaleidoSwap 的哪些部分：
+
+- **Node + Mind** — 同时运行钱包/节点和本地 AI 大脑（KaleidoMind）
+- **Only Node** — 仅运行 RGB Lightning 节点、通道和交换功能
+- **Only Mind** — 仅运行本地 AI 大脑，无需节点
+
+<img src="/assets/images/desktop-app/26_settings-capabilities.png" alt="功能（应用模式）设置项" width={595} height={228} />
+
+### 比特币单位 (Bitcoin Unit)
+
+**作用：** 控制应用中比特币金额的显示方式。
+
+- **Satoshi (SAT)** — 以聪（最小单位）显示金额（例如 100,000 聪）
+- **Bitcoin (BTC)** — 以比特币小数形式显示金额（例如 0.001 BTC）
+
+**何时需要修改：** 如果你觉得小额交易的小数金额不好读，切换成聪可以减少误读，也不会出现一长串前导零。
+
+### 法币 (Fiat Currency)
+
+**作用：** 设置用于显示余额和交换估值的法币币种。
+
+### 语言 (Language)
+
+**作用：** 设置应用的显示语言。下拉菜单中提供多种语言。
+
+### 主题 (Theme)
+
+应用只支持深色模式。浅色模式已被停用，以避免不同界面渲染不一致，因此设置中没有主题切换开关，应用也会忽略操作系统的主题偏好。
+
+## 做市商与 LSP 设置
+
+<img src="/assets/images/desktop-app/29_settings-maker.png" alt="做市商与 LSP 设置面板" width={910} height={451} />
+
+### 做市商 URL (Maker URLs)
+
+**作用：** 管理应用可连接的做市商接口端点列表，用于获取报价和执行交换。你可以添加多个做市商、删除它们，并把其中一个标记为**默认**（星形图标）。
+
+### LSP URL
+
+**作用：** 设置节点连接的闪电服务提供商 URL，用于获取通道流动性和交换路由。它通常与你的默认做市商 URL 一致。
+
+**何时需要修改：** 默认值已预先配置好，适用于大多数用户。如果你自己运行 LSP、偏好的 LSP 使用其他 URL，或者默认地址无法访问，就需要修改。
+
+## 节点连接设置
+
+<Note>
+  这些设置需要重启节点才能生效。保存后，应用会提示你 **「重启节点」(Restart Node)**，以便应用新的连接设置。
+</Note>
+
+### 节点连接串 (Node Connection String)
+
+**作用：** 指定应用连接的 RGB Lightning Node (RLN)，所有钱包、通道和支付操作都通过它完成（例如 `http://localhost:3001`）。
+
+**何时需要修改：** 默认情况下，应用会管理一个内置的本地节点。如果你要连接远程或自建的 RGB Lightning Node，或者要在多个节点实例之间切换，就需要修改这一项。
+
+### Bitcoin RPC
+
+**作用：** 节点访问其 bitcoind 后端所使用的 Bitcoin Core RPC 连接串。
+
+### 索引器 URL (Indexer URL)
+
+**作用：** 节点用于查询区块链的 Electrum/Esplora 索引器。
+
+### RGB 代理端点 (RGB Proxy Endpoint)
+
+**作用：** 用于交换 RGB 转账数据的 RGB 代理接口端点。
+
+<Note>
+  修改任何节点连接设置，都会让应用连接到另一个节点或后端。保存前请确认目标节点及相关服务正在运行且可以访问，然后在收到提示时重启节点。
+</Note>
+
+<img src="/assets/images/desktop-app/30_settings-node.png" alt="节点连接设置面板" width={909} height={622} />
+
+## 安全与备份
+
+安全与备份面板提供以下功能：
+
+- **查看助记词**(View Recovery Phrase) — 显示钱包的助记词种子短语
+- **修改密码**(Change Password) — 更新钱包的加密密码
+- **备份**(Backup) — 创建通道状态的加密备份。完整说明请参见[通道备份](/cn/desktop-app/channels/channel-backups)页面。
+
+<img src="/assets/images/desktop-app/31_settings-security.png" alt="安全与备份设置面板" width={435} height={397} />
+
+## 节点状态
+
+显示节点当前是运行中还是已离线，以及它是本地节点还是远程节点。在这里你可以 **「登出」(Logout)**（锁定节点）或 **「关闭」(Shutdown)** 节点。对于本地节点，设置页面底部还会显示实时的节点日志。
+
+<img src="/assets/images/desktop-app/32_settings-node-status.png" alt="节点状态与日志面板" width={433} height={326} />
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 和 Linux 的最新版 KaleidoSwap 桌面应用。
+</Card>

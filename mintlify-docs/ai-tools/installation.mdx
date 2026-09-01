@@ -8,9 +8,9 @@ Each AI surface installs independently. Pick the one that matches what you are b
 
 | Surface | Install path | Prerequisites |
 |---------|-------------|---------------|
-| **[MCP servers](/ai-tools/mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 20+, an MCP host |
-| **[KaleidoAgent](/ai-tools/kaleido-agent)** | Clone and build from source | Node.js 20+, KaleidoCLI, Nanobot, an LLM API key |
-| **[KaleidoMind](/ai-tools/kaleido-mind)** | Ships inside the Desktop App, or build the repo for development | Desktop App, or pnpm and the QVAC SDK |
+| **[MCP servers](#mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 20+, an MCP host |
+| **[KaleidoAgent](#kaleidoagent)** | Clone and build from source | Node.js 20+, KaleidoCLI, Nanobot, an LLM API key |
+| **[KaleidoMind](#kaleidomind)** | Ships inside the Desktop App, or build the repo for development | Desktop App, or pnpm and the QVAC SDK |
 
 <Warning>
   Every surface here signs with a real BIP-39 mnemonic or drives a live node. Start on test networks, keep `dry_run` enabled until a setup is verified, and never put a mainnet seed in a file you commit or share.
@@ -38,11 +38,11 @@ node dist/index.js
   `kaleidoswap-mcp` and `l402-gateway-mcp` are archived, their own READMEs point integrators at `kaleido-mcp` instead. Do not clone or build them for a new setup.
 </Note>
 
-Full environment variable reference, stdio vs. HTTP transport, the tool surface, and client config JSON for every server live on the [MCP Servers page](/ai-tools/mcp-servers#installation-&-configuration).
+For the full environment variable reference, stdio vs. HTTP transport, the tool surface by domain, and client config JSON for every server, check the [MCP Servers page](/ai-tools/mcp-servers).
 
 ## KaleidoAgent
 
-Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/getting-started) in `$PATH`, the [Nanobot](https://nanobot.dev) runtime, and an Anthropic or OpenAI API key.
+Prerequisites: Node.js 20 or newer, [KaleidoCLI](/cli/installation) in `$PATH`, the [Nanobot](https://nanobot.dev) runtime, and an Anthropic or OpenAI API key.
 
 ```bash
 git clone https://github.com/kaleidoswap/kaleido-agent.git
@@ -50,7 +50,7 @@ cd kaleido-agent
 npm run install:all
 ```
 
-From there, setting the API key, configuring the wallet in `agent.config.json`, and starting the dashboard are covered step by step on the [KaleidoAgent page](/ai-tools/kaleido-agent#run-it), along with the container deployment option.
+To set the API key, configure the wallet in `agent.config.json`, start the dashboard, or deploy in a container, check the [KaleidoAgent page](/ai-tools/kaleido-agent#run-it).
 
 ## KaleidoMind
 
@@ -86,3 +86,5 @@ To exercise the engine against a model without a phone, use the playground from 
 ```bash
 pnpm play "pay bob 3 eur"
 ```
+
+For how the tiered funnel routes a request, the tool contract shared across transports, the skills the engine loads, and where it runs across desktop, phone, and paired devices, check the [KaleidoMind page](/ai-tools/kaleido-mind).

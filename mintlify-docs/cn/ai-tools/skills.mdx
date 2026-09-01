@@ -1,0 +1,31 @@
+---
+title: "面向 AI 代理的 Skills 操作手册"
+sidebarTitle: "Skills"
+description: "SKILL.md 操作手册限定代理能调用哪些工具并承载执行计划：了解 KaleidoAgent 自带的每个 skill 分别负责什么。"
+---
+
+一个 skill 就是一个在运行时加载的自包含 `SKILL.md` 文件。它限定模型能够调用哪些工具，并承载执行计划，因此改变行为无需改动运行时代码。[KaleidoAgent](/cn/ai-tools/kaleido-agent) 的 skill 还支持 `!` bash 注入：这些命令会先执行，并在提示词到达 LLM 之前把输出内联进去。
+
+## 可用的 skill
+
+| Skill | 用途 |
+|-------|---------|
+| `kaleidoagent` | 核心行为与每日报告：投资组合快照、行情数据、交易历史 |
+| `portfolio-manager` | 从偏移检测到原子交换执行，包含完整的风险校验 |
+| `channel-manager` | 节点健康度、RGB 转移 flush、LSPS1 购买通道 |
+| `dca` | 按计划、感知价格的买入，受用户设定的上限约束 |
+| `wallet-assistant` | 以对话方式查询余额、生成发票、支付和交换 |
+| `cross-l2` | 在 Spark、闪电网络和链上比特币之间转移资产 |
+| `kaleidoswap` | KaleidoSwap DEX 参考：报价、原子交换、REST 订单、未平仓头寸 |
+| `mpp` | 通过闪电网络访问受 HTTP 402 门控的 API |
+| `node-manager` | RGB Lightning Node 生命周期、钱包解锁、通道与余额检查 |
+| `portfolio-loop` | 定时的投资组合再平衡器：对照目标测量偏移，执行最小规模的原子交换，并把 DCA 一并纳入 |
+| `node-loop` | 定时的节点健康监控：通道流动性审计、清理卡住的 RGB 转移、低于阈值时自动通过 LSPS1 购买 |
+| `bitrefill` | 通过 Bitrefill 购买礼品卡、手机充值和 eSIM，可用闪电网络支付 |
+
+`agent.config.json` 中默认启用的 skill 是 `portfolio-loop`、`node-loop` 和 `bitrefill`。
+
+每个文件都发布在 [kaleido-agent 仓库的 `skills/` 目录](https://github.com/kaleidoswap/kaleido-agent/tree/main/skills)下，也可以从 [AI 工具产品页](https://kaleidoswap.com/products/ai-tools#skills)阅读或下载。
+
+skill 可以在运行时通过代理的 `/skills` [状态 API 接口端点](/cn/ai-tools/kaleido-agent#status-api)列出、启用和禁用。
+

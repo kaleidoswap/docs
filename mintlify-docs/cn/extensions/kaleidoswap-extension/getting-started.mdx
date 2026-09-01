@@ -1,0 +1,151 @@
+---
+title: "KaleidoSwap 扩展：快速开始"
+sidebarTitle: "快速开始"
+description: "在 KaleidoSwap 扩展中创建或导入钱包、备份助记词、选择 RGB 后端，几分钟内配置好 Spark、Arkade 和 Liquid 多协议账户并开始使用。"
+---
+
+## 初始设置
+
+首次打开 KaleidoSwap 扩展时，初始设置流程会引导你完成基础配置。
+
+<img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap 扩展欢迎界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Steps>
+  <Step title="欢迎">
+    选择**创建新钱包**（Create New Wallet）或**导入已有钱包**（Import Existing Wallet）。
+  </Step>
+
+  <Step title="创建密码">
+    设置一个安全密码来保护钱包。这个密码用于：
+    - 在扩展自动锁定后解锁
+    - 加密本地存储的钱包数据
+
+    请选择一个强密码并记住它（密码无法找回）。
+  </Step>
+
+  <Step title="备份助记词">
+    新钱包会生成 12 词助记词。这组 BIP39 助记词控制 Spark、Arkade、Liquid 和 RGB-L1 账户，以及扩展派生的默认 Nostr 身份。日后恢复钱包始终从这组助记词开始。
+  </Step>
+
+  <Step title="Passkey（可选）">
+    你可以选择注册一个 passkey（WebAuthn），用设备的生物识别或安全密钥解锁钱包，而不必输入密码。也可以先跳过，之后在设置（Settings）中再添加。
+  </Step>
+
+  <Step title="Nostr 身份">
+    新钱包会获得一个从助记词派生的 Nostr 身份（NIP-06）。如果你已经有 Nostr 身份，可以在这一步导入已有密钥（`nsec1…` 或 64 位十六进制字符串），密钥会加密存储。跳过则保留派生出的身份。
+  </Step>
+
+  <Step title="RGB 设置">
+    选择 RGB 的连接方式：
+    - **无节点（推荐）** - 完全在你的设备上运行的自主保管 RGB 资产和 Bitcoin L1 上的 BTC，无需运行节点。
+    - **RLN 节点** - 连接你自己的 RGB Lightning Node，在 RGB 之上增加闪电通道和基于做市方的 RGB 交换。实验性功能，仅支持测试网络。
+
+    之后可以在设置中更改。两种后端互斥。
+  </Step>
+
+  <Step title="恢复 RGB 备份（仅导入时）">
+    使用无节点 RGB 导入已有钱包时，扩展会询问是否从云端（VSS）备份恢复 RGB 状态。未经你在这一步明确同意，不会恢复任何内容。
+  </Step>
+
+  <Step title="完成">
+    进入钱包。扩展会以 Spark、Arkade、Liquid 和 RGB 账户启动，连接节点后再加入 RLN 相关功能。
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/02-password.png" alt="KaleidoSwap 扩展设置密码步骤" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Warning>
+恢复钱包时，请始终使用 **BIP39 助记词**，而不是 Nostr 密钥。导入的 Nostr 密钥只会替换 Nostr 身份，并不控制资金。
+</Warning>
+
+<img src="/assets/images/extension/12-restore-backup-consent.png" alt="发现云端备份的提示，询问是否从 VSS 备份服务器恢复加密的 RGB 状态，并提供「暂时跳过」选项" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## RGB 账户
+
+### 无节点 RGB（RGB-L1）
+
+默认的 RGB 后端完全在扩展内部（WebAssembly）运行 Bitcoin L1 上的 RGB，无需节点。它默认通过 Esplora 索引器连接主网（已提供默认端点，你也可以在**设置 > RGB-L1**（Settings > RGB-L1）中填入自己的），自动创建盲化接收发票，替你管理 UTXO，并把 RGB 状态备份到加密云端（VSS）和本地文件。
+
+### RGB Lightning Node
+
+RLN 是可选的实验性功能。如果你需要 RGB 闪电通道、通过 Lightning 传输的 RGB 发票，或基于做市方的 RGB 交换，可以连接它。
+
+<img src="/assets/images/extension/04-rln-optional.png" alt="KaleidoSwap 扩展中的 RLN 可选启用界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+扩展可以通过两种传输方式连接你的 RLN：
+
+- **直连**（Direct）- 填入 **RLN Node URL**（节点接口端点，例如 `http://localhost:3001`），以及节点要求时的可选 **Biscuit / JWT token**。
+- **Nostr Wallet Connect（NWC）** - 粘贴 `nostr+walletconnect://` 连接字符串（例如来自 KaleidoSwap 桌面应用）。你的节点保持远程，只有签名后的请求经中继传输。
+
+两种传输方式共用同一个 RGB 交换做市方 URL。
+
+<img src="/assets/images/extension/05-rln-connect.png" alt="KaleidoSwap 扩展的 RLN 连接表单" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Note>
+在初始设置中，RGB Lightning 被标注为面向测试网络的实验性功能。你可以先跳过，之后在设置中连接。连接 RLN 节点会替换掉无节点的 RGB-L1 后端。
+</Note>
+
+## 仪表盘概览
+
+设置完成后，仪表盘会显示各个已连接协议的账户状态和资产。
+
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 账户状态
+
+仪表盘会展示 Spark、Arkade、Liquid 和 RGB 账户的状态。每个账户标签会显示它处于就绪、离线、可选还是仍在同步。如果某个已连接账户停止响应（例如余额请求持续超时），对应标签会变为琥珀色并显示**无响应**（Not responding）状态，同时仪表盘会出现一条可关闭的横幅，附带**重试**（Retry）操作。
+
+### 资产筛选
+
+使用资产和网络筛选器可以聚焦于：
+
+- 所有协议中的 BTC
+- Spark 资产
+- Arkade 资产
+- Liquid 资产（L-BTC 以及 USDt 等已发行资产）
+- RGB 资产（无节点或通过 RLN）
+- Bitcoin L1、Lightning、Spark、Arkade 和 Liquid 各网络分片
+
+不同后端中代码相同的资产会合并为仪表盘上的同一行，你也可以从列表中隐藏单个资产。
+
+### 操作
+
+| 操作 | 说明 |
+|--------|-------------|
+| **存入**（Deposit） | 为所选资产和账户路由生成接收地址或发票 |
+| **提取**（Withdraw） | 通过最合适的兼容路由发送到已识别的目标类型 |
+| **交换**（Swap） | 打开扩展内的交换界面 |
+| **跨链**（Bridge） | 在 Spark 与外部链之间转移资金 |
+
+## 锁定与解锁
+
+### 自动锁定
+
+KaleidoSwap 扩展会在一段时间无操作后自动锁定。锁定后，扩展需要你的密码（或已注册的 passkey）才会再次在内存中解密助记词。
+
+<img src="/assets/images/extension/13-lock-screen.png" alt="「欢迎回来」锁定界面，主操作为使用 Passkey 解锁，并提供使用密码解锁的备选方式" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 解锁
+
+扩展处于锁定状态时，你会看到上图所示的**欢迎回来**（Welcome Back）界面。
+
+- **使用 passkey** - 如果已注册，点击**使用 Passkey 解锁**（Unlock with Passkey），并用设备的生物识别或安全密钥确认
+- **使用密码** - 输入密码后选择**解锁**（Unlock）
+
+如果忘记密码，KaleidoSwap 无法帮你找回 - 恢复步骤请参见[故障排查](/cn/extensions/kaleidoswap-extension/troubleshooting)。
+
+### 手动锁定
+
+使用**设置 > 锁定钱包**（Settings > Lock Wallet）可立即锁定。
+
+### 修改锁定超时时间
+
+进入**设置 > 安全**（Settings > Security）调整自动锁定超时时间（从 1 分钟到 1 小时，或永不锁定）。比特币单位显示是设置主页面上的一个内嵌选择器。
+
+<img src="/assets/images/extension/06-wallet-ready.png" alt="KaleidoSwap 扩展就绪界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

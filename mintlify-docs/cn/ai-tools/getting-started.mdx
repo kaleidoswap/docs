@@ -1,0 +1,45 @@
+---
+title: "AI 工具：快速上手"
+sidebarTitle: "快速上手"
+description: "选择把 AI 代理接入比特币的方式：MCP 服务器、KaleidoAgent 还是 KaleidoMind，以及每一种的前置条件和花费把关机制。"
+---
+
+四种接入方式把同一套比特币工具交给模型，区别主要在于谁来跑代理循环、以及什么东西拦住一笔花费。这一页负责在它们之间做选择：先要准备什么、哪一种适合你，以及每一种如何为动用资金的调用把关。
+
+## 开始之前
+
+| 要求 | 说明 |
+|-------------|---------|
+| **一个测试网络** | regtest 或 signet。首次运行绝不要用主网 |
+| **一份钱包种子** | 用于测试网络的一次性 BIP-39 助记词，设置到 `WDK_SEED` |
+| **一个节点** | 仅 `wdk_*` 工具和原子交换需要。Spark 工具只需要种子，行情数据什么都不需要 |
+| **一个 MCP 宿主或 LLM 密钥** | Claude Desktop 或其他 MCP 客户端，或者用于 KaleidoAgent 的 Anthropic / OpenAI 密钥 |
+
+如果你还没有安装任何组件，请先看[安装](/cn/ai-tools/installation)。
+
+## 选择接入方式 {#pick-a-surface}
+
+| 如果你想 | 从这里开始 |
+|----------------|-----------|
+| 给 Claude Desktop 或自己的 MCP 客户端加上比特币工具 | [MCP 服务器](/cn/ai-tools/mcp-servers) |
+| 让代理无人值守地管理一个投资组合 | [KaleidoAgent](/cn/ai-tools/kaleido-agent) |
+| 在本地端通过聊天或语音操作钱包 | [KaleidoMind](/cn/ai-tools/kaleido-mind) |
+| 不改代码就调整代理行为 | [Skills](/cn/ai-tools/skills) |
+
+无论你选择哪一种接入方式，首次运行都遵循同样的顺序：先只读调用，再钱包调用，然后报价，最后才是执行。这个顺序既是谨慎，也是诊断手段。只读那一步失败说明是连接问题，钱包那一步失败说明是种子或网络问题，而能走到报价的，这两类问题都已经排除了。
+
+每种接入方式都有自己的操作指引：[MCP 服务器](/cn/ai-tools/mcp-servers#first-run)和 [KaleidoAgent](/cn/ai-tools/kaleido-agent#first-run)。KaleidoMind 是嵌入宿主运行的库，本身不独立运行，所以它的首次运行就是[桌面应用的安装流程](/cn/desktop-app/getting-started/installation)。[Skills](/cn/ai-tools/skills) 改变的是代理在这些接入方式上的行为，它本身不是一种接入方式。
+
+## 确认机制长什么样
+
+两种代理接入方式对花费的把关方式不同，值得弄清楚你依赖的是哪一种。
+
+| 接入方式 | 把关机制 |
+|---------|------|
+| **[KaleidoMind](/cn/ai-tools/kaleido-mind)** | 结构性把关。每个会动用资金的工具都标记了 `requiresConfirmation`，引擎会暂停并等待宿主的确认面板。模型无法绕过 |
+| **[KaleidoAgent](/cn/ai-tools/kaleido-agent)** | 策略性把关。`dry_run` 加上 `agent.config.json` 中的风险上限，在提交前校验 |
+| **[MCP 服务器](/cn/ai-tools/mcp-servers)** | 取决于你的宿主客户端。多数 MCP 客户端会为每次工具调用弹出确认，但那是客户端的行为，不是服务器的 |
+
+<Warning>
+  通用 MCP 宿主是保护最弱的一条路径。如果你的客户端自动批准工具调用，LLM 就能不经询问地从配置的钱包中花钱。在完全弄清客户端如何处理批准之前，请只使用测试网络种子。
+</Warning>

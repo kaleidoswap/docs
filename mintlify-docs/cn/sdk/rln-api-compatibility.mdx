@@ -1,0 +1,30 @@
+---
+title: 'RLN API'
+description: "查看每个 KaleidoSDK 版本对应的 RGB Lightning Node (RLN) API 版本，以及 client.rln 暴露的节点侧接口端点分类。"
+---
+
+import { sdkVersion, rlnApiVersion } from "/snippets/versions.mdx";
+
+RLN（RGB Lightning Node）API 由你所配置的 RGB Lightning Node 直接提供，支持钱包操作、闪电通道管理以及节点间的交换协调。
+
+## 兼容性
+
+**SDK v{sdkVersion}** 基于 **RGB Lightning Node API v{rlnApiVersion}** 生成（即 `kaleidoswap/rgb-lightning-node` 分支）。
+
+SDK 会自动支持最新发布的 RLN API。请始终保持 SDK 与 RGB Lightning Node 同步更新，以确保完整兼容，并及时获得最新功能和安全改进。版本历史请参阅[更新日志](/cn/sdk/changelog)。
+
+<Note>
+要查看最新的 RLN API 变更和更新内容，请参阅 [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) 或你自己的节点文档。
+</Note>
+
+## 分类
+
+| 分类 | 用途 | 示例 |
+|---|---|---|
+| **Wallet** | BTC 与 RGB 资产管理 | 余额查询、转账、资产操作 |
+| **Channels** | 闪电网络通道操作 | 开通、关闭、监控、备份通道 |
+| **Invoices** | 支付请求管理 | 创建、列出并监控发票 |
+| **Payments** | 支付执行 | 支付发票、协调交换、节点间交易 |
+| **Node Info** | 节点状态与配置 | 公钥、同步状态、能力信息 |
+
+这些分类都通过 `client.rln` 访问，前提是客户端配置了 `nodeUrl` / `node_url`：若未配置，TypeScript 会抛出 `ConfigError`，Python 会抛出 `NodeNotConfiguredError`。配置步骤与节点检查见[快速上手](/cn/sdk/getting-started)，全部方法见[客户端参考](/cn/sdk/api-reference)。

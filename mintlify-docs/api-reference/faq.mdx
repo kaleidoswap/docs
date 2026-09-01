@@ -1,0 +1,124 @@
+---
+title: "Bitcoin Swap API FAQ"
+sidebarTitle: "FAQ"
+description: "Common questions about the KaleidoSwap swap API, covering authentication, the maker and node APIs, amount units, quote lifetime, WebSocket quoting, and browser use"
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Do I need an API key to start?" icon="key">
+    **Not today.** Anonymous requests are still served on every Maker API endpoint, so you can integrate immediately. Bearer keys (`Authorization: Bearer <token>`) are already **accepted and attributed** — they carry scopes such as `quote:read` for market data and quotes and `swap:execute` for swap init and execute.
+
+    Enforcement is rolling out gradually. Once it is on, a missing or invalid key returns `401`, so send a key now rather than retrofitting it later. Details in the [Overview](/api-reference/introduction#authentication).
+  </Accordion>
+
+  <Accordion title="What is the difference between the Maker API and the RLN API?" icon="code-compare">
+    They are two different servers, and only one of them is ours.
+
+    | API | Where it lives | Covers |
+    |-----|----------------|--------|
+    | **Maker API** | `https://api.signet.kaleidoswap.com/api/v1` | Market data, quotes, swap init/execute/status, LSPS1 channel orders |
+    | **RLN API** | the root of **your own** node, e.g. `http://<node>:3001/` | Wallet and RGB assets, channels, invoices, swap whitelisting |
+
+    Everything documented under Endpoints in this tab is the Maker API. The RLN API is served by the [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) you run yourself — there is no KaleidoSwap-hosted RLN endpoint to call. The table in the [Overview](/api-reference/introduction) maps each goal to the right API.
+  </Accordion>
+
+  <Accordion title="Do I need to run an RGB Lightning Node?" icon="server">
+    **For market data, no.** Assets, pairs, routes, and quotes are plain HTTP calls against the maker.
+
+    **For atomic swaps, yes.** Your node is what whitelists the `swapstring` and routes the HTLC. That is exactly why the maker never takes custody — there is no step in the protocol where it holds your funds. See [Node Hosting](/desktop-app/getting-started/node-hosting) for deployment options.
+  </Accordion>
+
+  <Accordion title="Which environments can I integrate against?" icon="network-wired">
+    Signet (MutinyNet) is live today; mainnet is coming soon.
+
+    | Environment | REST base URL | WebSocket |
+    |-------------|---------------|-----------|
+    | **Signet** | `https://api.signet.kaleidoswap.com/api/v1` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+    | **Mainnet** | `https://api.kaleidoswap.com/api/v1` *(coming soon)* | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *(coming soon)* |
+
+    The interactive playground on the endpoint pages runs against Signet.
+  </Accordion>
+
+  <Accordion title="What units are amounts in — sats or msats?" icon="calculator">
+    **BTC legs are millisatoshis.** `POST /api/v1/swaps/init` states this explicitly, and the quote examples follow the same convention: `1000000` on a BTC leg is 1,000 sats.
+
+    **RGB asset legs are raw smallest units**, decided by the asset's own `precision` from `GET /api/v1/market/assets`. Precision differs per asset — USDT at precision `6` means `1000000` is 1.00 USDT.
+
+    Never hardcode a divisor. Read `precision` per asset, and treat the `precision` field as display metadata rather than as the unit of the amount you send.
+  </Accordion>
+
+  <Accordion title="How do I read the price field?" icon="chart-line">
+    `price` is the price of **one whole unit** of `from_asset`, expressed in the **smallest unit** of `to_asset`. It is not a display price, and it is not the amount you will receive.
+
+    The amount you will actually get is already on the response leg — `to_asset.amount` — with the fee folded in. Use that for anything user-facing, and use `price` only if you need the rate itself.
+  </Accordion>
+
+  <Accordion title="How long is an rfq_id valid?" icon="hourglass-half">
+    Until its `expires_at` (unix time) — a short window, measured in tens of seconds. One quote backs one `POST /api/v1/swaps/init`.
+
+    Do not hold an `rfq_id` across user think-time. Fetch the quote, then init, whitelist, and execute promptly; if a user pauses on a confirmation screen, request a fresh quote when they resume.
+  </Accordion>
+
+  <Accordion title="Should I use WebSocket or REST for quotes?" icon="bolt">
+    Either — they return the same quote shape.
+
+    The WebSocket is **request/response, not publish/subscribe**: you send a `quote_request` and the server answers that one message. There is no subscription, so a price only stays fresh if you keep asking. Send periodic `ping` messages to keep the connection healthy.
+
+    Use the WebSocket when you are showing a moving price and want to avoid the per-request HTTP overhead; use `POST /api/v1/market/quote` for a one-off swap. See [Swap Protocol](/api-reference/swap-protocol).
+  </Accordion>
+
+  <Accordion title="What is a swapstring, and why do I have to whitelist it?" icon="file-signature">
+    The `swapstring` returned by `/swaps/init` encodes the exact terms of the swap — both amounts, both assets, and the payment hash. Whitelisting it on your own node is how *you* authorise those precise terms.
+
+    This is the non-custodial hinge of the protocol: the maker cannot move your assets, it can only offer an HTLC your node has already agreed to honour. Whitelisting happens through the `/taker` API of your RGB Lightning Node, not through the Maker API.
+  </Accordion>
+
+  <Accordion title="Why does /swaps/init return an access_token, and what happens if I lose it?" icon="lock">
+    The `access_token` is a per-swap credential and is returned **only once**, at init. You need it alongside the `payment_hash` to poll `POST /api/v1/swaps/atomic/status`.
+
+    Without it, the status endpoint returns a uniform `404 Swap not found` — by design, so the endpoint cannot be used to probe for other people's payment hashes. Persist the token with the payment hash the moment init returns. LSPS1 channel orders work the same way: `create_order` returns a per-order `access_token` required by `get_order` and `rate_decision`.
+  </Accordion>
+
+  <Accordion title="Can I call the API directly from a browser?" icon="globe">
+    Not reliably. CORS is disabled on most Maker API endpoints, so a browser-only app needs its own backend to proxy the calls. Keep API keys server-side regardless — once enforcement is on, a key shipped to the browser is a key you have published.
+  </Accordion>
+
+  <Accordion title="What are the rate limits?" icon="gauge-high">
+    The defaults are 600 requests per minute per IP, 300 per minute per endpoint, and 1,000 per minute globally. They are configurable per deployment, so treat them as a starting point rather than a contract.
+
+    Every response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` — read them instead of guessing. Cache `assets` and `pairs` locally; they change rarely.
+  </Accordion>
+
+  <Accordion title="How is the API versioned?" icon="check-double">
+    The version lives in the path: `v1`, as in `https://api.signet.kaleidoswap.com/api/v1`. The versioned OpenAPI specifications are published in the [specs repository](https://github.com/kaleidoswap/specs) and updated on each release, so you can diff two versions rather than discover changes at runtime.
+  </Accordion>
+
+  <Accordion title="Should I use an SDK instead of calling REST directly?" icon="code">
+    For most integrations, yes. The [TypeScript and Python SDKs](/sdk/introduction) generate their types from the same OpenAPI specifications, wrap both the Maker API and your node behind `client.maker.*` and `client.rln.*`, and give you a typed error hierarchy with retry hints.
+
+    Call REST directly when you are in a language the SDKs do not cover, or when you need control the client abstracts away. There is also a [CLI](/cli/introduction) for driving a node from the terminal.
+  </Accordion>
+</AccordionGroup>
+
+## Get Help
+
+Check [Troubleshooting](/api-reference/troubleshooting) for errors rather than questions, and [Additional Resources](/api-reference/additional-resources) for specifications and upstream links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. Request URL and HTTP method
+2. Request payload (redact any API key)
+3. Full error response, including `request_id`
+4. Timestamp of the request
+5. Environment (Signet / Mainnet)
+
+<CardGroup cols={2}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

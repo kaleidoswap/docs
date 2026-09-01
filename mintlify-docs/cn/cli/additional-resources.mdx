@@ -1,0 +1,73 @@
+---
+title: "KaleidoCLI：更多资源"
+sidebarTitle: "更多资源"
+description: "面向 KaleidoCLI 用户的资源汇总：本地节点相关工具、协议参考、测试网络，以及技术支持渠道"
+---
+
+## 工具链 {#tooling}
+
+<CardGroup cols={2}>
+  <Card title="uv" icon="bolt" href="https://docs.astral.sh/uv/">
+    `uv tool install` 背后的 Python 工具管理器，也是让 `kaleido` 保持隔离与最新的最简单方式。
+  </Card>
+
+  <Card title="Docker Compose" icon="docker" href="https://docs.docker.com/compose/">
+    `kaleido node` 底层驱动的工具。需要手工检查已生成的环境时会用到。
+  </Card>
+</CardGroup>
+
+## 协议参考
+
+<CardGroup cols={2}>
+  <Card title="MCP 服务器" icon="plug" href="/cn/ai-tools/mcp-servers">
+    `kaleido-mcp` 调用的正是同一个 `kaleido` 二进制文件，把节点生命周期与交易暴露为 LLM 可调用的工具。
+  </Card>
+
+  <Card title="RGB LSPS1 接口" icon="server" href="/cn/api-reference/rgb-lsps1-apis">
+    `channel order` 与 `channel lsp` 背后的通道订购接口。
+  </Card>
+
+  <Card title="RGB 闪电节点" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    所有 `node`、`wallet`、`asset`、`channel`、`payment` 命令驱动的节点。这是 KaleidoSwap 的分支；[上游项目](https://github.com/RGB-Tools/rgb-lightning-node)由 RGB Tools 维护。
+  </Card>
+
+  <Card title="RGB 协议文档" icon="gem" href="https://docs.rgb.info">
+    客户端验证、资产接口，以及 `asset issue` 所写入的 `nia` / `cfa` / `uda` 方案。
+  </Card>
+</CardGroup>
+
+## 开发与测试
+
+<CardGroup cols={2}>
+  <Card title="Mutiny 水龙头" icon="faucet" href="https://faucet.mutinynet.com/">
+    领取 signet 比特币，为节点充值并开通测试通道。配合 `kaleido wallet address` 使用。
+  </Card>
+
+  <Card title="Mutinynet 区块浏览器" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    查询 `wallet transactions` 与 `asset transfers` 背后的交易。
+  </Card>
+</CardGroup>
+
+## 获取帮助
+
+如果遇到的是报错，请查阅[故障排查](/cn/cli/troubleshooting)；如果是疑问，请查阅[常见问题](/cn/cli/faq)。
+
+其他情况请通过下面你偏好的渠道反馈问题，并附上：
+
+1. CLI 的安装方式，以及 `uv tool list` 的输出（没有 `--version` 标志）
+2. Python 版本（`python --version`）与操作系统
+3. 你执行的完整命令，以及加上 `--json` 后的输出
+4. 节点是本地 Docker 环境还是远程节点，以及所在网络
+5. `kaleido config show` 与 `kaleido node ps` 的输出，去掉其中的密码
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    在相应的仓库中报告缺陷。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

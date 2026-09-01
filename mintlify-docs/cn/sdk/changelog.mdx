@@ -1,0 +1,184 @@
+---
+title: "KaleidoSDK 更新日志"
+sidebarTitle: "更新日志"
+description: "KaleidoSDK 的版本历史：每个版本的新增功能、破坏性变更，以及与 RLN 和 Maker API 的兼容性说明"
+---
+
+## SDK v0.1.18（当前版本）
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.9.0**
+
+<Warning>
+本版本要求 RGB Lightning Node 至少为 **v0.9.0**。如果你的节点仍在运行 0.8.0 或更早版本，请继续使用 SDK **0.1.17** —— 新的 `/unlock` 请求体会被这些节点拒绝，而它们所需的请求体结构在新版中已无法表达。
+</Warning>
+
+### 变更
+
+- 将随包提供的 RGB Lightning Node OpenAPI 规范同步到 RLN **v0.9.0**，并重新生成了节点模型（Python + TypeScript）。
+
+### 新增
+
+- `UnlockRequest` 新增 `ldk_chain_sync`，用于选择 LDK 如何跟踪链上数据：`BlockSync`（通过 bitcoind RPC，即 0.9.0 之前的行为）或 `TransactionSync`（仅使用索引器，不需要 bitcoind）。
+- 新增节点类型 `LdkChainSyncBlockSync` 和 `LdkChainSyncTransactionSync`。TypeScript 还导出了 `LdkChainSync` 联合类型以及 `LdkChainSyncBlockSyncMode` / `LdkChainSyncTransactionSyncMode` 枚举；Python 则以 `LdkBlockSyncConfig` / `LdkTransactionSyncConfig` 导出嵌套配置。
+
+### 破坏性变更
+
+- **`UnlockRequest` 不再接受 `bitcoind_rpc_username`、`bitcoind_rpc_password`、`bitcoind_rpc_host` 和 `bitcoind_rpc_port`。** 请把它们移入 `ldk_chain_sync.config` 并设置 `mode: "BlockSync"`，或者干脆不用它们，改为传入 `mode: "TransactionSync"` 和 `config.indexer_url`。
+- **`UnlockRequest.indexer_url` 现在是必填项**（此前可选且可为 null）。无论选择哪种链同步模式，RGB 转移都会用到它。
+
+## SDK v0.1.17
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### 修复
+
+- **TypeScript** `listSwaps()` 不再让超过 `Number.MAX_SAFE_INTEGER` 的 RGB 交换数量丢失精度 —— `qty_from`/`qty_to` 会原样保留（类型为 `string | number`，请用 `BigInt(...)` 读取）。此前 `JSON.parse` 会静默地对这些数值取整，导致大额交换被错误上报。
+
+## SDK v0.1.16
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### 新增
+
+- **TypeScript** `KaleidoConfig` 新增 `nodeApiKey` —— 用于 RLN 节点请求（包括 `enableNodeClient()`）的 bearer token，与做市方的 `apiKey` 相互独立，因此凭据绝不会被跨服务发送。
+
+### 修复
+
+- **TypeScript** 面向需要认证的 RLN 节点的凭据会被静默丢弃 —— `apiKey` 只会附加到做市方客户端上，所有节点调用都以未认证的方式发出。
+
+## SDK v0.1.15
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### 修复
+
+- 补齐 0.1.14 版本的发布：该版本**只发布到了 npm**（一个过期的 decode-invoice 单元测试失败后，PyPI 任务被跳过）。相对 0.1.14 没有任何功能变化。
+
+## SDK v0.1.14
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+<Warning>
+如果你的 RGB Lightning Node 仍在运行 **v0.7.1**，请继续使用 SDK **0.1.13** —— 0.1.14 及之后重新生成的模型针对的是 0.8.0 API 的数据结构。
+</Warning>
+
+### 变更
+
+- 将随包提供的 RGB Lightning Node OpenAPI 规范同步到 RLN **v0.8.0**，并重新生成了节点模型（Python + TypeScript）。
+- `/refreshtransfers` 接口端点现在返回 `RefreshResponse`（`{ transfers }`），而不再是空响应体。SDK 的 `refreshTransfers()` / `refresh_transfers()` 方法仍返回 `void` / `None`。
+
+### 新增
+
+- 来自 v0.8.0 的新 RLN 接口端点：`/getconsignment`、`/provideoutofbandack`、`/provideoutofbandconsignment`（带外 consignment 转移），以及它们对应的请求/响应类型。
+- 新的转移状态 `WaitingBroadcast`。
+- `Utxo` 新增 `exists` 与 `derivation_index`；`Unspent` 新增 `pending_blinded`。
+
+### 破坏性变更
+
+- **`RgbInvoiceRequest` 现在要求 `expiration_timestamp` 与 `transport_endpoints`**（在 RLN 0.7.1 中这两个字段是可选的或并不存在）。调用 `createRgbInvoice`/`create_rgb_invoice` 时必须同时提供二者。
+- **`SendRgbRequest` 现在要求 `expiration_timestamp`**，适用于 `sendRgb`/`send_rgb`。
+- `TransferTransportEndpoint.proxy_endpoint` 已被移除。
+
+## SDK v0.1.13
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### 移除
+
+- **基于订单的交换流程。** 做市方 API 的 `/api/v1/swaps/orders/*` 接口端点已下线，因此 SDK 不再提供基于订单的接口：`createSwapOrder`/`create_swap_order`、`getSwapOrderStatus`/`get_swap_order_status`、`getOrderHistory`/`get_order_history`、`getOrderAnalytics`/`get_order_analytics`、交换订单的费率决策方法，以及 `waitForSwapCompletion`/`wait_for_swap_completion`（连同 `SwapCompletionOptions`），还有 `SwapOrder*`、`OrderHistory*` 和 `OrderStats*` 这些类型。（LSPS1 的 `submitLspRateDecision` 以及 `RateDecisionRequest`/`RateDecisionResponse` 不受影响。）
+
+### 破坏性变更
+
+- 请从已移除的基于订单的方法迁移到**原子交换流程**：`initSwap`/`init_swap` → 在你的 RLN 节点上把 swapstring 加入白名单 → `executeSwap`/`execute_swap`，并通过 `getAtomicSwapStatus`/`get_atomic_swap_status` 查询状态。LSPS1 通道订单（`createLspOrder`/`getLspOrder`）不受影响。
+
+## SDK v0.1.11
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### 修复
+
+- `refreshTransfers()` / `refresh_transfers()` 现在会在默认请求体中发送 `filter: []`（刷新所有待处理的转移）。RLN 0.7.1 把 `filter` 变成了 `RefreshRequest`（`POST /refreshtransfers`）的必填字段；此前只带 `{skip_sync}` 的默认请求体会被拒绝，返回 `HTTP 400 "Failed to deserialize the JSON body into the target type"`。TypeScript 与 Python 客户端均受此修复影响。
+
+## SDK v0.1.10
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### 修复
+
+- **TypeScript** `listUnspents()` 现在默认发送 `settled_only: false`，与 Python 客户端以及 RLN 0.7.1 所要求的 `ListUnspentsRequest` 结构保持一致。在 0.1.9 中，TS 的便捷方法仍然发送只带 `{skip_sync}` 的请求体，会被 RLN 0.7.1 拒绝并返回 `HTTP 400 "Failed to deserialize the JSON body into the target type"`。
+
+## SDK v0.1.9
+
+**兼容的 API：** 最新 Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### 新增
+
+- **NWC (Nostr Wallet Connect, NIP-47) 客户端** —— 新增 `kaleido-sdk/nwc` 子路径。`NWCClient` 提供 `rln_*` RLN 扩展方法，以及一个 `RlnTransport` 接缝，可让 RLN 客户端在 NWC 连接上运行（NIP-44 加密，NIP-04 回退）。闪电发票解码、发送 BTC 和列出支付记录都已映射到 NWC 传输通道上。
+- 面向 `POST /sendrgb`、`POST /inflate`、`POST /issueassetifa` 的 RLN 客户端方法与模型，以及 Inflatable Fungible Asset (IFA) 相关类型。
+
+### 变更
+
+- 基于 `kaleidoswap/rgb-lightning-node` **v0.7.1** 重新生成了 RLN 模型。
+
+### 破坏性变更
+
+- `ListUnspentsRequest` 现在要求 `settled_only`。RLN 0.7.1 会拒绝旧的只带 `{skip_sync}` 的请求体，返回 `HTTP 400 "Failed to deserialize the JSON body into the target type"`。便捷方法 `list_unspents()` 默认使用 `settled_only=False`；直接构造请求的调用方必须自行设置该字段。
+- `POST /sendasset` 已重命名为 `POST /sendrgb`（`SendAssetRequest`/`SendAssetResponse` → `SendRgbRequest`/`SendRgbResponse`）。
+
+<Info>
+  这里省略了 0.1.6–0.1.8 版本；完整内容请查看 SDK 仓库中的 [CHANGELOG](https://github.com/kaleidoswap/kaleido-sdk/blob/master/CHANGELOG.md)。
+</Info>
+
+## SDK v0.1.5
+
+**兼容的 API：** 最新 Maker API 与最新 RLN API
+
+<Info>
+本条目描述的是 0.1.5 发布时的接口面。下面列出的基于订单的交换方法以及 `waitForSwapCompletion` 后来在 **0.1.13** 中被移除 —— 迁移路径请参见该版本条目。
+</Info>
+
+### 包含内容
+
+#### Maker API 客户端（`client.maker`）
+
+市场数据、报价、交换订单、原子交换协议、LSPS1 通道下单，以及 WebSocket 流式推送：
+
+- 市场操作：资产与交易对列表，带缓存
+- 报价接口端点：单笔与批量询价，支持实时流式推送
+- 交换订单管理：创建、列出并监控基于订单的交换
+- 原子交换协议：面向桌面端和直连节点场景的 HTLC 交换
+- LSPS1 通道下单：流动性与通道供给
+- WebSocket 流式推送：`streamQuotesByTicker` / `streamQuotesForAllRoutes`，自动发现路由并自动重连
+
+#### RLN API 客户端（`client.rln`）
+
+覆盖钱包管理、闪电通道与资产操作的完整 RGB Lightning Node 操作：
+
+- 钱包管理：BTC 与 RGB 资产操作，并跟踪余额
+- 通道管理：开通、监控与关闭闪电通道
+- 发票操作：创建、列出并监控闪电发票
+- 支付执行：支付发票并协调节点间交换
+- 节点信息与健康状况：读取节点配置与公钥信息
+
+#### SDK 特性
+
+- `KaleidoClient.create()` —— TypeScript 与 Python 通用的同步工厂方法
+- `waitForSwapCompletion` —— 内置的轮询辅助方法，超时时间与状态回调均可配置
+- `PrecisionHandler` 与 `AssetPairMapper` 工具，用于金额换算和交易对查找
+- 完整的错误层级：`KaleidoError`、`NetworkError`、`ValidationError`、`APIError`、`QuoteExpiredError`、`NodeNotConfiguredError`
+- 根据 OpenAPI 规范自动生成的类型（TypeScript：`openapi-fetch`；Python：Pydantic 模型）
+
+---
+
+## API v1
+
+**状态：** 稳定。v1 没有计划中的破坏性变更。
+
+Maker API 的接口端点分组请参见 [Maker API 兼容性](/cn/sdk/maker-api-compatibility)，节点侧的接口面请参见 [RLN API 兼容性](/cn/sdk/rln-api-compatibility)。线上环境及其 WebSocket URL 列在[安装](/cn/sdk/installation#available-environments)中。
+
+---
+
+## 路线图
+
+- **主网上线** —— 面向真实 BTC 与 RGB 资产的生产环境。
+- **支持更多分层协议** —— 在 KaleidoSwap Extension 中加入 Spark、Arkade 与 Liquid 协议适配器。

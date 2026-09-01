@@ -4,7 +4,29 @@ sidebarTitle: "Changelog"
 description: "KaleidoSDK version history, listing new features, breaking changes, and RLN and Maker API compatibility notes for each release"
 ---
 
-## SDK v0.1.17 (Current)
+## SDK v0.1.18 (Current)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.9.0**
+
+<Warning>
+This release requires an RGB Lightning Node at **v0.9.0 or later**. If your node still runs 0.8.0 or earlier, stay on SDK **0.1.17** — the new `/unlock` body is rejected by those nodes, and their body shape can no longer be expressed.
+</Warning>
+
+### Changed
+
+- Synced the vendored RGB Lightning Node OpenAPI spec to RLN **v0.9.0** and regenerated the node models (Python + TypeScript).
+
+### Added
+
+- `ldk_chain_sync` on `UnlockRequest` selects how LDK follows the chain: `BlockSync` (bitcoind RPC, the pre-0.9.0 behaviour) or `TransactionSync` (indexer only, no bitcoind).
+- New node types `LdkChainSyncBlockSync` and `LdkChainSyncTransactionSync`. TypeScript also exports the `LdkChainSync` union and the `LdkChainSyncBlockSyncMode` / `LdkChainSyncTransactionSyncMode` enums; Python exports the nested configs as `LdkBlockSyncConfig` / `LdkTransactionSyncConfig`.
+
+### Breaking changes
+
+- **`UnlockRequest` no longer takes `bitcoind_rpc_username`, `bitcoind_rpc_password`, `bitcoind_rpc_host`, or `bitcoind_rpc_port`.** Move them into `ldk_chain_sync.config` with `mode: "BlockSync"`, or drop them entirely and pass `mode: "TransactionSync"` with `config.indexer_url`.
+- **`UnlockRequest.indexer_url` is now required** (previously optional and nullable). RGB transfers use it regardless of the chain-sync mode you pick.
+
+## SDK v0.1.17
 
 **Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
 
@@ -103,17 +125,17 @@ If your RGB Lightning Node still runs **v0.7.1**, stay on SDK **0.1.13** — the
 - `ListUnspentsRequest` now requires `settled_only`. RLN 0.7.1 rejects the old `{skip_sync}`-only body with `HTTP 400 "Failed to deserialize the JSON body into the target type"`. The `list_unspents()` convenience method defaults `settled_only=False`; callers that build the request directly must set it.
 - `POST /sendasset` was renamed to `POST /sendrgb` (`SendAssetRequest`/`SendAssetResponse` → `SendRgbRequest`/`SendRgbResponse`).
 
-<Note>
+<Info>
   Versions 0.1.6–0.1.8 are omitted here; see the full [CHANGELOG](https://github.com/kaleidoswap/kaleido-sdk/blob/master/CHANGELOG.md) in the SDK repository.
-</Note>
+</Info>
 
 ## SDK v0.1.5
 
 **Compatible APIs:** Latest Maker API and Latest RLN API
 
-<Note>
+<Info>
 This entry describes the surface as it shipped in 0.1.5. The order-based swap methods and `waitForSwapCompletion` listed below were later removed in **0.1.13** — see that entry for the migration path.
-</Note>
+</Info>
 
 ### What's included
 
@@ -152,7 +174,7 @@ Full RGB Lightning Node operations for wallet management, Lightning channels, an
 
 **Status:** Stable. No breaking changes planned for v1.
 
-For the Maker API endpoint groups see [Maker API Compatibility](/sdk/maker-api-compatibility), and for the node-side surface see [RLN API Compatibility](/sdk/rln-api-compatibility). Live environments and their WebSocket URLs are listed in [Getting Started](/sdk/getting-started#available-environments).
+For the Maker API endpoint groups see [Maker API Compatibility](/sdk/maker-api-compatibility), and for the node-side surface see [RLN API Compatibility](/sdk/rln-api-compatibility). Live environments and their WebSocket URLs are listed in [Installation](/sdk/installation#available-environments).
 
 ---
 

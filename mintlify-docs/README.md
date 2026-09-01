@@ -83,7 +83,6 @@ The documentation will be available at `http://localhost:3000`
 - `api-reference.mdx` - Complete API documentation
 - `types.mdx` - Pydantic models and enums
 - `examples.mdx` - Real-world code examples
-- `error-handling.mdx` - Exception handling guide
 - `websocket.mdx` - Real-time data streaming
 - `utilities.mdx` - Helper functions
 
@@ -94,16 +93,16 @@ The documentation will be available at `http://localhost:3000`
 - `api-reference.mdx` - API method documentation
 - `types.mdx` - Type definitions
 - `utilities.mdx` - Utility classes
-- `error-handling.mdx` - Error management
 - `examples.mdx` - Code examples
 - `websocket.mdx` - WebSocket integration
 - `best-practices.mdx` - Best practices guide
 - `troubleshooting.mdx` - Common issues
 
-### API Reference (6 pages)
+### API Reference (9 pages)
 ✅ Migrated + expanded with OpenAPI
-- `introduction.mdx`, `getting-started.mdx`, `error-handling.mdx`
+- `introduction.mdx`, `getting-started.mdx`, `swap-protocol.mdx`
 - `rgb-lsps1-apis.mdx`, `market-apis.mdx`, `swap-apis.mdx`
+- `faq.mdx`, `troubleshooting.mdx`, `additional-resources.mdx`
 - Automatic endpoint reference generated from `openapi.json`
 
 ## 🎨 Customization

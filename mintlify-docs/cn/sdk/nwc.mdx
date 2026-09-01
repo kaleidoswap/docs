@@ -1,0 +1,86 @@
+---
+title: 'Nostr Wallet Connect (NWC)'
+description: '通过 Nostr Wallet Connect（NIP-47）与 kaleido-sdk/nwc 客户端远程操控多资产闪电节点：标准钱包方法、RGB 闪电扩展方法，以及与 HTTP 接入方式的取舍'
+---
+
+## 概览
+
+从 **kaleido-sdk 0.1.9** 起，SDK 在 `kaleido-sdk/nwc` 子路径下提供了一个 **Nostr Wallet Connect (NIP-47)**
+客户端。它让客户端应用可以通过 Nostr 中继驱动远端的钱包服务 —— 例如运行 RGB Lightning Node 的 KaleidoSwap
+桌面枢纽 —— 而无需与该节点建立直接的 HTTP 连接。
+
+在标准 NIP-47 钱包方法之外，该客户端还增加了 **`rln*` RGB 闪电扩展方法**，让你能够通过同一条加密的 NWC
+通道读取余额、管理 RGB 资产，并在远端节点上创建发票。
+
+<Note>
+  传输层采用 **NIP-44** 端到端加密；当钱包服务未声明支持 NIP-44 时，会回退到 **NIP-04**。
+</Note>
+
+## 建立连接
+
+你需要一个由钱包服务签发的 NWC **连接 URI**（`nostr+walletconnect://...`）。
+
+```ts
+import { NWCClient } from 'kaleido-sdk/nwc';
+
+const nwc = new NWCClient(connectionUri);
+
+const { balance } = await nwc.getBalance();
+console.log('balance (msat):', balance);
+
+// 用完后释放中继订阅
+nwc.close();
+```
+
+如果你需要在连接前查看 URI 的内容（中继、钱包公钥、密钥），可以使用导出的 `parseNwcUri(uri)`；协议错误或
+超时会抛出 `NwcError`。
+
+## 标准钱包方法（NIP-47）
+
+```ts
+await nwc.getInfo();                              // 能力 / 支持的方法
+await nwc.getBalance();                           // { balance }，单位为 msat
+await nwc.makeInvoice({ amount, description });    // 创建一张 BOLT11 发票
+await nwc.payInvoice({ invoice });                 // 支付一张 BOLT11 发票
+await nwc.payKeysend({ pubkey, amount });          // 自发支付
+await nwc.lookupInvoice({ payment_hash });         // 发票状态
+await nwc.listTransactions({ limit, offset });     // 支付历史
+```
+
+## RGB Lightning Node 扩展方法
+
+这些方法把 RLN 操作映射到同一条 NWC 连接上：
+
+```ts
+await nwc.rlnNodeInfo();                 // NodeInfoResponse
+await nwc.rlnListAssets();               // ListAssetsResponse
+await nwc.rlnAssetBalance({ asset_id }); // AssetBalanceResponse
+await nwc.rlnGetAddress();               // 链上地址
+await nwc.rlnListChannels();             // ListChannelsResponse
+await nwc.rlnRgbInvoice(params);         // 创建一张 RGB 发票
+await nwc.rlnDecodeRgbInvoice({ invoice });
+await nwc.rlnSendAsset(params);          // SendRgbRequest -> SendRgbResponse
+```
+
+## 通过 NWC 使用完整的 RLN 客户端
+
+如果你已经在用 [`RlnClient`](/cn/sdk/api-reference) 连接 HTTP 的 `nodeUrl`，可以把传输层换成 NWC —— 客户端
+接口完全一致，只是改由 Nostr 承载：
+
+```ts
+import { NWCClient, createNwcRlnClient } from 'kaleido-sdk/nwc';
+
+const rln = createNwcRlnClient(new NWCClient(connectionUri));
+const info = await rln.getNodeInfo();
+const channels = await rln.listChannels();
+```
+
+如果你需要直接构造底层传输，可以使用 `NwcRlnNodeClient`。
+
+## NWC 与 HTTP 的选择
+
+| | HTTP (`nodeUrl`) | NWC |
+| --- | --- | --- |
+| 连通性 | 需要能直接访问节点的 REST API | 通过 Nostr 中继工作 —— 不需要入向端口或公网节点 URL |
+| 认证 | API key / Authorization 请求头 | NWC 连接密钥，全程加密（NIP-44/04） |
+| 适用场景 | 服务端集成与同网络环境下的集成 | 在公网上远程操控用户自己的节点（例如桌面枢纽） |

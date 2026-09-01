@@ -1,0 +1,146 @@
+---
+title: "KaleidoSDK：安装"
+sidebarTitle: "安装"
+description: "在 TypeScript 或 Python 中安装 KaleidoSDK：环境要求、客户端配置字段、环境变量，以及可用的 API 环境。"
+---
+
+`kaleido-sdk`（TypeScript）和 `kaleido_sdk`（Python）由同一份 Maker API 与 RGB Lightning Node 规范生成，并在其上封装了手写客户端：
+
+- `client.maker` 对应 KaleidoSwap 的市场、交换和 LSPS1 接口端点
+- `client.rln` 对应 RGB Lightning Node 的钱包、通道、支付和交换接口端点
+
+两者从同一个代码仓库发布并共用版本号，因此同一个版本在两种语言中的行为完全一致。
+
+<Note>
+  要确认哪个 SDK 版本对应哪个 API 版本，请参阅 [Maker API 兼容性](/cn/sdk/maker-api-compatibility) 和 [RLN API 兼容性](/cn/sdk/rln-api-compatibility)。
+</Note>
+
+## 安装依赖包 {#install-the-package}
+
+<CodeGroup>
+```bash npm
+npm install kaleido-sdk
+```
+
+```bash pnpm
+pnpm add kaleido-sdk
+```
+
+```bash yarn
+yarn add kaleido-sdk
+```
+
+```bash pip
+pip install kaleido-sdk
+```
+</CodeGroup>
+
+### 环境要求 {#requirements}
+
+<Tabs>
+  <Tab title="TypeScript">
+    - Node.js 18 或更高版本
+    - 推荐 TypeScript 5.x
+  </Tab>
+  <Tab title="Python">
+    - Python 3.10 或更高版本
+    - 运行时依赖会自动安装
+  </Tab>
+</Tabs>
+
+## 配置 {#configuration}
+
+### TypeScript
+
+`KaleidoClient.create()` 接收一个 `KaleidoConfig` 对象：
+
+```typescript
+import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+  apiKey: process.env.KALEIDO_API_KEY,
+  timeout: 30,
+  logLevel: LogLevel.INFO,
+});
+```
+
+支持的配置字段：
+
+- `baseUrl?`：Maker API 基础 URL，默认为 `https://api.signet.kaleidoswap.com`
+- `nodeUrl?`：RGB Lightning Node 地址
+- `apiKey?`：可选的 API key
+- `nodeApiKey?`：可选的 bearer token，用于需要认证的 RLN 节点请求
+- `timeout?`：请求超时时间（秒）
+- `logLevel?`：SDK 日志级别
+- `logger?`：自定义日志实现
+
+### Python
+
+`KaleidoClient.create()` 接收关键字参数：
+
+```python
+import logging
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+    api_key=None,
+    timeout=30.0,
+    max_retries=3,
+    cache_ttl=60,
+    log_level=logging.INFO,
+)
+```
+
+Python 支持相同的连接设置，并额外提供：
+
+- `max_retries`：HTTP 客户端的重试次数上限
+- `cache_ttl`：缓存 TTL（秒）
+- `log_level`：标准 Python 日志级别
+
+## 环境变量 {#environment-variables}
+
+SDK 不会自动加载环境变量，但示例中使用了以下名称，作为约定也很实用：
+
+| 变量 | 常见用途 |
+|----------|-------------|
+| `KALEIDO_API_URL` | Maker API 基础 URL |
+| `KALEIDO_NODE_URL` | RGB Lightning Node 地址 |
+| `KALEIDO_API_KEY` | API key |
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: process.env.KALEIDO_API_URL || 'https://api.signet.kaleidoswap.com',
+  nodeUrl: process.env.KALEIDO_NODE_URL,
+  apiKey: process.env.KALEIDO_API_KEY,
+});
+```
+
+```python Python
+import os
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url=os.environ.get("KALEIDO_API_URL", "https://api.signet.kaleidoswap.com"),
+    node_url=os.environ.get("KALEIDO_NODE_URL"),
+    api_key=os.environ.get("KALEIDO_API_KEY"),
+)
+```
+</CodeGroup>
+
+## 可用环境 {#available-environments}
+
+将 API URL 作为 `baseUrl` / `base_url` 传入即可，SDK 会自行拼接 `/api/v1` 路径。在测试网络上无需 API key。
+
+| 环境 | API URL | WebSocket URL | 状态 |
+|-------------|---------|---------------|--------|
+| **signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` | 已上线（默认） |
+| **主网** | `https://api.kaleidoswap.com` | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` | 即将上线 |
+
+装好依赖包之后，请继续阅读[快速上手](/cn/sdk/getting-started)，创建客户端并获取第一笔报价。

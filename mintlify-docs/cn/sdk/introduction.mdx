@@ -1,0 +1,45 @@
+---
+title: "KaleidoSDK"
+sidebarTitle: "总览"
+description: "使用 KaleidoSDK 构建比特币钱包与交易应用。提供 TypeScript 与 Python 客户端，支持跨比特币分层协议的非托管原子交换，类型安全、接口一致。"
+---
+
+KaleidoSDK（`kaleido-sdk`）让钱包开发者能够集成跨比特币、Lightning 和 RGB 的非托管原子交换。它是 [KaleidoSwap 非托管 DEX](https://kaleidoswap.com) 的底层实现，并提供 TypeScript 与 Python 两个版本。
+
+## 架构
+
+两个 SDK 采用相同的 API 设计，各自独立构建：
+
+![KaleidoSDK 架构图：应用通过 KaleidoClient 连接 MakerClient 与 RlnClient 两个子客户端，底层由 HTTP 与 WebSocket 传输层支撑](/assets/images/overview/sdk-architecture.png)
+
+你的应用通过 `KaleidoClient` 接入，它提供两个子客户端：**MakerClient** 负责市场操作（报价、原子交换、LSPS1 通道订单），**RlnClient** 负责 RGB Lightning Node 操作（钱包、通道、发票）。两者内部都使用 HTTP 客户端，并可选择使用 WebSocket 进行实时推送。
+
+## 两套 API 界面
+
+**Maker API**（`client.maker`）
+
+接入 KaleidoSwap 的做市方 API，用于：
+- 获取资产交易对的报价
+- 初始化并执行 HTLC 原子交换
+- 通过 WebSocket 订阅实时报价
+- LSPS1 通道订购
+
+**RLN（RGB Lightning Node）操作**（`client.rln`）
+
+直接与 RGB Lightning Node 交互，用于：
+- 钱包管理与 RGB 资产操作
+- 闪电通道管理
+- 发票创建与支付
+- 节点间交换协调
+
+想了解 KaleidoSwap 作为协议的整体设计，请参阅 [KaleidoSwap 是什么](/cn/whats-kaleidoswap/introduction)。
+
+## 主要特性
+
+- **子客户端架构**：通过 `client.maker` 和 `client.rln` 分类访问 API
+- **类型安全**：类型由 OpenAPI 规范自动生成 —— 完整的 TypeScript 类型和 Python Pydantic 模型
+- **一致的 API**：TypeScript 与 Python 结构完全相同
+- **WebSocket 支持**：实时报价推送，并支持自动重连
+- **错误处理**：两个 SDK 都提供完整的异常层次结构
+- **RGB 资产交易**：完整支持在 Lightning 和链上交易 RGB 资产
+- **原子交换**：基于 HTLC 的交换，无需信任做市方

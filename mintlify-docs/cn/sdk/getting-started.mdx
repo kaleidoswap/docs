@@ -1,0 +1,136 @@
+---
+title: "KaleidoSDK：快速上手"
+sidebarTitle: "快速上手"
+description: "在 TypeScript 或 Python 中创建第一个 KaleidoSDK 客户端，访问 maker 与节点两个子客户端，用几行代码获取一笔交换报价。"
+---
+
+这是从「装好依赖包」到「拿到第一笔报价」的完整路径。如果你还没有安装 SDK，请先看[安装](/cn/sdk/installation)。
+
+## 基础设置 {#basic-setup}
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+const assets = await client.maker.listAssets();
+console.log(`Found ${assets.assets.length} assets`);
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+assets = await client.maker.list_assets()
+print(f"Found {len(assets.assets)} assets")
+```
+</CodeGroup>
+
+<Note>
+`KaleidoClient.create()` 在两个 SDK 中都是同步方法。创建客户端时不要使用 `await`。
+</Note>
+
+`create()` 能接收的全部字段列在[配置](/cn/sdk/installation#configuration)中。
+
+## 子客户端架构 {#sub-client-architecture}
+
+<CodeGroup>
+```typescript TypeScript
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+
+const pairs = await client.maker.listPairs();
+
+if (client.hasNode()) {
+  const nodeInfo = await client.rln.getNodeInfo();
+  const channels = await client.rln.listChannels();
+}
+```
+
+```python Python
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+)
+
+pairs = await client.maker.list_pairs()
+
+if client.has_node():
+    node_info = await client.rln.get_node_info()
+    channels = await client.rln.list_channels()
+```
+</CodeGroup>
+
+## 节点配置检查 {#node-configuration-checks}
+
+TypeScript 提供 `client.hasNode()`，并且始终返回一个 `rln` 客户端实例。Python 提供 `client.has_node()`，如果缺少 `node_url`，访问 `client.rln` 会抛出 `NodeNotConfiguredError`。
+
+<CodeGroup>
+```typescript TypeScript
+if (!client.hasNode()) {
+  console.log('Node URL not configured; only maker operations are available');
+} else {
+  const nodeInfo = await client.rln.getNodeInfo();
+  console.log(nodeInfo.pubkey);
+}
+```
+
+```python Python
+if not client.has_node():
+    print("Node URL not configured; only maker operations are available")
+else:
+    node_info = await client.rln.get_node_info()
+    print(node_info.pubkey)
+```
+</CodeGroup>
+
+## 第一笔报价 {#first-quote}
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
+
+const client = KaleidoClient.create();
+
+const quote = await client.maker.getQuote({
+  from_asset: {
+    asset_id: 'BTC',
+    layer: Layer.BTC_LN,
+    amount: 100000,
+  },
+  to_asset: {
+    asset_id: 'USDT',
+    layer: Layer.RGB_LN,
+  },
+});
+
+console.log(quote.rfq_id);
+console.log(quote.price);
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
+
+client = KaleidoClient.create()
+
+quote = await client.maker.get_quote(
+    PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+    )
+)
+
+print(quote.rfq_id)
+print(quote.price)
+```
+</CodeGroup>
+
+报价确认无误之后，[如何交换](/cn/sdk/how-to-swap)会完整走一遍原子交换流程。

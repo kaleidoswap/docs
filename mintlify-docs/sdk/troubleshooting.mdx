@@ -1,7 +1,7 @@
 ---
 title: "KaleidoSDK Troubleshooting"
 sidebarTitle: "Troubleshooting"
-description: "Diagnose common KaleidoSDK issues such as connection failures, version mismatches, and swap errors, with step-by-step solutions"
+description: "Diagnose common KaleidoSDK issues such as connection failures, version mismatches, and swap errors, with step-by-step solutions plus the full error hierarchy and retry patterns"
 ---
 
 ## Installation Issues
@@ -27,11 +27,13 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     4. Try: `pip install kaleido-sdk --no-cache-dir`
   </Accordion>
 
-  <Accordion title="Module not found after installation" icon="magnifying-glass">
-    **Symptoms:** `Cannot find module 'kaleido-sdk'` or `ModuleNotFoundError`
+  <Accordion title="Module not found, or ERR_REQUIRE_ESM" icon="magnifying-glass">
+    **Symptoms:** `Cannot find module 'kaleido-sdk'`, `ERR_REQUIRE_ESM`, import syntax errors, or `ModuleNotFoundError`
+
+    **Cause (TypeScript):** The SDK is ESM-only, and the legacy `"moduleResolution": "node"` setting ignores the package's `exports` field.
 
     **Solutions:**
-    - **TypeScript:** The SDK is ESM-only, so `tsconfig.json` needs `"moduleResolution": "bundler"`, `"node16"`, or `"nodenext"`. The legacy `"node"` setting ignores the package's `exports` field and will not resolve it
+    - **TypeScript:** set `"moduleResolution"` to `"bundler"`, `"node16"`, or `"nodenext"` in `tsconfig.json`, and make the consuming project ESM — `"type": "module"` in `package.json`, or the `.mts` file extension. If you must stay on CommonJS, use a dynamic import: `const sdk = await import('kaleido-sdk')`
     - **Python:** Verify you are in the correct virtual environment
     - Verify the package is installed: `npm list kaleido-sdk` or `pip show kaleido-sdk`
   </Accordion>
@@ -114,7 +116,7 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     **Solutions:**
     1. Check that `apiKey` / `api_key` is set correctly
     2. Verify the key is valid and not expired
-    3. Some endpoints may not require an API key -- check the [API Reference](/sdk/api-reference)
+    3. Some endpoints may not require an API key — check the [API Reference](/sdk/api-reference)
   </Accordion>
 
   <Accordion title="TimeoutError" icon="clock">
@@ -128,7 +130,7 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     **Solutions:**
     1. Increase the timeout: `timeout: 60` (seconds)
     2. Check network connectivity
-    3. Implement retry logic using `error.isRetryable()` — see [Error Handling](/sdk/error-handling#retry-patterns)
+    3. Implement retry logic using `error.isRetryable()` — see [Retry Patterns](#retry-patterns)
   </Accordion>
 
   <Accordion title="RateLimitError: 429 Too Many Requests" icon="gauge-high">
@@ -246,10 +248,10 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
   </Accordion>
 </AccordionGroup>
 
-## TypeScript-Specific Issues
+## Language-Specific Issues
 
 <AccordionGroup>
-  <Accordion title="Type errors with OpenAPI types" icon="code">
+  <Accordion title="Type errors with OpenAPI types (TypeScript)" icon="code">
     **Symptoms:** TypeScript compiler errors about incompatible types
 
     **Solutions:**
@@ -261,30 +263,16 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
     3. If using strict mode, you may need to handle `undefined` explicitly
   </Accordion>
 
-  <Accordion title="ESM / CommonJS issues" icon="file-code">
-    **Symptoms:** `ERR_REQUIRE_ESM` or import syntax errors
-
-    **Solutions:**
-    1. The SDK is ESM-only. Ensure your project uses ESM:
-       - `"type": "module"` in `package.json`
-       - Or use `.mts` file extension
-    2. If you must use CommonJS, use dynamic import: `const sdk = await import('kaleido-sdk')`
-  </Accordion>
-</AccordionGroup>
-
-## Python-Specific Issues
-
-<AccordionGroup>
-  <Accordion title="Pydantic validation errors" icon="circle-exclamation">
+  <Accordion title="Pydantic validation errors (Python)" icon="circle-exclamation">
     **Symptoms:** `ValidationError` from Pydantic when parsing API responses
 
     **Solutions:**
     1. Ensure `pydantic>=2.0` is installed
     2. Check that you are using the correct request format
-    3. The API may have been updated -- try updating the SDK: `pip install --upgrade kaleido-sdk`
+    3. The API may have been updated — try updating the SDK: `pip install --upgrade kaleido-sdk`
   </Accordion>
 
-  <Accordion title="httpx connection errors" icon="network-wired">
+  <Accordion title="httpx connection errors (Python)" icon="network-wired">
     **Symptoms:** `httpx.ConnectError` or similar
 
     **Solutions:**
@@ -294,94 +282,232 @@ description: "Diagnose common KaleidoSDK issues such as connection failures, ver
   </Accordion>
 </AccordionGroup>
 
-## Debugging
+## Error Reference
 
-### Enable Verbose Logging
+Both SDKs share a nearly identical error class hierarchy. All errors extend from `KaleidoError`, so a single `catch` on it never lets an SDK failure escape unhandled:
+
+```
+KaleidoError (base)
+├── APIError (HTTP 400-599)
+│   └── RateLimitError (HTTP 429, TypeScript only)
+├── RateLimitError (HTTP 429, Python — extends KaleidoError directly)
+├── NetworkError (connectivity issues)
+├── ValidationError (HTTP 400, 422)
+├── TimeoutError (HTTP 408, 504)
+├── WebSocketError (WebSocket issues)
+├── NotFoundError (HTTP 404)
+├── ConfigError (configuration issues)
+├── SwapError (swap operation failures)
+├── NodeNotConfiguredError (node not set up)
+├── QuoteExpiredError (quote expired)
+└── InsufficientBalanceError (not enough funds)
+```
+
+Two divergences between the SDKs are worth knowing before you write a handler:
+
+- **`RateLimitError`** extends `APIError` in TypeScript but `KaleidoError` directly in Python — a Python `except APIError` handler will **not** catch rate-limit errors.
+- **A missing node URL** raises `NodeNotConfiguredError` in Python, but `ConfigError` ("Node API not configured. Provide \"nodeUrl\" when creating the client.") in TypeScript.
+
+### KaleidoError Properties
+
+Every error carries these, whichever class it is:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `code` | `string` | Error code for programmatic handling |
+| `message` | `string` | Human-readable error message |
+| `statusCode` / `status_code` | `number?` | HTTP status code (if applicable) |
+| `details` | `string?` | Additional error details |
+| `isRetryable()` / `is_retryable()` | `boolean` | Whether the error is safe to retry |
+
+### Error Classes
+
+| Class | Raised when | Additional properties |
+|-------|-------------|-----------------------|
+| `APIError` | HTTP 400-599 | TypeScript: `details`. Python: `response_body` |
+| `RateLimitError` | HTTP 429 | `retryAfter` / `retry_after` — seconds to wait |
+| `NetworkError` | DNS failure, connection refused, and other connectivity faults | — |
+| `ValidationError` | HTTP 400, 422 — includes parsed FastAPI validation detail | — |
+| `TimeoutError` | HTTP 408, 504 | — |
+| `WebSocketError` | WebSocket connection or communication failure | — |
+| `NotFoundError` | HTTP 404 | — |
+| `ConfigError` | Invalid SDK configuration, such as a malformed URL. In TypeScript, also a `client.rln.*` call made without `nodeUrl` | — |
+| `SwapError` | A swap operation failed | `swapId` / `swap_id` |
+| `NodeNotConfiguredError` | Python only — a `client.rln.*` call made without `node_url` | — |
+| `QuoteExpiredError` | An `rfq_id` is used after its `expires_at` | — |
+| `InsufficientBalanceError` | The balance cannot cover the operation | `requiredAmount` / `required_amount`, `availableAmount` / `available_amount`, `asset` |
+
+Which of these are safe to retry is decided per status, not per class — see [HTTP Error Mapping](#http-error-mapping) below.
+
+### HTTP Error Mapping
+
+The SDK automatically maps HTTP errors to typed exceptions using `mapHttpError` / `map_http_error`:
+
+| HTTP Status | Error Class | Retryable |
+|------------|-------------|-----------|
+| 400, 422 | `ValidationError` | No — the request itself is wrong |
+| 404 | `NotFoundError` | No |
+| 408, 504 | `TimeoutError` | Yes, always |
+| 429 | `RateLimitError` | TypeScript: yes, after `retryAfter`. Python: `is_retryable()` returns `False` — back off using `retry_after` yourself |
+| 500, 502, 503 | `APIError` | Yes — a server-side fault may clear |
+| Other 4xx | `APIError` | No |
+| Network failure | `NetworkError` | Yes, always |
+
+Rather than hardcoding this table in your own retry logic, call `isRetryable()` / `is_retryable()` — it encodes exactly these rules and stays correct as the mapping evolves.
+
+### Comprehensive Error Handling
+
+Branch from the most specific class to the most general, and end on `KaleidoError` so nothing escapes. Subclasses must be tested before their parents — in TypeScript `RateLimitError` is an `APIError`, so an `APIError` branch placed first would swallow it.
 
 <CodeGroup>
 ```typescript TypeScript
-// Use Node.js debugging
-// Set environment variable: NODE_DEBUG=http
-// Or inspect network with browser DevTools
-```
+import { KaleidoError, RateLimitError, QuoteExpiredError } from 'kaleido-sdk';
 
-```python Python
-import logging
-
-# Enable debug logging for httpx
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger("httpx").setLevel(logging.DEBUG)
-logging.getLogger("websockets").setLevel(logging.DEBUG)
-```
-</CodeGroup>
-
-### Validate Configuration
-
-<CodeGroup>
-```typescript TypeScript
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',
-});
-
-console.log(`Has node: ${client.hasNode()}`);
-
-// Test connectivity
 try {
-  const assets = await client.maker.listAssets();
-  console.log(`API connected: ${assets.assets.length} assets`);
+  const quote = await client.maker.getQuote({ /* ... */ });
+  const swap = await client.maker.initSwap({ /* ... */ });
 } catch (error) {
-  console.error('API connection failed:', error);
-}
-
-if (client.hasNode()) {
-  try {
-    const nodeInfo = await client.rln.getNodeInfo();
-    console.log(`Node connected: ${nodeInfo.pubkey}`);
-  } catch (error) {
-    console.error('Node connection failed:', error);
+  if (error instanceof QuoteExpiredError) {
+    // Get a fresh quote and retry
+  } else if (error instanceof RateLimitError) {
+    await new Promise(r => setTimeout(r, (error.retryAfter ?? 5) * 1000));
+  } else if (error instanceof KaleidoError && error.isRetryable()) {
+    // Back off and retry — see Retry Patterns below
+  } else if (error instanceof KaleidoError) {
+    console.error(`SDK error [${error.code}]: ${error.message}`);
   }
 }
 ```
 
 ```python Python
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",
+import asyncio
+
+from kaleido_sdk import (
+    KaleidoError,
+    PairQuoteRequest,
+    QuoteExpiredError,
+    RateLimitError,
+    SwapRequest,
 )
 
-print(f"Has node: {client.has_node()}")
-
 try:
-    assets = await client.maker.list_assets()
-    print(f"API connected: {len(assets.assets)} assets")
-except Exception as e:
-    print(f"API connection failed: {e}")
-
-if client.has_node():
-    try:
-        node_info = await client.rln.get_node_info()
-        print(f"Node connected: {node_info.pubkey}")
-    except Exception as e:
-        print(f"Node connection failed: {e}")
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+    swap = await client.maker.init_swap(SwapRequest(...))
+except QuoteExpiredError:
+    # Get a fresh quote and retry
+    pass
+except RateLimitError as e:
+    await asyncio.sleep(e.retry_after or 5)
+except KaleidoError as e:
+    if e.is_retryable():
+        # Back off and retry — see Retry Patterns below
+        pass
+    else:
+        print(f"SDK error [{e.code}]: {e}")
 ```
 </CodeGroup>
 
+Add a branch for a specific class only where your handling genuinely differs — `InsufficientBalanceError` to show the shortfall, `ValidationError` to point at the offending field. Everything else is already covered by the `isRetryable()` check and the base case.
+
+### Retry Patterns
+
+Use `isRetryable()` to implement automatic retries:
+
+<CodeGroup>
+```typescript TypeScript
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof KaleidoError && error.isRetryable() && attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+const pairs = await withRetry(() => client.maker.listPairs());
+```
+
+```python Python
+import asyncio
+
+async def with_retry(fn, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return await fn()
+        except KaleidoError as e:
+            if e.is_retryable() and attempt < max_retries - 1:
+                delay = 2 ** attempt
+                await asyncio.sleep(delay)
+                continue
+            raise
+    raise RuntimeError("Max retries exceeded")
+
+pairs = await with_retry(lambda: client.maker.list_pairs())
+```
+</CodeGroup>
+
+## Debugging
+
+### Enable Verbose Logging
+
+Python exposes the underlying `httpx` and `websockets` loggers:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("websockets").setLevel(logging.DEBUG)
+```
+
+TypeScript has no equivalent switch for the transport. Pass a lower `logLevel` when creating the client for the SDK's own output — see [Configuration](/sdk/installation#configuration) — and inspect the wire with `NODE_DEBUG=http`, or the network panel in your browser's DevTools.
+
+### Validate Configuration
+
+When calls fail before you can pin down a specific error, check these four things in order:
+
+<Steps>
+  <Step title="The API URL resolves">
+    Open `<baseUrl>/api/v1/market/assets` in a browser. The SDK appends `/api/v1` itself, so the config value must not already include it.
+  </Step>
+
+  <Step title="The client sees a node">
+    `client.hasNode()` / `client.has_node()` returns `false` whenever `nodeUrl` / `node_url` was omitted, and every `client.rln.*` call will fail on that alone.
+  </Step>
+
+  <Step title="The node answers">
+    `client.rln.getNodeInfo()` / `get_node_info()` returning a pubkey proves the node is both reachable and unlocked.
+  </Step>
+
+  <Step title="Both point at the same network">
+    A Signet `baseUrl` paired with a mainnet node yields confusing empty results rather than a clean error.
+  </Step>
+</Steps>
+
 ## Get Help
 
-Check the [FAQ](/sdk/faq) for questions rather than errors. For anything else, report a problem through your preferred channel from the options below, including:
+Check the [FAQ](/sdk/faq) for questions rather than errors, and [Additional Resources](/sdk/additional-resources) for upstream documentation and links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
 
 1. SDK version (`getVersion()` / `get_version()`)
 2. Language and runtime version (Node.js / Python)
 3. Error message and stack trace
 4. Minimal code to reproduce
-5. Environment (Regtest / Signet / Mainnet)
+5. Environment (Signet / Mainnet)
 
 <CardGroup cols={3}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
   </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
     Report a bug on the relevant repository.
   </Card>
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">

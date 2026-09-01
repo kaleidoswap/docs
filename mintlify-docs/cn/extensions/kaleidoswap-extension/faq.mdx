@@ -1,0 +1,107 @@
+---
+title: "KaleidoSwap 扩展常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoSwap 扩展的常见问题：浏览器支持、多协议账户、可用资产、备份与恢复、密码，以及 DApp 连接方式。"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="KaleidoSwap 扩展支持哪些浏览器？">
+    首个封闭测试面向基于 Chromium 的浏览器，例如 Google Chrome、Brave、Microsoft Edge 和 Opera，通过开发者模式加载私有测试版 zip 包安装。如果提供了 Firefox 构建，Firefox 支持会另行测试。Safari 暂不支持。
+  </Accordion>
+
+  <Accordion title="在哪里获取封闭测试版构建？">
+    受邀测试者会收到 KaleidoSwap 团队提供的专属下载链接，形式为 `https://kaleidoswap.com/dl?t=...`，该链接始终指向最新的测试版构建。扩展尚未上架浏览器商店，源码仓库也尚未公开，因此封闭测试者只应安装自己专属下载链接提供的 zip 包。
+  </Accordion>
+
+  <Accordion title="我需要自己的节点吗？">
+    **不需要。** Spark、Arkade、Liquid 和无节点 RGB-L1 账户全部由 KaleidoSwap 扩展的助记词派生，无需任何节点即可运行——包括 Bitcoin L1 上的 RGB 资产，它们完全通过 WebAssembly 在扩展内运行。
+
+    只有当你想使用 RGB **闪电通道**和基于做市方的 RGB 交换时，才需要 RGB Lightning Node（RLN）。要使用 RLN 功能，你可以连接：
+    - **本地节点**：使用 [KaleidoSwap 桌面应用](/cn/desktop-app/wallet/creating-wallet)，或在本机运行 [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node)。
+    - **远程节点**：通过 URL 或 **Nostr Wallet Connect** 访问。
+
+    请注意，无节点 RGB-L1 账户和 RLN 账户是 RGB 资产的两种互斥后端。
+  </Accordion>
+
+  <Accordion title="KaleidoSwap 扩展是托管的吗？">
+    **不是。** KaleidoSwap 扩展把钱包助记词加密后保存在本地，并由它派生各协议账户。若选择使用 RLN，扩展会连接到你自行配置的节点。
+  </Accordion>
+
+  <Accordion title="使用基础钱包功能需要交易场所吗？">
+    **不需要。** 交易场所是可选的。没有交易场所时：
+    - 发送、接收和余额功能正常可用
+    - 只有**交换**功能不可用
+  </Accordion>
+
+  <Accordion title="KaleidoSwap 扩展支持哪些资产？">
+    KaleidoSwap 扩展支持：
+    - **BTC**，覆盖 Spark、Arkade、Liquid（L-BTC）、Bitcoin L1，以及已连接时的 RLN Lightning
+    - Spark 账户上可用时的 **Spark 原生资产**
+    - Arkade 账户上可用时的 **Arkade 原生资产**
+    - Liquid 账户上的 **Liquid 资产**，例如 USDt
+    - Bitcoin L1 上的 **RGB 资产**，通过无节点 RGB-L1 账户，或在连接 RGB Lightning Node 时通过 Lightning
+  </Accordion>
+
+  <Accordion title="如何备份钱包？">
+    进入**设置 > 备份钱包**（Settings > Backup Wallet），重新输入密码后即可显示并复制助记词。同一界面也提供无节点账户的 RGB 备份指引。
+
+    请分别离线保存以下内容：
+    - 用于 Spark、Arkade、Liquid、RGB-L1 和派生 Nostr 身份的 **KaleidoSwap 扩展助记词**
+    - 如果你使用 RGB Lightning Node，还需保存较新的 **RGB 节点备份文件**
+    - 如果节点由你另行管理，还需保存 **RLN 节点助记词或节点备份材料**
+
+    无节点 **RGB-L1 账户会自动备份**：在发送、接收和 UTXO 变化等钱包活动之后，它会备份到加密云端（VSS）。你也可以在备份界面手动导出本地加密备份文件。重新导入钱包时，初始设置流程会询问是否从云端备份恢复——只有在你明确同意后才会执行恢复。
+  </Accordion>
+
+  <Accordion title="忘记密码怎么办？">
+    KaleidoSwap 扩展无法帮你找回密码。如果忘记了密码，你需要：
+    1. 卸载并重新安装扩展
+    2. 导入助记词
+    3. 设置新密码
+    4. 重新连接 RGB Lightning Node 等可选服务
+
+    Spark、Arkade、Liquid 和派生的 Nostr 身份都可以从助记词恢复，无节点 RGB-L1 的状态可以在初始设置流程中从云端（VSS）备份恢复。RGB Lightning Node 的状态必须用该节点自己的备份材料恢复。
+  </Accordion>
+
+  <Accordion title="可以同时连接多个节点吗？">
+    KaleidoSwap 扩展管理 Spark、Arkade、Liquid、RGB-L1 以及可选的 RLN 账户。对于 RLN，同一时间只能连接一个节点接口端点（直连 URL 或 NWC）。
+  </Accordion>
+
+  <Accordion title="自动锁定是怎么工作的？">
+    KaleidoSwap 扩展在一段时间无操作后会自动锁定（默认 10 分钟）。锁定后需要输入密码才能解锁。超时时间可在**设置 > 安全**（Settings > Security）中配置。
+  </Accordion>
+
+  <Accordion title="KaleidoSwap 扩展可以配合 DApp 使用吗？">
+    **可以。** 受信任的 DApp 可以通过 KaleidoSwap 扩展的浏览器提供方请求钱包操作。批准之前请逐一核对每个连接、支付、资产或签名请求。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请查看[故障排查](/cn/extensions/kaleidoswap-extension/troubleshooting)；上游文档与相关链接见[更多资源](/cn/extensions/kaleidoswap-extension/additional-resources)。
+
+其他情况请从下面的渠道中选择一个反馈问题，并附上：
+
+1. 浏览器名称和版本
+2. KaleidoSwap 扩展版本（Settings > About）
+3. 节点类型和版本
+4. 复现步骤
+5. 错误信息或截图
+6. 控制台日志（右键点击扩展弹出窗口 > Inspect > Console）
+
+<CardGroup cols={2}>
+  <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
+    向社群提问。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

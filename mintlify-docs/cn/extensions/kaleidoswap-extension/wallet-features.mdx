@@ -1,0 +1,257 @@
+---
+title: "钱包"
+sidebarTitle: "钱包"
+description: "在 KaleidoSwap 扩展中管理多协议账户、资产、存入、提取和交易记录——一个跑在浏览器里的完整比特币分层钱包，覆盖 Spark、Arkade、Liquid 和 RGB。"
+---
+
+## 账户
+
+KaleidoSwap 扩展从同一组助记词派生多个协议账户：
+
+| 账户 | 持有内容 | 说明 |
+|---------|---------------|-------|
+| **Spark** | Spark BTC、Spark 原生资产、Lightning 收发 | 同时支撑 Flashnet 交换和跨链桥 |
+| **Arkade** | Arkade BTC 和 Arkade 原生资产 | 进出通道（boarding/offboarding）和 VTXO 生命周期；可选轮换地址（HD）模式 |
+| **Liquid** | L-BTC 以及 USDt 等 Liquid 资产 | 无节点、自主保管；默认主网 |
+| **RGB-L1** | Bitcoin L1 上的 RGB 资产和 BTC | 无节点，运行于 WebAssembly；默认主网 |
+| **RGB Lightning（RLN）** | 通过闪电通道流转的 RGB 资产 | 可选、实验性；连接后会替换 RGB-L1 后端 |
+
+## 资产管理
+
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 查看余额
+
+KaleidoSwap 仪表盘会显示你的全部资产：
+
+- **BTC 余额**，覆盖 Spark、Arkade、Liquid、Bitcoin L1，以及已连接时的 RLN Lightning
+- 来自 Spark 账户的 **Spark 资产**
+- 来自 Arkade 账户的 **Arkade 资产**
+- 来自 Liquid 账户的 **Liquid 资产**
+- 来自无节点 RGB-L1 账户、或已连接时来自 RLN 的 **RGB 资产**
+- **协议和网络筛选器**，用于聚焦单一后端或某个网络分片
+
+不同后端中代码相同的资产会合并为仪表盘上的同一行，展开后可查看各网络的余额明细。
+
+### 隐藏资产
+
+在资产管理视图中，你可以隐藏不想显示在仪表盘上的资产。隐藏的资产余额不受影响，只是从列表中移除，直到你取消隐藏。
+
+### 资产详情
+
+点击任意资产可查看详情：
+
+| 字段 | 说明 |
+|-------|-------------|
+| **代码**（Ticker） | 资产简称（例如 USDT） |
+| **名称**（Name） | 资产全称 |
+| **精度**（Precision） | 小数位数 |
+| **账户**（Account） | 持有该资产的协议账户 |
+| **可用余额**（Spendable Balance） | 所选路由可动用的金额 |
+| **网络标签**（Network Badges） | 该资产可用的位置，例如 Spark、Arkade、Liquid、RGB-L1 或 RGB-LN |
+
+<img src="/assets/images/extension/19-asset-detail.png" alt="RGB 资产的详情页，显示资产 ID、代码、精度、账户、协议、分层，以及链上与 Lightning 余额对比" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 发送支付
+
+KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自动识别支付类型。
+
+### 支持的目标格式
+
+| 格式 | 识别为 | 示例 |
+|--------|------------|---------|
+| **BOLT11 发票** | Lightning 支付 | `lnbc1...` |
+| **Lightning Address** | Lightning 支付 | `name@example.com` |
+| **LNURL-pay** | Lightning 支付 | `lnurl1...` |
+| **RGB 发票** | RGB 资产转移 | `rgb:...` |
+| **比特币地址** | 链上支付 | `bc1q...`、`3...`、`1...` |
+| **Liquid 地址／URI** | Liquid 转移 | `lq1...`、`liquidnetwork:...` |
+| **Spark 地址** | Spark 转移 | Spark 地址字符串 |
+| **Arkade 路由** | Arkade 转移或离场路由 | 兼容 Arkade 的目标 |
+
+### 发送流程
+
+<Steps>
+  <Step title="输入目标">
+    粘贴或输入目标地址、发票或公钥。KaleidoSwap 扩展会自动识别支付类型。
+  </Step>
+
+  <Step title="输入金额">
+    对于地址和 keysend，请输入以聪或 BTC 计的金额。对于发票，金额会从发票中自动填入。**最大**（Max）会填入可用余额，并在链上发送时预留网络费用，确保交易能够真正广播。
+  </Step>
+
+  <Step title="核对">
+    核对支付详情：
+    - 目标
+    - 金额
+    - 所选路由／账户
+    - 可用时显示的费用或路由提示
+  </Step>
+
+  <Step title="确认">
+    点击**发送**（Send）执行支付。状态页面会显示结果。
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示以聪计的金额、费率选项，以及在 Spark 和 Arkade 之间的建议路由" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 接收支付
+
+根据所选资产和已连接的账户，生成发票和地址以接收 Spark、Arkade、Liquid、Bitcoin L1、Lightning 和 RGB 上支持的资产。
+
+<img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap 存入流程" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 接收标签页
+
+可用的接收方式取决于所选资产和已连接的账户：
+
+| 路由 | 生成内容 |
+|-------|-------------------|
+| **Spark** | Spark 地址或 Spark Lightning 发票 |
+| **Arkade** | Arkade 地址、入场地址或兼容的接收路由 |
+| **Liquid** | 用于 L-BTC 或已发行资产的 Liquid 地址 |
+| **Bitcoin L1** | 用于链上接收的比特币地址 |
+| **Lightning** | 所选账户支持时生成 BOLT11 发票 |
+| **RGB** | 盲化 RGB 发票（无节点），或 RLN 已连接时的 RGB 闪电发票 |
+
+### 接收流程
+
+<Steps>
+  <Step title="选择资产">
+    选择 BTC 或其他受支持的资产。
+  </Step>
+
+  <Step title="选择路由">
+    选择一个可用的账户路由，例如 Spark、Arkade、Liquid、Bitcoin L1、Lightning 或 RGB。
+  </Step>
+
+  <Step title="生成">
+    创建发票或地址。界面会同时显示二维码和文本内容。
+  </Step>
+
+  <Step title="分享">
+    - **复制**（Copy）发票／地址到剪贴板
+    - **显示二维码**（Show QR）供付款方扫描
+    - 过期的闪电发票会被**标记**出来，并可重新生成
+  </Step>
+</Steps>
+
+<img src="/assets/images/extension/15-receive-generated.png" alt="接收 BTC 的界面，包含二维码、RLN、Spark、Arkade 和 Liquid 的目标账户标签页，以及生成的 Arkade 地址和链上入场地址" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 存入与提取
+
+### 存入
+
+把 BTC 或受支持的资产存入所选账户：
+
+1. 在仪表盘上点击**存入**（Deposit）
+2. 选择资产和路由
+3. 生成地址或发票
+4. 从外部钱包或服务发送资金
+
+### 提取
+
+提取是从所选账户发送到已识别的目标：
+
+1. 在仪表盘上点击**提取**（Withdraw）
+2. 粘贴比特币地址、闪电发票、Lightning Address、LNURL、RGB 发票、Liquid 地址或 `liquidnetwork:` URI、Spark 地址，或 Arkade 目标
+3. 输入金额
+4. 核对建议路由并确认
+
+<img src="/assets/images/extension/16-withdraw-form.png" alt="提取界面，列出它接受的全部目标格式：Lightning、Bitcoin、Spark、Liquid、Arkade、RGB，以及跨链 USDC 或 USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+从 Spark 提取到外部链（EVM 网络、Solana 等）的方式，请参见[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
+
+## 交易记录
+
+在**记录**（Activity）标签页中查看你的全部交易：
+
+### 交易列表
+
+- 列出所有已连接账户的近期交易；各数据源并发加载并渐进渲染
+- 每条记录显示：类型、金额、状态、承载网络和时间戳
+- 可按交易类型或状态筛选
+
+<img src="/assets/images/extension/17-activity-list.png" alt="记录标签页列出已接收的交易及其金额和时间戳，可按全部、链上或 Lightning 筛选" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 交易详情
+
+点击任意交易可查看：
+- 完整交易详情
+- 交易 ID
+- 金额和费用
+- 承载网络和状态
+- 时间戳
+
+<img src="/assets/images/extension/18-transaction-detail.png" alt="展开后的交易详情，显示支付哈希、日期、承载网络和已完成状态" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+## 设置
+
+通过齿轮图标或底部导航进入设置。
+
+<img src="/assets/images/extension/11-settings.png" alt="KaleidoSwap 设置界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 账户
+
+- **Spark** - 网络选择、SDK 详情和连接状态
+- **Arkade** - 网络选择、VTXO 设置、入场流程、生命周期设置，以及可选的轮换地址（HD）模式（支持通过 gap scan 恢复）
+- **Liquid** - 网络选择以及 Esplora/waterfalls 同步接口端点（已提供一个高速默认端点，你也可以填入自己的）
+- **RGB-L1** - 网络选择，以及无节点账户使用的 Esplora 索引器和 RGB proxy 接口端点
+- **RGB & Lightning** - 可选的 RLN 账户（直连 URL 或 NWC），可在实验性设置中启用
+
+<img src="/assets/images/extension/22-settings-accounts.png" alt="设置中的账户部分，Spark、Arkade、RGB 和 Liquid 均显示为已连接状态" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### KaleidoSwap 用户名
+
+你可以在设置中申领一个 **Lightning Address 用户名**（`yourname@kaleidoswap.me`）。输入时会实时检查可用性，申领后它会关联到你的钱包以接收闪电支付，并在你恢复钱包时自动重新关联。
+
+<img src="/assets/images/extension/20-handle-claim.png" alt="申领地址界面，包含名称输入框、kaleidoswap.me 后缀和实时可用性检查" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### Nostr
+
+- **Nostr 账户**（Nostr Account） - 查看公钥（npub）、在可用时查看／导出会话私钥，以及重新派生或导入身份
+- **已连接应用**（Connected Apps） - 查看连接到钱包的每个网站和应用，并可逐项撤销权限
+- **Nostr Connect（NIP-46）** - 生成 `bunker://` 连接字符串，让外部 Nostr 应用远程请求签名
+- **Nostr Wallet Connect** - 通过二维码以 NWC 方式配对外部应用，并设置带金额上限的预算
+
+<Warning>
+切勿分享你的 Nostr 私钥（nsec）。任何拿到这个密钥的人都能签名事件并以你的身份行事。
+</Warning>
+
+### 安全
+
+- **修改密码**（Change Password） - 更新钱包密码
+- **Passkey 登录**（Passkey Login） - 注册或移除用于解锁钱包的 passkey（WebAuthn）
+- **自动锁定超时**（Auto-lock Timeout） - 设置无操作超时时间，从 1 分钟到 1 小时，或永不锁定
+- **备份钱包**（Backup Wallet） - 确认密码后显示助记词，并管理 RGB 备份（无节点账户的加密 VSS 云备份和本地备份文件，或 RLN 的 RGB 节点备份归档）
+
+<img src="/assets/images/extension/23-backup-wallet.png" alt="备份钱包界面，解密助记词前要求输入密码，并附带警告和备份覆盖范围的说明" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 应用
+
+显示相关的偏好设置是设置主页面上的内嵌选择器：
+
+| 设置项 | 选项 |
+|---------|---------|
+| **比特币单位**（Bitcoin Unit） | 聪、BTC，或仅 ₿ |
+| **法币**（Fiat Currency） | USD、EUR、GBP、JPY、CHF、CAD、CNY、KRW |
+| **语言**（Language） | 英语、西班牙语、法语、德语、葡萄牙语、日语、意大利语、韩语、中文 |
+
+自动锁定超时时间位于**设置 > 安全**（Settings > Security）下。
+
+### 全标签页视图
+
+钱包通常在浏览器侧边栏（或工具栏弹出窗口）中打开。如果需要更大的操作空间，可使用**设置 > 在完整标签页中打开**（Settings > Open in Full Tab），把钱包作为完整浏览器标签页打开。
+
+<img src="/assets/images/extension/21-full-tab-view.png" alt="钱包以完整浏览器标签页而非侧边栏运行，全宽显示解锁界面" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### 关于
+
+- 扩展版本和构建信息
+- 文档、GitHub 和支持渠道的链接
+
+---
+
+<Card title="申请测试版访问权限" icon="puzzle-piece" href="https://kaleidoswap.com/products/extension/beta">
+  申请加入 KaleidoSwap 扩展的封闭测试。
+</Card>

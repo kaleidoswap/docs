@@ -19,18 +19,18 @@ Before streaming quotes, enable the WebSocket connection:
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client-id');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id');
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client-id")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id")
 ```
 </CodeGroup>
 
 The URL includes a client ID for session tracking. The `enableWebSocket` method returns a `WSClient` instance.
 
 <Note>
-The examples on this page use Signet, which is also the SDK default. Match the WebSocket URL to the environment your `baseUrl` points at. See [Available Environments](/sdk/getting-started#available-environments).
+The examples on this page use Signet, which is also the SDK default. Match the WebSocket URL to the environment your `baseUrl` points at. See [Available Environments](/sdk/installation#available-environments).
 </Note>
 
 ## High-Level API
@@ -170,7 +170,7 @@ For full control, use the `WSClient` directly.
 
 <CodeGroup>
 ```typescript TypeScript
-const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/ws/my-client');
+const ws = client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client');
 
 await ws.connect();
 console.log(`Connected: ${ws.isConnected()}`);
@@ -180,7 +180,7 @@ ws.disconnect();
 ```
 
 ```python Python
-ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/ws/my-client")
+ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client")
 
 await ws.connect()
 print(f"Connected: {ws.is_connected()}")

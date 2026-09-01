@@ -1,0 +1,108 @@
+---
+title: "KaleidoCLI：快速开始"
+sidebarTitle: "快速开始"
+description: '完成 KaleidoCLI 首次运行设置，保存默认的 API 与节点端点，并执行第一批市场与节点命令'
+---
+
+这是从装好 CLI 到跑通第一批命令的路径。如果还没有安装，请先阅读[安装](/cn/cli/installation)。
+
+## 首次运行设置
+
+新用户请从这条命令开始：
+
+```bash
+kaleido setup
+```
+
+不带参数的 `kaleido setup` 以非交互方式运行：它会立即以默认设置创建并启动一个本地 Docker mutinynet 节点，因此 Docker 必须处于运行状态。比特币网络是可选的位置参数（默认为 `mutinynet`）：
+
+```bash
+kaleido setup signetcustom
+kaleido setup mutinynet --env-name taker-1
+```
+
+使用 `--mode` 可以显式选择配置档案：
+
+- `market`：保存用于市场数据和服务端交换流程的 API 设置
+- `local`：配置 API 设置，并可选择创建本地 Docker 节点环境
+
+### 非交互示例
+
+```bash
+# 使用已保存的默认值完成仅市场模式设置
+kaleido setup --mode market --defaults
+
+# 使用默认值创建并启动本地节点环境
+kaleido setup --mode local --create-node --defaults
+```
+
+### 设置标志
+
+| 标志 | 用途 |
+|------|---------|
+| `<network>` (positional) | 本地节点使用的比特币网络，默认为 `mutinynet` |
+| `--mode market\|local` | 选择设置档案 |
+| `--defaults` | 使用已保存的值或默认值，不再弹出提示 |
+| `--api-url` | 保存 KaleidoSwap API 基础 URL |
+| `--node-url` | 直接保存节点 URL |
+| `--create-node` | 在设置过程中创建 Docker 节点环境 |
+| `--spawn-dir` | 设置命名环境的基础目录 |
+| `--env-name` | 为设置过程中创建的环境命名 |
+| `--node-count` | 要创建的节点数量 |
+| `--start` | 环境创建完成后启动它 |
+
+## 配置
+
+CLI 将配置存储在：
+
+```text
+~/.kaleido/config.json
+```
+
+支持的键：
+
+- `api-url`
+- `node-url`
+- `network`
+- `spawn-dir`
+
+命令示例：
+
+```bash
+kaleido config show
+kaleido config set api-url https://api.signet.kaleidoswap.com
+kaleido config set network signet
+kaleido config set spawn-dir ~/.kaleido
+kaleido config path
+```
+
+## 快速上手
+
+### 仅市场模式
+
+```bash
+kaleido setup --mode market --defaults
+kaleido market pairs
+kaleido market quote BTC/USDT --from-amount 0.001
+```
+
+### 本地节点
+
+```bash
+kaleido setup --mode local --create-node --defaults
+kaleido node init
+kaleido node unlock
+kaleido node info
+kaleido wallet address
+```
+
+## 何时覆盖配置
+
+已存储的配置适用于你的默认环境。需要时可以按命令覆盖：
+
+```bash
+kaleido --api-url https://api.signet.kaleidoswap.com market pairs
+kaleido --node-url http://localhost:3002 wallet balance
+```
+
+如果你需要管理多套本地 RLN 节点栈，请继续阅读[节点环境](/cn/cli/node-environments)。

@@ -1,0 +1,219 @@
+---
+title: "AI 工具故障排查"
+sidebarTitle: "故障排查"
+description: "解决 KaleidoSwap AI 工具的常见问题：MCP 连接失败、工具缺失、节点报错、种子配置错误，以及原子交换失败。"
+---
+
+## MCP 连接问题
+
+<AccordionGroup>
+  <Accordion title="服务器没有出现在我的 MCP 客户端里" icon="plug-circle-xmark">
+    **现象**：工具不存在，或宿主把该服务器列为启动失败。
+
+    **解决办法**：
+    1. **先构建。** 单域服务器从 `dist/` 运行，而在 `npm run build` 成功之前该目录并不存在。
+    2. **使用绝对路径。** `args` 必须指向 `dist/index.js` 的完整路径，而不是相对路径。宿主并不是从你的项目目录启动的。
+    3. **重启宿主。** MCP 宿主只在启动时读取配置，已经在运行的客户端不会识别新服务器。
+    4. **检查 JSON。** 多余的逗号或没加引号的键，在多数宿主中会让整份配置静默失效。
+  </Accordion>
+
+  <Accordion title="服务器启动后立刻退出" icon="circle-xmark">
+    **现象**：宿主报告进程在启动时就已终止。
+
+    **原因**：缺少某个必需的环境变量。独立的 `wdk-wallet-spark-mcp` 在没有 `WDK_SPARK_SEED` 时会拒绝启动。`kaleido-mcp` 要宽容一些：没有 `WDK_SEED` 时它仍会启动，记录一条警告，并禁用 Spark 工具。
+
+    **解决办法**：
+    1. 确认种子变量写在宿主配置的 `env` 块中，而不是你的 shell 里（宿主不会继承你的 shell 环境）。
+    2. 确认助记词是合法的 BIP-39 短语，单词之间以单个空格分隔。
+    3. 用同样的环境变量手动运行服务器，直接看报错：
+       ```bash
+       WDK_SPARK_SEED="your twelve word seed phrase" node dist/index.js
+       ```
+  </Accordion>
+
+  <Accordion title="HTTP 模式下返回 401 Unauthorized" icon="ban">
+    **现象**：Streamable HTTP 请求被拒绝。
+
+    **原因**：服务器上设置了 `MCP_AUTH_TOKEN`，因此每个请求都必须携带 bearer token。
+
+    **解决办法**：
+    1. 发送 `Authorization: Bearer <token>`，值与 `MCP_AUTH_TOKEN` 完全一致。
+    2. 如果你本来不想启用鉴权，请取消 `MCP_AUTH_TOKEN` 并重启。仅在回环接口上这样做。
+  </Accordion>
+
+  <Accordion title="部分工具前缀缺失" icon="wrench">
+    **现象**：`spark_*` 工具可用，但 `wdk_*` 或 `kaleidoswap_*` 不可用，或者反过来。
+
+    **原因**：你连接的是某个单域服务器，而不是统一网关。每个单域服务器只暴露它自己那一块。
+
+    **解决办法**：
+    1. 使用 `kaleido-mcp`，一条连接拿到全部前缀。
+    2. 或者把每个单域服务器分别加入宿主配置。
+  </Accordion>
+</AccordionGroup>
+
+## 节点与钱包报错
+
+<AccordionGroup>
+  <Accordion title="调用 wdk_* 工具时连接被拒绝" icon="link-slash">
+    **现象**：钱包或通道工具失败，而行情数据工具仍然正常。
+
+    **原因**：`RLN_NODE_URL`（默认 `http://localhost:3001`）上没有可访问的 RGB Lightning Node。
+
+    **解决办法**：
+    1. 启动一个节点。最快的方式是用 CLI：
+       ```bash
+       kaleido setup --mode local --create-node --defaults
+       ```
+    2. 确认它有响应：
+       ```bash
+       curl http://localhost:3001/nodeinfo
+       ```
+    3. 如果节点跑在别处，在宿主配置中把 `RLN_NODE_URL` 设为那个地址。
+    4. 基于 Docker 的部署方式见[节点环境](/cn/cli/node-environments)。
+  </Accordion>
+
+  <Accordion title="节点在运行但处于锁定状态" icon="lock">
+    **现象**：节点有响应，但钱包调用报解锁或密码相关的错误。
+
+    **原因**：RGB Lightning Node 启动后必须先解锁，才会提供钱包操作。
+
+    **解决办法**：
+    1. 通过 CLI 解锁，或使用 `kaleido-mcp` 暴露的 `kaleido_node_unlock` 工具。
+    2. 请预留等待时间：解锁过程会先同步节点，之后才完全可用。
+  </Accordion>
+
+  <Accordion title="找不到 KaleidoCLI" icon="terminal">
+    **现象**：`skill` 模式下的 KaleidoAgent，或 `kaleido_node_*` 工具执行失败。
+
+    **原因**：可执行文件不在进程能看到的 `PATH` 中。
+
+    **解决办法**：
+    1. 确认它能被解析：`kaleido --version`
+    2. 在服务器或代理配置中把 `KALEIDO_BIN` 设为该可执行文件的绝对路径。
+    3. 如果尚未安装，请按 [CLI 安装](/cn/cli/installation)安装。
+  </Accordion>
+
+  <Accordion title="明明有资金，余额却读成零" icon="wallet">
+    **现象**：对一个你确定已入资的钱包，工具返回空余额。
+
+    **解决办法**：
+    1. **检查网络。** `SPARK_NETWORK` 和节点自身的网络必须与资金所在的网络一致。regtest 的种子在主网上什么都看不到。
+    2. **确认种子。** 换一份助记词派生出的是另一个钱包，而不是一个空钱包。
+    3. **等待同步。** 刚解锁的节点可能还没追上链的最新高度。
+    4. **区分链上与闪电。** `wdk_get_balances` 会把普通与着色 UTXO 和闪电余额分开列出，而通道里的资产并不是链上余额。
+  </Accordion>
+</AccordionGroup>
+
+## 交换失败
+
+<AccordionGroup>
+  <Accordion title="执行前报价已过期" icon="hourglass-end">
+    **现象**：使用某个 `rfq_id` 时被拒绝。
+
+    **原因**：报价的有效期很短，而一轮 LLM 对话加上一次确认提示就可能超时。
+
+    **解决办法**：
+    1. 在发起交换前立刻重新询价，不要复用早先的 `rfq_id`。
+    2. 在提示词或 skill 中减少询价与执行之间的步骤数。
+  </Accordion>
+
+  <Accordion title="原子交换失败或卡住" icon="arrows-rotate">
+    **现象**：`kaleidoswap_atomic_execute` 报错，或状态一直停留在 pending。
+
+    **原因**：一笔原子交换需要 DEX 工具和钱包工具按顺序配合，还需要你这一侧有通道流动性。
+
+    **解决办法**：
+    1. 确认整个顺序都跑完了：在 DEX 上 init，用 `wdk_atomic_taker` 在你的节点上把 HTLC 加入白名单，然后执行。见[跨服务器调用顺序](/cn/ai-tools/mcp-servers#atomic-swap-across-servers)。
+    2. 确认资产确实**在通道里**。仅有链上余额无法结算一笔闪电交换。
+    3. 按 `payment_hash` 轮询 `kaleidoswap_atomic_status` 获取真实状态。
+    4. 如果任一侧卡住，时间锁到期后双方各自取回自己的资金。这是设计好的结果，不是交换丢失。
+  </Accordion>
+
+  <Accordion title="金额差了好几个数量级" icon="calculator">
+    **现象**：一笔交换的报价或执行金额远高于或远低于预期。
+
+    **原因**：工具接收的是以资产最小单位计价的**原始数量**，而不同资产精度不同。USDT 通常使用 6 位小数，而 BTC 的数量以聪计价。
+
+    **解决办法**：
+    1. 在构造数量之前，先用 `kaleidoswap_get_assets` 读取每个资产的精度。
+    2. 让模型在确认信息中同时给出原始数量和显示数量，这样在你批准之前就能看出不一致。
+  </Accordion>
+</AccordionGroup>
+
+## KaleidoAgent 问题
+
+<AccordionGroup>
+  <Accordion title="代理做出了决策但从不交易" icon="ghost">
+    **现象**：循环在跑，也报告了打算执行的交易，但什么都没有真正执行。
+
+    **原因**：`portfolio.dry_run` 为 `true`。这是默认值，并且是有意为之。
+
+    **解决办法**：只有当连续几轮的 dry-run 决策都看起来正确之后，再把它设为 `false`。
+  </Accordion>
+
+  <Accordion title="交易自己停了" icon="hand">
+    **现象**：代理原本在执行，之后就不再提交交换了。
+
+    **原因**：某个风险上限被触发。最常见的是 `stop_loss_btc_sats`（低于其 BTC 阈值时停止所有交易），或者 `min_btc_reserve_sats`。
+
+    **解决办法**：
+    1. 读取 `GET /status` 查看余额和最近的运行记录。
+    2. 把它们与 `agent.config.json` 中的上限做对比。
+    3. 给钱包补充资金，或者有意识地调整阈值，而不是把这道防线直接去掉。
+  </Accordion>
+
+  <Accordion title="再平衡从不触发" icon="scale-balanced">
+    **现象**：投资组合已经偏离目标，但没有提出任何交换。
+
+    **原因**：偏移还没有超过 `rebalance_threshold_pct`，其默认值为 5%。
+
+    **解决办法**：降低该阈值，或用 `POST /run` 配合 `{"task_id":"rebalance"}` 手动触发一轮。
+  </Accordion>
+
+  <Accordion title="缺少 API 密钥或提供商配置错误" icon="key">
+    **现象**：代理能启动，但推理调用失败。
+
+    **解决办法**：
+    1. 确认 `.env` 中设置了 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY`。
+    2. 确认 `AGENT_PROVIDER` 与你实际提供的那个密钥相匹配。
+  </Accordion>
+</AccordionGroup>
+
+## 速率限制与数据
+
+<AccordionGroup>
+  <Accordion title="高负载下行情工具报错" icon="gauge-high">
+    **现象**：`l402_get_price` 或 `l402_get_market_data` 间歇性失败。
+
+    **原因**：这些公开接口端点背后的 CoinGecko 免费层有速率限制。
+
+    **解决办法**：
+    1. 调用行情工具的间隔不要短于 30 秒。
+    2. 用 `l402_get_market_data` 把多个资产合并到一次调用，而不是循环逐个请求。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是疑问而不是报错，请查看[常见问题](/cn/ai-tools/faq)；上游文档与相关链接见[更多资源](/cn/ai-tools/additional-resources)。
+
+其他情况请通过下面任一渠道反馈问题，并附上：
+
+1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
+2. 你所在的网络（regtest、signet 或主网）
+3. 失败的工具名称和报错文本
+4. 宿主与运行时版本（MCP 客户端、Node.js）
+5. 你的配置，并移除其中的种子和所有密钥
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    在相关仓库提交缺陷报告。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

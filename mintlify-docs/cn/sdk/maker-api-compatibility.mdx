@@ -1,0 +1,30 @@
+---
+title: 'Maker API'
+description: "了解 KaleidoSDK 版本如何跟随 Maker API 演进，以及 SDK 通过 client.maker 暴露的接口端点分组和调用方式。"
+---
+
+Maker API 由 KaleidoSwap 托管，通过网络直接访问，你自己不需要运行任何基础设施。它提供市场数据与报价、做市方一侧的原子交换协调，以及 LSPS1 通道订购。
+
+## 兼容性
+
+SDK 始终跟随**最新的 Maker API** 版本：这一侧不需要管理版本配对关系。请让两者都保持更新，以便使用受支持的接口端点，并第一时间用上新功能。
+
+<Note>
+当前的 Maker API 接口详情见 [API 参考](/cn/api-reference/introduction)。SDK 类型所基于的 OpenAPI 规范发布在 [kaleidoswap/specs](https://github.com/kaleidoswap/specs)。
+</Note>
+
+## 接口端点分组
+
+Maker API 提供以下接口端点分组：
+
+| 接口端点分组 | 基础路径 | 说明 |
+|---|---|---|
+| **Market** | `/api/v1/market/` | 资产列表、交易对、报价请求 |
+| **Swaps (Atomic)** | `/api/v1/swaps/` | 基于 HTLC 的原子交换初始化、执行与状态跟踪 |
+| **LSPS1** | `/api/v1/lsps1/` | 通道订购、费用估算、流动性供给与闪电通道建立 |
+
+<Note>
+基于订单的交换接口端点（`/api/v1/swaps/orders/*`）已下线，对应的 SDK 方法在 **0.1.13** 中被移除。请改用原子交换流程 —— 参阅 [如何交换](/cn/sdk/how-to-swap)。
+</Note>
+
+所有分组都通过 `client.maker` 访问，除了客户端上的 `baseUrl` 之外不需要任何额外配置。第一次调用见[快速上手](/cn/sdk/getting-started)，全部方法见[客户端参考](/cn/sdk/api-reference)。

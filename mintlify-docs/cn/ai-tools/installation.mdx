@@ -1,0 +1,90 @@
+---
+title: "AI 工具：安装"
+sidebarTitle: "安装"
+description: "安装 KaleidoSwap AI 工具：MCP 服务器网关、KaleidoAgent 以及本地端 KaleidoMind 引擎，并逐一说明各自的前置条件。"
+---
+
+每个 AI 接入方式都可以独立安装。挑选与你的开发目标最匹配的那一个，或者先安装 MCP 网关 —— 它是跑通第一次工具调用的最短路径。
+
+| 接入方式 | 安装路径 | 前置条件 |
+|---------|-------------|---------------|
+| **[MCP 服务器](#mcp-servers)** | 网关用 `npx`，专用服务器需本地构建 | Node.js 20+，一个 MCP 宿主客户端 |
+| **[KaleidoAgent](#kaleidoagent)** | 克隆仓库并从源码构建 | Node.js 20+、KaleidoCLI、Nanobot、一个 LLM API 密钥 |
+| **[KaleidoMind](#kaleidomind)** | 随桌面应用一起提供，或构建仓库用于开发 | 桌面应用，或 pnpm 与 QVAC SDK |
+
+<Warning>
+  这里的每一种接入方式都会使用真实的 BIP-39 助记词签名，或直接驱动一个运行中的节点。请先在测试网络上起步，在配置验证通过之前保持 `dry_run` 开启，并且永远不要把主网种子写入会被提交或分享的文件。
+</Warning>
+
+## MCP 服务器 {#mcp-servers}
+
+`kaleido-mcp` 是跑通工具调用的最快路径，已发布到 npm，无需本地构建：
+
+```bash
+npx -y kaleido-mcp
+```
+
+另有三个按钱包划分的服务器 `wdk-wallet-mcp`、`wdk-wallet-spark-mcp` 和 `wdk-wallet-liquid-mcp`，它们保持独立而未并入网关，需要从源码构建：
+
+```bash
+git clone https://github.com/kaleidoswap/wdk-wallet-mcp.git
+cd wdk-wallet-mcp
+npm install
+npm run build
+node dist/index.js
+```
+
+<Note>
+  `kaleidoswap-mcp` 和 `l402-gateway-mcp` 已归档，它们各自的 README 也建议集成方改用 `kaleido-mcp`。新项目请不要再克隆或构建它们。
+</Note>
+
+完整的环境变量参考、stdio 与 HTTP 传输方式的对比、按领域划分的工具清单，以及每个服务器的客户端配置 JSON，请查看 [MCP 服务器页面](/cn/ai-tools/mcp-servers)。
+
+## KaleidoAgent {#kaleidoagent}
+
+前置条件：Node.js 20 或更高版本、位于 `$PATH` 中的 [KaleidoCLI](/cn/cli/installation)、[Nanobot](https://nanobot.dev) 运行时，以及一个 Anthropic 或 OpenAI API 密钥。
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-agent.git
+cd kaleido-agent
+npm run install:all
+```
+
+设置 API 密钥、在 `agent.config.json` 中配置钱包、启动仪表盘，以及容器部署方案，请查看 [KaleidoAgent 页面](/cn/ai-tools/kaleido-agent#run-it)。
+
+## KaleidoMind {#kaleidomind}
+
+KaleidoMind 是嵌入宿主应用中的引擎，而不是一个独立安装的程序。
+
+### 通过桌面应用
+
+这是最快的路径。[桌面应用](/cn/desktop-app/getting-started/installation)将该引擎打包为应用内聊天，负责管理本地模型的生命周期，并且可以作为手机端委托推理的配对节点。在 **设置 > 能力** (Settings > Capabilities) 中选择 **Node + Mind** 或 **Only Mind** 即可开启。
+
+<Note>
+  KaleidoMind 依赖本地 AI 运行时，目前在 Windows 上可能尚不可用。所有交易与节点功能都不依赖它，因此如果你的平台上 Mind 暂不可用，可以用 **Only Node** 模式运行应用。
+</Note>
+
+### 从源码构建，用于开发
+
+```bash
+git clone https://github.com/kaleidoswap/kaleido-mind.git
+cd kaleido-mind
+pnpm install && pnpm -r build
+```
+
+`apps/cli` 中的 CLI 负责本地模型管理，也可以直接运行代理：
+
+```bash
+cd apps/cli
+npx tsx src/index.ts setup     # 引导式首次运行：选择并拉取模型
+npx tsx src/index.ts run "what's my balance?"
+npx tsx src/index.ts skills    # 列出已安装的 Skills
+```
+
+如果想在没有手机的情况下用某个模型验证引擎，可以在仓库根目录使用 playground：
+
+```bash
+pnpm play "pay bob 3 eur"
+```
+
+分层漏斗如何路由一次请求、跨传输方式共享的工具契约、引擎加载的 skills，以及它在桌面、手机和配对设备上的运行方式，请查看 [KaleidoMind 页面](/cn/ai-tools/kaleido-mind)。

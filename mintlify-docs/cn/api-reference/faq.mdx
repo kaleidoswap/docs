@@ -1,0 +1,124 @@
+---
+title: "比特币交换 API 常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoSwap 交换 API 的常见问题：认证、Maker API 与节点 API 的区别、金额单位、报价有效期、WebSocket 报价以及浏览器端调用。"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="我需要 API 密钥才能开始吗？" icon="key">
+    **目前不需要。** 所有 Maker API 接口端点仍然接受匿名请求，因此你可以立即开始集成。Bearer 密钥（`Authorization: Bearer <token>`）目前已被**接受并记录归属** —— 密钥携带作用域，例如市场数据与报价用的 `quote:read`，以及交换发起与执行用的 `swap:execute`。
+
+    强制校验正在逐步上线。一旦开启，缺失或无效的密钥将返回 `401`，所以请现在就开始发送密钥，而不是事后补上。详见[总览](/cn/api-reference/introduction#authentication)。
+  </Accordion>
+
+  <Accordion title="Maker API 和 RLN API 有什么区别？" icon="code-compare">
+    它们是两台不同的服务器，其中只有一台是我们的。
+
+    | API | 部署位置 | 覆盖范围 |
+    |-----|----------------|--------|
+    | **Maker API** | `https://api.signet.kaleidoswap.com/api/v1` | 市场数据、报价、交换的发起/执行/状态、LSPS1 通道订单 |
+    | **RLN API** | **你自己**节点的根路径，例如 `http://<node>:3001/` | 钱包与 RGB 资产、通道、发票、交换白名单 |
+
+    本标签页「接口端点」下记录的全部内容都属于 Maker API。RLN API 由你自己运行的 [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) 提供 —— 不存在由 KaleidoSwap 托管的 RLN 地址可供调用。[总览](/cn/api-reference/introduction)中的表格把每个目标对应到正确的 API。
+  </Accordion>
+
+  <Accordion title="我必须运行 RGB Lightning Node 吗？" icon="server">
+    **只取市场数据的话，不需要。** 资产、交易对、路由和报价都是对做市方的普通 HTTP 调用。
+
+    **做原子交换的话，需要。** 白名单 `swapstring` 和路由 HTLC 都发生在你的节点上。这正是做市方永远不托管资金的原因 —— 协议中没有任何一步让它持有你的资金。部署方式见[节点托管](/cn/desktop-app/getting-started/node-hosting)。
+  </Accordion>
+
+  <Accordion title="我可以在哪些环境上集成？" icon="network-wired">
+    signet（MutinyNet）目前已上线；主网即将推出。
+
+    | 环境 | REST 基础 URL | WebSocket |
+    |-------------|---------------|-----------|
+    | **signet** | `https://api.signet.kaleidoswap.com/api/v1` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
+    | **主网** | `https://api.kaleidoswap.com/api/v1`（即将推出） | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}`（即将推出） |
+
+    接口端点页面上的交互式演练场运行在 signet。
+  </Accordion>
+
+  <Accordion title="金额的单位是聪还是毫聪？" icon="calculator">
+    **BTC 一侧使用毫聪（msat）。** `POST /api/v1/swaps/init` 明确说明了这一点，报价示例也遵循同样的约定：BTC 一侧的 `1000000` 表示 1,000 聪。
+
+    **RGB 资产一侧使用原始最小单位**，由该资产自身的 `precision` 决定，可从 `GET /api/v1/market/assets` 获取。精度因资产而异 —— USDT 的精度为 `6`，因此 `1000000` 表示 1.00 USDT。
+
+    不要硬编码换算系数。逐个资产读取 `precision`，并把 `precision` 当作展示用的元数据，而不是你所发送金额的单位。
+  </Accordion>
+
+  <Accordion title="price 字段该怎么理解？" icon="chart-line">
+    `price` 是**一个完整单位**的 `from_asset` 的价格，以 `to_asset` 的**最小单位**表示。它不是展示用价格，也不是你将收到的金额。
+
+    你实际会收到的金额已经在响应的资产一侧给出 —— `to_asset.amount` —— 并且已经把手续费计入其中。面向用户的展示请使用它；只有在你确实需要汇率本身时才用 `price`。
+  </Accordion>
+
+  <Accordion title="一个 rfq_id 能用多久？" icon="hourglass-half">
+    到它的 `expires_at`（unix 时间）为止 —— 这是一个很短的窗口，以数十秒计。一个报价对应一次 `POST /api/v1/swaps/init`。
+
+    不要让 `rfq_id` 跨越用户思考的时间。先取报价，然后迅速完成发起、白名单和执行；如果用户停在某个确认界面上，等他继续时再请求一个新报价。
+  </Accordion>
+
+  <Accordion title="报价该用 WebSocket 还是 REST？" icon="bolt">
+    都可以 —— 两者返回的报价结构相同。
+
+    WebSocket 是**请求/响应式的，不是发布/订阅式的**：你发送一条 `quote_request`，服务器回复这一条消息。它没有订阅机制，所以只有不断询问，价格才会保持新鲜。请定期发送 `ping` 消息以维持连接健康。
+
+    当你要展示不断变化的价格、又想避免每次请求的 HTTP 开销时，用 WebSocket；一次性的交换用 `POST /api/v1/market/quote` 即可。参见[交换协议](/cn/api-reference/swap-protocol)。
+  </Accordion>
+
+  <Accordion title="swapstring 是什么，为什么必须把它加入白名单？" icon="file-signature">
+    `/swaps/init` 返回的 `swapstring` 编码了这笔交换的确切条款 —— 两侧金额、两侧资产以及 payment hash。在你自己的节点上把它加入白名单，就是**你**对这些确切条款的授权。
+
+    这是该协议非托管性的关键：做市方无法转移你的资产，它只能提供一个你的节点已经同意履行的 HTLC。白名单是通过你 RGB Lightning Node 的 `/taker` API 完成的，而不是通过 Maker API。
+  </Accordion>
+
+  <Accordion title="/swaps/init 为什么返回 access_token，丢了会怎样？" icon="lock">
+    `access_token` 是单笔交换的凭证，**只在发起时返回一次**。你需要它连同 `payment_hash` 一起去轮询 `POST /api/v1/swaps/atomic/status`。
+
+    没有它，状态接口会返回统一的 `404 Swap not found` —— 这是刻意设计的，这样该接口就无法被用来探测别人的 payment hash。发起返回的那一刻就把 token 和 payment hash 一起持久化。LSPS1 通道订单同理：`create_order` 会返回单笔订单的 `access_token`，`get_order` 和 `rate_decision` 都需要它。
+  </Accordion>
+
+  <Accordion title="我可以直接从浏览器调用 API 吗？" icon="globe">
+    不可靠。大多数 Maker API 接口端点关闭了 CORS，因此纯浏览器应用需要自己的后端来代理调用。无论如何都要把 API 密钥保留在服务端 —— 一旦强制校验开启，发到浏览器的密钥就等于公开的密钥。
+  </Accordion>
+
+  <Accordion title="速率限制是多少？" icon="gauge-high">
+    默认值为：单 IP 每分钟 600 次请求、单接口端点每分钟 300 次、全局每分钟 1,000 次。它们可按部署配置，因此请把这些数字视为起点而非承诺。
+
+    每个响应都带有 `X-RateLimit-Limit`、`X-RateLimit-Remaining` 和 `X-RateLimit-Reset` —— 请读取它们，不要靠猜。资产和交易对请在本地缓存，它们很少变化。
+  </Accordion>
+
+  <Accordion title="API 是如何做版本管理的？" icon="check-double">
+    版本写在路径里：`v1`，例如 `https://api.signet.kaleidoswap.com/api/v1`。带版本的 OpenAPI 规范发布在[规范仓库](https://github.com/kaleidoswap/specs)中，并在每次发布时更新，因此你可以直接对比两个版本，而不是在运行时才发现变化。
+  </Accordion>
+
+  <Accordion title="我应该用 SDK 而不是直接调 REST 吗？" icon="code">
+    对大多数集成来说，是的。[TypeScript 和 Python SDK](/cn/sdk/introduction) 的类型由同一份 OpenAPI 规范生成，把 Maker API 和你的节点分别封装在 `client.maker.*` 与 `client.rln.*` 之后，并提供带重试提示的类型化错误层级。
+
+    当你使用的语言尚无 SDK，或者你需要客户端所抽象掉的那部分控制权时，再直接调用 REST。此外还有一个[命令行工具](/cn/cli/introduction)，可以从终端驱动节点。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请查阅[故障排查](/cn/api-reference/troubleshooting)；规范与上游链接见[更多资源](/cn/api-reference/additional-resources)。
+
+其他情况请从下面的渠道中选择一个反馈问题，并附上：
+
+1. 请求 URL 与 HTTP 方法
+2. 请求负载（请隐去 API 密钥）
+3. 完整的错误响应，包含 `request_id`
+4. 请求的时间戳
+5. 运行环境（signet / 主网）
+
+<CardGroup cols={2}>
+  <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
+    向社群提问。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

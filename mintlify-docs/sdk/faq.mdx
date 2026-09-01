@@ -8,7 +8,7 @@ description: "Common questions about the KaleidoSDK, covering language choice, t
 
 <AccordionGroup>
   <Accordion title="TypeScript or Python — which should I use?" icon="code">
-    Whichever matches your stack. Both are standalone implementations that generate their types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs), so the API shape, the sub-clients, and the error hierarchy are nearly identical across the two — the few divergences (rate-limit handling, the missing-node error) are called out in [Error Handling](/sdk/error-handling). Every example in these docs shows both.
+    Whichever matches your stack. Both are standalone implementations that generate their types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs), so the API shape, the sub-clients, and the error hierarchy are nearly identical across the two — the few divergences (rate-limit handling, the missing-node error) are called out in [Troubleshooting](/sdk/troubleshooting#error-reference). Every example in these docs shows both.
 
     Runtime requirements: **Node.js 18+** for TypeScript, **Python 3.10+** for Python. A Rust core is in progress.
   </Accordion>
@@ -39,7 +39,7 @@ description: "Common questions about the KaleidoSDK, covering language choice, t
 
     - **Signet** — `https://api.signet.kaleidoswap.com`, realistic conditions, best before mainnet
 
-    Pass this as `baseUrl` / `base_url`; the SDK appends `/api/v1` itself. Full list in [Available Environments](/sdk/getting-started#available-environments).
+    Pass this as `baseUrl` / `base_url`; the SDK appends `/api/v1` itself. Full list in [Available Environments](/sdk/installation#available-environments).
   </Accordion>
 
   <Accordion title="How do I know which SDK version works with which API?" icon="check-double">
@@ -79,25 +79,27 @@ description: "Common questions about the KaleidoSDK, covering language choice, t
   <Accordion title="How should I handle errors and retries?" icon="triangle-exclamation">
     Every SDK exception extends `KaleidoError`, so catching that one type covers the whole hierarchy. Each error exposes `isRetryable()` / `is_retryable()`, which tells you whether retrying is safe — do not retry blindly, since some failures will never succeed on a second attempt.
 
-    See [Error Handling](/sdk/error-handling) for the full hierarchy and the retry-with-backoff pattern, and [Best Practices](/sdk/best-practices) for how it fits a production client.
+    See [Troubleshooting](/sdk/troubleshooting#error-reference) for the full hierarchy and the retry-with-backoff pattern, and [Best Practices](/sdk/best-practices) for how it fits a production client.
   </Accordion>
 </AccordionGroup>
 
 ## Get Help
 
-Check the [Troubleshooting](/sdk/troubleshooting) for errors rather than questions. For anything else, report a problem through your preferred channel from the options below, including:
+Check the [Troubleshooting](/sdk/troubleshooting) for errors rather than questions, and [Additional Resources](/sdk/additional-resources) for upstream documentation and links.
+
+For anything else, report a problem through your preferred channel from the options below, including:
 
 1. SDK version (`getVersion()` / `get_version()`)
 2. Language and runtime version (Node.js / Python)
 3. Error message and stack trace
 4. Minimal code to reproduce
-5. Environment (Regtest / Signet / Mainnet)
+5. Environment (Signet / Mainnet)
 
 <CardGroup cols={3}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
   </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
     Report a bug on the relevant repository.
   </Card>
   <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">

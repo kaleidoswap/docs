@@ -1,5 +1,6 @@
 ---
 title: 'Channels And LSP Flows'
+sidebarTitle: 'Channels & LSP'
 description: 'Open Lightning channels directly or use KaleidoSwap LSP channel-order workflows from the KaleidoCLI'
 ---
 
@@ -11,9 +12,9 @@ The `channel` group covers direct Lightning channel management against your loca
 |--------|---------|
 | `kaleido channel list` | List current channels |
 | `kaleido channel open <peer>` | Open a channel to a peer |
-| `kaleido channel close <channel-id>` | Close a channel |
+| `kaleido channel close <channel-id> --peer <pubkey>` | Close a channel |
 
-Peer arguments use `pubkey@host:port` format.
+Peer arguments use `pubkey@host:port` format. Closing needs both the channel ID and `--peer`; add `--force` for a unilateral close, and only when the peer is unresponsive, since it locks funds until the timelock expires.
 
 ## Open A Channel
 
@@ -50,9 +51,9 @@ Use `channel order` when you want KaleidoSwap's LSP flow instead of manually ope
 
 | Command | Purpose |
 |--------|---------|
-| `kaleido channel order create <client-pubkey>` | Create a channel order |
+| `kaleido channel order create [client-pubkey]` | Create a channel order, defaulting to the local node pubkey |
 | `kaleido channel order get <order-id>` | Fetch status and details |
-| `kaleido channel order pay <order-id>` | Pay an order with local wallet funds |
+| `kaleido channel order pay <order-id>` | Pay an order with local wallet funds (`--onchain` or `--offchain`) |
 | `kaleido channel order decide <order-id>` | Submit a rate decision |
 | `kaleido channel order estimate-fees` | Estimate opening fees |
 
@@ -64,17 +65,28 @@ kaleido channel order create 03abc... \
   --client-balance 500000
 ```
 
+The pubkey is optional and defaults to your local node, so `kaleido channel order create --lsp-balance 1000000 --client-balance 500000` is equivalent when you are ordering for yourself.
+
 Useful options:
 
-- `--confirmations`
-- `--funding-within`
-- `--expiry-blocks`
-- `--refund-address`
+- `--confirmations`, default 6
+- `--funding-within`, default 144 blocks
+- `--expiry-blocks`, at least 1
+- `--refund-address`, defaulting to a local node address
 - `--announce` or `--private`
 - `--asset-id`
-- `--lsp-asset-amount`
-- `--client-asset-amount`
+- `--lsp-asset-amount`, required with `--asset-id`
+- `--client-asset-amount`, which must not exceed `--lsp-asset-amount`
 - `--email`
+- `--yes`, `-y` to accept the fetched RFQ price, required non-interactively
+
+### Pay an order
+
+```bash
+kaleido channel order pay <order-id> --access-token <token> --offchain
+```
+
+Choose the funding source with `--onchain` or `--offchain`; interactively the CLI asks, but in `--agent` or `--json` mode exactly one is required, along with `--yes`. On-chain payments accept `--fee-rate` in sat/vbyte.
 
 Example colored channel order:
 
@@ -107,4 +119,4 @@ kaleido channel order estimate-fees --lsp-balance 1000000 --client-balance 50000
 kaleido channel order create 03abc... --lsp-balance 1000000 --client-balance 500000
 ```
 
-See [Market And Swaps](/cli/market-and-swaps) for server-side trading flows that often run alongside channels and liquidity management.
+See [Market And Swaps](/cli/market-and-swaps) for server-side trading flows that often run alongside channels and liquidity management, or [Troubleshooting](/cli/troubleshooting#channels-and-lsp-orders) when a channel or an order will not go through.

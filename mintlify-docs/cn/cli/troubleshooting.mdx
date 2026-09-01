@@ -1,0 +1,476 @@
+---
+title: "KaleidoCLI 故障排查"
+sidebarTitle: "故障排查"
+description: "定位并解决 KaleidoCLI 的常见报错：安装、Docker 环境、节点连接、资产、通道与交换，每一项都给出确切的报错文本与对应的修复步骤"
+---
+
+## 安装问题 {#installation-issues}
+
+<AccordionGroup>
+  <Accordion title="kaleido: command not found" icon="terminal">
+    **症状：** 安装已完成，但 shell 找不到 `kaleido`
+
+    **原因：** 存放启动器的目录不在 `PATH` 中。安装脚本的最后一行已经提示过：`If 'kaleido' is not found yet, add <dir> to your PATH and restart your shell.`
+
+    **解决办法：**
+    1. 先重启 shell —— 已经运行中的会话看不到新加入 `PATH` 的条目
+    2. 若使用 `uv` 安装，确认工具目录在 `PATH` 中：`uv tool dir` 和 `uv tool list`
+    3. 若使用引导安装脚本，把它打印的目录写进 shell 配置文件（`~/.bashrc`、`~/.zshrc`）
+    4. Windows 上请使用 WSL —— shell 引导脚本面向 macOS、Linux 和 WSL
+  </Accordion>
+
+  <Accordion title="pip install kaleido-cli 找不到这个包" icon="cube">
+    **症状：** `ERROR: Could not find a version that satisfies the requirement kaleido-cli`
+
+    **原因：** CLI 没有发布到 PyPI，只能从源码安装。
+
+    **解决办法：**
+
+    ```bash
+    uv tool install git+https://github.com/kaleidoswap/kaleido-cli.git
+    ```
+
+    也可以使用引导安装脚本，它优先调用 `uv`，否则回退到隔离的虚拟环境。详见[安装](/cn/cli/installation)。
+  </Accordion>
+
+  <Accordion title="Kaleido CLI requires Python 3.10 or newer" icon="python">
+    **症状：** 安装脚本以这条信息终止
+
+    **解决办法：**
+    1. 查看当前版本：`python3 --version`
+    2. 安装更新的 Python，或交给 `uv` 管理：`uv python install 3.12`
+    3. 待 `python3` 指向 3.10 或更高版本后重新执行安装
+  </Accordion>
+</AccordionGroup>
+
+## 设置与环境 {#setup-and-environments}
+
+<AccordionGroup>
+  <Accordion title="Docker is not installed or not in PATH." icon="docker">
+    **症状：** 任何 `node` 生命周期命令、或不带参数的 `kaleido setup` 报出这条信息
+
+    **原因：** CLI 通过 `docker compose` 执行操作，因此二进制文件和运行中的守护进程缺一不可。
+
+    **解决办法：**
+    1. 同时确认客户端与守护进程：`docker version` —— 必须出现 "Server" 部分
+    2. 启动 Docker Desktop，Linux 上执行 `sudo systemctl start docker`
+    3. 确认 Compose v2 插件可用：`docker compose version`
+    4. 如果完全不想用 Docker，可以只做市场模式设置：`kaleido setup --mode market --defaults`
+  </Accordion>
+
+  <Accordion title="No docker-compose.yml found in …" icon="file-circle-xmark">
+    **症状：** `No docker-compose.yml found in <dir>`，随后是 `Run 'kaleido node create' to generate it.`，或者 `Environment directory not found: <dir>`
+
+    **原因：**
+    - 环境从未创建过，或创建在了另一个基础目录下
+    - 配置里的 `spawn-dir` 指向的位置与环境实际所在的位置不一致
+
+    **解决办法：**
+    1. 先看 CLI 实际能识别哪些环境：`kaleido node list`
+    2. 检查基础目录：`kaleido config show` —— 环境位于 `spawn-dir` 下，默认为 `~/.kaleido`
+    3. 重新创建：`kaleido node create <name>`
+  </Accordion>
+
+  <Accordion title="Multiple environments exist — specify one:" icon="layer-group">
+    **症状：** 生命周期命令拒绝执行，并列出可用的环境
+
+    **原因：** 只有当环境恰好只有一个时，名称才会被自动识别。
+
+    **解决办法：** 显式指定名称。
+
+    ```bash
+    kaleido node list
+    kaleido node up testenv
+    kaleido node logs testenv --service rgb_node_1
+    ```
+
+    相关的 `No environments found. Run 'kaleido node create' first.` 则是相反的问题 —— 还没有创建过任何环境。
+  </Accordion>
+
+  <Accordion title="Environment '<name>' already exists at …" icon="copy">
+    **症状：** `kaleido setup` 以这条信息终止，并提示 `Choose a different environment name with --env-name to create a new node.`
+
+    **解决办法：**
+    1. 复用已有环境：`kaleido node up <name>`，然后 `kaleido node use <name>`
+    2. 或者另建一个：`kaleido setup --env-name taker-2`
+
+    交互式的 `kaleido node create` 则会询问是否覆盖 compose 文件，这不会影响数据卷。
+  </Accordion>
+
+  <Accordion title="容器起来了，但节点始终没有响应" icon="heart-pulse">
+    **症状：** `node up` 成功，`node info` 失败
+
+    **解决办法：**
+    1. 查看容器状态：`kaleido node ps <name>`
+    2. 读取节点自身的日志：`kaleido node logs <name> --service rgb_node_1 --no-follow`
+    3. 排查端口冲突 —— 节点 1 绑定 3001 与 9735，节点 2 绑定 3002 与 9736。若这些端口被占用，用 `kaleido node create` 以不同的基础端口重建环境
+    4. `up` 之后稍等片刻：节点需要先打开数据库才能对外提供服务
+  </Accordion>
+</AccordionGroup>
+
+## 节点连接 {#node-connectivity}
+
+<AccordionGroup>
+  <Accordion title="Node URL not configured." icon="link-slash">
+    **症状：** 这条信息，外加 `Use --node-url or: kaleido config set node-url http://localhost:3001`
+
+    **原因：** 该命令需要节点，但标志、环境变量和配置里都没有节点 URL。
+
+    **解决办法：**
+    1. 指向某个环境的节点：`kaleido node use <name>`
+    2. 或直接设置：`kaleido config set node-url http://localhost:3001`
+    3. 或只为这一条命令覆盖：`kaleido --node-url http://localhost:3002 wallet balance`
+  </Accordion>
+
+  <Accordion title="连接被拒绝，或响应的是另一个节点" icon="plug-circle-xmark">
+    **症状：** `wallet`、`asset`、`channel`、`payment` 报连接错误，或者余额属于另一个节点
+
+    **原因：**
+    - 容器没有在运行
+    - `node-url` 仍指向你上次使用的节点
+    - shell 里导出了 `KALEIDO_NODE_URL`，静默覆盖了保存的配置
+
+    **解决办法：**
+    1. 确认当前生效的节点：`kaleido config show`，以及 `kaleido node list` —— 生效的节点标记为 `●`
+    2. 启动环境：`kaleido node up <name>`
+    3. 检查是否有残留的覆盖：`echo $KALEIDO_NODE_URL`
+    4. 记住优先级：标志 → 环境变量 → 配置文件
+  </Accordion>
+
+  <Accordion title="Node N does not exist in '<name>' — environment has M node(s)." icon="hashtag">
+    **症状：** `kaleido node use <name> --node 2` 被拒绝
+
+    **原因：** `--node` 是 compose 文件中实际定义的节点的 1 起始索引。
+
+    **解决办法：** 用 `kaleido node list` 查看环境里有多少个节点。需要更多节点时，重建环境并在节点数量提示处填更大的值。
+
+    相关的 `No nodes found in environment '<name>'. Is the compose file present?` 表示 compose 文件存在，但没有定义任何 `rgb_node_*` 服务。
+  </Accordion>
+
+  <Accordion title="Error unlocking wallet，或所有调用都提示钱包已锁定" icon="lock">
+    **症状：** `Error unlocking wallet: …`，或重启后节点命令全部失败
+
+    **原因：**
+    - 节点重启后没有解锁 —— 每次重启都需要 `unlock`
+    - 解锁请求指向的 bitcoind 或索引器不可达
+    - 这个节点上的钱包从未初始化
+
+    **解决办法：**
+    1. 解锁：`kaleido node unlock`
+    2. 如果问题出在服务上，改用索引器跟随链，而不是 bitcoind：
+
+       ```bash
+       kaleido node unlock --chain-sync transaction --indexer-url https://esplora.signet.kaleidoswap.com
+       ```
+    3. 如果从未初始化，先运行一次 `kaleido node init`
+    4. 用 `kaleido node info` 确认结果
+  </Accordion>
+
+  <Accordion title="Error initializing wallet" icon="wallet">
+    **症状：** `Error initializing wallet: …`
+
+    **原因：**
+    - 这个节点上的钱包已经初始化过 —— `init` 每个节点只做一次，不是每个会话一次
+    - 恢复时传入的 `--mnemonic` 无效
+
+    **解决办法：**
+    1. 若节点已初始化，直接执行 `kaleido node unlock`
+    2. 想从干净的节点重来，`kaleido node clean <name>` 会不可逆地删除数据卷，之后才能重新 `init`
+    3. 恢复时给助记词加引号，避免被 shell 拆开：`--mnemonic "word1 word2 …"`
+  </Accordion>
+</AccordionGroup>
+
+## 钱包与资产 {#wallet-and-assets}
+
+<AccordionGroup>
+  <Accordion title="余额看起来够，发送却失败" icon="coins">
+    **症状：** `wallet send` 或 `asset send` 报余额不足
+
+    **原因：**
+    - 余额尚未确认
+    - 没有空闲 UTXO 可供 RGB 分配使用
+    - 金额之外的手续费无法覆盖
+
+    **解决办法：**
+    1. 查看真正可用的部分：`kaleido wallet balance` 与 `kaleido wallet utxos`
+    2. 在 RGB 操作前创建有色 UTXO：`kaleido wallet create-utxos --num 10 --size 3000`
+    3. signet 上用 [Mutiny 水龙头](https://faucet.mutinynet.com/)给节点充值，地址来自 `kaleido wallet address`
+    4. 用 `kaleido wallet estimate-fee --blocks 6` 查看当前费率，并显式传入 `--fee-rate`
+  </Accordion>
+
+  <Accordion title="RGB 转账一直处于 pending" icon="hourglass-half">
+    **症状：** `kaleido asset transfers <asset-id>` 中的转账始终没有完成
+
+    **解决办法：**
+    1. 推进待处理的转账：`kaleido asset refresh`
+    2. 重新同步 RGB 钱包：`kaleido asset sync`
+    3. 再看一次状态：`kaleido asset transfers <asset-id>`
+    4. 只有在转账确实失效时，才释放它占用的分配：`kaleido asset fail-transfers --batch-idx <idx>`
+
+    如果你一直在传 `--skip-sync`，请去掉：命令返回的本来就是缓存状态。
+  </Accordion>
+
+  <Accordion title="asset send-batch 报 File not found 或 Invalid JSON" icon="file-code">
+    **症状：** `File not found: <path>` 或 `Invalid JSON: …`
+
+    **原因：** `asset send-batch` 接收的是一个描述收款方的 JSON 文件路径，而不是内联标志。
+
+    **解决办法：**
+
+    ```bash
+    kaleido asset send-batch ./transfers.json
+    ```
+
+    确认路径相对于当前目录正确，并在重试前校验该文件。
+  </Accordion>
+
+  <Accordion title="PATH argument is required in non-interactive mode." icon="box-archive">
+    **症状：** `--agent` 模式下 `wallet backup` 或 `wallet restore` 被拒绝
+
+    **原因：** 目标路径是位置参数，而提示已被禁用。
+
+    **解决办法：** 显式传入路径和密码。
+
+    ```bash
+    kaleido --agent wallet backup ~/kaleido-backup.zip --password <password>
+    ```
+
+    `restore` 会覆盖当前节点数据，务必谨慎执行。
+  </Accordion>
+</AccordionGroup>
+
+## 通道与 LSP 订单 {#channels-and-lsp-orders}
+
+<AccordionGroup>
+  <Accordion title="Peer must be in pubkey@host:port format in non-interactive mode." icon="circle-nodes">
+    **症状：** `channel open` 或 `peer connect` 被拒绝
+
+    **原因：** 只传了裸公钥。交互模式下 CLI 会追问地址，非交互模式下必须给出完整格式。
+
+    **解决办法：**
+    1. 使用完整的 peer 字符串：`kaleido channel open 03abc...@peer.host:9735 --capacity 100000`
+    2. 先连接并确认可达：`kaleido peer connect 03abc...@peer.host:9735`，然后 `kaleido peer list`
+
+    相关的非交互模式拒绝还有 `PEER argument is required in non-interactive mode.` 与 `--capacity is required in non-interactive mode.`。
+  </Accordion>
+
+  <Accordion title="--asset-amount requires --asset-id." icon="link">
+    **症状：** 有色通道命令还没联系节点就被拒绝
+
+    **原因：** 脱离资产本身，资产数量没有意义。同样的规则适用于 `--push-asset-amount`，以及 LSP 订单上的 `--lsp-asset-amount` / `--client-asset-amount`。
+
+    **解决办法：**
+
+    ```bash
+    kaleido channel open 03abc...@peer.host:9735 \
+      --capacity 100000 \
+      --asset-id rgb:abc... \
+      --asset-amount 5000
+    ```
+
+    LSP 订单上还有两条约束：`--lsp-asset-amount is required when --asset-id is set.` 与 `--client-asset-amount must be less than or equal to --lsp-asset-amount.`。
+  </Accordion>
+
+  <Accordion title="--peer is required in non-interactive mode.（channel close）" icon="scissors">
+    **症状：** `channel close <channel-id>` 被拒绝
+
+    **原因：** 关闭通道同时需要通道 ID 和对端公钥。
+
+    **解决办法：**
+
+    ```bash
+    kaleido channel list
+    kaleido channel close <channel-id> --peer 03abc...
+    ```
+
+    只有在对端无响应时才加 `--force`：单方面关闭会把资金锁定到时间锁到期为止。
+  </Accordion>
+
+  <Accordion title="Asset '<asset-id>' is not available from the LSP." icon="ban">
+    **症状：** `channel order create` 或 `estimate-fees` 拒绝该资产
+
+    **原因：** LSP 只为它支持的资产开通有色通道。
+
+    **解决办法：** 先查看它支持哪些资产，再使用其中的资产 ID。
+
+    ```bash
+    kaleido channel lsp info
+    ```
+
+    `LSP did not report a connection URL.` 是同一次交互的另一面 —— 返回的 LSP 元数据里没有对等地址，订单无法继续。
+  </Accordion>
+
+  <Accordion title="订单并不处于等待付款的状态" icon="receipt">
+    **症状：** `channel order pay` 返回 `This order is not awaiting a wallet payment. Current payment state: <state>`
+
+    **原因：**
+    - 订单已经支付过
+    - 在完成资金确认前就过期了
+    - 它在等待费率决定，而不是等待付款
+
+    **解决办法：**
+    1. 查看当前状态：`kaleido channel order get <order-id> --access-token <token>`
+    2. 若在等待费率，提交决定：`kaleido channel order decide <order-id> --accept`
+    3. 若已过期，重新创建订单 —— `--funding-within` 与 `--expiry-blocks` 控制这两个时间窗
+    4. 非交互模式下必须显式选择付款方式，否则会看到 `Specify exactly one of --onchain or --offchain in non-interactive mode.`
+  </Accordion>
+</AccordionGroup>
+
+## 市场与交换 {#market-and-swaps}
+
+<AccordionGroup>
+  <Accordion title="Pair '<pair>' not found." icon="magnifying-glass">
+    **症状：** `Pair 'BTC/USD' not found. Use 'kaleido market pairs' to list available pairs.`
+
+    **原因：**
+    - 拼写错误，或该 ticker 未上线
+    - 交易对方向写反了 —— 顺序是有意义的
+
+    **解决办法：**
+    1. 列出所有交易对：`kaleido market pairs`
+    2. 使用该输出中确切的 `BASE/QUOTE` ticker
+
+    `No trading pairs are currently available.` 则不同：maker 返回了空列表，问题在上游而不在你的命令。
+  </Accordion>
+
+  <Accordion title="Provide exactly one of --from-amount or --to-amount." icon="calculator">
+    **症状：** 报价或交换命令被拒绝，或提示 `Provide --from-amount or --to-amount in non-interactive mode.`
+
+    **原因：** 报价只锚定一侧 —— 你固定发送金额或接收金额，另一侧由 maker 定价。
+
+    **解决办法：**
+    1. 二者只传其一
+    2. 记住这里是**显示单位**：`--from-amount 0.001` 是 0.001 BTC，不是 1000 聪
+    3. 如果金额被判为无效，用 `kaleido market pairs` 查看该交易对的上下限
+  </Accordion>
+
+  <Accordion title="Swapstring must contain 6 slash-separated fields." icon="triangle-exclamation">
+    **症状：** 这条信息，或 `Swapstring fields must not be empty or whitespace.`、`Swapstring contains invalid numeric fields.`
+
+    **原因：** swapstring 被截断或损坏了。它的结构是：
+
+    ```text
+    <from_amount>/<from_asset>/<to_amount>/<to_asset>/<expiry>/<payment_hash>
+    ```
+
+    **解决办法：**
+    1. 从 `swap atomic init` 的输出中完整复制，不要折行
+    2. 加引号，避免 shell 改动它：`--swapstring '30/rgb:abc.../10/rgb:def.../600/<hash>'`
+    3. 或者用 `kaleido swap atomic run <pair>` 完全跳过这一步
+  </Accordion>
+
+  <Accordion title="Auto-whitelist validation failed" icon="shield-halved">
+    **症状：** `Auto-whitelist validation failed: …`，或类似 `Swapstring from_amount 30 does not match quote amount 31.` 的信息
+
+    **原因：** 在本地节点白名单之前，CLI 会用你接受的报价校验 swapstring。不匹配说明这个 swapstring 属于另一笔交换，或者报价已经变了。
+
+    **解决办法：**
+    1. 重新执行 `swap atomic init`，并使用同一次响应里的 swapstring 与 payment hash —— 不要跨次混用
+    2. 重新报价后不要复用旧的 swapstring
+    3. `Maker returned no swap payload for --payment-hash; refusing to auto-whitelist.` 表示 maker 没有该 payment hash 对应的交换：用 `kaleido swap atomic status <payment-hash>` 核对
+  </Accordion>
+
+  <Accordion title="execute 失败，因为交换从未被加入白名单" icon="list-check">
+    **症状：** `swap atomic init` 成功，`swap atomic execute` 失败
+
+    **原因：** maker 结算之前，taker 节点必须先接受这笔交换，而这一步发生在你的节点上，不在 maker 那边。
+
+    **解决办法：** 三个步骤必须按顺序执行。
+
+    ```bash
+    kaleido swap atomic init BTC/USDT --to-amount 5
+    kaleido node swap whitelist --swapstring '<swapstring>'
+    kaleido swap atomic execute --swapstring '<swapstring>' --taker-pubkey <pubkey> --payment-hash <hash>
+    ```
+
+    也可以交给 CLI：给 `execute` 加上 `--auto-whitelist`，或直接用 `kaleido swap atomic run <pair>`。
+  </Accordion>
+
+  <Accordion title="execute 之后交换一直挂起" icon="clock-rotate-left">
+    **症状：** `execute` 已返回，但资产没有到账
+
+    **解决办法：**
+    1. 轮询 maker 一侧：`kaleido swap atomic status <payment-hash>`
+    2. 轮询你的节点一侧：`kaleido node swap status <payment-hash> --taker`
+    3. 列出节点已知的交换：`kaleido node swap list`
+    4. 推进待处理的 RGB 转账：`kaleido asset refresh`
+
+    最常见的原因是你发送那一侧的出向容量不足。用 `kaleido channel list` 检查该资产的容量，而不只是看总余额。
+  </Accordion>
+</AccordionGroup>
+
+## 脚本与自动化 {#scripting-and-automation}
+
+<AccordionGroup>
+  <Accordion title="命令卡住不返回" icon="pause">
+    **症状：** 脚本停在那里，没有任何输出
+
+    **原因：** 命令在等待一个没人会回答的交互提示。
+
+    **解决办法：** 加上 `--agent`，它会把所有提示变成报错：
+
+    ```bash
+    kaleido --agent --json wallet balance
+    ```
+
+    这样你会得到明确的拒绝信息，例如 `PAIR argument is required in non-interactive mode.` 或 `<option> is required in non-interactive mode.`，直接指出缺了什么。
+  </Accordion>
+
+  <Accordion title="--yes is required in non-interactive mode" icon="check-double">
+    **症状：** `--yes is required in non-interactive mode to accept the quoted price.`、`… to accept the RFQ price.`、`… to pay the order.`，或它们的 JSON 模式变体
+
+    **原因：** 任何花钱或接受价格的操作都会请求确认，而此时没人可以确认。
+
+    **解决办法：**
+    1. 确认参数无误后加上 `--yes`
+    2. 先用 `kaleido market quote` 或 `kaleido channel order estimate-fees` 核价，再带 `--yes` 执行
+    3. `kaleido node clean` 与 `kaleido config reset` 同样接受 `--yes`
+  </Accordion>
+
+  <Accordion title="互斥标志" icon="code-branch">
+    **症状：** `Must specify exactly one of --accept or --reject`、`Must specify at most one of --taker or --maker`，或 `Specify exactly one of --onchain or --offchain in non-interactive mode.`
+
+    **原因：** 这些是选择而不是开关，两个都不给或都给时，CLI 拒绝猜测。
+
+    **解决办法：** 只传其中一个。交互模式下两个都省略时，CLI 会改为询问。
+  </Accordion>
+</AccordionGroup>
+
+## 调试
+
+当报错信息不足以定位问题时，从 CLI 自己的视角逐层向外排查：
+
+```bash
+kaleido config show                              # 当前使用的 API 与节点 URL
+kaleido node list                                # 有哪些环境，哪个节点生效
+kaleido node ps <name>                           # 容器状态
+kaleido node logs <name> --service rgb_node_1 --no-follow
+kaleido node info                                # 节点是否可达且已解锁
+kaleido --json <失败的命令>                       # 原始 API 响应
+```
+
+同时检查 `echo $KALEIDO_NODE_URL` 与 `echo $KALEIDO_API_URL`：导出的环境变量会覆盖保存的配置，而且很容易被忘记。
+
+## 获取帮助
+
+如果遇到的是疑问而不是报错，请查阅[常见问题](/cn/cli/faq)；上游文档与相关链接见[更多资源](/cn/cli/additional-resources)。
+
+其他情况请通过下面你偏好的渠道反馈问题，并附上：
+
+1. CLI 的安装方式，以及 `uv tool list` 的输出（没有 `--version` 标志）
+2. Python 版本（`python --version`）与操作系统
+3. 你执行的完整命令，以及加上 `--json` 后的输出
+4. 节点是本地 Docker 环境还是远程节点，以及所在网络
+5. `kaleido config show` 与 `kaleido node ps` 的输出，去掉其中的密码
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-cli/issues">
+    在相应的仓库中报告缺陷。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

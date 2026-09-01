@@ -1,0 +1,133 @@
+---
+title: "KaleidoSwap 桌面应用故障排查"
+sidebarTitle: "故障排查"
+description: "解决 KaleidoSwap 桌面应用中交易失败、钱包恢复和 LSP 连接等常见问题，提供逐步排查方法与技术支持渠道。"
+---
+
+## 交易
+
+<AccordionGroup>
+  <Accordion title="交易失败该怎么办？" icon="arrows-rotate">
+    **现象**：原子交换未能完成。
+
+    **解决办法**：
+    1. 检查通道流动性
+    2. 核对 RGB 资产详情
+    3. 确认节点已正常同步
+    4. 如问题持续，请联系支持
+  </Accordion>
+
+  <Accordion title="无法输入想要的通道容量" icon="sliders">
+    **现象**：「通道容量」(Channel Capacity) 字段拒绝手动输入，或只接受以 “50000” 开头的数值。
+
+    **原因**：50,000 聪是最小通道容量，该字段会在你输入时按这个下限校验。
+
+    **解决办法**：选中该字段的全部内容，一次性重新输入完整数字，而不要逐位修改——例如全选后直接输入 `500000`，而不是去改动已有数值的开头几位。只要不低于 50,000 聪，任何金额都会被接受。
+  </Accordion>
+</AccordionGroup>
+
+## 钱包
+
+<AccordionGroup>
+  <Accordion title="我该如何恢复钱包？" icon="wallet">
+    恢复钱包的步骤：
+    1. 使用你此前创建的备份文件
+    2. 用你的密码解密备份文件
+    3. 等待节点同步完成
+  </Accordion>
+</AccordionGroup>
+
+## 连接 {#connectivity}
+
+<AccordionGroup>
+  <Accordion title="无法连接到 LSP" icon="link-slash">
+    **现象**：出现关于 LSP 连接的错误提示，或无法开通通道。
+
+    **解决办法**：
+    1. 检查网络连接是否稳定
+    2. 核对 LSP 地址——默认为 `https://api.mutinynet2.kaleidoswap.com/`，位于「设置」(Settings) → 「做市方与 LSP 设置」(Maker & LSP Settings)
+    3. 检查防火墙/VPN 设置；需要开放的端口为 9735（闪电 P2P）和 3001（节点 API）
+    4. 查看该 LSP 的状态页面，或在有其他 LSP 可选时切换一个
+  </Accordion>
+
+  <Accordion title="Windows 上无法在本地运行 RGB Lightning Node" icon="ban">
+    **现象**：Windows 上没有运行本地节点的选项，或本地节点设置失败。
+
+    **原因**：RGB Lightning Node 集成尚未在 Windows 上获得完整的原生支持。
+
+    **解决办法**：
+    1. 改为连接**远程节点**——在 Linux 或 macOS 上自行托管，或在 Docker 容器中运行并远程连接。两种方式都可参见[节点托管](/cn/desktop-app/getting-started/node-hosting)
+    2. 或使用 [ThunderStack](/cn/desktop-app/getting-started/node-hosting#option-3-hosted-provider-thunderstack) 这类专业托管方案
+    3. 通过远程连接使用交易和钱包功能的方式完全相同——受影响的只有本地节点托管
+  </Accordion>
+
+  <Accordion title="我自行托管的节点无法启动" icon="server">
+    **现象**：节点在启动过程中退出，或桌面应用无法访问它的 API。
+
+    **检查项**：
+    1. 确认 Bitcoin Core 正在运行，且节点能访问所配置的 RPC 主机、端口、用户名和密码
+    2. 确认所配置的索引器和 RGB proxy 接口端点在线
+    3. 查看节点日志中出现的第一条启动错误，修正相关连接设置后重启
+  </Accordion>
+
+  <Accordion title="桌面应用无法连接到我的远程节点" icon="plug-circle-xmark">
+    **现象**：应用提示远程节点不可达，或始终处于未连接状态。
+
+    **检查项**：
+    1. 在**「设置」>「节点连接」** (Settings > Node Connection) 中核对节点地址，并确认节点正在运行且已解锁
+    2. 确保服务器防火墙放行节点 API 端口（默认：`3001`）以及 `9735` 上的闪电对等节点流量
+    3. 如果你使用了 VPN、反向代理或隧道，请确认它会把流量转发到应用中配置的同一地址和端口
+  </Accordion>
+
+  <Accordion title="我的节点卡在同步状态" icon="arrows-rotate">
+    **现象**：节点持续处于同步状态，钱包或通道操作不可用。
+
+    **检查项**：
+    1. 等 Bitcoin Core 完成同步后再重试
+    2. 检查所配置的 Electrum 或 Esplora 索引器是否已追上所选网络的进度
+    3. 确认节点、比特币后端和索引器使用的是同一网络
+  </Accordion>
+
+  <Accordion title="Mutinynet 节点或交易无法正常工作" icon="triangle-exclamation">
+    **现象**：signet 节点无法连接，或交易在 Mutinynet 上不确认。
+
+    **检查项**：
+    1. 使用支持 Mutinynet/signet 的比特币构建版本和 Electrs 配置
+    2. 确认节点配置了 `NETWORK=signet` 以及正确的 Mutinynet 种子节点
+    3. 在 [Mutinynet 浏览器](https://mutinynet.com/)上查看网络状态和交易确认情况
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是疑问而不是报错，请查看[常见问题](/cn/desktop-app/support/faq)；上游文档与相关链接见[更多资源](/cn/desktop-app/support/additional-resources)。
+
+其他情况请通过下方任一渠道反馈问题，并附上以下信息：
+
+1. 你的操作系统及版本（macOS、Windows 或 Linux）
+2. KaleidoSwap 桌面应用版本
+3. 节点类型（本地或远程）及版本
+4. 复现步骤
+5. 错误信息或截图
+6. 日志文件：
+   - macOS：`~/Library/Logs/com.kaleidoswap.dev/`
+   - Windows：`%APPDATA%\com.kaleidoswap.dev\logs`
+   - Linux：`~/.local/share/com.kaleidoswap.dev/logs`
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/desktop-app/issues">
+    在对应的代码仓库中反馈 bug。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新版 KaleidoSwap 桌面应用。
+</Card>

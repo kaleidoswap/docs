@@ -1,0 +1,71 @@
+---
+title: "AI 工具：更多资源"
+sidebarTitle: "更多资源"
+description: "KaleidoSwap AI 工具的相关链接：各个源码仓库、MCP 与闪电付费 API 的协议规范，以及可用的支持渠道。"
+---
+
+## 源码仓库
+
+每一种 AI 接入方式都在 [KaleidoSwap 组织](https://github.com/kaleidoswap)下开源。
+
+<CardGroup cols={2}>
+  <Card title="kaleido-agent" icon="robot" href="https://github.com/kaleidoswap/kaleido-agent">
+    自主代理本体、它的仪表盘与状态 API，以及每个循环加载的 `skills/` 目录。
+  </Card>
+  <Card title="kaleido-mind" icon="brain" href="https://github.com/kaleidoswap/kaleido-mind">
+    本地端引擎：分层漏斗、recipe 引擎、工具契约、记忆与检索，以及评测框架。
+  </Card>
+  <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
+    把所有领域组合到一条连接背后的统一网关。已发布到 npm。
+  </Card>
+  <Card title="Rate" icon="mobile" href="https://github.com/kaleidoswap/Rate">
+    以语音控制承载 KaleidoMind 的 React Native 移动钱包。
+  </Card>
+</CardGroup>
+
+## 协议规范
+
+<CardGroup cols={2}>
+  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
+    每个 KaleidoSwap MCP 服务器都实现的工具协议。
+  </Card>
+  <Card title="RGB 协议" icon="gem" href="https://docs.rgb.info">
+    RGB 工具背后的客户端验证与资产接口。
+  </Card>
+  <Card title="RGB Lightning Node" icon="bolt" href="https://github.com/RGB-Tools/rgb-lightning-node">
+    `wdk_*` 工具所驱动的节点，附带它自己的 OpenAPI 参考。
+  </Card>
+  <Card title="QVAC SDK" icon="microchip" href="https://www.npmjs.com/package/@qvac/sdk">
+    KaleidoMind 用于 LLM、向量嵌入、语音转文字和文字转语音的本地端推理运行时。
+  </Card>
+</CardGroup>
+
+## 获取帮助
+
+如果遇到的是报错，请查看[故障排查](/cn/ai-tools/troubleshooting)；如果是疑问，请查看[常见问题](/cn/ai-tools/faq)。
+
+其他情况请通过下面任一渠道反馈问题，并附上：
+
+1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
+2. 你所在的网络（regtest、signet 或主网）
+3. 失败的工具名称和报错文本
+4. 宿主与运行时版本（MCP 客户端、Node.js）
+5. 你的配置，并移除其中的种子和所有密钥
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap">
+    在相关仓库提交缺陷报告。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="AI 工具产品页" icon="sparkles" href="https://kaleidoswap.com/products/ai-tools">
+  产品概览，以及每个 skill 的可阅读与可下载版本。
+</Card>

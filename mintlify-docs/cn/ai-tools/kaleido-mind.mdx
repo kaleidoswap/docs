@@ -1,0 +1,79 @@
+---
+title: "KaleidoMind：比特币钱包的本地端 AI 引擎"
+sidebarTitle: "KaleidoMind"
+description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分层请求漏斗、跨宿主统一的工具契约，以及内置的花费前确认机制。"
+---
+
+[KaleidoMind](https://github.com/kaleidoswap/kaleido-mind)（`@kaleidorg/mind`）是面向多 L2 比特币钱包的本地优先代理式推理与工具调用引擎。它是一个纯库：负责代理循环的 `Engine`、支持可插拔 `ToolSource` 的 `ToolRegistry`、一个 `SkillRegistry`，以及注入式的 `LLMProvider`，在手机和笔记本上的运行方式完全一致。
+
+它的设计出发点是一个硬性约束：本地端的小模型在多步规划上既慢又不可靠。KaleidoMind 索性不让它们做这件事。
+
+<Note>
+  KaleidoMind 不会独立运行，它是一个由宿主嵌入的库：[Rate 移动钱包](https://github.com/kaleidoswap/Rate)（React Native，完全本地端 QVAC）、[桌面应用](/cn/desktop-app/getting-started/introduction)的 Tauri sidecar，或者一套评测与基准测试框架。**[KaleidoAgent](/cn/ai-tools/kaleido-agent) 目前并未使用这个库**，它有自己独立的代理循环。详见下文[与 KaleidoAgent 的关系](#relationship-to-kaleidoagent)。
+</Note>
+
+## 分层漏斗
+
+大多数请求根本不会到达模型。
+
+| 层级 | 示例 | 成本 |
+|------|---------|------|
+| `T0` 快速通道 | "balance"、"address"、"btc price" | 零次推理，即时返回 |
+| `T2` recipe | "pay bob 3 EUR"、"buy 0.001 BTC" | 约一次推理（模型可协助提取参数槽），随后是确定性链路，需确认才继续 |
+| `T1` 代理循环 | 其余全部请求 | 由 skill 限定范围的 LLM，可通过 P2P 把困难或新型链路委托给已配对桌面端的更大模型 |
+
+- **T0，快速通道。** 确定性模式匹配，零推理。余额查询、地址、现货价格。
+- **T2，recipe 引擎。** 由 skill 承载有序的执行计划（解析、定价、换算、确认、发送），模型只负责填充参数槽。这让多步流程即使在约 0.6B 参数的模型上也足够可靠，而不是要求模型自己规划整条链路。
+- **T1，完整代理循环。** 其余全部请求，范围限定在该 skill 自己的工具清单内，这样小模型永远不必一次性面对全部工具。发现类流程（例如 merchant-finder）则有意更多依赖模型的自然语言理解能力。
+
+## 统一的工具契约，多种传输方式
+
+模型在任何地方看到的工具名称和 schema 都完全相同，只有*工具如何执行*会因接入方式而异：
+
+| 接入方式 | 工具执行方式 | 花费前确认 |
+|---------|----------------|----------------------|
+| 移动端（Rate） | 进程内 WDK 适配器（完全本地端、私密）；可选通过 P2P 委托给已配对的桌面端 | 确认面板 |
+| 桌面端 | 以 stdio 工具源方式接入 `kaleido-mcp`（命名空间为 `spark_*`/`rln_*`/`kaleidoswap_*`） | 确认对话框 |
+| 评测 / CLI | 预置的桩处理器，用于可复现的基准测试 | 自动批准（同时断言把关已触发） |
+
+规范的工具契约以 `ToolDef[]` 的形式定义在 core 中，其 `spend` 标记会映射为 `requiresConfirmation: true`。每个会动用资金的工具都带有这个标记，**Engine 会在执行前暂停并调用宿主的 `onConfirm`**，因此模型永远无法绕过花费把关。确认面板上的复述文本是确定性的、以语音优先方式生成（例如 *"Send 4,800 sats to bob over Spark. Confirm?"*），由已解析的调用内容拼装，而不是由模型生成，所以单位或收款方写错时会显示出来，便于被发现。
+
+### 各分层的钱包工具
+
+| 分层 | 状态 | 工具 |
+|-------|--------|-------|
+| Spark | 已上线 | `spark_get_balance` · `spark_get_address` · `spark_get_onchain_address` · `spark_create_invoice` · `spark_pay_invoice` 🔒 · `spark_send` 🔒 |
+| RLN / RGB | 已上线 | `rln_get_balances` · `rln_get_node_info` · `rln_list_channels` · `rln_create_ln_invoice` · `rln_create_rgb_invoice` · `rln_pay_invoice` 🔒 · `rln_send_asset` 🔒 |
+| Arkade | 已上线 | `arkade_get_balance` · `arkade_get_address` · `arkade_send` 🔒 |
+| Liquid | 计划中，尚未实现 | `liquid_get_balance` · `liquid_create_invoice` · `liquid_send` 🔒（契约中已定义类型，但还没有适配器） |
+
+此外还有跨层的路由工具：`get_balances(layer?)`、`resolve_contact(name)`、`get_price(asset?, fiat?)`、`fiat_to_sats(amount, currency)`、`get_swap_quote`/`execute_swap`，会自动选择结算通道的统一 `send_payment(asset, amount, to, layer?)`，以及与之对应的收款工具 `create_invoice(asset?, amount?, layer?)`。
+
+### KaleidoSwap 交易与 LSPS1
+
+DEX 交易（`kaleidoswap_get_quote`、`kaleidoswap_place_order`、`kaleidoswap_atomic_init`/`execute`/`status`）与不绑定特定 LSP 的通道订单（`lsp_get_info`、`lsp_get_network_info`、`lsp_estimate_fees`、`lsp_create_order`、`lsp_get_order`）各有独立的契约。原子交换链路以单个需确认的 recipe（`kaleidoswapAtomicRecipe`）运行：先报价，用户确认一次后在做市方一侧初始化，读取节点的 pubkey，以接单方身份把 HTLC 加入白名单，然后执行。
+
+## Skills
+
+Skills 是符合 Agent Skills 规范的操作手册（`SKILL.md` 加渐进式披露），用于限定哪些工具可见，并且在代理层级中还承载手册本身。内置的 skills 包括各钱包的操作手册（`spark-wallet`、`rgb-lightning-node`）、交易与通道（`kaleido-trading`、`kaleido-lsps`、`flashnet-swaps`、`channel-manager`、`liquidity-optimizer`）、投资组合自动化（`portfolio-manager`、`dca`）、消费与数据（`bitrefill`、`paid-data`、`wallet-assistant`），以及一个更依赖模型的商户发现 skill（`merchant-finder`，通过可插拔的嵌入选择器结合地理位置与 BTC Map）。支付与收款流程以 T2 recipe 而非 skill 的形式提供。
+
+## QVAC：本地端推理
+
+LLM、嵌入、语音转文字和文字转语音推理全部通过 [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) 完成，默认在本地端运行，较重的任务也可以委托给用户明确配对并自行掌控的桌面端。它以 `@kaleidorg/mind/qvac` 子路径发布，使该 SDK 保持为 peer 依赖，而不是 core 的硬性依赖。记忆与 RAG（长期回忆、钱包历史检索、商户发现）同样走 QVAC 的嵌入能力，并通过近重复内容合并来避免记忆膨胀。
+
+## 运行环境
+
+| 宿主 | 角色 |
+|------|------|
+| [Rate](https://github.com/kaleidoswap/Rate) | React Native 移动钱包，内含本地 LLM、语音转文字、神经网络文字转语音，以及免手操作的语音循环 |
+| [桌面应用](/cn/desktop-app/getting-started/introduction) | 通过 Tauri sidecar（`apps/provider`）把引擎作为应用内聊天运行，该 sidecar 以 stdio 工具源方式接入 `kaleido-mcp`，同时还能作为手机的配对推理节点 |
+
+最快的体验方式是桌面应用。[下载最新版本](https://kaleidoswap.com/downloads)，然后按照[安装指南](/cn/desktop-app/getting-started/installation)操作。
+
+## 与 KaleidoAgent 的关系 {#relationship-to-kaleidoagent}
+
+[KaleidoAgent](/cn/ai-tools/kaleido-agent) 是一个独立的常驻 Node.js 服务（Nanobot 运行时、定时调度、Telegram），它早于 KaleidoMind 的 `Engine`，并且**尚未**迁移到该引擎上，而是直接对接 Anthropic 或 OpenAI 运行自己的代理循环。两者在概念上是同一个思路（在工具注册表之上运行带确认把关的代理循环）的两次实现。让二者收敛 —— 即由 KaleidoAgent 承载 KaleidoMind 的 `Engine` 而不再用自己的循环 —— 是一条已知但尚未启动的整合路径；在那之前，请把它们当作两个都消费 `kaleido-mcp` 的独立系统。
+
+## 发布与子路径
+
+从 `packages/core` 以 `@kaleidorg/mind` 发布，包含这些子路径：`./mcp`（MCP 工具源辅助函数）、`./skills`（skill 加载器）、`./logger` 和 `./qvac`（本地端推理适配器）。npm 上还有 `apps/provider`，即桌面应用嵌入的 Tauri 桌面 sidecar，包名为 `@kaleidorg/mind-provider`。`apps/cli` 中的 CLI 供仓库内的终端与评测使用，不对外发布。

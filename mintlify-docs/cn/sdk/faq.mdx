@@ -1,0 +1,108 @@
+---
+title: "KaleidoSDK 常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoSDK 的常见问题：语言选择、maker 与 RLN 两个子客户端、密钥保管、可用网络、版本兼容、金额单位以及浏览器端使用"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="TypeScript 还是 Python —— 我该用哪个？" icon="code">
+    看你的技术栈。两者都是独立实现，类型都由同一份 [OpenAPI 规范](https://github.com/kaleidoswap/specs)生成，因此 API 结构、子客户端和错误层级在两者之间几乎完全一致 —— 少数差异（速率限制处理、节点缺失错误）已在[故障排查](/cn/sdk/troubleshooting#error-reference)中说明。本文档中的每个示例都同时给出两种语言。
+
+    运行环境要求：TypeScript 需要 **Node.js 18+**，Python 需要 **Python 3.10+**。Rust 核心正在开发中。
+  </Accordion>
+
+  <Accordion title="client.maker 和 client.rln 有什么区别？" icon="code-compare">
+    它们是一笔交换的两侧，大多数流程都会同时用到。
+
+    | 子客户端 | 通信对象 | 覆盖范围 |
+    |------------|----------|--------|
+    | `client.maker` | KaleidoSwap 做市方 | 报价、询价流式推送、原子交换的初始化与执行、LSPS1 通道订单 |
+    | `client.rln` | 你自己的 RGB Lightning Node | 钱包与 RGB 资产、通道、发票、交换白名单 |
+
+    典型的原子交换会通过 `client.maker` 获取报价并初始化，在 `client.rln` 上把 `swapstring` 加入白名单，然后再回到 `client.maker` 执行。参见[如何进行交换](/cn/sdk/how-to-swap)。
+  </Accordion>
+
+  <Accordion title="我必须自己运行 RGB Lightning Node 吗？" icon="server">
+    **对原子交换路径来说，是的。** 持有密钥、把 `swapstring` 加入白名单并路由 HTLC 的正是接单方自己的节点。这也正是做市方从不托管资产的原因 —— 流程中根本没有让它托管的环节。
+
+    你可以在本地运行节点，也可以让 SDK 指向一个由你控制的远端节点。部署方式请参见[节点托管](/cn/desktop-app/getting-started/node-hosting)。
+  </Accordion>
+
+  <Accordion title="SDK 会持有密钥或托管资产吗？" icon="key">
+    **不会。** SDK 只是覆盖两套 HTTP API 的带类型客户端。密钥保存在你所指向的 RGB Lightning Node 中，签名也在那里完成。SDK 无法转移任何未经你的节点授权的资金。
+  </Accordion>
+
+  <Accordion title="我可以在哪些网络上开发？" icon="network-wired">
+    signet（MutinyNet）目前已经上线；主网即将推出。
+
+    - **signet** —— `https://api.signet.kaleidoswap.com`，条件贴近真实环境，是上主网前的最佳选择
+
+    把它作为 `baseUrl` / `base_url` 传入即可；`/api/v1` 由 SDK 自动追加。完整列表见[可用环境](/cn/sdk/installation#available-environments)。
+  </Accordion>
+
+  <Accordion title="怎么知道哪个 SDK 版本对应哪个 API？" icon="check-double">
+    需要关注两套彼此独立的兼容性：
+
+    - [Maker API 兼容性](/cn/sdk/maker-api-compatibility) —— SDK 始终跟随最新的 Maker API 版本，因此不需要管理版本配对
+    - [RLN API 兼容性](/cn/sdk/rln-api-compatibility) —— SDK 是针对某个特定的 RGB Lightning Node API 版本生成的
+
+    两者都必须对齐。如果某个调用返回的不是错误，而是意料之外的数据结构，首先要检查的就是版本不匹配。
+  </Accordion>
+
+  <Accordion title="为什么我的金额差了好几个数量级？" icon="calculator">
+    API 使用的是**原始整数金额**，而不是小数。换算比例由资产的精度决定，而各个资产的精度并不相同 —— BTC 和 USDT 就不一样。
+
+    请使用辅助函数，不要自己做这套算术：
+
+    ```typescript
+    import { parseRawAmount } from 'kaleido-sdk';
+
+    const sats = parseRawAmount(0.001, 8);   // 100000
+    const usdt = parseRawAmount(10.50, 2);   // 1050
+    ```
+
+    完整的函数集（包括资产映射）见[工具函数](/cn/sdk/utilities)。
+  </Accordion>
+
+  <Accordion title="我一定要用 WebSocket 吗？" icon="bolt">
+    不必。WebSocket 用于**流式接收实时报价**并自动重连；如果你要展示不断变动的价格或据此做出反应，它才有意义。一次性的交换用 REST 取一次报价就够了。
+
+    流式 API 请参见 [WebSocket](/cn/sdk/websocket)。
+  </Accordion>
+
+  <Accordion title="我能直接从浏览器调用 SDK 吗？" icon="globe">
+    面向做市方 API 不行。大多数接口端点都禁用了 CORS，因此浏览器端应用需要自建后端来代理这些调用。请把 SDK 放在服务端，只向前端暴露必要的能力。
+  </Accordion>
+
+  <Accordion title="我应该如何处理错误和重试？" icon="triangle-exclamation">
+    所有 SDK 异常都继承 `KaleidoError`，因此只捕获这一个类型就能覆盖整个层级。每个错误都提供 `isRetryable()` / `is_retryable()`，用来判断重试是否安全 —— 不要盲目重试，因为有些失败无论重试多少次都不会成功。
+
+    完整的错误层级和带退避的重试模式见[故障排查](/cn/sdk/troubleshooting#error-reference)，如何将其融入生产级客户端见[最佳实践](/cn/sdk/best-practices)。
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请查阅[故障排查](/cn/sdk/troubleshooting)；上游文档与相关链接见[更多资源](/cn/sdk/additional-resources)。
+
+其他情况请通过下面你偏好的渠道反馈问题，并附上：
+
+1. SDK 版本（`getVersion()` / `get_version()`）
+2. 语言与运行时版本（Node.js / Python）
+3. 错误信息与堆栈跟踪
+4. 可复现问题的最小代码
+5. 运行环境（signet / 主网）
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
+    在相应的仓库中报告缺陷。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>

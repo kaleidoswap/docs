@@ -1,0 +1,234 @@
+---
+title: '命令参考'
+sidebarTitle: '命令'
+description: 'KaleidoCLI 的完整命令地图，包含嵌套命令组和最重要的标志，涵盖节点、钱包、资产、通道、市场与交换操作'
+---
+
+## 根命令
+
+```bash
+kaleido [global options] <command> [subcommand] [args]
+```
+
+### 全局选项
+
+| 选项 | 含义 |
+|-------|---------|
+| `--json` | 输出原始 JSON |
+| `--agent` | 关闭提示，适用于非交互式场景 |
+| `--node-url` | 覆盖已配置的节点 URL |
+| `--api-url` | 覆盖已配置的 API URL |
+| `--install-completion` | 安装 shell 补全 |
+| `--show-completion` | 打印 shell 补全内容 |
+
+CLI 没有 `--version` 标志。全局标志必须放在子命令之前：`kaleido --json market pairs`，而不是 `kaleido market pairs --json`。
+
+## 顶层命令
+
+| 命令 | 说明 |
+|--------|---------|
+| `setup` | 首次运行配置，并可选择创建本地节点 |
+| `node` | 基于 Docker 的 RLN 环境生命周期与钱包访问 |
+| `wallet` | BTC 钱包操作 |
+| `asset` | RGB 资产管理与发行 |
+| `channel` | 通道管理与 LSP 订单流程 |
+| `peer` | 对等节点连通性 |
+| `payment` | 闪电与 RGB+LN 支付 |
+| `market` | 市场发现、报价和路由 |
+| `swap` | 由做市商支撑的原子交换流程 |
+| `config` | 已存储的 CLI 配置 |
+
+## `setup`
+
+| 命令 | 备注 |
+|--------|-------|
+| `kaleido setup` | 非交互式默认行为：以默认设置创建并启动一个本地 mutinynet 节点 |
+| `kaleido setup signetcustom` | 在显式指定的网络上执行同样的流程（位置参数，默认为 `mutinynet`） |
+| `kaleido setup mutinynet --env-name taker-1` | 自定义环境名称 |
+| `kaleido setup --mode market --defaults` | 仅市场模式设置 |
+| `kaleido setup --mode local --create-node --defaults` | 本地节点设置 |
+
+主要标志：`--mode`、`--defaults`、`--api-url`、`--node-url`、`--create-node`、`--spawn-dir`、`--env-name`、`--node-count`、`--start`
+
+## `node`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido node create [name]` | 创建命名环境 |
+| `kaleido node list` | 列出环境及节点 URL |
+| `kaleido node use <name> [--node N]` | 选择当前活动节点 |
+| `kaleido node up <name>` | 启动容器 |
+| `kaleido node stop <name>` | 停止容器 |
+| `kaleido node down <name>` | 移除容器和网络 |
+| `kaleido node ps <name>` | 显示容器状态 |
+| `kaleido node logs <name>` | 实时输出日志（`--no-follow` 打印已有日志后退出） |
+| `kaleido node clean <name>` | 删除数据卷（`--yes` 跳过确认提示） |
+| `kaleido node info` | 显示节点详情 |
+| `kaleido node network` | 显示网络信息 |
+| `kaleido node init` | 初始化钱包 |
+| `kaleido node unlock` | 解锁钱包（`--chain-sync block\|transaction`、`--bitcoind-*`、`--indexer-url`、`--proxy-endpoint`、`--announce-alias`、`--announce-address`） |
+| `kaleido node lock` | 锁定钱包 |
+| `kaleido node shutdown` | 优雅关闭节点 |
+
+### `node swap`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido node swap pubkey` | 打印接单方公钥 |
+| `kaleido node swap init` | 启动本地的做市方初始化交换流程（`--from-asset`、`--qty-from`、`--to-asset`、`--qty-to`、`--timeout`） |
+| `kaleido node swap whitelist --swapstring '<swapstring>'` | 在接单方一侧将某个交换加入白名单 |
+| `kaleido node swap execute` | 执行本地节点交换（`--swapstring`、`--payment-secret`、`--taker-pubkey`） |
+| `kaleido node swap status <payment-hash>` | 查询本地节点交换状态（`--taker` 或 `--maker`） |
+| `kaleido node swap list` | 列出节点已知的交换 |
+
+## `wallet`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido wallet address` | 新的 BTC 存入地址 |
+| `kaleido wallet balance` | BTC 余额（`--skip-sync`） |
+| `kaleido wallet send <amount> <address>` | 发送 BTC（`--fee-rate`、`--skip-sync`） |
+| `kaleido wallet utxos` | 列出 UTXO（`--skip-sync`） |
+| `kaleido wallet create-utxos` | 创建供 RGB 使用的 UTXO（`--num/-n`、`--size`、`--up-to`、`--fee-rate`、`--skip-sync`） |
+| `kaleido wallet transactions` | 交易历史 |
+| `kaleido wallet backup <path>` | 备份钱包数据 |
+| `kaleido wallet restore <path>` | 恢复钱包数据 |
+| `kaleido wallet change-password` | 修改钱包密码（`--old-password`、`--new-password`） |
+| `kaleido wallet estimate-fee` | 估算费率（`--blocks/-b`，默认 6） |
+
+## `asset`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido asset list` | 列出资产 |
+| `kaleido asset balance <asset-id>` | 资产余额 |
+| `kaleido asset metadata <asset-id>` | 资产元数据 |
+| `kaleido asset invoice <asset-id>` | 创建 RGB 发票（`--amount/-a`、`--min-confirmations`、`--duration`、`--transport-endpoint`） |
+| `kaleido asset send <asset-id> <amount> <invoice>` | 发送 RGB 资产（`--fee-rate`、`--min-confirmations`、`--donation`、`--transport-endpoint`、`--witness-amount-sat`、`--witness-blinding`、`--skip-sync`） |
+| `kaleido asset send-batch <json-file>` | 依据 JSON 文件向多个接收方发送 |
+| `kaleido asset transfers <asset-id>` | 转账历史 |
+| `kaleido asset refresh` | 刷新待处理的转账（`--skip-sync`） |
+| `kaleido asset sync` | 同步 RGB 钱包 |
+| `kaleido asset fail-transfers` | 将待处理的转账标记为失败（`--batch-idx`、`--no-asset-only`、`--skip-sync`） |
+| `kaleido asset media <digest>` | 按 SHA-256 摘要获取资产媒体 |
+
+### `asset issue`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido asset issue nia` | 发行固定供应量的同质化资产 |
+| `kaleido asset issue cfa` | 发行可收藏的同质化资产 |
+| `kaleido asset issue uda` | 发行独一无二的数字资产 |
+
+所有 `issue` 子命令都接受 `--precision` 指定小数位数，且 `--supply` 以最小的原始单位表示。`cfa` 与 `uda` 还接受 `--description` 和 `--file`。
+
+## `channel`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido channel list` | 列出通道 |
+| `kaleido channel open <peer>` | 开通通道（`--capacity/-c`、`--push-msat`、`--asset-id`、`--asset-amount`、`--push-asset-amount`、`--public/--private`、`--with-anchors`、`--fee-base-msat`、`--fee-proportional-millionths`、`--temporary-channel-id`） |
+| `kaleido channel close <channel-id>` | 关闭通道（需要 `--peer <pubkey>`；`--force` 为单方面关闭） |
+
+### `channel order`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido channel order create [client-pubkey]` | 创建 LSP 通道订单（公钥默认为本地节点；`--yes` 直接接受获取到的询价价格） |
+| `kaleido channel order get <order-id>` | 获取订单状态（`--access-token`） |
+| `kaleido channel order pay <order-id>` | 支付通道订单（`--access-token`；非交互式使用时传入 `--onchain` 或 `--offchain`，以及 `--fee-rate` 和 `--yes`） |
+| `kaleido channel order decide <order-id>` | 提交费率决定（`--accept` 或 `--reject`、`--access-token`） |
+| `kaleido channel order estimate-fees` | 估算通道订单费用（`--lsp-balance`、`--client-balance`、`--asset-id`、`--lsp-asset-amount`、`--client-asset-amount`、`--expiry-blocks`、`--token`、`--rfq-id`） |
+
+### `channel lsp`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido channel lsp info` | LSP 元数据与选项 |
+| `kaleido channel lsp network-info` | LSP 网络信息 |
+
+## `peer`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido peer list` | 列出对等节点 |
+| `kaleido peer connect <peer>` | 连接到对等节点 |
+| `kaleido peer disconnect <pubkey>` | 断开与对等节点的连接 |
+
+## `payment`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido payment invoice` | 创建 BOLT11 或 RGB+LN 发票（`--expiry`，默认 3600） |
+| `kaleido payment send <invoice>` | 支付发票 |
+| `kaleido payment list` | 列出支付记录 |
+| `kaleido payment status <payment-hash>` | 支付状态 |
+| `kaleido payment decode <invoice>` | 解码发票 |
+| `kaleido payment invoice-status <invoice>` | 发票状态 |
+| `kaleido payment keysend <dest-pubkey> <amt-msat>` | 无需发票的即时闪电支付（RGB 场景使用 `--asset-id`/`--asset-amount`） |
+
+## `market`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido market assets` | 列出资产 |
+| `kaleido market pairs` | 列出交易对 |
+| `kaleido market quote <pair>` | 请求报价（`--from-amount`/`--to-amount`、`--from-layer`、`--to-layer`） |
+| `kaleido market info` | 做市商节点信息 |
+| `kaleido market routes <pair>` | 可用路由 |
+
+## `swap`
+
+### `swap atomic`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido swap atomic init <pair>` | 初始化原子交换（`--from-amount`/`--to-amount`、`--from-layer`、`--to-layer`、`--yes/-y`） |
+| `kaleido swap atomic execute` | 执行交换（`--swapstring`、`--taker-pubkey`、`--payment-hash`，省略时会提示输入；`--auto-whitelist` 会先在本地节点上加入白名单） |
+| `kaleido swap atomic status <payment-hash>` | 原子交换状态 |
+| `kaleido swap atomic run <pair>` | 运行完整的原子交换流程 |
+
+## `config`
+
+| 命令 | 说明 |
+|--------|---------|
+| `kaleido config show` | 打印当前配置 |
+| `kaleido config set <key> <value>` | 更新单个配置键 |
+| `kaleido config reset` | 将配置重置为默认值（`--yes/-y`） |
+| `kaleido config path` | 打印配置文件路径 |
+
+有效的配置键：`node-url`、`api-url`、`network`、`spawn-dir`
+
+## 金额与分层
+
+| 命令 | 金额单位 |
+|------|----------|
+| `market quote`、`swap atomic init`、`swap atomic run` | 显示单位 —— `--from-amount 0.001` 表示 0.001 BTC |
+| `asset invoice`、`asset send`、`payment *` | 原始整数单位，由资产精度决定 |
+| `wallet send`、`wallet create-utxos`、`channel open --capacity` | 聪（satoshi） |
+
+分层取值也因命令而异：`market quote` 接受 `BTC_LN`、`RGB_LN` 和 `BTC_ONCHAIN`，而 `swap atomic init` 与 `swap atomic run` 接受 `BTC_L1`、`BTC_LN`、`RGB_L1` 和 `RGB_LN`。
+
+## 短选项别名
+
+| 别名 | 选项 | 适用命令 |
+|------|------|----------|
+| `-p` | `--password` | `node init`、`node unlock`、`wallet backup`、`wallet restore` |
+| `-y` | `--yes` | `node clean`、`config reset`、`channel order create`、`channel order pay`、`swap atomic init`、`swap atomic run` |
+| `-n` | `--node` / `--num` | `node use` / `wallet create-utxos` |
+| `-s` | `--service` | `node logs` |
+| `-c` | `--capacity` | `channel open` |
+| `-a` | `--amount` / `--amount-msat` | `asset invoice` / `payment invoice` |
+| `-e` | `--expiry` | `payment invoice` |
+| `-b` | `--blocks` | `wallet estimate-fee` |
+
+## 机器可读模式
+
+每个命令组都可以与 `--json` 组合使用：
+
+```bash
+kaleido --json wallet balance
+kaleido --json market quote BTC/USDT --from-amount 0.001
+```
+
+在脚本中请同时使用 `--agent`，让缺少参数时立即报错而不是卡在提示上；对任何花钱或接受价格的操作再加上 `--yes`。详见[故障排查](/cn/cli/troubleshooting#scripting-and-automation)。

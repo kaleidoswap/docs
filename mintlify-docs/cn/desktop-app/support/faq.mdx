@@ -1,0 +1,130 @@
+---
+title: "KaleidoSwap 桌面应用常见问题"
+sidebarTitle: "常见问题"
+description: "关于 KaleidoSwap 桌面应用的常见问题解答，涵盖钱包、闪电通道、资产交换、费用与安全性，以及如何反馈问题和获取帮助"
+---
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="KaleidoSwap 桌面应用是什么？">
+    KaleidoSwap 桌面应用是一款开源桌面软件，支持在闪电网络上交易 RGB 资产。它提供了易用的界面来管理 RGB Lightning 节点，并连接闪电服务提供商（LSP）。
+  </Accordion>
+
+  <Accordion title="我可以在 KaleidoSwap 桌面应用上交易哪些资产？">
+    钱包支持全部四种 RGB 模式：NIA（非可增发资产）、CFA（收藏类可替代资产）、UDA（唯一数字资产）和 IFA（可增发可替代资产）。平台目前交易的交易对都是 NIA 资产（此前称为 RGB20）——它们是运行在比特币上的客户端验证智能合约，代表固定供应量的可替代代币。
+  </Accordion>
+
+  <Accordion title="KaleidoSwap 桌面应用是托管的吗？">
+    **不是**，KaleidoSwap 桌面应用是非托管的。你始终完全掌控自己的私钥和资产。应用提供安全的密钥管理和加密备份。
+  </Accordion>
+
+  <Accordion title="我必须自己运行 RGB Lightning 节点吗？">
+    **不必**，你有两种选择：
+    - 自己运行 RGB Lightning 节点
+    - 通过应用连接到已有的节点
+  </Accordion>
+
+  <Accordion title="交易协议是如何运作的？">
+    KaleidoSwap 桌面应用采用接单方—做市方模型进行交易：
+    1. 做市方提供流动性并设定价格
+    2. 接单方可以查看实时价格更新
+    3. 交易通过 RLN API 以原子交换方式执行
+    4. 所有交易都由闪电网络和 RGB 协议保障
+  </Accordion>
+
+  <Accordion title="为什么我不能把通道内自己那一侧的所有聪都用于交易？">
+    **粉尘储备（3,000 聪）：** 在 RGB 闪电交换中，接单方（也就是你）必须作为交换的一部分，始终向做市方发送 3,000 聪。这些聪并没有丢失——它们只是充当临时的“粉尘金额”。当做市方完成 HTLC 并把资产发回时，你会连同资产一起收回这 3,000 聪。因此，你的余额中至少要留出 3,000 聪不可用于交易，交换流程才能正常运转。
+
+    除了粉尘储备之外，可交易的数量还受你通道的出向容量限制，以及做市方为每条路由所公布的单资产限额限制。
+  </Accordion>
+
+  <Accordion title="我的资产安全性如何？">
+    KaleidoSwap 桌面应用采取了多重安全措施：
+    - 非托管架构
+    - 加密的通道备份
+    - 安全的密钥管理
+    - 无需信任的交易协议
+    - RGB 资产的客户端验证
+  </Accordion>
+
+  <Accordion title="我的交易是私密的吗？">
+    是的，KaleidoSwap 桌面应用高度重视隐私：
+    - 通道操作可以是私密的
+    - 交易详情只有参与方知晓
+    - 基础操作无需 KYC
+  </Accordion>
+
+  <Accordion title="开始交易需要准备什么？">
+    要在 KaleidoSwap 桌面应用上开始交易：
+    1. 安装桌面应用
+    2. 创建或导入钱包
+    3. 向钱包充入比特币
+    4. 开通闪电通道
+    5. 获取 RGB 资产
+  </Accordion>
+
+  <Accordion title="我该如何获取 RGB 资产？">
+    你可以通过以下方式获取 RGB 资产：
+    - 在 KaleidoSwap 桌面应用中交易
+    - 连接 RGB LSP
+    - 参与 RGB 代币分发
+  </Accordion>
+
+  <Accordion title="最低配置要求是什么？">
+    运行 KaleidoSwap 桌面应用的最低要求：
+    - 较新的操作系统（Windows、macOS、Linux）
+    - 建议 4GB 内存
+    - 稳定的网络连接
+    - 如果运行全节点，需有足够的存储空间存放区块链数据
+  </Accordion>
+
+  <Accordion title="我该如何反馈 bug？">
+    反馈 bug 的方式：
+    1. 先查看 GitHub 上已有的 issue
+    2. 提供详细的复现步骤
+    3. 附上相关日志和系统信息
+    4. 通过 GitHub issues 提交
+  </Accordion>
+
+  <Accordion title="有面向开发者的文档吗？">
+    有，开发者可以参考：
+    - [API 文档](/cn/api-reference/introduction)
+    - [RGB LSPS1 规范](/cn/api-reference/rgb-lsps1-apis)
+    - [交易协议](/cn/api-reference/swap-apis)
+  </Accordion>
+</AccordionGroup>
+
+## 获取帮助
+
+如果遇到的是报错而不是疑问，请先查看[故障排查](/cn/desktop-app/support/troubleshooting)；上游文档与相关链接见[更多资源](/cn/desktop-app/support/additional-resources)。
+
+其他情况请通过下方任一渠道反馈问题，并附上以下信息：
+
+1. 你的操作系统及版本（macOS、Windows 或 Linux）
+2. KaleidoSwap 桌面应用版本
+3. 节点类型（本地或远程）及版本
+4. 复现步骤
+5. 错误信息或截图
+6. 日志文件：
+   - macOS：`~/Library/Logs/com.kaleidoswap.dev/`
+   - Windows：`%APPDATA%\com.kaleidoswap.dev\logs`
+   - Linux：`~/.local/share/com.kaleidoswap.dev/logs`
+
+<CardGroup cols={3}>
+  <Card title="Telegram 社区" icon="telegram" href="https://t.me/kaleidoswap">
+    向社区提问。
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/desktop-app/issues">
+    在对应的代码仓库中反馈 bug。
+  </Card>
+  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
+    紧急问题的直接支持渠道。
+  </Card>
+</CardGroup>
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 和 Linux 的最新版 KaleidoSwap 桌面应用。
+</Card>

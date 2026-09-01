@@ -4,6 +4,15 @@ sidebarTitle: "Client Reference"
 description: "Full reference for KaleidoClient, MakerClient, and RlnClient, covering methods, parameters, and return types in the KaleidoSDK"
 ---
 
+## Overview
+
+`KaleidoClient` is the single entry point. You create it once, then work through its two sub-clients:
+
+- **`client.maker`** — the hosted [Maker API](/sdk/maker-api-compatibility): market data, quotes, atomic swaps, LSPS1 channel orders
+- **`client.rln`** — your own [RGB Lightning Node](/sdk/rln-api-compatibility): wallet, RGB assets, channels, invoices, payments
+
+`client.maker` needs nothing beyond `baseUrl`, while `client.rln` also requires `nodeUrl` / `node_url`. Every method below is listed in both its TypeScript and Python form.
+
 ## Client Initialization
 
 <CodeGroup>

@@ -1,17 +1,19 @@
 ---
-title: 'Maker API Compatibility'
+title: 'Maker API'
 description: "How KaleidoSDK versions track the Maker API, with the endpoint groups the SDK exposes through client.maker and how to reach them"
 ---
+
+The Maker API is hosted by KaleidoSwap and reached over the network, with no infrastructure of your own to run. It enables market data and quoting, maker-side atomic swap coordination, and LSPS1 channel ordering.
 
 ## Compatibility
 
 The SDK tracks the **latest Maker API** release: there is no version pairing to manage on this side. Keep both up to date to stay on supported endpoints and get new features as they ship.
 
 <Note>
-To check the current Maker API version and updates, refer to the [Maker API changelog](https://github.com/kaleidoswap/maker-api/releases) or your API documentation.
+For the current Maker API surface, see the [API Reference](/api-reference/introduction). The OpenAPI specification the SDK generates its types from is published in [kaleidoswap/specs](https://github.com/kaleidoswap/specs).
 </Note>
 
-## API Endpoint Groups
+## Endpoint Groups
 
 The Maker API provides the following endpoint groups:
 
@@ -25,46 +27,4 @@ The Maker API provides the following endpoint groups:
 The order-based swap endpoints (`/api/v1/swaps/orders/*`) were retired, and the matching SDK methods were removed in **0.1.13**. Use the atomic swap flow instead — see [How to Swap](/sdk/how-to-swap).
 </Note>
 
-## Using the Maker API
-
-To use Maker API features with the SDK:
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
-
-// Access Maker API through client.maker
-const assets = await client.maker.listAssets();
-const pairs = await client.maker.listPairs();
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
-});
-```
-
-```python Python
-import asyncio
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
-
-async def main():
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com"
-    )
-
-    # Access Maker API through client.maker
-    assets = await client.maker.list_assets()
-    pairs = await client.maker.list_pairs()
-    quote = await client.maker.get_quote(
-        PairQuoteRequest(
-            from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
-            to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-        )
-    )
-
-asyncio.run(main())
-```
-</CodeGroup>
+Every group is reached through `client.maker`, which needs nothing beyond a `baseUrl` on the client. See [Getting Started](/sdk/getting-started) for the first call, and the [Client Reference](/sdk/api-reference) for every method.

@@ -1,0 +1,184 @@
+---
+title: "如何使用 KaleidoSDK 进行交换"
+sidebarTitle: "如何交换"
+description: "用 KaleidoSDK 创建并执行比特币原子交换：从询价、初始化、白名单授权到执行与结算跟踪，逐步走通多协议交换的完整流程"
+---
+
+本指南使用 KaleidoSDK 完整演示一次原子交换（节点直连），并同时提供 TypeScript 与 Python 示例。
+
+原子交换无需信任：做市方始终不会托管你的资金，因为密钥由你自己的 RGB Lightning Node 持有，且必须先由它把交换加入白名单才能结算。这也意味着你需要在客户端旁运行一个 RLN 节点 —— 可选方案见 [节点托管](/cn/desktop-app/getting-started/node-hosting)。
+
+## 环境准备
+
+`baseUrl` 和 `nodeUrl` 都必须提供：前者用于访问做市方，后者用于访问你自己的节点。
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+```
+
+```python Python
+from kaleido_sdk import (
+    ConfirmSwapRequest,
+    KaleidoClient,
+    Layer,
+    PairQuoteRequest,
+    SwapLegInput,
+    SwapRequest,
+    SwapStatusRequest,
+)
+from kaleido_sdk.rln import TakerRequest
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+)
+```
+</CodeGroup>
+
+## 第 1 步：获取报价
+
+为想要交换的交易对请求报价。金额一律使用**原始整数单位** —— 转换辅助函数见 [工具函数](/cn/sdk/utilities)。
+
+<CodeGroup>
+```typescript TypeScript
+const quote = await client.maker.getQuote({
+  from_asset: {
+    asset_id: 'BTC',
+    layer: Layer.BTC_LN,
+    amount: 1000000,
+  },
+  to_asset: {
+    asset_id: 'rgb:...:...', // 你的 RGB 资产 ID
+    layer: Layer.RGB_LN,
+  },
+});
+```
+
+```python Python
+quote = await client.maker.get_quote(PairQuoteRequest(
+    from_asset=SwapLegInput(
+        asset_id="BTC",
+        layer=Layer.BTC_LN,
+        amount=1000000,
+    ),
+    to_asset=SwapLegInput(
+        asset_id="rgb:...:...",  # 你的 RGB 资产 ID
+        layer=Layer.RGB_LN,
+    ),
+))
+```
+</CodeGroup>
+
+响应中的 `rfq_id` 是把下一步与本次价格绑定起来的凭据。报价会过期 —— 不要让 `rfq_id` 跨越用户的思考时间，否则 `initSwap` 会抛出 `QuoteExpiredError`。
+
+## 第 2 步：初始化交换
+
+依据该报价与做市方锁定交换。这一步返回后续每一步都要用到的 `swapstring` 和 `payment_hash`，以及授权状态轮询的 `access_token` —— `access_token` 只在这里返回一次，请与 payment hash 一起保存。
+
+<CodeGroup>
+```typescript TypeScript
+const swap = await client.maker.initSwap({
+  rfq_id: quote.rfq_id,
+  from_asset: quote.from_asset.asset_id,
+  from_amount: quote.from_asset.amount,
+  to_asset: quote.to_asset.asset_id,
+  to_amount: quote.to_asset.amount,
+});
+
+// swap.swapstring, swap.payment_hash, swap.access_token
+```
+
+```python Python
+swap = await client.maker.init_swap(SwapRequest(
+    rfq_id=quote.rfq_id,
+    from_asset=quote.from_asset.asset_id,
+    from_amount=quote.from_asset.amount,
+    to_asset=quote.to_asset.asset_id,
+    to_amount=quote.to_asset.amount,
+))
+
+# swap.swapstring, swap.payment_hash, swap.access_token
+```
+</CodeGroup>
+
+## 第 3 步：在接单方节点上加入白名单
+
+你的节点必须先授权该 `swapstring`，才会接受传入的 HTLC。这是唯一一个通过 `client.rln` 执行的步骤。
+
+<CodeGroup>
+```typescript TypeScript
+const takerPubkey = await client.rln.getTakerPubkey();
+
+await client.rln.whitelistSwap({ swapstring: swap.swapstring });
+```
+
+```python Python
+taker_pubkey = await client.rln.get_taker_pubkey()
+
+await client.rln.whitelist_swap(TakerRequest(
+    swapstring=swap.swapstring,
+))
+```
+</CodeGroup>
+
+<Warning>
+跳过这一步是执行阶段出现 `SwapError` 的最常见原因：初始化成功，但由于接单方从未同意该交换，执行随即失败。
+</Warning>
+
+## 第 4 步：执行交换
+
+把你节点的信息交给做市方，由它完成结算。
+
+<CodeGroup>
+```typescript TypeScript
+const execution = await client.maker.executeSwap({
+  swapstring: swap.swapstring,
+  payment_hash: swap.payment_hash,
+  taker_pubkey: takerPubkey,
+});
+
+console.log(`Swap executed. Status: ${execution.status}`);
+```
+
+```python Python
+execution = await client.maker.execute_swap(ConfirmSwapRequest(
+    swapstring=swap.swapstring,
+    payment_hash=swap.payment_hash,
+    taker_pubkey=taker_pubkey,
+))
+
+print(f"Swap executed. Status: {execution.status}")
+```
+</CodeGroup>
+
+## 第 5 步：跟踪结算
+
+`executeSwap` 返回并不等于交换已经结算。请携带 `initSwap` 返回的 `access_token`，按 `payment_hash` 轮询状态，直到进入终态。
+
+<CodeGroup>
+```typescript TypeScript
+const status = await client.maker.getAtomicSwapStatus({
+  payment_hash: swap.payment_hash,
+  access_token: swap.access_token,
+});
+
+console.log(status.swap?.status);
+```
+
+```python Python
+status = await client.maker.get_atomic_swap_status(SwapStatusRequest(
+    payment_hash=swap.payment_hash,
+    access_token=swap.access_token,
+))
+
+print(status.swap.status if status.swap else None)
+```
+</CodeGroup>
+
+如果某笔转移待处理的时间超出预期，`client.rln.refreshTransfers()` / `refresh_transfers()` 可以推进待处理的 RGB 转移，而 `client.rln.listSwaps()` 能让你看到节点自身的视图。各类失败情形见 [故障排查](/cn/sdk/troubleshooting#swap-issues)。

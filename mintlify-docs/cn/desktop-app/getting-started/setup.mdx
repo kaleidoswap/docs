@@ -1,0 +1,75 @@
+---
+title: "KaleidoSwap 桌面应用：快速上手"
+sidebarTitle: "快速上手"
+description: "从零开始配置 KaleidoSwap 桌面应用，按顺序完成安装、连接节点、创建钱包、充值和第一笔原子交换，并了解动手前需要准备什么。"
+---
+
+这是从全新安装到完成第一笔交换的完整路径。每一步都链接到详细的指南，因此这里不重复那些指南已经讲清的内容。
+
+## 开始之前
+
+要在桌面应用上交易，你需要准备：
+
+| 前提条件 | 说明 |
+|-------------|---------|
+| **比特币** | 建议至少约 100 万聪（0.01 BTC），用于为通道注资并覆盖费用 |
+| **LSP 连接** | 一个用于开通通道的闪电服务提供商（默认 LSP 已预先配置） |
+| **RGB 资产** | 在开通通道时分配到通道内，或通过交换获得 |
+
+如果你只想先体验应用而不打算交易，可以先安装并创建钱包，不必存入任何资金。
+
+<Note>
+  网络在账户创建时即固定，之后无法更改，因此请为每个网络分别创建账户。目前可选 regtest、signet、Mutinynet 和测试网；主网暂不可用。
+</Note>
+
+## 配置路径
+
+<Steps>
+  <Step title="安装应用">
+    下载适用于你平台的已签名二进制文件，或从源码构建。运行前先校验 GPG 签名。
+
+    [安装](/cn/desktop-app/getting-started/installation) · [校验二进制文件下载](/cn/desktop-app/getting-started/verify-binaries)
+  </Step>
+
+  <Step title="决定节点运行在哪里">
+    应用需要一个 RGB Lightning Node。想要完全掌控就在本地运行，也可以部署在服务器上通过网络连接。你可以现在就做决定，或者让账户创建流程为你启动一个本地节点。
+
+    [节点托管](/cn/desktop-app/getting-started/node-hosting)
+  </Step>
+
+  <Step title="创建账户">
+    为账户命名、选择网络并生成钱包。把助记词离线保存好 —— 它是找回资金的唯一途径。
+
+    [创建新钱包](/cn/desktop-app/wallet/creating-wallet) · [初始化助记词](/cn/desktop-app/wallet/initializing-mnemonic)
+  </Step>
+
+  <Step title="解锁并等待节点同步">
+    解锁会启动节点并将其同步到链上。首次同步耗时最长。
+
+    [解锁钱包](/cn/desktop-app/wallet/unlocking-wallet)
+  </Step>
+
+  <Step title="为钱包注资">
+    在链上存入 BTC。要接收 RGB 资产，你还需要一个染色 UTXO，应用可以在存入过程中为你创建。
+
+    [存入](/cn/desktop-app/wallet/deposits)
+  </Step>
+
+  <Step title="获得一条通道">
+    交易通过闪电网络进行，因此你需要一条有流动性的通道。可以直接与对等节点开通，也可以从 LSP 购买一条已在内部分配好 RGB 资产的通道。
+
+    [开通通道](/cn/desktop-app/channels/opening-channel) · [订购新通道](/cn/desktop-app/channels/order-new-channel)
+  </Step>
+
+  <Step title="完成第一笔交换">
+    为某个交易对获取报价，并以原子交换的方式结算。两条腿要么同时完成，要么都不发生。
+
+    [资产交换](/cn/desktop-app/trading/asset-swaps)
+  </Step>
+</Steps>
+
+---
+
+<Card title="下载桌面应用" icon="download" href="https://github.com/kaleidoswap/desktop-app/releases">
+  获取适用于 macOS、Windows 或 Linux 的最新 KaleidoSwap 桌面应用版本。
+</Card>

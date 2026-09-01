@@ -712,6 +712,14 @@
     {
       "source": "/cn/sdk/error-handling",
       "destination": "/cn/sdk/troubleshooting"
+    },
+    {
+      "source": "/api-reference/error-handling",
+      "destination": "/api-reference/troubleshooting"
+    },
+    {
+      "source": "/cn/api-reference/error-handling",
+      "destination": "/cn/api-reference/troubleshooting"
     }
   ],
   "footer": {

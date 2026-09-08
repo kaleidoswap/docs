@@ -142,39 +142,6 @@
             ]
           },
           {
-            "tab": "AI Tools",
-            "groups": [
-              {
-                "group": "Introduction",
-                "icon": "flag",
-                "pages": [
-                  "ai-tools/introduction",
-                  "ai-tools/installation",
-                  "ai-tools/getting-started"
-                ]
-              },
-              {
-                "group": "Tools",
-                "icon": "toolbox",
-                "pages": [
-                  "ai-tools/kaleido-mind",
-                  "ai-tools/kaleido-agent",
-                  "ai-tools/mcp-servers",
-                  "ai-tools/skills"
-                ]
-              },
-              {
-                "group": "Reference",
-                "icon": "book",
-                "pages": [
-                  "ai-tools/faq",
-                  "ai-tools/troubleshooting",
-                  "ai-tools/additional-resources"
-                ]
-              }
-            ]
-          },
-          {
             "tab": "SDK",
             "groups": [
               {
@@ -227,27 +194,6 @@
             ]
           },
           {
-            "tab": "Wallet Engine",
-            "groups": [
-              {
-                "group": "Introduction",
-                "icon": "flag",
-                "pages": [
-                  "wallet-engine/introduction",
-                  "wallet-engine/getting-started"
-                ]
-              },
-              {
-                "group": "Guides",
-                "icon": "book-open",
-                "pages": [
-                  "wallet-engine/concepts",
-                  "wallet-engine/adding-a-protocol"
-                ]
-              }
-            ]
-          },
-          {
             "tab": "CLI",
             "groups": [
               {
@@ -288,6 +234,39 @@
             ]
           },
           {
+            "tab": "AI Tools",
+            "groups": [
+              {
+                "group": "Introduction",
+                "icon": "flag",
+                "pages": [
+                  "ai-tools/introduction",
+                  "ai-tools/installation",
+                  "ai-tools/getting-started"
+                ]
+              },
+              {
+                "group": "Tools",
+                "icon": "toolbox",
+                "pages": [
+                  "ai-tools/kaleido-mind",
+                  "ai-tools/kaleido-agent",
+                  "ai-tools/mcp-servers",
+                  "ai-tools/skills"
+                ]
+              },
+              {
+                "group": "Reference",
+                "icon": "book",
+                "pages": [
+                  "ai-tools/faq",
+                  "ai-tools/troubleshooting",
+                  "ai-tools/additional-resources"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "API Reference",
             "groups": [
               {
@@ -322,6 +301,27 @@
                   "api-reference/faq",
                   "api-reference/troubleshooting",
                   "api-reference/additional-resources"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Wallet Engine",
+            "groups": [
+              {
+                "group": "Introduction",
+                "icon": "flag",
+                "pages": [
+                  "wallet-engine/introduction",
+                  "wallet-engine/getting-started"
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "pages": [
+                  "wallet-engine/concepts",
+                  "wallet-engine/adding-a-protocol"
                 ]
               }
             ]
@@ -488,39 +488,6 @@
             ]
           },
           {
-            "tab": "AI 工具",
-            "groups": [
-              {
-                "group": "简介",
-                "icon": "flag",
-                "pages": [
-                  "cn/ai-tools/introduction",
-                  "cn/ai-tools/installation",
-                  "cn/ai-tools/getting-started"
-                ]
-              },
-              {
-                "group": "工具",
-                "icon": "toolbox",
-                "pages": [
-                  "cn/ai-tools/kaleido-mind",
-                  "cn/ai-tools/kaleido-agent",
-                  "cn/ai-tools/mcp-servers",
-                  "cn/ai-tools/skills"
-                ]
-              },
-              {
-                "group": "参考",
-                "icon": "book",
-                "pages": [
-                  "cn/ai-tools/faq",
-                  "cn/ai-tools/troubleshooting",
-                  "cn/ai-tools/additional-resources"
-                ]
-              }
-            ]
-          },
-          {
             "tab": "SDK",
             "groups": [
               {
@@ -608,6 +575,39 @@
                   "cn/cli/faq",
                   "cn/cli/troubleshooting",
                   "cn/cli/additional-resources"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "AI 工具",
+            "groups": [
+              {
+                "group": "简介",
+                "icon": "flag",
+                "pages": [
+                  "cn/ai-tools/introduction",
+                  "cn/ai-tools/installation",
+                  "cn/ai-tools/getting-started"
+                ]
+              },
+              {
+                "group": "工具",
+                "icon": "toolbox",
+                "pages": [
+                  "cn/ai-tools/kaleido-mind",
+                  "cn/ai-tools/kaleido-agent",
+                  "cn/ai-tools/mcp-servers",
+                  "cn/ai-tools/skills"
+                ]
+              },
+              {
+                "group": "参考",
+                "icon": "book",
+                "pages": [
+                  "cn/ai-tools/faq",
+                  "cn/ai-tools/troubleshooting",
+                  "cn/ai-tools/additional-resources"
                 ]
               }
             ]

@@ -130,6 +130,21 @@ window.addEventListener('webln:ready', async () => {
 `window.rgb` 将随下一个扩展版本发布，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。
 </Note>
 
+### TypeScript 支持
+
+[`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) 包提供 `window.rgb` 的类型声明，以及一个 `requestProvider()` 辅助函数：当页面先于钱包运行时，它会等待 `rgb:ready` 事件：
+
+```bash
+npm install @kaleidorg/webrgb
+```
+
+```typescript
+import { requestProvider } from "@kaleidorg/webrgb";
+
+const rgb = await requestProvider(); // 返回带类型的 RgbProvider，找不到时以 METHOD_NOT_SUPPORTED 拒绝
+await rgb.enable();
+```
+
 ### 支持的方法
 
 | 方法 | 说明 |

@@ -130,6 +130,21 @@ Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the 
 `window.rgb` ships with the next extension release. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists.
 </Note>
 
+### TypeScript Support
+
+The [`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) package ships the `window.rgb` declarations and a `requestProvider()` helper that waits for the `rgb:ready` event when the page runs before the wallet:
+
+```bash
+npm install @kaleidorg/webrgb
+```
+
+```typescript
+import { requestProvider } from "@kaleidorg/webrgb";
+
+const rgb = await requestProvider(); // typed RgbProvider, or rejects with METHOD_NOT_SUPPORTED
+await rgb.enable();
+```
+
 ### Supported Methods
 
 | Method | Description |

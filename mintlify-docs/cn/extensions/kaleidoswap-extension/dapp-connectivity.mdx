@@ -1,6 +1,6 @@
 ---
 title: DApp 连接
-description: "用 WebLN、WebBTC 和 Nostr（NIP-07）提供方把 KaleidoSwap 扩展连接到受信任的 DApp：授权流程、权限管理与可用方法一览。"
+description: "用 WebLN、WebBTC、RGB 和 Nostr（NIP-07）提供方及 Nostr Wallet Connect 把 KaleidoSwap 扩展连接到受信任的 DApp：授权流程、权限与方法一览。"
 ---
 
 ## 概览
@@ -13,11 +13,12 @@ KaleidoSwap 扩展会把标准钱包提供方注入浏览器页面，DApp 在获
 - **`window.webbtc`** — 面向链上比特币的 WebBTC 提供方（地址、PSBT 签名、BIP-322 消息签名、广播）。
 - **`window.nostr`** — 完整的 [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) 提供方，用于 Nostr 事件签名与加密。
 - **`window.bitcoin`** — Bitcoin Wallet Standard 提供方（Unisat／OKX／Leather 风格），部分 DApp 会探测它来获取链上账户。
+- **`window.rgb`** — KaleidoSwap 专有的 RGB 资产提供方：发行、接收、发送和跟踪资产；接入闪电节点后还可通过闪电网络收付资产。
 
 ### 工作原理
 
 1. KaleidoSwap 扩展的**内容脚本**被注入网页
-2. 内容脚本加载**注入脚本**，添加 `window.webln`、`window.webbtc`、`window.nostr` 和 `window.bitcoin`
+2. 内容脚本加载**注入脚本**，添加 `window.webln`、`window.webbtc`、`window.nostr`、`window.bitcoin` 和 `window.rgb`
 3. DApp 调用这些提供方上的方法
 4. 请求被路由到 KaleidoSwap 扩展的**后台 service worker**
 5. 敏感操作会触发确认或权限提示
@@ -30,6 +31,18 @@ KaleidoSwap 扩展会把标准钱包提供方注入浏览器页面，DApp 在获
 - `webbtc:ready` / `webbtcReady`
 - `nostr:ready`
 - `bitcoin:ready`
+- `rgb:ready`
+
+### 错误码
+
+每个提供方在拒绝时都会抛出带 `code` 属性的 `Error`，DApp 可据此区分用户的"拒绝"与钱包故障：
+
+| 错误码 | 含义 |
+|------|---------|
+| `USER_REJECTED` | 用户拒绝了连接或确认提示 |
+| `NOT_ENABLED` | 在该来源的 `enable()` 完成之前就调用了提供方 |
+| `METHOD_NOT_SUPPORTED` | 已连接的钱包无法提供该方法（例如在无节点的 RGB 钱包上使用 RGB 闪电功能） |
+| `INTERNAL_ERROR` | 其他所有情况，钱包的说明在 `error.message` 中 |
 
 ## WebLN 提供方
 
@@ -109,6 +122,80 @@ window.addEventListener('webln:ready', async () => {
 
 <img src="/assets/images/extension/32-psbt-confirm.png" alt="PSBT 签名确认界面，解码出交易总额、每个输出的目标地址和金额，以及网络费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
+## RGB 提供方
+
+`window.rgb` 把钱包的 RGB 运行时暴露给 DApp——无节点的 RGB 钱包或已连接的 RGB 闪电节点，取决于钱包的配置——让应用无需自建 RGB 后端即可发行、接收、发送和跟踪 RGB 资产。每个涉及资金的调用都会在扩展弹窗中确认，连接提示还允许用户把某个来源限制在特定能力范围内（发行资产受独立的 `issueAsset` 能力控制）。
+
+<Note>
+`window.rgb` 将随下一个扩展版本发布，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。
+</Note>
+
+### 支持的方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `enable()` | 连接 DApp；与其他提供方共用同一份来源授权 |
+| `getInfo()` | `{ ready, network, protocol, methods }`——未连接 RGB 钱包时 `ready` 为 `false` |
+| `getAddress()` | RGB 钱包的比特币地址，用于锚定 RGB 状态 |
+| `blindReceive(args)` | 某资产的盲化 UTXO 接收发票（`assetId`，可选 `amount`、`durationSeconds`、`minConfirmations`） |
+| `issueAsset(args)` | 发行新资产（`schema: "nia"`、`ticker`、`name`、`amounts`、`precision`）；仅当钱包可发行时才出现在 `methods` 中 |
+| `listAssets()` | 钱包持有的资产 |
+| `getAssetBalance(assetId)` | 单个资产的 `{ assetId, balance }` |
+| `sendAsset(args)` | 按接收方的 RGB 发票发送（`{ invoice }`），或显式指定（`assetId`、`amount`、`recipientId`） |
+| `listTransfers(assetId?)` | 转账历史，可按资产过滤 |
+| `getTransferStatus(id, assetId?)` | 按索引、接收方 ID 或 txid 查询单笔转账 |
+| `makeLnInvoice(args)` | 携带资产的 BOLT-11 发票（`assetId`，可选 `assetAmount`、`amountSats`、`description`、`expirySeconds`）；仅限 RGB 闪电钱包 |
+| `payLnInvoice(args)` | 支付携带资产的 BOLT-11 发票（`{ invoice }`）；仅限 RGB 闪电钱包 |
+| `on(event, listener)` / `off(event, listener)` | 订阅 `transferReceived` 和 `transferSettled` |
+
+### 用法示例
+
+```javascript
+window.addEventListener("rgb:ready", async () => {
+  await window.rgb.enable();
+
+  const info = await window.rgb.getInfo();
+  // { ready: true, network: "signet", protocol: "RGB_L1" | "RGB_LN", methods: [...] }
+
+  const { invoice } = await window.rgb.blindReceive({
+    assetId: "rgb:…",
+    amount: 1, // 省略则为任意金额发票
+  });
+
+  // 推荐：按接收方的 RGB 发票发送
+  await window.rgb.sendAsset({ invoice: "rgb:…/…utxob:…" });
+});
+```
+
+### RGB 闪电网络
+
+当钱包的 RGB 运行时是闪电节点时，`getInfo().protocol` 为 `"RGB_LN"`，`methods` 中还会列出 `makeLnInvoice` 和 `payLnInvoice`。在无节点的 RGB 钱包上，两者都会以 `METHOD_NOT_SUPPORTED` 拒绝。
+
+```javascript
+// 接收：携带资产的 BOLT-11 发票。`amountSats` 是 HTLC 携带的比特币；
+// 节点有最低限额，钱包会把金额提高到该限额，确认弹窗显示的就是这个数字。
+const { invoice, paymentHash } = await window.rgb.makeLnInvoice({
+  assetId: "rgb:…",
+  assetAmount: 5, // 省略则为任意金额发票
+  description: "tickets",
+});
+
+// 支付：发票必须携带带有明确金额的资产。纯比特币发票会被拒绝——
+// 请改用 window.webln.sendPayment()。
+const { preimage, assetId, assetAmount } = await window.rgb.payLnInvoice({ invoice: "lnbc…" });
+```
+
+两个调用都会在弹窗中确认，显示资产、单位数量以及 HTLC 携带的聪。消费额度不适用于资产支付：每次 `payLnInvoice` 都会提示确认。
+
+### 事件
+
+```javascript
+window.rgb.on("transferReceived", (t) => { /* 发现新的入账转账 */ });
+window.rgb.on("transferSettled", (t) => { /* 已知转账达到 Settled 状态 */ });
+```
+
+事件负载为 `{ assetId, transferId, status, kind, amount, recipientId, txid }`。事件由后台轮询推送，只要有已订阅的来源保持标签页打开，就会大约每分钟运行一次，因此无需循环调用 `listTransfers()`——但也不要期待分钟以内的延迟。
+
 ## Nostr 提供方（NIP-07）
 
 KaleidoSwap 扩展在 `window.nostr` 上注入完整的 **NIP-07** 提供方，Nostr 网页应用可以请求钱包公钥、签名事件，以及加密或解密私信。Nostr 身份由钱包助记词派生（若已设置，则使用导入的身份）。
@@ -148,6 +235,29 @@ window.addEventListener('nostr:ready', async () => {
 ## Nostr Wallet Connect（NWC）
 
 扩展也可以通过 **Nostr Wallet Connect** 把钱包暴露给外部应用：扫描配对二维码完成配对，再用**按金额生效的预算**限定它能做什么。通过 NWC 发起的 Zap 支付（NIP-57）会被校验，并与钱包交易记录关联。
+
+### 面向开发者
+
+凡是不在同一浏览器中运行的网页之外的一切——移动应用、桌面客户端、机器人和后端——都应通过 NWC 集成。扩展充当 [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **钱包服务**；任何 NIP-47 客户端库都能与之配合，无需任何 KaleidoSwap 专有的实现。在**设置 > Nostr Wallet Connect**（Settings > Nostr Wallet Connect）中生成的配对字符串采用标准格式：
+
+```text
+nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secret>
+```
+
+该服务声明 NIP-47 版本 `1.0`，支持 `nip04` 与 `nip44_v2` 加密，并支持以下方法：
+
+| 方法 | 说明 |
+|--------|-------|
+| `get_info` | 节点别名、网络、支持的方法与加密方式 |
+| `get_balance` | 可支配的闪电余额 |
+| `make_invoice` | 创建 BOLT-11 发票 |
+| `pay_invoice` | 支付 BOLT-11 发票；超出客户端预算时会提示确认 |
+| `multi_pay_invoice` | 一次请求支付多张发票，每张都按预算单独判定 |
+| `lookup_invoice` | 按支付哈希或 BOLT-11 查询发票 |
+| `list_transactions` | 最近的收付款记录 |
+| `sign_message` | 用节点密钥签名消息 |
+
+每个已配对的客户端都有独立的消费预算，可在**设置 > 已连接应用**（Settings > Connected Apps）中查看和撤销。预算内的支付无需提示即可完成；超出预算的支付会打开与页面内提供方相同的确认窗口。
 
 ## 权限提示与已连接应用
 

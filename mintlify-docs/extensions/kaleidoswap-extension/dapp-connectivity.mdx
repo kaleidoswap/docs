@@ -1,6 +1,6 @@
 ---
 title: DApp Connectivity
-description: "Connect the KaleidoSwap Extension to trusted DApps with the WebLN, WebBTC, and Nostr (NIP-07) providers, covering approval flow, permissions, and methods"
+description: "Connect the KaleidoSwap Extension to trusted DApps with the WebLN, WebBTC, RGB, and Nostr (NIP-07) providers, plus Nostr Wallet Connect, covering approval flow, permissions, and methods"
 ---
 
 ## Overview
@@ -13,11 +13,12 @@ The extension injects:
 - **`window.webbtc`** — WebBTC provider for on-chain Bitcoin (addresses, PSBT signing, BIP-322 message signing, broadcasting).
 - **`window.nostr`** — full [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) provider for Nostr event signing and encryption.
 - **`window.bitcoin`** — a Bitcoin Wallet Standard provider (Unisat/OKX/Leather-style) that some DApps probe for on-chain accounts.
+- **`window.rgb`** — a KaleidoSwap-specific provider for RGB assets: issue, receive, send and track assets, and, with a Lightning node, pay and receive them over Lightning.
 
 ### How It Works
 
 1. The KaleidoSwap Extension's **content script** is injected into web pages
-2. The content script loads an **injected script** that adds `window.webln`, `window.webbtc`, `window.nostr`, and `window.bitcoin`
+2. The content script loads an **injected script** that adds `window.webln`, `window.webbtc`, `window.nostr`, `window.bitcoin`, and `window.rgb`
 3. DApps call methods on those providers
 4. Requests are routed to the KaleidoSwap Extension **background service worker**
 5. Sensitive operations trigger a confirmation or permission prompt
@@ -30,6 +31,18 @@ The injected script dispatches ready events (both with and without the colon, fo
 - `webbtc:ready` / `webbtcReady`
 - `nostr:ready`
 - `bitcoin:ready`
+- `rgb:ready`
+
+### Error Codes
+
+Every provider rejects with an `Error` that carries a `code` property, so a DApp can tell a user's "no" from a wallet fault:
+
+| Code | Meaning |
+|------|---------|
+| `USER_REJECTED` | The user declined the connection or the confirmation prompt |
+| `NOT_ENABLED` | The provider was called before `enable()` resolved for this origin |
+| `METHOD_NOT_SUPPORTED` | The connected wallet cannot serve this method (for example RGB over Lightning on a node-less RGB wallet) |
+| `INTERNAL_ERROR` | Anything else, with the wallet's message in `error.message` |
 
 ## WebLN Provider
 
@@ -109,6 +122,96 @@ Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the 
 
 <img src="/assets/images/extension/32-psbt-confirm.png" alt="PSBT signing confirmation decoding the transaction total, each output with its destination and amount, and the network fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
+## RGB Provider
+
+`window.rgb` exposes the wallet's RGB runtime to DApps — the node-less RGB wallet or a connected RGB Lightning node, whichever the wallet is configured with — so an app can issue, receive, send and track RGB assets without running its own RGB backend. Every funds-touching call confirms in the extension popup, and the connect prompt lets the user restrict an origin to specific capabilities (minting is gated by its own `issueAsset` capability).
+
+<Note>
+`window.rgb` ships with the next extension release. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists.
+</Note>
+
+### TypeScript Support
+
+The [`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) package ships the `window.rgb` declarations and a `requestProvider()` helper that waits for the `rgb:ready` event when the page runs before the wallet:
+
+```bash
+npm install @kaleidorg/webrgb
+```
+
+```typescript
+import { requestProvider } from "@kaleidorg/webrgb";
+
+const rgb = await requestProvider(); // typed RgbProvider, or rejects with METHOD_NOT_SUPPORTED
+await rgb.enable();
+```
+
+### Supported Methods
+
+| Method | Description |
+|--------|-------------|
+| `enable()` | Connect the DApp; shares the origin approval with the other providers |
+| `getInfo()` | `{ ready, network, protocol, methods }` — `ready` is `false` when no RGB wallet is connected |
+| `getAddress()` | Bitcoin address of the RGB wallet, used to anchor RGB state |
+| `blindReceive(args)` | Blinded-UTXO receive invoice for an asset (`assetId`, optional `amount`, `durationSeconds`, `minConfirmations`) |
+| `issueAsset(args)` | Issue a new asset (`schema: "nia"`, `ticker`, `name`, `amounts`, `precision`); listed in `methods` only when the wallet can mint |
+| `listAssets()` | Assets held by the wallet |
+| `getAssetBalance(assetId)` | `{ assetId, balance }` for one asset |
+| `sendAsset(args)` | Send against a receiver's RGB invoice (`{ invoice }`) or explicitly (`assetId`, `amount`, `recipientId`) |
+| `listTransfers(assetId?)` | Transfer history, optionally filtered by asset |
+| `getTransferStatus(id, assetId?)` | One transfer by index, recipient id or txid |
+| `makeLnInvoice(args)` | BOLT-11 invoice carrying an asset (`assetId`, optional `assetAmount`, `amountSats`, `description`, `expirySeconds`); RGB Lightning wallets only |
+| `payLnInvoice(args)` | Pay a BOLT-11 invoice that carries an asset (`{ invoice }`); RGB Lightning wallets only |
+| `on(event, listener)` / `off(event, listener)` | Subscribe to `transferReceived` and `transferSettled` |
+
+### Example Usage
+
+```javascript
+window.addEventListener("rgb:ready", async () => {
+  await window.rgb.enable();
+
+  const info = await window.rgb.getInfo();
+  // { ready: true, network: "signet", protocol: "RGB_L1" | "RGB_LN", methods: [...] }
+
+  const { invoice } = await window.rgb.blindReceive({
+    assetId: "rgb:…",
+    amount: 1, // omit for an any-amount invoice
+  });
+
+  // Preferred: send against the receiver's RGB invoice
+  await window.rgb.sendAsset({ invoice: "rgb:…/…utxob:…" });
+});
+```
+
+### RGB over Lightning
+
+When the wallet's RGB runtime is a Lightning node, `getInfo().protocol` is `"RGB_LN"` and `methods` also lists `makeLnInvoice` and `payLnInvoice`. On a node-less RGB wallet both reject with `METHOD_NOT_SUPPORTED`.
+
+```javascript
+// Receive: a BOLT-11 invoice that carries the asset. `amountSats` is the
+// Bitcoin the HTLC carries; the node enforces a floor and the wallet
+// raises the figure to it, which is what the confirmation shows.
+const { invoice, paymentHash } = await window.rgb.makeLnInvoice({
+  assetId: "rgb:…",
+  assetAmount: 5, // omit for an any-amount invoice
+  description: "tickets",
+});
+
+// Pay: the invoice must carry an asset with an explicit amount. Plain
+// Bitcoin invoices are refused — use window.webln.sendPayment() for those.
+const { preimage, assetId, assetAmount } = await window.rgb.payLnInvoice({ invoice: "lnbc…" });
+```
+
+Both calls confirm in the popup with the asset, its units and the sats the HTLC carries. Spending allowances do not apply to asset payments: every `payLnInvoice` prompts.
+
+### Events
+
+```javascript
+window.rgb.on("transferReceived", (t) => { /* new incoming transfer seen */ });
+window.rgb.on("transferSettled", (t) => { /* a known transfer reached Settled */ });
+```
+
+The payload is `{ assetId, transferId, status, kind, amount, recipientId, txid }`. Events are pushed by a background poll that runs about once a minute while a subscribed origin has an open tab, so there is no need to poll `listTransfers()` in a loop — but do not expect sub-minute latency.
+
 ## Nostr Provider (NIP-07)
 
 The KaleidoSwap Extension injects a full **NIP-07** provider at `window.nostr`, so Nostr web apps can request the wallet's public key, sign events, and encrypt or decrypt direct messages. The Nostr identity is derived from the wallet recovery phrase (or an imported identity, when set).
@@ -148,6 +251,29 @@ Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for 
 ## Nostr Wallet Connect (NWC)
 
 The extension can also expose the wallet to external apps over **Nostr Wallet Connect**: pair an app by scanning the pairing QR code, then control what it can do with **amount-aware budgets**. Zap payments (NIP-57) made through NWC are validated and correlated with wallet activity.
+
+### For Developers
+
+NWC is the integration path for anything that is not a web page in the same browser — mobile apps, desktop clients, bots and backends. The extension acts as the [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **wallet service**; any NIP-47 client library works against it, so nothing KaleidoSwap-specific is required. The pairing string generated in **Settings > Nostr Wallet Connect** has the standard shape:
+
+```text
+nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secret>
+```
+
+The service announces NIP-47 version `1.0` with `nip04` and `nip44_v2` encryption and supports these methods:
+
+| Method | Notes |
+|--------|-------|
+| `get_info` | Node alias, network, supported methods and encryptions |
+| `get_balance` | Spendable Lightning balance |
+| `make_invoice` | Create a BOLT-11 invoice |
+| `pay_invoice` | Pay a BOLT-11 invoice; prompts unless the request fits the client's budget |
+| `multi_pay_invoice` | Pay several invoices in one request, each judged against the budget |
+| `lookup_invoice` | Look up an invoice by payment hash or BOLT-11 |
+| `list_transactions` | Recent incoming and outgoing payments |
+| `sign_message` | Sign a message with the node key |
+
+Each paired client gets its own spending budget, visible and revocable under **Settings > Connected Apps**. A payment within budget settles without a prompt; anything over it opens the same confirmation window the in-page providers use.
 
 ## Permission Prompts and Connected Apps
 

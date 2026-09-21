@@ -52,11 +52,18 @@ If you have an integration still pointing at `kaleidoswap-mcp` or `l402-gateway-
 
 ## Installation & Configuration
 
-`kaleido-mcp` is published to npm, so the fastest path needs no local build:
+`kaleido-mcp` is published to npm, which is the quickest way to a first tool call:
 
 ```bash
 npx -y kaleido-mcp
 ```
+<Warning>
+  The npm release currently trails `main`. The published build predates the node
+  lifecycle tools (`kaleido_node_*`) and still exposes the removed order tools,
+  so `npx` will not give you the full surface documented on this page. Until the
+  next release lands, build from source for `kaleido_node_*` and the RFQ swap flow.
+</Warning>
+
 
 In practice an MCP host runs this for you, point its config at the command (see [Client Configuration](#client-configuration) below). For development, or to run a specific commit, build from source instead:
 
@@ -164,11 +171,6 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
     | `kaleidoswap_get_pairs` | Tradeable pairs with available layer routes |
     | `kaleidoswap_get_quote` | Price quote for a swap, returns output amount, price, fee, `rfq_id` |
     | `kaleidoswap_get_spreads` | Quotes across every route for a pair, to compare or find arbitrage |
-    | `kaleidoswap_place_order` | Place a REST swap order, returns a `deposit_address` |
-    | `kaleidoswap_get_order_status` | Poll order status until `FILLED`, `FAILED`, `EXPIRED`, or `CANCELLED` |
-    | `kaleidoswap_get_open_orders` | Orders placed in this session with last known status |
-    | `kaleidoswap_cancel_order` | Mark an order cancelled in the local session tracker |
-    | `kaleidoswap_get_position` | Session trading stats: fill rate, volume by asset |
     | `kaleidoswap_atomic_init` | Step 1 of an atomic swap, returns `swapstring` and `payment_hash` |
     | `kaleidoswap_atomic_execute` 🔒 | Step 3, confirm execution after `wdk_atomic_taker` whitelists the HTLC |
     | `kaleidoswap_atomic_status` | Poll atomic swap status by `payment_hash` |

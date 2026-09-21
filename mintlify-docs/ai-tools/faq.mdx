@@ -60,15 +60,22 @@ description: "Common questions about the KaleidoSwap AI tools, covering custody,
   </Accordion>
 
   <Accordion title="How do I stop an agent from spending?">
-    Several independent controls, and it is worth using more than one:
+    On KaleidoAgent, one control is enforced in code:
 
     | Control | Effect |
     |---------|--------|
-    | `dry_run` | Simulates the decision without executing |
+    | `dry_run` | Blocks execution before any tool is called. Simulates the decision without executing |
+
+    The rest are passed to the model as operating rules rather than enforced independently, so treat them as guidance and not as a spending limit:
+
+    | Control | Intended effect |
+    |---------|--------|
     | `max_swap_usd` | Caps a single trade |
     | `stop_loss_btc_sats` | Halts all trading below a BTC threshold |
     | `min_btc_reserve_sats` | Keeps a floor across the node and Spark |
     | `max_concurrent_orders` | Caps simultaneous open orders |
+
+    The controls that hold regardless of what the model decides are `dry_run` and keeping the funded balance small.
 
     On KaleidoMind the equivalent is structural rather than configured: fund-moving tools are marked `requiresConfirmation` and pause for the host's confirmation sheet.
   </Accordion>
@@ -84,7 +91,7 @@ description: "Common questions about the KaleidoSwap AI tools, covering custody,
   </Accordion>
 
   <Accordion title="Is any of this open source?">
-    Yes. Every repository is public under [github.com/kaleidoswap](https://github.com/kaleidoswap): the MCP servers, KaleidoAgent, KaleidoMind, and the skills themselves. See [Additional Resources](/ai-tools/additional-resources) for the direct links.
+    Yes, with one caveat. The gateway, the per-wallet MCP servers, KaleidoAgent, KaleidoMind and the skills are all public under [github.com/kaleidoswap](https://github.com/kaleidoswap). `kaleido-mcp`, KaleidoAgent and KaleidoMind are Apache 2.0. The three per-wallet servers are public but do not yet carry a licence file, so treat them as source-available until one lands. See [Additional Resources](/ai-tools/additional-resources) for the direct links.
   </Accordion>
 
   <Accordion title="Can I use these tools with the Desktop App or the Extension?">

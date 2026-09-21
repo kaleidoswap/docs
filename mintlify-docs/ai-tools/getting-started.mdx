@@ -37,7 +37,7 @@ The two agent surfaces gate spending differently, and it is worth knowing which 
 | Surface | Gate |
 |---------|------|
 | **[KaleidoMind](/ai-tools/kaleido-mind)** | Structural. Every fund-moving tool is marked `requiresConfirmation`, so the engine pauses for the host's confirmation sheet. The model cannot bypass it |
-| **[KaleidoAgent](/ai-tools/kaleido-agent)** | Policy. `dry_run` plus the risk limits in `agent.config.json`, checked before submission |
+| **[KaleidoAgent](/ai-tools/kaleido-agent)** | Mixed. `dry_run` is enforced in code; the other risk limits in `agent.config.json` are rules given to the model, not an independent ceiling |
 | **[MCP servers](/ai-tools/mcp-servers)** | Whatever your host provides. Most MCP clients prompt per tool call, but that is the client's behaviour, not the server's |
 
 <Warning>

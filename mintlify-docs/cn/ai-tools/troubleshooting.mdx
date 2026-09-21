@@ -155,7 +155,7 @@ description: "解决 KaleidoSwap AI 工具的常见问题：MCP 连接失败、�
   <Accordion title="交易自己停了" icon="hand">
     **现象**：代理原本在执行，之后就不再提交交换了。
 
-    **原因**：某个风险上限被触发。最常见的是 `stop_loss_btc_sats`（低于其 BTC 阈值时停止所有交易），或者 `min_btc_reserve_sats`。
+    **原因**：通常是 `dry_run` 仍然开启，因此决策只是模拟而未执行。否则就是模型自己选择不交易，例如它根据指令应用了 `stop_loss_btc_sats` 或 `min_btc_reserve_sats`，或者某次工具调用失败了。
 
     **解决办法**：
     1. 读取 `GET /status` 查看余额和最近的运行记录。

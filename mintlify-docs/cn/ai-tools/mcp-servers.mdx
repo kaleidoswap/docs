@@ -57,6 +57,12 @@ KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 
 ```bash
 npx -y kaleido-mcp
 ```
+<Warning>
+  npm 上的发布版本落后于 `main`。已发布的构建不包含节点生命周期工具（`kaleido_node_*`），
+  并且仍然暴露已移除的订单工具，因此 `npx` 无法提供本页所记录的完整工具集。
+  在下一个发布版本发布之前，请从源码构建以使用 `kaleido_node_*` 和 RFQ 交换流程。
+</Warning>
+
 
 实际使用中由 MCP 宿主替你执行这条命令，把宿主配置指向该命令即可（见下面的[客户端配置](#client-configuration)）。若用于开发，或要运行某个特定提交，请改为从源码构建：
 
@@ -164,11 +170,6 @@ PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
     | `kaleidoswap_get_pairs` | 可交易的交易对及其可用的分层路由 |
     | `kaleidoswap_get_quote` | 一笔交换的价格报价，返回输出数量、价格、费用和 `rfq_id` |
     | `kaleidoswap_get_spreads` | 某个交易对在每条路由上的报价，用于比价或发现套利机会 |
-    | `kaleidoswap_place_order` | 下一个 REST 交换订单，返回一个 `deposit_address` |
-    | `kaleidoswap_get_order_status` | 轮询订单状态，直到 `FILLED`、`FAILED`、`EXPIRED` 或 `CANCELLED` |
-    | `kaleidoswap_get_open_orders` | 本会话中下过的订单及其最后已知状态 |
-    | `kaleidoswap_cancel_order` | 在本地会话跟踪器中把订单标记为已取消 |
-    | `kaleidoswap_get_position` | 本会话交易统计：成交率、按资产统计的交易量 |
     | `kaleidoswap_atomic_init` | 原子交换的第 1 步，返回 `swapstring` 和 `payment_hash` |
     | `kaleidoswap_atomic_execute` 🔒 | 第 3 步，在 `wdk_atomic_taker` 把 HTLC 加入白名单后确认执行 |
     | `kaleidoswap_atomic_status` | 按 `payment_hash` 轮询原子交换状态 |

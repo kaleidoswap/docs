@@ -18,11 +18,18 @@ Each AI surface installs independently. Pick the one that matches what you are b
 
 ## MCP Servers
 
-`kaleido-mcp` is the fastest path to a working tool call, published to npm with no local build required:
+`kaleido-mcp` is the quickest path to a first tool call, published to npm:
 
 ```bash
 npx -y kaleido-mcp
 ```
+<Warning>
+  The npm release currently trails `main`. The published build predates the node
+  lifecycle tools (`kaleido_node_*`) and still exposes the removed order tools,
+  so `npx` will not give you the full surface documented on this page. Until the
+  next release lands, build from source for `kaleido_node_*` and the RFQ swap flow.
+</Warning>
+
 
 Three per-wallet servers, `wdk-wallet-mcp`, `wdk-wallet-spark-mcp`, and `wdk-wallet-liquid-mcp`, remain standalone rather than folded into the gateway and build from source:
 

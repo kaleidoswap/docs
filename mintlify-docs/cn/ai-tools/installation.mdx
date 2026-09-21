@@ -23,6 +23,12 @@ description: "安装 KaleidoSwap AI 工具：MCP 服务器网关、KaleidoAgent 
 ```bash
 npx -y kaleido-mcp
 ```
+<Warning>
+  npm 上的发布版本落后于 `main`。已发布的构建不包含节点生命周期工具（`kaleido_node_*`），
+  并且仍然暴露已移除的订单工具，因此 `npx` 无法提供本页所记录的完整工具集。
+  在下一个发布版本发布之前，请从源码构建以使用 `kaleido_node_*` 和 RFQ 交换流程。
+</Warning>
+
 
 另有三个按钱包划分的服务器 `wdk-wallet-mcp`、`wdk-wallet-spark-mcp` 和 `wdk-wallet-liquid-mcp`，它们保持独立而未并入网关，需要从源码构建：
 

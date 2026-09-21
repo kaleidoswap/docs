@@ -60,7 +60,7 @@ description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种�
   </Accordion>
 
   <Accordion title="怎样阻止代理花钱？">
-    有几种相互独立的控制手段，而且值得同时用上多个：
+    在 KaleidoAgent 上，只有一项控制在代码层面强制生效：`dry_run`。下表其余项是作为运行规则传递给模型的，请当作指引而非支出上限：
 
     | 控制项 | 效果 |
     |---------|--------|
@@ -84,7 +84,7 @@ description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种�
   </Accordion>
 
   <Accordion title="这些都是开源的吗？">
-    是的。所有仓库都公开在 [github.com/kaleidoswap](https://github.com/kaleidoswap) 下：MCP 服务器、KaleidoAgent、KaleidoMind，以及 skill 本身。直达链接见[更多资源](/cn/ai-tools/additional-resources)。
+    是的，但有一点需要说明。网关、各个钱包 MCP 服务器、KaleidoAgent、KaleidoMind 和 skill 都公开在 [github.com/kaleidoswap](https://github.com/kaleidoswap) 下。`kaleido-mcp`、KaleidoAgent 和 KaleidoMind 采用 Apache 2.0。三个钱包服务器虽然公开，但尚未附带许可证文件，在许可证落地之前请按 source-available 对待。直达链接见[更多资源](/cn/ai-tools/additional-resources)。
   </Accordion>
 
   <Accordion title="这些工具能配合桌面应用或浏览器扩展使用吗？">

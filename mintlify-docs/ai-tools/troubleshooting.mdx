@@ -155,7 +155,7 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
   <Accordion title="Trading stopped on its own" icon="hand">
     **Symptoms**: The agent was executing, then stopped submitting swaps.
 
-    **Cause**: A risk limit tripped. Most often `stop_loss_btc_sats`, which halts all trading below its BTC threshold, or `min_btc_reserve_sats`.
+    **Cause**: Usually `dry_run` is still on, so decisions are simulated rather than executed. Otherwise the model declined to trade, which can happen when it applies `stop_loss_btc_sats` or `min_btc_reserve_sats` from its instructions, or when a tool call failed.
 
     **Solutions**:
     1. Read `GET /status` for balances and recent runs.

@@ -127,7 +127,7 @@ Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the 
 `window.rgb` exposes the wallet's RGB runtime to DApps — the node-less RGB wallet or a connected RGB Lightning node, whichever the wallet is configured with — so an app can issue, receive, send and track RGB assets without running its own RGB backend. Every funds-touching call confirms in the extension popup, and the connect prompt lets the user restrict an origin to specific capabilities (minting is gated by its own `issueAsset` capability).
 
 <Note>
-`window.rgb` ships with the next extension release. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists.
+`window.rgb` ships from extension 0.3.0 on. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists.
 </Note>
 
 ### TypeScript Support

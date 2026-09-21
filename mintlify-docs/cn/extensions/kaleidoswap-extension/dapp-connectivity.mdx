@@ -127,7 +127,7 @@ window.addEventListener('webln:ready', async () => {
 `window.rgb` 把钱包的 RGB 运行时暴露给 DApp——无节点的 RGB 钱包或已连接的 RGB 闪电节点，取决于钱包的配置——让应用无需自建 RGB 后端即可发行、接收、发送和跟踪 RGB 资产。每个涉及资金的调用都会在扩展弹窗中确认，连接提示还允许用户把某个来源限制在特定能力范围内（发行资产受独立的 `issueAsset` 能力控制）。
 
 <Note>
-`window.rgb` 将随下一个扩展版本发布，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。
+`window.rgb` 从扩展 0.3.0 起提供，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。
 </Note>
 
 ### TypeScript 支持

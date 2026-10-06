@@ -30,6 +30,8 @@ KALEIDO_NETWORK=signet npx -y kaleido-mcp
   resolves an older cached version, run `npx -y kaleido-mcp@latest` once.
 </Note>
 
+From 0.3.1 the Spark and Liquid wallets are optional and not installed by plain `npx`. To enable them, run `npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp` and set `WDK_SEED` / `LIQUID_MNEMONIC`.
+
 For the RGB tools you also need an RGB Lightning Node. [KaleidoCLI](/cli/installation) runs one on signet in Docker, see [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent) for the full path.
 
 Three per-wallet servers, `wdk-wallet-mcp`, `wdk-wallet-spark-mcp`, and `wdk-wallet-liquid-mcp`, remain standalone rather than folded into the gateway and build from source:

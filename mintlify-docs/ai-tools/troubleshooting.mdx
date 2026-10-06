@@ -20,7 +20,7 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
   <Accordion title="Server starts then exits immediately" icon="circle-xmark">
     **Symptoms**: The host reports the process died on launch.
 
-    **Cause**: A required environment variable is missing. The standalone `wdk-wallet-spark-mcp` refuses to start without `WDK_SPARK_SEED`. `kaleido-mcp` is more forgiving: without `WDK_SEED` it still boots, logs a warning, and disables the Spark tools.
+    **Cause**: A required environment variable is missing. The standalone `wdk-wallet-spark-mcp` refuses to start without `WDK_SPARK_SEED`. `kaleido-mcp` is more forgiving: without `WDK_SEED`, or without the optional `@tetherto/wdk-wallet-spark` package, it still boots, logs a warning or install hint, and disables the Spark tools. On `KALEIDO_NETWORK=mainnet` it does refuse to start without `KALEIDOSWAP_API_URL`, since there is no public mainnet API.
 
     **Solutions**:
     1. Confirm the seed variable is set in the `env` block of the host config, not in your shell (the host does not inherit your shell environment).

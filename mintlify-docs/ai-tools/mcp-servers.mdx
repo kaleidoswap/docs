@@ -65,6 +65,16 @@ KALEIDO_NETWORK=signet npx -y kaleido-mcp
   `npx -y kaleido-mcp@latest` once, or build from source.
 </Note>
 
+<Note>
+  From 0.3.1 the Spark and Liquid wallets are optional peer dependencies that plain
+  `npx -y kaleido-mcp` does not install. With `WDK_SEED` or `LIQUID_MNEMONIC` set but
+  the package missing, the server still starts and logs an install hint. To enable them:
+
+  ```bash
+  npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp
+  ```
+</Note>
+
 In practice an MCP host runs this for you, point its config at the command (see [Client Configuration](#client-configuration) below). For development, or to run a specific commit, build from source instead:
 
 ```bash
@@ -98,13 +108,13 @@ The preset only fills in defaults. Any variable you set explicitly, such as `KAL
 | Env var | Required | Description |
 |---------|----------|--------------|
 | `KALEIDO_NETWORK` | No | `signet` (default) or `mainnet`. Sets the defaults in [Network Preset](#network-preset) |
-| `KALEIDOSWAP_API_URL` | With `mainnet` | KaleidoSwap maker API URL. Overrides the preset |
-| `WDK_SEED` | Yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. The server still boots without it, the Spark tools are just disabled |
+| `WDK_SEED` | Yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. Also needs the optional `@tetherto/wdk-wallet-spark` package. The server still boots without either, the Spark tools are just disabled |
+| `LIQUID_MNEMONIC` | Yes, for Liquid tools | BIP-39 mnemonic for the Liquid wallet. Also needs the optional `@kaleidorg/wdk-wallet-liquid` package |
 | `SPARK_NETWORK` | No | Overrides the preset's Spark network: `MAINNET`, or `REGTEST` for Spark's test network |
 | `SPARK_SCAN_API_KEY` | No | SparkScan API key |
 | `SPARK_USDT_TOKEN` | No | Default Spark token identifier |
 | `RLN_NODE_URL` | No | RLN daemon URL, default `http://localhost:3001` |
-| `KALEIDOSWAP_API_URL` | No | Overrides the preset's KaleidoSwap API URL. `KALEIDO_API_URL` is accepted as well |
+| `KALEIDOSWAP_API_URL` | With `mainnet` | KaleidoSwap maker API URL, overriding the preset. Required on `mainnet`, which has no public endpoint. `KALEIDO_API_URL` is accepted as well |
 | `KALEIDO_BIN` | No | Path to the `kaleido` binary, for the node lifecycle tools |
 | `KALEIDO_NODE_URL` | No | Node URL passed as `--node-url` to the node lifecycle tools |
 | `KALEIDO_API_URL` | No | API URL passed as `--api-url` to the node lifecycle tools, and a fallback for `KALEIDOSWAP_API_URL` |
@@ -254,7 +264,7 @@ Add a server to an MCP host such as Claude Desktop or Claude Code. `npx` works f
   "mcpServers": {
     "kaleido": {
       "command": "npx",
-      "args": ["-y", "kaleido-mcp"],
+      "args": ["-y", "-p", "kaleido-mcp", "-p", "@tetherto/wdk-wallet-spark", "kaleido-mcp"],
       "env": {
         "KALEIDO_NETWORK": "signet",
         "WDK_SEED": "your twelve word seed phrase",
@@ -270,7 +280,7 @@ claude mcp add kaleido \
   --env KALEIDO_NETWORK=signet \
   --env RLN_NODE_URL=http://localhost:3001 \
   --env WDK_SEED="your twelve word seed phrase" \
-  -- npx -y kaleido-mcp
+  -- npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark kaleido-mcp
 ```
 
 ```json wdk-wallet-mcp
@@ -303,7 +313,7 @@ claude mcp add kaleido \
 ```
 </CodeGroup>
 
-On Claude Desktop the file is `claude_desktop_config.json` (**Settings > Developer > Edit Config**). `WDK_SEED` is optional: leave it out and the Spark tools are disabled while the RGB node, DEX, payment and market tools keep working. The standalone Spark server takes no network preset, so it sets `SPARK_NETWORK` directly; `REGTEST` is the name the Spark SDK gives its hosted test network.
+On Claude Desktop the file is `claude_desktop_config.json` (**Settings > Developer > Edit Config**). `WDK_SEED` and the `@tetherto/wdk-wallet-spark` package are optional: leave them out and the Spark tools are disabled while the RGB node, DEX, payment and market tools keep working. The standalone Spark server takes no network preset, so it sets `SPARK_NETWORK` directly; `REGTEST` is the name the Spark SDK gives its hosted test network.
 
 ## First Run
 

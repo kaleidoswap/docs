@@ -38,5 +38,5 @@ The [KaleidoMind](/ai-tools/kaleido-mind) repository ships its bundled skills as
 /plugin install kaleido-mind@kaleidoswap
 ```
 
-The plugin runs `npx -y kaleido-mcp` with `KALEIDO_NETWORK=signet`. Set `RLN_NODE_URL` to point at your RGB Lightning Node and `WDK_SEED` to enable the Spark wallet tools. Some KaleidoMind skills (Spark wallet, Bitrefill, Flashnet, merchant finder) rely on tools that only the KaleidoMind runtime provides.
+The plugin runs `npx -y kaleido-mcp` with `KALEIDO_NETWORK=signet`. Set `RLN_NODE_URL` to point at your RGB Lightning Node. The plugin does not install the optional Spark wallet package; to use the Spark tools, configure `kaleido-mcp` yourself as shown in [MCP Servers](/ai-tools/mcp-servers#client-configuration). Some KaleidoMind skills (Spark wallet, Bitrefill, Flashnet, merchant finder) rely on tools that only the KaleidoMind runtime provides.
 

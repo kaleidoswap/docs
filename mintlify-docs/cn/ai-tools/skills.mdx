@@ -38,5 +38,5 @@ skill 可以在运行时通过代理的 `/skills` [状态 API 接口端点](/cn/
 /plugin install kaleido-mind@kaleidoswap
 ```
 
-该插件以 `KALEIDO_NETWORK=signet` 运行 `npx -y kaleido-mcp`。将 `RLN_NODE_URL` 指向你的 RGB Lightning Node，并设置 `WDK_SEED` 以启用 Spark 钱包工具。部分 KaleidoMind skill（Spark 钱包、Bitrefill、Flashnet、商户查找）依赖仅由 KaleidoMind 运行时提供的工具。
+该插件以 `KALEIDO_NETWORK=signet` 运行 `npx -y kaleido-mcp`。将 `RLN_NODE_URL` 指向你的 RGB Lightning Node。该插件不会安装可选的 Spark 钱包包；如需使用 Spark 工具，请按 [MCP 服务器](/cn/ai-tools/mcp-servers#client-configuration)中的说明自行配置 `kaleido-mcp`。部分 KaleidoMind skill（Spark 钱包、Bitrefill、Flashnet、商户查找）依赖仅由 KaleidoMind 运行时提供的工具。
 

@@ -20,7 +20,7 @@ description: "解决 KaleidoSwap AI 工具的常见问题：MCP 连接失败、�
   <Accordion title="服务器启动后立刻退出" icon="circle-xmark">
     **现象**：宿主报告进程在启动时就已终止。
 
-    **原因**：缺少某个必需的环境变量。独立的 `wdk-wallet-spark-mcp` 在没有 `WDK_SPARK_SEED` 时会拒绝启动。`kaleido-mcp` 要宽容一些：没有 `WDK_SEED` 时它仍会启动，记录一条警告，并禁用 Spark 工具。
+    **原因**：缺少某个必需的环境变量。独立的 `wdk-wallet-spark-mcp` 在没有 `WDK_SPARK_SEED` 时会拒绝启动。`kaleido-mcp` 要宽容一些：没有 `WDK_SEED`，或缺少可选包 `@tetherto/wdk-wallet-spark` 时，它仍会启动，记录一条警告或安装提示，并禁用 Spark 工具。但在 `KALEIDO_NETWORK=mainnet` 下如果没有 `KALEIDOSWAP_API_URL`，它会拒绝启动，因为没有公开的主网 API。
 
     **解决办法**：
     1. 确认种子变量写在宿主配置的 `env` 块中，而不是你的 shell 里（宿主不会继承你的 shell 环境）。

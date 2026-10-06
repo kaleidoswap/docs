@@ -76,16 +76,29 @@ Each loop is driven by a [skill](/ai-tools/skills).
 
 ## Risk Controls
 
-Risk limits live in `agent.config.json` under `portfolio`. They are checked before any swap is submitted.
+Risk limits live in `agent.config.json` under `portfolio`. They are not all enforced the same way, and the difference matters when you size them.
+
+`dry_run` is enforced in code. The swap executor refuses before any tool is called, so no phrasing in a prompt or a skill reaches past it.
 
 | Parameter | Default | Effect |
 |-----------|---------|--------|
-| `dry_run` | `true` | Simulates the decision without executing a swap |
+| `dry_run` | `true` | Blocks execution in code. Simulates the decision without executing a swap |
+
+The remaining parameters are passed to the model as operating rules, in the run prompt and in the skill files. They shape what a cooperative model does. They are not an independent ceiling, so a model that ignores them is not currently stopped by anything else.
+
+| Parameter | Default | Intended effect |
+|-----------|---------|--------|
 | `max_swap_usd` | `200` | Caps the USD value of a single trade |
 | `min_btc_reserve_sats` | `50000` | Minimum combined BTC balance across the RLN node and Spark |
 | `stop_loss_btc_sats` | `30000` | Halts all trading below this BTC threshold |
 | `rebalance_threshold_pct` | `5` | Minimum drift percentage that triggers a swap |
 | `max_concurrent_orders` | `3` | Caps simultaneous open orders |
+
+<Warning>
+  Treat the second table as guidance to the model, not as a spending limit. Until
+  these are enforced outside the reasoning loop, `dry_run` and a small funded
+  balance are the only controls that hold against a model that gets it wrong.
+</Warning>
 
 ## Trading Modes
 
@@ -180,7 +193,7 @@ With the agent running, drive one loop by hand and read what it decided before l
   </Step>
 
   <Step title="Review the risk limits">
-    Confirm `max_swap_usd`, `min_btc_reserve_sats`, and `stop_loss_btc_sats` match what you are willing to lose on a test network. These are checked before any swap is submitted, see [Risk Controls](#risk-controls) above.
+    Confirm `max_swap_usd`, `min_btc_reserve_sats`, and `stop_loss_btc_sats` match what you are willing to lose on a test network. These are passed to the model as rules rather than enforced in code, so keep `dry_run` on and the balance small until you trust the decisions, see [Risk Controls](#risk-controls) above.
   </Step>
 
   <Step title="Only then disable dry run">

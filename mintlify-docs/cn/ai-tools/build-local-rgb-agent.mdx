@@ -1,0 +1,266 @@
+---
+title: "15 分钟构建一个支持 RGB 的本地 AI 代理"
+sidebarTitle: "构建本地 RGB 代理"
+description: "运行一个 signet RGB Lightning Node，把它接入 kaleido-mcp，再通过 KaleidoMind 用本地 QVAC 模型驱动它：查询余额、收发 USDT、报价与交换"
+---
+
+本教程带你从一台空机器出发，最终得到一个能在 signet 上读取并转移 RGB 资产的本地语言模型。所有组件都运行在你的电脑上：模型通过 [QVAC](https://www.npmjs.com/package/@qvac/sdk) 运行，推理引擎是 [KaleidoMind](/cn/ai-tools/kaleido-mind)，工具来自 [`kaleido-mcp`](/cn/ai-tools/mcp-servers)，RGB Lightning Node 则通过 [KaleidoCLI](/cn/cli/introduction) 在 Docker 中运行。唯一的网络调用是发往你的节点、signet KaleidoSwap API，以及节点自身所需的比特币与 RGB 服务。
+
+```
+你 ─▶ KaleidoMind（QVAC 模型，本地）─▶ kaleido-mcp（stdio）─▶ RGB Lightning Node（Docker，signet）
+                                                 └──────────▶ api.signet.kaleidoswap.com
+```
+
+<Note>
+  本教程的一切都运行在 signet 上，使用的测试币没有任何价值。不要在其他任何地方复用本教程中的种子或密码。
+</Note>
+
+## 前置条件 {#prerequisites}
+
+| 要求 | 用途 |
+|-------------|-----|
+| Node.js 20+ | 运行 `kaleido-mcp` 和 KaleidoMind 宿主 |
+| Python 3.10+ | 运行 KaleidoCLI |
+| Docker 与 Compose | 运行 RGB Lightning Node |
+| 一个 GitHub 账号 | 登录 RGB 水龙头 |
+| 约 1 GB 可用磁盘 | 存放本地模型和节点数据 |
+
+不需要任何 API 密钥，也不需要托管的 LLM。
+
+## 1. 启动一个 signet RGB Lightning Node {#1-start-a-signet-rgb-lightning-node}
+
+用安装脚本安装 KaleidoCLI。它尚未发布到 PyPI，所以 `pip install` 找不到它：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kaleidoswap/kaleido-cli/master/install.sh | sh
+```
+
+使用 signet 默认值创建并启动一个节点，然后初始化并解锁它的钱包：
+
+```bash
+kaleido setup          # 在 Docker 中创建并启动一个 signet 节点
+kaleido node init      # 仅一次：设置钱包密码并打印助记词
+kaleido node unlock    # 每次重启后都要执行
+kaleido node info      # 确认节点在 http://localhost:3001 上响应
+```
+
+KaleidoCLI 把这个网络称为 `mutinynet`，它与 KaleidoSwap signet API 和 RGB 水龙头使用的是同一个 signet。请记下 `kaleido node init` 打印的助记词。
+
+<Tip>
+  [节点环境](/cn/cli/node-environments)页面介绍了如何运行多个节点、在节点之间切换以及查看日志。
+</Tip>
+
+## 2. 为节点注资 {#2-fund-the-node}
+
+RGB 资产依附在比特币 UTXO 上，因此节点在接收任何资产之前需要少量 signet BTC。
+
+<Steps>
+  <Step title="获取 signet BTC">
+    打印一个链上地址，并从公共的 [Mutinynet 水龙头](https://faucet.mutinynet.com)向它发币：
+
+    ```bash
+    kaleido wallet address
+    ```
+
+    signet 大约每 30 秒出一个块。用 `kaleido wallet balance` 查看余额。
+  </Step>
+
+  <Step title="为 RGB 创建 UTXO">
+    把一部分 BTC 拆分成可以承载 RGB 分配的 UTXO：
+
+    ```bash
+    kaleido wallet create-utxos
+    ```
+  </Step>
+
+  <Step title="获取测试 RGB 资产">
+    创建一张 RGB 发票。不指定资产 ID 即可接收任意资产：
+
+    ```bash
+    kaleido asset invoice
+    ```
+
+    打开 [KaleidoSwap RGB 水龙头](https://faucet.mutinynet.kaleidoswap.com)，用 GitHub 登录并粘贴发票。转账确认后，先运行 `kaleido asset refresh`，再用 `kaleido asset list` 就能看到该资产。
+  </Step>
+</Steps>
+
+## 3. 在 signet 上运行 kaleido-mcp {#3-run-kaleido-mcp-on-signet}
+
+`KALEIDO_NETWORK=signet` 会把 `kaleido-mcp` 指向 `https://api.signet.kaleidoswap.com` 和 Spark 测试网络。把 `RLN_NODE_URL` 指向第 1 步中的节点：
+
+```bash
+KALEIDO_NETWORK=signet RLN_NODE_URL=http://localhost:3001 npx -y kaleido-mcp
+```
+
+服务器会输出 `network: signet` 并在 stdio 上等待。你不需要手动保持它运行：下一步中的代理会把它作为子进程启动。这里 `WDK_SEED` 是可选的；不设置时 Spark 工具保持关闭，RGB、DEX、支付和行情工具照常可用。全部变量见 [MCP 服务器](/cn/ai-tools/mcp-servers#network-preset)。
+
+<Tip>
+  想在写代码之前先试用这些工具？用[客户端配置](/cn/ai-tools/mcp-servers#client-configuration)中的配置把同一条命令添加到 Claude Desktop 或 Claude Code，然后询问你的 RGB 余额。本教程余下部分会把这个托管模型换成本地模型。
+</Tip>
+
+## 4. 通过 KaleidoMind 接入本地 QVAC 模型 {#4-wire-a-local-qvac-model-with-kaleidomind}
+
+创建一个项目，安装引擎、QVAC SDK 和 MCP 客户端：
+
+```bash
+mkdir rgb-agent && cd rgb-agent
+npm init -y && npm pkg set type=module
+npm install @kaleidorg/mind @qvac/sdk @modelcontextprotocol/sdk
+```
+
+KaleidoMind 支持 `@qvac/sdk` 0.13 及以上版本，建议安装最新版本。把下面的代码保存为 `agent.mjs`：
+
+```js agent.mjs
+import { createInterface } from 'node:readline/promises';
+import { completion, cancel, loadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk';
+import { Funnel, ToolRegistry, confirmReadback } from '@kaleidorg/mind';
+import { McpToolSource } from '@kaleidorg/mind/mcp';
+import { createQvacProvider } from '@kaleidorg/mind/qvac';
+
+// 1. 通过 stdio 启动运行在 signet 上的 kaleido-mcp
+const kaleido = new McpToolSource({
+  id: 'kaleido',
+  transport: {
+    kind: 'stdio',
+    command: 'npx',
+    args: ['-y', 'kaleido-mcp'],
+    env: {
+      PATH: process.env.PATH,
+      HOME: process.env.HOME,
+      KALEIDO_NETWORK: 'signet',
+      RLN_NODE_URL: 'http://localhost:3001',
+    },
+  },
+});
+await kaleido.connect();
+
+// 2. 通过 QVAC 加载本地模型（首次运行时下载）
+const modelId = await loadModel({
+  modelSrc: QWEN3_600M_INST_Q4,
+  modelType: 'llm',
+  modelConfig: { ctx_size: 8192, tools: true },
+});
+const provider = createQvacProvider({ completion, cancel, getModelId: () => modelId });
+
+// 3. 分层漏斗，任何花费之前都会弹出确认
+const funnel = new Funnel({ provider, tools: new ToolRegistry([kaleido]) });
+const rl = createInterface({ input: process.stdin, output: process.stdout });
+
+while (true) {
+  const text = await rl.question('\n> ');
+  if (!text.trim()) continue;
+  const out = await funnel.runTurn(text, {
+    onConfirm: async (call) => {
+      const answer = await rl.question(`${confirmReadback(call)} [y/N] `);
+      return { approved: answer.trim().toLowerCase() === 'y' };
+    },
+  });
+  console.log(out.text);
+}
+```
+
+运行它：
+
+```bash
+node agent.mjs
+```
+
+首次启动会下载模型。每个动用资金的工具都会在 `onConfirm` 回调处暂停，在你输入 `y` 之前，任何资金都不会离开节点。
+
+<Note>
+  这是一个最小的宿主。[`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) 以及 [kaleido-mind 仓库](https://github.com/kaleidoswap/kaleido-mind)中的 `examples/node-minimal` 和 `examples/rgb-agent` 目录走得更远，包含 skills、recipe 和更大的模型。0.6B 模型能很好地处理快速路径和 recipe；对于开放式请求，Qwen3 1.7B 或 4B 这类更大的模型表现明显更好。
+</Note>
+
+## 5. 可以尝试的提示词 {#5-prompts-to-try}
+
+先只读，再收款，最后花费。
+
+| 提示词 | 调用的工具 |
+|--------|-----------|
+| `What RGB assets does my node hold, and how much of each?` | `wdk_list_assets`、`wdk_get_asset_balance` |
+| `Show my BTC balance on-chain and in Lightning.` | `wdk_get_balances` |
+| `Create an RGB invoice to receive 10 USDT, using transport endpoint rpcs://proxy.iriswallet.com/0.2/json-rpc.` | `wdk_create_rgb_invoice` |
+| `Send 5 USDT to this RGB invoice: <invoice>` | `wdk_send_asset` 🔒 |
+| `Quote 100000 sats of BTC over Lightning into USDT over RGB Lightning. Do not execute.` | `kaleidoswap_get_quote` |
+| `Swap 100000 sats into USDT with an atomic swap.` | `kaleidoswap_get_quote` → `kaleidoswap_atomic_init` → `wdk_atomic_taker` → `kaleidoswap_atomic_execute` 🔒 → `kaleidoswap_atomic_status` |
+
+KaleidoMind 可能会用旧的 `rln_*` 名称调用同样的工具；`kaleido-mcp` 两种名称都提供。
+
+如果没有第二个钱包也想试试发送，可以向朋友要一张 RGB 发票，或者用 `kaleido node create` 在第二个节点上生成一张。
+
+<Warning>
+  原子交换通过闪电网络结算，因此节点需要与 KaleidoSwap 做市方之间有一条承载该资产的通道。在 signet 上获取通道最快的方式是向 LSP 购买：`Buy a channel from the KaleidoSwap LSP preloaded with 10 USDT` 会调用 `kaleidoswap_lsp_quote_asset_channel` 和 `kaleidoswap_lsp_create_asset_channel`，并通过链上付款。交换之前请等几个区块让通道打开。
+</Warning>
+
+## Mock 模式：无需节点与资金 {#mock-mode-no-node-no-funds}
+
+如果想在节点就绪之前或在 CI 中构建代理逻辑，可以把 MCP 工具源换成 `@kaleidorg/mind/testing` 中的有状态 mock 钱包。它绑定的是同一份工具契约，因此驱动它的代码之后同样可以驱动真实节点：
+
+```js mock.mjs
+import { Funnel, confirmReadback } from '@kaleidorg/mind';
+import { MockWallet, scriptedProvider } from '@kaleidorg/mind/testing';
+
+const wallet = new MockWallet();
+const funnel = new Funnel({ provider: scriptedProvider(), tools: wallet.registry() });
+
+const out = await funnel.runTurn('what is my balance?', {
+  onConfirm: async (call) => {
+    console.log(confirmReadback(call));
+    return { approved: true };
+  },
+});
+console.log(out.text);
+```
+
+`scriptedProvider()` 完全不需要模型。把它换成第 4 步中的 QVAC provider，就能用真实模型测试 mock 钱包；再把 `wallet.registry()` 换成 `new ToolRegistry([kaleido])`，即可接入真实节点。
+
+## 故障排查 {#troubleshooting}
+
+<AccordionGroup>
+  <Accordion title="kaleido: command not found">
+    安装程序会把 `kaleido` 放在一个用户脚本目录中，该目录可能还不在你的 `PATH` 里。请打开一个新的终端，或按照安装程序打印的路径操作。见 [CLI 安装](/cn/cli/installation)。
+  </Accordion>
+
+  <Accordion title="代理连不上节点">
+    运行 `kaleido node info`。如果失败，用 `kaleido node up` 启动容器，再用 `kaleido node unlock` 解锁；每次重启后钱包都会重新锁定。然后确认 `RLN_NODE_URL` 与 `kaleido node list` 标记为当前活动的 URL 一致。
+  </Accordion>
+
+  <Accordion title="水龙头的转账一直没有到账">
+    运行 `kaleido asset refresh` 并等待一次确认。如果节点没有空闲的 UTXO，发票就无法创建或结算：用 BTC 注资后再运行一次 `kaleido wallet create-utxos`。
+  </Accordion>
+
+  <Accordion title="对方无法支付我的 RGB 发票">
+    付款方会从发票中列出的 RGB 代理获取转账数据。请用 `kaleido asset invoice` 创建发票（它会加入默认代理），或像上表那样在提示词中指明代理。
+  </Accordion>
+
+  <Accordion title="报价失败或指向了主网">
+    确认 `kaleido-mcp` 输出了 `network: signet`。环境中显式设置的 `KALEIDOSWAP_API_URL` 或 `KALEIDO_API_URL` 会覆盖预设。
+  </Accordion>
+
+  <Accordion title="交换一直没有执行">
+    检查 `wdk_list_channels`：你需要一条与做市方之间、可用且承载所买卖资产的通道。没有它，报价可以成功，但无法结算。
+  </Accordion>
+
+  <Accordion title="模型调用了错误的工具或编造参数">
+    小模型不擅长开放式规划。请像上面的提示词那样把请求说具体，或者加载更大的 QVAC 模型。KaleidoMind 的 recipe 会以确定性方式处理多步流程，模型只需要填槽。
+  </Accordion>
+</AccordionGroup>
+
+更多解决办法见 [AI 工具故障排查](/cn/ai-tools/troubleshooting)。
+
+## 黑客松项目灵感 {#ideas-for-hackathon-projects}
+
+<CardGroup cols={2}>
+  <Card title="语音钱包" icon="microphone">
+    QVAC 也能在本地运行语音转文字和文字转语音。`@kaleidorg/mind/qvac` 中的 `createQvacVoice` 和 `runVoiceAssistant` 提供免手操作的循环，每次花费前都会语音确认。
+  </Card>
+  <Card title="为 API 付费的代理" icon="key">
+    让代理用 `search_paid_apis` 找到付费 API，再通过 `mpp_*` 和 `l402_*` 工具按次经闪电网络付款。无需注册，也无需 API 密钥。
+  </Card>
+  <Card title="自主交换机器人" icon="arrows-rotate">
+    用 `l402_get_price` 和 `kaleidoswap_get_spreads` 盯盘，并通过原子交换在 BTC 与 USDT 之间再平衡。在决策看起来可靠之前，请一直保留确认关卡。
+  </Card>
+  <Card title="RGB 资产发行" icon="coins">
+    把门票或积分代币发行为新的 RGB 资产。目前可以通过 CLI（`kaleido asset issue nia`）以及 KaleidoMind 的 mock 钱包实现；`kaleido-mcp` 尚未提供发行工具。
+  </Card>
+</CardGroup>

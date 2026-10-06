@@ -10,12 +10,12 @@ description: "选择把 AI 代理接入比特币的方式：MCP 服务器、Kale
 
 | 要求 | 说明 |
 |-------------|---------|
-| **一个测试网络** | regtest 或 signet。首次运行绝不要用主网 |
+| **一个测试网络** | signet。KaleidoSwap API 在 `https://api.signet.kaleidoswap.com` 提供 signet 实例，[RGB 水龙头](https://faucet.mutinynet.kaleidoswap.com)可发放测试资产。首次运行绝不要用主网 |
 | **一份钱包种子** | 用于测试网络的一次性 BIP-39 助记词，设置到 `WDK_SEED` |
-| **一个节点** | 仅 `wdk_*` 工具和原子交换需要。Spark 工具只需要种子，行情数据什么都不需要 |
+| **一个节点** | 仅 `wdk_*` 工具和原子交换需要。[KaleidoCLI](/cn/cli/installation) 一条命令即可启动一个 signet RGB Lightning Node。Spark 工具只需要种子，行情数据什么都不需要 |
 | **一个 MCP 宿主或 LLM 密钥** | Claude Desktop 或其他 MCP 客户端，或者用于 KaleidoAgent 的 Anthropic / OpenAI 密钥 |
 
-如果你还没有安装任何组件，请先看[安装](/cn/ai-tools/installation)。
+如果你还没有安装任何组件，请先看[安装](/cn/ai-tools/installation)。想从一台空机器一路走到让本地模型在 signet 上操作 RGB 资产，请按照[构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)操作。
 
 ## 选择接入方式 {#pick-a-surface}
 
@@ -37,7 +37,7 @@ description: "选择把 AI 代理接入比特币的方式：MCP 服务器、Kale
 | 接入方式 | 把关机制 |
 |---------|------|
 | **[KaleidoMind](/cn/ai-tools/kaleido-mind)** | 结构性把关。每个会动用资金的工具都标记了 `requiresConfirmation`，引擎会暂停并等待宿主的确认面板。模型无法绕过 |
-| **[KaleidoAgent](/cn/ai-tools/kaleido-agent)** | 策略性把关。`dry_run` 加上 `agent.config.json` 中的风险上限，在提交前校验 |
+| **[KaleidoAgent](/cn/ai-tools/kaleido-agent)** | 混合把关。`dry_run` 在代码层面强制生效；`agent.config.json` 中其余风险上限是给模型的规则，不是独立的上限 |
 | **[MCP 服务器](/cn/ai-tools/mcp-servers)** | 取决于你的宿主客户端。多数 MCP 客户端会为每次工具调用弹出确认，但那是客户端的行为，不是服务器的 |
 
 <Warning>

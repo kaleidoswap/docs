@@ -43,15 +43,17 @@ The canonical tool contract lives in core as `ToolDef[]`, with a `spend` flag th
 | Layer | Status | Tools |
 |-------|--------|-------|
 | Spark | Shipped | `spark_get_balance` · `spark_get_address` · `spark_get_onchain_address` · `spark_create_invoice` · `spark_pay_invoice` 🔒 · `spark_send` 🔒 |
-| RLN / RGB | Shipped | `rln_get_balances` · `rln_get_node_info` · `rln_list_channels` · `rln_create_ln_invoice` · `rln_create_rgb_invoice` · `rln_pay_invoice` 🔒 · `rln_send_asset` 🔒 |
+| RLN / RGB | Shipped | `rln_get_balances` · `rln_get_node_info` · `rln_list_assets` · `rln_list_transfers` · `rln_list_channels` · `rln_create_ln_invoice` · `rln_create_rgb_invoice` · `rln_create_utxos` · `rln_pay_invoice` 🔒 · `rln_send_asset` 🔒 · `rln_issue_asset` 🔒 |
 | Arkade | Shipped | `arkade_get_balance` · `arkade_get_address` · `arkade_send` 🔒 |
 | Liquid | Planned, not implemented | `liquid_get_balance` · `liquid_create_invoice` · `liquid_send` 🔒 (type-defined in the contract, no adapter yet) |
+
+`rln_issue_asset` is part of the KaleidoMind contract and runs against the mock wallet in `@kaleidorg/mind/testing`, but `kaleido-mcp` does not expose an issuance tool yet, so a host bound to the gateway cannot issue an RGB asset through it today.
 
 Plus cross-cutting router tools: `get_balances(layer?)`, `resolve_contact(name)`, `get_price(asset?, fiat?)`, `fiat_to_sats(amount, currency)`, `get_swap_quote`/`execute_swap`, the unified `send_payment(asset, amount, to, layer?)` that picks the rail automatically, and its receive counterpart `create_invoice(asset?, amount?, layer?)`.
 
 ### KaleidoSwap Trading & LSPS1
 
-Separate contracts for DEX trading (`kaleidoswap_get_quote`, `kaleidoswap_place_order`, `kaleidoswap_atomic_init`/`execute`/`status`) and LSP-agnostic channel orders (`lsp_get_info`, `lsp_get_network_info`, `lsp_estimate_fees`, `lsp_create_order`, `lsp_get_order`). The atomic swap chain runs as a single confirm-gated recipe (`kaleidoswapAtomicRecipe`): quote, then after one confirmation init on the maker, read the node's pubkey, whitelist the HTLC as taker, and execute.
+Separate contracts for DEX trading (`kaleidoswap_get_quote`, then `kaleidoswap_atomic_init`/`execute`/`status`; `kaleido-mcp` 0.3.0 settles swaps atomically only) and LSP-agnostic channel orders (`lsp_get_info`, `lsp_get_network_info`, `lsp_estimate_fees`, `lsp_create_order`, `lsp_get_order`). The atomic swap chain runs as a single confirm-gated recipe (`kaleidoswapAtomicRecipe`): quote, then after one confirmation init on the maker, read the node's pubkey, whitelist the HTLC as taker, and execute.
 
 ## Skills
 
@@ -59,7 +61,27 @@ Skills are Agent-Skills-spec playbooks (`SKILL.md` plus progressive disclosure) 
 
 ## QVAC: On-Device Inference
 
-LLM, embedding, speech-to-text, and text-to-speech inference all run through the [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk), locally on-device by default, or delegated to an explicitly paired, user-controlled desktop for heavier work. Published as the `@kaleidorg/mind/qvac` subpath so the SDK stays a peer dependency rather than a hard requirement of core. Memory and RAG (long-term recall, wallet-history retrieval, merchant discovery) also route through QVAC's embeddings, with near-duplicate consolidation to keep memory from bloating.
+LLM, embedding, speech-to-text, and text-to-speech inference all run through the [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk), Tether's local AI runtime, locally on-device by default, or delegated to an explicitly paired, user-controlled desktop for heavier work. Published as the `@kaleidorg/mind/qvac` subpath so the SDK stays a peer dependency rather than a hard requirement of core. Memory and RAG (long-term recall, wallet-history retrieval, merchant discovery) also route through QVAC's embeddings, with near-duplicate consolidation to keep memory from bloating.
+
+| Package | Version |
+|---------|---------|
+| `@qvac/sdk` | The core engine works with 0.13 and later. Install the latest release, which is what the hosts and evals are tested against |
+| `@kaleidorg/mind` | Takes `@qvac/sdk` as an optional peer dependency, so the engine also runs with no model at all against the mock provider |
+
+`createQvacProvider` turns the SDK's `completion` into the engine's `LLMProvider`. The SDK functions are injected rather than imported, so the host owns the model lifecycle (`loadModel`, `unloadModel`) and the engine never pulls QVAC into a bundle that does not need it.
+
+## Build With It
+
+The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) has a quickstart, and the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) carries two runnable examples:
+
+| Example | What it shows |
+|---------|---------------|
+| `examples/node-minimal` | The smallest Node.js host: a QVAC model, the funnel, and a confirm callback |
+| `examples/rgb-agent` | A local agent bound to `kaleido-mcp` on signet, moving RGB assets on a real RGB Lightning Node |
+
+`@kaleidorg/mind/testing` provides a stateful `MockWallet` bound to the real tool contract and a scripted provider, so the full funnel, recipes and confirm gate run in CI or on a laptop with no node, no funds and no model.
+
+For a step-by-step version on signet, follow [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent).
 
 ## Where It Runs
 
@@ -76,5 +98,5 @@ The fastest way to try it is the Desktop App. [Download the latest release](http
 
 ## Publishing & Subpaths
 
-Published from `packages/core` as `@kaleidorg/mind`, with subpaths: `./mcp` (MCP tool source helpers), `./skills` (skill loader), `./logger`, and `./qvac` (the on-device inference adapter). Also on npm: `apps/provider` as `@kaleidorg/mind-provider`, the Tauri desktop sidecar that the Desktop App embeds. The CLI in `apps/cli` is for terminal and eval use from the repository and is not published.
+Published from `packages/core` as `@kaleidorg/mind`, with subpaths: `./mcp` (MCP tool source helpers), `./skills` (skill loader), `./logger`, `./qvac` (the on-device inference adapter), and `./testing` (mock wallet and scripted provider). Also on npm: `apps/provider` as `@kaleidorg/mind-provider`, the Tauri desktop sidecar that the Desktop App embeds. The CLI in `apps/cli` is for terminal and eval use from the repository and is not published.
 

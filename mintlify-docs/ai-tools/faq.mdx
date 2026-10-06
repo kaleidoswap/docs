@@ -46,9 +46,18 @@ description: "Common questions about the KaleidoSwap AI tools, covering custody,
   </Accordion>
 
   <Accordion title="Can I run this on mainnet?">
-    The tools can reach mainnet, but treat it as the last step rather than the first. Start on Regtest or Signet with a throwaway seed, keep `dry_run` enabled on KaleidoAgent until the dry-run decisions look correct, and only then switch networks.
+    The tools can reach mainnet, but treat it as the last step rather than the first. Start on signet with a throwaway seed, keep `dry_run` enabled on KaleidoAgent until the dry-run decisions look correct, and only then switch networks.
 
     Note that the different surfaces carry different maturity: KaleidoAgent and the MCP servers drive live funds directly, and an LLM making a wrong tool call is a real failure mode.
+  </Accordion>
+
+  <Accordion title="Where do I get test funds?">
+    Everything in these docs runs on signet. Point `kaleido-mcp` at it with `KALEIDO_NETWORK=signet`, which selects the signet KaleidoSwap API at `https://api.signet.kaleidoswap.com`.
+
+    - **RGB assets:** the [KaleidoSwap RGB faucet](https://faucet.mutinynet.kaleidoswap.com) sends test assets to an RGB invoice from your node. Sign in with GitHub.
+    - **A node:** [KaleidoCLI](/cli/installation) runs a signet RGB Lightning Node locally with `kaleido setup`.
+
+    [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent) walks through both.
   </Accordion>
 
   <Accordion title="What does it cost to run?">
@@ -60,15 +69,22 @@ description: "Common questions about the KaleidoSwap AI tools, covering custody,
   </Accordion>
 
   <Accordion title="How do I stop an agent from spending?">
-    Several independent controls, and it is worth using more than one:
+    On KaleidoAgent, one control is enforced in code:
 
     | Control | Effect |
     |---------|--------|
-    | `dry_run` | Simulates the decision without executing |
+    | `dry_run` | Blocks execution before any tool is called. Simulates the decision without executing |
+
+    The rest are passed to the model as operating rules rather than enforced independently, so treat them as guidance and not as a spending limit:
+
+    | Control | Intended effect |
+    |---------|--------|
     | `max_swap_usd` | Caps a single trade |
     | `stop_loss_btc_sats` | Halts all trading below a BTC threshold |
     | `min_btc_reserve_sats` | Keeps a floor across the node and Spark |
     | `max_concurrent_orders` | Caps simultaneous open orders |
+
+    The controls that hold regardless of what the model decides are `dry_run` and keeping the funded balance small.
 
     On KaleidoMind the equivalent is structural rather than configured: fund-moving tools are marked `requiresConfirmation` and pause for the host's confirmation sheet.
   </Accordion>
@@ -84,7 +100,7 @@ description: "Common questions about the KaleidoSwap AI tools, covering custody,
   </Accordion>
 
   <Accordion title="Is any of this open source?">
-    Yes. Every repository is public under [github.com/kaleidoswap](https://github.com/kaleidoswap): the MCP servers, KaleidoAgent, KaleidoMind, and the skills themselves. See [Additional Resources](/ai-tools/additional-resources) for the direct links.
+    Yes, with one caveat. The gateway, the per-wallet MCP servers, KaleidoAgent, KaleidoMind and the skills are all public under [github.com/kaleidoswap](https://github.com/kaleidoswap). `kaleido-mcp`, KaleidoAgent and KaleidoMind are Apache 2.0. The three per-wallet servers are public but do not yet carry a licence file, so treat them as source-available until one lands. See [Additional Resources](/ai-tools/additional-resources) for the direct links.
   </Accordion>
 
   <Accordion title="Can I use these tools with the Desktop App or the Extension?">
@@ -99,7 +115,7 @@ Check the [Troubleshooting](/ai-tools/troubleshooting) for errors rather than qu
 For anything else, report a problem through your preferred channel from the options below, including:
 
 1. Which surface and version (MCP server name, KaleidoAgent commit, or Desktop App version)
-2. The network you are on (Regtest, Signet, or mainnet)
+2. The network you are on (signet or mainnet)
 3. The tool name that failed and the error text
 4. Host and runtime versions (MCP client, Node.js)
 5. Your config with the seed and any keys removed

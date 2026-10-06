@@ -242,7 +242,8 @@
                 "pages": [
                   "ai-tools/introduction",
                   "ai-tools/installation",
-                  "ai-tools/getting-started"
+                  "ai-tools/getting-started",
+                  "ai-tools/build-local-rgb-agent"
                 ]
               },
               {
@@ -588,7 +589,8 @@
                 "pages": [
                   "cn/ai-tools/introduction",
                   "cn/ai-tools/installation",
-                  "cn/ai-tools/getting-started"
+                  "cn/ai-tools/getting-started",
+                  "cn/ai-tools/build-local-rgb-agent"
                 ]
               },
               {

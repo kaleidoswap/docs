@@ -98,7 +98,7 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
     **Symptoms**: Tools return empty balances for a wallet you know is funded.
 
     **Solutions**:
-    1. **Check the network.** `SPARK_NETWORK` and the node's own network must match where the funds are. A Regtest seed shows nothing on mainnet.
+    1. **Check the network.** `KALEIDO_NETWORK` (or `SPARK_NETWORK`) and the node's own network must match where the funds are. A signet wallet shows nothing on mainnet, and the reverse.
     2. **Confirm the seed.** A different mnemonic derives a different wallet, not an empty one.
     3. **Wait for sync.** A node that has just unlocked may not have caught up to the chain tip.
     4. **Distinguish on-chain from Lightning.** `wdk_get_balances` separates vanilla and colored UTXOs from the Lightning balance, and an asset in a channel is not an on-chain balance.
@@ -155,7 +155,7 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
   <Accordion title="Trading stopped on its own" icon="hand">
     **Symptoms**: The agent was executing, then stopped submitting swaps.
 
-    **Cause**: A risk limit tripped. Most often `stop_loss_btc_sats`, which halts all trading below its BTC threshold, or `min_btc_reserve_sats`.
+    **Cause**: Usually `dry_run` is still on, so decisions are simulated rather than executed. Otherwise the model declined to trade, which can happen when it applies `stop_loss_btc_sats` or `min_btc_reserve_sats` from its instructions, or when a tool call failed.
 
     **Solutions**:
     1. Read `GET /status` for balances and recent runs.
@@ -201,7 +201,7 @@ Check the [FAQ](/ai-tools/faq) for questions rather than errors, and [Additional
 For anything else, report a problem through your preferred channel from the options below, including:
 
 1. Which surface and version (MCP server name, KaleidoAgent commit, or Desktop App version)
-2. The network you are on (Regtest, Signet, or mainnet)
+2. The network you are on (signet or mainnet)
 3. The tool name that failed and the error text
 4. Host and runtime versions (MCP client, Node.js)
 5. Your config with the seed and any keys removed

@@ -16,7 +16,7 @@ description: "SKILL.md 操作手册限定代理能调用哪些工具并承载执
 | `dca` | 按计划、感知价格的买入，受用户设定的上限约束 |
 | `wallet-assistant` | 以对话方式查询余额、生成发票、支付和交换 |
 | `cross-l2` | 在 Spark、闪电网络和链上比特币之间转移资产 |
-| `kaleidoswap` | KaleidoSwap DEX 参考：报价、原子交换、REST 订单、未平仓头寸 |
+| `kaleidoswap` | KaleidoSwap DEX 参考：报价与原子交换 |
 | `mpp` | 通过闪电网络访问受 HTTP 402 门控的 API |
 | `node-manager` | RGB Lightning Node 生命周期、钱包解锁、通道与余额检查 |
 | `portfolio-loop` | 定时的投资组合再平衡器：对照目标测量偏移，执行最小规模的原子交换，并把 DCA 一并纳入 |
@@ -28,4 +28,15 @@ description: "SKILL.md 操作手册限定代理能调用哪些工具并承载执
 每个文件都发布在 [kaleido-agent 仓库的 `skills/` 目录](https://github.com/kaleidoswap/kaleido-agent/tree/main/skills)下，也可以从 [AI 工具产品页](https://kaleidoswap.com/products/ai-tools#skills)阅读或下载。
 
 skill 可以在运行时通过代理的 `/skills` [状态 API 接口端点](/cn/ai-tools/kaleido-agent#status-api)列出、启用和禁用。
+
+## 在 Claude Code 中使用 skill
+
+[KaleidoMind](/cn/ai-tools/kaleido-mind) 仓库将其内置 skill 作为 Claude Code 插件发布，并附带已配置为 signet 的 `kaleido-mcp` 服务器：
+
+```bash
+/plugin marketplace add kaleidoswap/kaleido-mind
+/plugin install kaleido-mind@kaleidoswap
+```
+
+该插件以 `KALEIDO_NETWORK=signet` 运行 `npx -y kaleido-mcp`。将 `RLN_NODE_URL` 指向你的 RGB Lightning Node，并设置 `WDK_SEED` 以启用 Spark 钱包工具。部分 KaleidoMind skill（Spark 钱包、Bitrefill、Flashnet、商户查找）依赖仅由 KaleidoMind 运行时提供的工具。
 

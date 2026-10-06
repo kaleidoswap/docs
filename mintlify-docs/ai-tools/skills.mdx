@@ -16,7 +16,7 @@ A skill is a self-contained `SKILL.md` file loaded at runtime. It scopes which t
 | `dca` | Scheduled, price-aware purchases bounded by user-set caps |
 | `wallet-assistant` | Interactive balances, invoices, payments, and swaps over chat |
 | `cross-l2` | Asset moves between Spark, Lightning, and on-chain Bitcoin |
-| `kaleidoswap` | KaleidoSwap DEX reference: quotes, atomic swaps, REST orders, open positions |
+| `kaleidoswap` | KaleidoSwap DEX reference: quotes and atomic swaps |
 | `mpp` | Access to HTTP 402-gated APIs over Lightning |
 | `node-manager` | RGB Lightning Node lifecycle, wallet unlock, channel and balance inspection |
 | `portfolio-loop` | Scheduled portfolio rebalancer: measures drift against targets, executes the minimum atomic swap, folds in DCA |
@@ -28,4 +28,15 @@ A skill is a self-contained `SKILL.md` file loaded at runtime. It scopes which t
 Each file is published under [`skills/` in the kaleido-agent repository](https://github.com/kaleidoswap/kaleido-agent/tree/main/skills), and can be read or downloaded from the [AI Tools product page](https://kaleidoswap.com/products/ai-tools#skills).
 
 Skills can be listed, enabled, and disabled at runtime through the agent's `/skills` [status API endpoint](/ai-tools/kaleido-agent#status-api).
+
+## Use the skills in Claude Code
+
+The [KaleidoMind](/ai-tools/kaleido-mind) repository ships its bundled skills as a Claude Code plugin, together with the `kaleido-mcp` server configured for signet:
+
+```bash
+/plugin marketplace add kaleidoswap/kaleido-mind
+/plugin install kaleido-mind@kaleidoswap
+```
+
+The plugin runs `npx -y kaleido-mcp` with `KALEIDO_NETWORK=signet`. Set `RLN_NODE_URL` to point at your RGB Lightning Node and `WDK_SEED` to enable the Spark wallet tools. Some KaleidoMind skills (Spark wallet, Bitrefill, Flashnet, merchant finder) rely on tools that only the KaleidoMind runtime provides.
 

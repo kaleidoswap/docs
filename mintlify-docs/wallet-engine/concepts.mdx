@@ -115,7 +115,7 @@ Engine modules that persist state read `getPlatform()?.storage`. Modules whose c
 ```ts
 import { KaleidoswapSwap } from '@kaleidorg/wallet-engine/swap'
 
-const swap = new KaleidoswapSwap(rlnAccount, { baseUrl: 'https://api.kaleidoswap.com' })
+const swap = new KaleidoswapSwap(rlnAccount, { baseUrl: 'https://api.signet.kaleidoswap.com' })
 
 const quote = await swap.getQuote({
   fromAsset: 'rgb:USDT…', toAsset: 'BTC',

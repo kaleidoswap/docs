@@ -92,7 +92,7 @@ RGB 资产依附在比特币 UTXO 上，因此节点在接收任何资产之前�
 KALEIDO_NETWORK=signet RLN_NODE_URL=http://localhost:3001 npx -y kaleido-mcp
 ```
 
-服务器会输出 `network: signet` 并在 stdio 上等待。你不需要手动保持它运行：下一步中的代理会把它作为子进程启动。这里 `WDK_SEED` 是可选的；不设置时 Spark 工具保持关闭，RGB、DEX、支付和行情工具照常可用。全部变量见 [MCP 服务器](/cn/ai-tools/mcp-servers#network-preset)。
+服务器会输出 `network: signet` 并在 stdio 上等待。你不需要手动保持它运行：下一步中的代理会把它作为子进程启动。这里 `WDK_SEED` 是可选的，而且普通的 `npx` 不会安装 Spark 钱包包；缺少它们时 Spark 工具保持关闭，RGB、DEX、支付和行情工具照常可用。全部变量见 [MCP 服务器](/cn/ai-tools/mcp-servers#network-preset)。
 
 <Tip>
   想在写代码之前先试用这些工具？用[客户端配置](/cn/ai-tools/mcp-servers#client-configuration)中的配置把同一条命令添加到 Claude Desktop 或 Claude Code，然后询问你的 RGB 余额。本教程余下部分会把这个托管模型换成本地模型。

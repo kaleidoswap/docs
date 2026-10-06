@@ -46,7 +46,7 @@ Retrieve the public identity of the maker's RGB Lightning Node — its pubkey, t
 | Environment | URL |
 |-------------|-----|
 | **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
-| **Mainnet** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *(coming soon)* |
+| **Mainnet** | No public endpoint yet: use your own maker's URL |
 
 ### Description
 Establish a WebSocket connection to request live quotes from the maker. The protocol is request/response: the client sends a message and the server replies to that message. There is no subscription mechanism — to keep a price fresh, send a new `quote_request` whenever you need an updated quote.

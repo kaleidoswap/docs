@@ -92,7 +92,7 @@ RGB assets live on Bitcoin UTXOs, so the node needs a little signet BTC before i
 KALEIDO_NETWORK=signet RLN_NODE_URL=http://localhost:3001 npx -y kaleido-mcp
 ```
 
-The server logs `network: signet` and waits on stdio. You do not need to keep it running by hand: the agent in the next step starts it as a child process. `WDK_SEED` is optional here; without it the Spark tools stay off and the RGB, DEX, payment and market tools still work. See [MCP Servers](/ai-tools/mcp-servers#network-preset) for every variable.
+The server logs `network: signet` and waits on stdio. You do not need to keep it running by hand: the agent in the next step starts it as a child process. `WDK_SEED` is optional here, and plain `npx` does not install the Spark wallet package; without them the Spark tools stay off and the RGB, DEX, payment and market tools still work. See [MCP Servers](/ai-tools/mcp-servers#network-preset) for every variable.
 
 <Tip>
   Want to try the tools before writing any code? Add the same command to Claude Desktop or Claude Code with the config in [Client Configuration](/ai-tools/mcp-servers#client-configuration), then ask for your RGB balance. The rest of this tutorial swaps that hosted model for a local one.

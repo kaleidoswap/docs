@@ -30,6 +30,8 @@ KALEIDO_NETWORK=signet npx -y kaleido-mcp
   请运行一次 `npx -y kaleido-mcp@latest`。
 </Note>
 
+自 0.3.1 起，Spark 和 Liquid 钱包是可选的，普通的 `npx` 不会安装它们。如需启用，请运行 `npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp`，并设置 `WDK_SEED` / `LIQUID_MNEMONIC`。
+
 使用 RGB 工具还需要一个 RGB Lightning Node。[KaleidoCLI](/cn/cli/installation) 可以在 Docker 中运行一个 signet 节点，完整流程见[构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)。
 
 另有三个按钱包划分的服务器 `wdk-wallet-mcp`、`wdk-wallet-spark-mcp` 和 `wdk-wallet-liquid-mcp`，它们保持独立而未并入网关，需要从源码构建：

@@ -64,6 +64,16 @@ KALEIDO_NETWORK=signet npx -y kaleido-mcp
   `npx` 解析到了较旧的缓存版本，请运行一次 `npx -y kaleido-mcp@latest`，或从源码构建。
 </Note>
 
+<Note>
+  自 0.3.1 起，Spark 和 Liquid 钱包是可选的 peer 依赖，普通的 `npx -y kaleido-mcp`
+  不会安装它们。设置了 `WDK_SEED` 或 `LIQUID_MNEMONIC` 但缺少对应包时，服务器仍会启动，
+  并输出安装提示。启用方法：
+
+  ```bash
+  npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp
+  ```
+</Note>
+
 实际使用中由 MCP 宿主替你执行这条命令，把宿主配置指向该命令即可（见下面的[客户端配置](#client-configuration)）。若用于开发，或要运行某个特定提交，请改为从源码构建：
 
 ```bash
@@ -85,24 +95,25 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 
 ### 网络预设 {#network-preset}
 
-`KALEIDO_NETWORK` 用一个变量选定一组默认值，可取 `mainnet`（默认）或 `signet`：
+`KALEIDO_NETWORK` 用一个变量选定一组默认值，可取 `signet`（自 0.3.1 起为默认）或 `mainnet`：
 
 | 预设 | KaleidoSwap API | Spark 网络 |
 |--------|-----------------|---------------|
-| `mainnet` | `https://api.kaleidoswap.com` | `MAINNET` |
 | `signet` | `https://api.signet.kaleidoswap.com` | Spark 测试网络（Spark SDK 中名为 `REGTEST`） |
+| `mainnet` | 无：把 `KALEIDOSWAP_API_URL` 设为你自己的做市商端点 | `MAINNET` |
 
-预设只负责填充默认值。你显式设置的任何变量（例如 `KALEIDOSWAP_API_URL` 或 `SPARK_NETWORK`）都会覆盖它。未知取值会让服务器在启动时直接退出，而不是悄悄回退到主网。`RLN_NODE_URL` 不属于预设：请把它指向你自己的节点，在 signet 上通常就是 [KaleidoCLI](/cn/cli/installation) 运行在 `http://localhost:3001` 的那个节点。
+预设只负责填充默认值。你显式设置的任何变量（例如 `KALEIDOSWAP_API_URL` 或 `SPARK_NETWORK`）都会覆盖它。KaleidoSwap 目前没有公开的主网 API，因此 `mainnet` 未设置 `KALEIDOSWAP_API_URL` 时，服务器会在启动时直接退出；未知取值同样如此。`RLN_NODE_URL` 不属于预设：请把它指向你自己的节点，在 signet 上通常就是 [KaleidoCLI](/cn/cli/installation) 运行在 `http://localhost:3001` 的那个节点。
 
 | 环境变量 | 是否必需 | 说明 |
 |---------|----------|--------------|
-| `KALEIDO_NETWORK` | 否 | `mainnet`（默认）或 `signet`。设置[网络预设](#network-preset)中的默认值 |
-| `WDK_SEED` | 使用 Spark 工具时必需 | Spark 钱包的 BIP-39 助记词。没有它服务器仍能启动，只是 Spark 工具会被禁用 |
+| `KALEIDO_NETWORK` | 否 | `signet`（默认）或 `mainnet`。设置[网络预设](#network-preset)中的默认值 |
+| `WDK_SEED` | 使用 Spark 工具时必需 | Spark 钱包的 BIP-39 助记词，同时需要可选包 `@tetherto/wdk-wallet-spark`。两者缺一服务器仍能启动，只是 Spark 工具会被禁用 |
+| `LIQUID_MNEMONIC` | 使用 Liquid 工具时必需 | Liquid 钱包的 BIP-39 助记词，同时需要可选包 `@kaleidorg/wdk-wallet-liquid` |
 | `SPARK_NETWORK` | 否 | 覆盖预设中的 Spark 网络：`MAINNET`，或代表 Spark 测试网络的 `REGTEST` |
 | `SPARK_SCAN_API_KEY` | 否 | SparkScan API 密钥 |
 | `SPARK_USDT_TOKEN` | 否 | 默认的 Spark 代币标识符 |
 | `RLN_NODE_URL` | 否 | RLN 守护进程 URL，默认 `http://localhost:3001` |
-| `KALEIDOSWAP_API_URL` | 否 | 覆盖预设中的 KaleidoSwap API URL，也接受 `KALEIDO_API_URL` |
+| `KALEIDOSWAP_API_URL` | 使用 `mainnet` 时必填 | KaleidoSwap 做市商 API URL，覆盖预设。主网没有公开端点，因此 `mainnet` 必须设置。也接受 `KALEIDO_API_URL` |
 | `KALEIDO_BIN` | 否 | `kaleido` 可执行文件的路径，供节点生命周期工具使用 |
 | `KALEIDO_NODE_URL` | 否 | 以 `--node-url` 传给节点生命周期工具的节点 URL |
 | `KALEIDO_API_URL` | 否 | 以 `--api-url` 传给节点生命周期工具的 API URL，同时作为 `KALEIDOSWAP_API_URL` 的备选 |
@@ -252,7 +263,7 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
   "mcpServers": {
     "kaleido": {
       "command": "npx",
-      "args": ["-y", "kaleido-mcp"],
+      "args": ["-y", "-p", "kaleido-mcp", "-p", "@tetherto/wdk-wallet-spark", "kaleido-mcp"],
       "env": {
         "KALEIDO_NETWORK": "signet",
         "WDK_SEED": "your twelve word seed phrase",
@@ -268,7 +279,7 @@ claude mcp add kaleido \
   --env KALEIDO_NETWORK=signet \
   --env RLN_NODE_URL=http://localhost:3001 \
   --env WDK_SEED="your twelve word seed phrase" \
-  -- npx -y kaleido-mcp
+  -- npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark kaleido-mcp
 ```
 
 ```json wdk-wallet-mcp
@@ -301,7 +312,7 @@ claude mcp add kaleido \
 ```
 </CodeGroup>
 
-在 Claude Desktop 中，配置文件是 `claude_desktop_config.json`（**Settings > Developer > Edit Config**）。`WDK_SEED` 是可选的：不设置时 Spark 工具会被禁用，而 RGB 节点、DEX、支付和行情工具照常可用。独立的 Spark 服务器没有网络预设，因此直接设置 `SPARK_NETWORK`；`REGTEST` 是 Spark SDK 对其托管测试网络的命名。
+在 Claude Desktop 中，配置文件是 `claude_desktop_config.json`（**Settings > Developer > Edit Config**）。`WDK_SEED` 和 `@tetherto/wdk-wallet-spark` 包都是可选的：不提供时 Spark 工具会被禁用，而 RGB 节点、DEX、支付和行情工具照常可用。独立的 Spark 服务器没有网络预设，因此直接设置 `SPARK_NETWORK`；`REGTEST` 是 Spark SDK 对其托管测试网络的命名。
 
 ## 首次运行 {#first-run}
 

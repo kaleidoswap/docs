@@ -46,7 +46,7 @@ description: 用于发起、执行和查询原子 HTLC 交换的接口端点 —
 | Environment | URL |
 |-------------|-----|
 | **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
-| **Mainnet** | `wss://api.kaleidoswap.com/api/v1/market/ws/{client_id}` *（即将上线）* |
+| **Mainnet** | 暂无公开端点：请使用你自己的做市商 URL |
 
 ### 说明
 建立 WebSocket 连接，向做市方请求实时报价。该协议采用请求/响应模式：客户端发送一条消息，服务端针对该消息回复。它没有订阅机制 —— 想让价格保持新鲜，就在需要更新报价时再发一条 `quote_request`。

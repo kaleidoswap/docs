@@ -86,18 +86,19 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 
 ### Network Preset
 
-`KALEIDO_NETWORK` picks a set of defaults in one variable. It accepts `mainnet` (the default) or `signet`:
+`KALEIDO_NETWORK` picks a set of defaults in one variable. It accepts `signet` (the default from 0.3.1) or `mainnet`:
 
 | Preset | KaleidoSwap API | Spark network |
 |--------|-----------------|---------------|
-| `mainnet` | `https://api.kaleidoswap.com` | `MAINNET` |
 | `signet` | `https://api.signet.kaleidoswap.com` | Spark's test network (`REGTEST` in the Spark SDK) |
+| `mainnet` | None: set `KALEIDOSWAP_API_URL` to your own maker endpoint | `MAINNET` |
 
-The preset only fills in defaults. Any variable you set explicitly, such as `KALEIDOSWAP_API_URL` or `SPARK_NETWORK`, wins over it. An unknown value stops the server at startup rather than silently falling back to mainnet. `RLN_NODE_URL` is not part of the preset: point it at your own node, which on signet is usually the one [KaleidoCLI](/cli/installation) runs on `http://localhost:3001`.
+The preset only fills in defaults. Any variable you set explicitly, such as `KALEIDOSWAP_API_URL` or `SPARK_NETWORK`, wins over it. There is no public mainnet KaleidoSwap API, so `mainnet` without `KALEIDOSWAP_API_URL` stops the server at startup, as does an unknown value. `RLN_NODE_URL` is not part of the preset: point it at your own node, which on signet is usually the one [KaleidoCLI](/cli/installation) runs on `http://localhost:3001`.
 
 | Env var | Required | Description |
 |---------|----------|--------------|
-| `KALEIDO_NETWORK` | No | `mainnet` (default) or `signet`. Sets the defaults in [Network Preset](#network-preset) |
+| `KALEIDO_NETWORK` | No | `signet` (default) or `mainnet`. Sets the defaults in [Network Preset](#network-preset) |
+| `KALEIDOSWAP_API_URL` | With `mainnet` | KaleidoSwap maker API URL. Overrides the preset |
 | `WDK_SEED` | Yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. The server still boots without it, the Spark tools are just disabled |
 | `SPARK_NETWORK` | No | Overrides the preset's Spark network: `MAINNET`, or `REGTEST` for Spark's test network |
 | `SPARK_SCAN_API_KEY` | No | SparkScan API key |

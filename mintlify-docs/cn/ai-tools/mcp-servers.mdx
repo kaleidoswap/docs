@@ -85,18 +85,19 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 
 ### 网络预设 {#network-preset}
 
-`KALEIDO_NETWORK` 用一个变量选定一组默认值，可取 `mainnet`（默认）或 `signet`：
+`KALEIDO_NETWORK` 用一个变量选定一组默认值，可取 `signet`（自 0.3.1 起为默认）或 `mainnet`：
 
 | 预设 | KaleidoSwap API | Spark 网络 |
 |--------|-----------------|---------------|
-| `mainnet` | `https://api.kaleidoswap.com` | `MAINNET` |
 | `signet` | `https://api.signet.kaleidoswap.com` | Spark 测试网络（Spark SDK 中名为 `REGTEST`） |
+| `mainnet` | 无：把 `KALEIDOSWAP_API_URL` 设为你自己的做市商端点 | `MAINNET` |
 
-预设只负责填充默认值。你显式设置的任何变量（例如 `KALEIDOSWAP_API_URL` 或 `SPARK_NETWORK`）都会覆盖它。未知取值会让服务器在启动时直接退出，而不是悄悄回退到主网。`RLN_NODE_URL` 不属于预设：请把它指向你自己的节点，在 signet 上通常就是 [KaleidoCLI](/cn/cli/installation) 运行在 `http://localhost:3001` 的那个节点。
+预设只负责填充默认值。你显式设置的任何变量（例如 `KALEIDOSWAP_API_URL` 或 `SPARK_NETWORK`）都会覆盖它。KaleidoSwap 目前没有公开的主网 API，因此 `mainnet` 未设置 `KALEIDOSWAP_API_URL` 时，服务器会在启动时直接退出；未知取值同样如此。`RLN_NODE_URL` 不属于预设：请把它指向你自己的节点，在 signet 上通常就是 [KaleidoCLI](/cn/cli/installation) 运行在 `http://localhost:3001` 的那个节点。
 
 | 环境变量 | 是否必需 | 说明 |
 |---------|----------|--------------|
-| `KALEIDO_NETWORK` | 否 | `mainnet`（默认）或 `signet`。设置[网络预设](#network-preset)中的默认值 |
+| `KALEIDO_NETWORK` | 否 | `signet`（默认）或 `mainnet`。设置[网络预设](#network-preset)中的默认值 |
+| `KALEIDOSWAP_API_URL` | 使用 `mainnet` 时必填 | KaleidoSwap 做市商 API URL，优先于预设 |
 | `WDK_SEED` | 使用 Spark 工具时必需 | Spark 钱包的 BIP-39 助记词。没有它服务器仍能启动，只是 Spark 工具会被禁用 |
 | `SPARK_NETWORK` | 否 | 覆盖预设中的 Spark 网络：`MAINNET`，或代表 Spark 测试网络的 `REGTEST` |
 | `SPARK_SCAN_API_KEY` | 否 | SparkScan API 密钥 |

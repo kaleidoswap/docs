@@ -43,15 +43,17 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 | 分层 | 状态 | 工具 |
 |-------|--------|-------|
 | Spark | 已上线 | `spark_get_balance` · `spark_get_address` · `spark_get_onchain_address` · `spark_create_invoice` · `spark_pay_invoice` 🔒 · `spark_send` 🔒 |
-| RLN / RGB | 已上线 | `rln_get_balances` · `rln_get_node_info` · `rln_list_channels` · `rln_create_ln_invoice` · `rln_create_rgb_invoice` · `rln_pay_invoice` 🔒 · `rln_send_asset` 🔒 |
+| RLN / RGB | 已上线 | `rln_get_balances` · `rln_get_node_info` · `rln_list_assets` · `rln_list_transfers` · `rln_list_channels` · `rln_create_ln_invoice` · `rln_create_rgb_invoice` · `rln_create_utxos` · `rln_pay_invoice` 🔒 · `rln_send_asset` 🔒 · `rln_issue_asset` 🔒 |
 | Arkade | 已上线 | `arkade_get_balance` · `arkade_get_address` · `arkade_send` 🔒 |
 | Liquid | 计划中，尚未实现 | `liquid_get_balance` · `liquid_create_invoice` · `liquid_send` 🔒（契约中已定义类型，但还没有适配器） |
+
+`rln_issue_asset` 属于 KaleidoMind 的契约，可以在 `@kaleidorg/mind/testing` 的 mock 钱包上运行，但 `kaleido-mcp` 目前尚未提供发行工具，因此接入网关的宿主暂时无法通过它发行 RGB 资产。
 
 此外还有跨层的路由工具：`get_balances(layer?)`、`resolve_contact(name)`、`get_price(asset?, fiat?)`、`fiat_to_sats(amount, currency)`、`get_swap_quote`/`execute_swap`，会自动选择结算通道的统一 `send_payment(asset, amount, to, layer?)`，以及与之对应的收款工具 `create_invoice(asset?, amount?, layer?)`。
 
 ### KaleidoSwap 交易与 LSPS1
 
-DEX 交易（`kaleidoswap_get_quote`、`kaleidoswap_place_order`、`kaleidoswap_atomic_init`/`execute`/`status`）与不绑定特定 LSP 的通道订单（`lsp_get_info`、`lsp_get_network_info`、`lsp_estimate_fees`、`lsp_create_order`、`lsp_get_order`）各有独立的契约。原子交换链路以单个需确认的 recipe（`kaleidoswapAtomicRecipe`）运行：先报价，用户确认一次后在做市方一侧初始化，读取节点的 pubkey，以接单方身份把 HTLC 加入白名单，然后执行。
+DEX 交易（先 `kaleidoswap_get_quote`，再 `kaleidoswap_atomic_init`/`execute`/`status`；`kaleido-mcp` 0.3.0 只通过原子交换结算）与不绑定特定 LSP 的通道订单（`lsp_get_info`、`lsp_get_network_info`、`lsp_estimate_fees`、`lsp_create_order`、`lsp_get_order`）各有独立的契约。原子交换链路以单个需确认的 recipe（`kaleidoswapAtomicRecipe`）运行：先报价，用户确认一次后在做市方一侧初始化，读取节点的 pubkey，以接单方身份把 HTLC 加入白名单，然后执行。
 
 ## Skills
 
@@ -59,7 +61,27 @@ Skills 是符合 Agent Skills 规范的操作手册（`SKILL.md` 加渐进式披
 
 ## QVAC：本地端推理
 
-LLM、嵌入、语音转文字和文字转语音推理全部通过 [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) 完成，默认在本地端运行，较重的任务也可以委托给用户明确配对并自行掌控的桌面端。它以 `@kaleidorg/mind/qvac` 子路径发布，使该 SDK 保持为 peer 依赖，而不是 core 的硬性依赖。记忆与 RAG（长期回忆、钱包历史检索、商户发现）同样走 QVAC 的嵌入能力，并通过近重复内容合并来避免记忆膨胀。
+LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本地 AI 运行时 [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) 完成，默认在本地端运行，较重的任务也可以委托给用户明确配对并自行掌控的桌面端。它以 `@kaleidorg/mind/qvac` 子路径发布，使该 SDK 保持为 peer 依赖，而不是 core 的硬性依赖。记忆与 RAG（长期回忆、钱包历史检索、商户发现）同样走 QVAC 的嵌入能力，并通过近重复内容合并来避免记忆膨胀。
+
+| 包 | 版本 |
+|---------|---------|
+| `@qvac/sdk` | 核心引擎支持 0.13 及以上版本。建议安装最新版本，宿主与评测都以它为测试基准 |
+| `@kaleidorg/mind` | 把 `@qvac/sdk` 作为可选 peer 依赖，因此引擎在完全没有模型的情况下也能配合 mock provider 运行 |
+
+`createQvacProvider` 把 SDK 的 `completion` 转换为引擎所需的 `LLMProvider`。SDK 函数通过注入而非导入的方式传入，因此由宿主掌控模型生命周期（`loadModel`、`unloadModel`），引擎也不会把 QVAC 打进不需要它的包里。
+
+## 动手构建 {#build-with-it}
+
+[`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) 提供快速上手，[kaleido-mind 仓库](https://github.com/kaleidoswap/kaleido-mind)中有两个可运行的示例：
+
+| 示例 | 演示内容 |
+|---------|---------------|
+| `examples/node-minimal` | 最小的 Node.js 宿主：一个 QVAC 模型、漏斗和一个确认回调 |
+| `examples/rgb-agent` | 在 signet 上接入 `kaleido-mcp` 的本地代理，在真实的 RGB Lightning Node 上转移 RGB 资产 |
+
+`@kaleidorg/mind/testing` 提供绑定真实工具契约的有状态 `MockWallet` 和脚本化 provider，因此完整的漏斗、recipe 和确认关卡可以在 CI 或笔记本上运行，无需节点、资金或模型。
+
+想在 signet 上按步骤操作，请参阅[构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)。
 
 ## 运行环境
 
@@ -76,4 +98,4 @@ LLM、嵌入、语音转文字和文字转语音推理全部通过 [QVAC SDK](ht
 
 ## 发布与子路径
 
-从 `packages/core` 以 `@kaleidorg/mind` 发布，包含这些子路径：`./mcp`（MCP 工具源辅助函数）、`./skills`（skill 加载器）、`./logger` 和 `./qvac`（本地端推理适配器）。npm 上还有 `apps/provider`，即桌面应用嵌入的 Tauri 桌面 sidecar，包名为 `@kaleidorg/mind-provider`。`apps/cli` 中的 CLI 供仓库内的终端与评测使用，不对外发布。
+从 `packages/core` 以 `@kaleidorg/mind` 发布，包含这些子路径：`./mcp`（MCP 工具源辅助函数）、`./skills`（skill 加载器）、`./logger`、`./qvac`（本地端推理适配器）和 `./testing`（mock 钱包与脚本化 provider）。npm 上还有 `apps/provider`，即桌面应用嵌入的 Tauri 桌面 sidecar，包名为 `@kaleidorg/mind-provider`。`apps/cli` 中的 CLI 供仓库内的终端与评测使用，不对外发布。

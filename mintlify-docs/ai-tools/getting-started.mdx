@@ -10,12 +10,12 @@ Four surfaces expose the same Bitcoin tools to a model, and they differ mostly i
 
 | Requirement | Details |
 |-------------|---------|
-| **A test network** | Regtest or Signet. Never a first run on mainnet |
+| **A test network** | Signet. The KaleidoSwap API runs a signet instance at `https://api.signet.kaleidoswap.com`, and the [RGB faucet](https://faucet.mutinynet.kaleidoswap.com) sends test assets. Never a first run on mainnet |
 | **A wallet seed** | A throwaway BIP-39 mnemonic for the test network, set as `WDK_SEED` |
-| **A node** | Only for the `wdk_*` tools and atomic swaps. Spark tools need just a seed, market data needs nothing |
+| **A node** | Only for the `wdk_*` tools and atomic swaps. [KaleidoCLI](/cli/installation) starts a signet RGB Lightning Node with one command. Spark tools need just a seed, market data needs nothing |
 | **An MCP host or LLM key** | Claude Desktop or another MCP client, or an Anthropic/OpenAI key for KaleidoAgent |
 
-If you have not installed anything yet, start with [Installation](/ai-tools/installation).
+If you have not installed anything yet, start with [Installation](/ai-tools/installation). For an end-to-end path from an empty machine to a local model moving RGB assets on signet, follow [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent).
 
 ## Pick a Surface
 

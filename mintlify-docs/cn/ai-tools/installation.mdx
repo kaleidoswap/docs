@@ -10,7 +10,7 @@ description: "安装 KaleidoSwap AI 工具：MCP 服务器网关、KaleidoAgent 
 |---------|-------------|---------------|
 | **[MCP 服务器](#mcp-servers)** | 网关用 `npx`，专用服务器需本地构建 | Node.js 20+，一个 MCP 宿主客户端 |
 | **[KaleidoAgent](#kaleidoagent)** | 克隆仓库并从源码构建 | Node.js 20+、KaleidoCLI、Nanobot、一个 LLM API 密钥 |
-| **[KaleidoMind](#kaleidomind)** | 随桌面应用一起提供，或构建仓库用于开发 | 桌面应用，或 pnpm 与 QVAC SDK |
+| **[KaleidoMind](#kaleidomind)** | 随桌面应用一起提供，在你自己的宿主中 `npm install @kaleidorg/mind`，或构建仓库用于开发 | 桌面应用，或 Node.js 与 QVAC SDK（`@qvac/sdk`） |
 
 <Warning>
   这里的每一种接入方式都会使用真实的 BIP-39 助记词签名，或直接驱动一个运行中的节点。请先在测试网络上起步，在配置验证通过之前保持 `dry_run` 开启，并且永远不要把主网种子写入会被提交或分享的文件。
@@ -18,17 +18,19 @@ description: "安装 KaleidoSwap AI 工具：MCP 服务器网关、KaleidoAgent 
 
 ## MCP 服务器 {#mcp-servers}
 
-`kaleido-mcp` 是跑通工具调用的最快路径，已发布到 npm，无需本地构建：
+`kaleido-mcp` 是跑通工具调用的最快路径，已发布到 npm。`KALEIDO_NETWORK=signet` 用一个变量把它指向 signet KaleidoSwap API 和 Spark 测试网络：
 
 ```bash
-npx -y kaleido-mcp
+KALEIDO_NETWORK=signet npx -y kaleido-mcp
 ```
-<Warning>
-  npm 上的发布版本落后于 `main`。已发布的构建不包含节点生命周期工具（`kaleido_node_*`），
-  并且仍然暴露已移除的订单工具，因此 `npx` 无法提供本页所记录的完整工具集。
-  在下一个发布版本发布之前，请从源码构建以使用 `kaleido_node_*` 和 RFQ 交换流程。
-</Warning>
 
+<Note>
+  本文档描述的是 `kaleido-mcp` 0.3.0 及以上版本：它新增了 `KALEIDO_NETWORK` 预设和
+  `kaleido_node_*` 工具，并且只通过原子交换结算。如果 `npx` 解析到了较旧的缓存版本，
+  请运行一次 `npx -y kaleido-mcp@latest`。
+</Note>
+
+使用 RGB 工具还需要一个 RGB Lightning Node。[KaleidoCLI](/cn/cli/installation) 可以在 Docker 中运行一个 signet 节点，完整流程见[构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)。
 
 另有三个按钱包划分的服务器 `wdk-wallet-mcp`、`wdk-wallet-spark-mcp` 和 `wdk-wallet-liquid-mcp`，它们保持独立而未并入网关，需要从源码构建：
 
@@ -69,6 +71,14 @@ KaleidoMind 是嵌入宿主应用中的引擎，而不是一个独立安装的�
 <Note>
   KaleidoMind 依赖本地 AI 运行时，目前在 Windows 上可能尚不可用。所有交易与节点功能都不依赖它，因此如果你的平台上 Mind 暂不可用，可以用 **Only Node** 模式运行应用。
 </Note>
+
+### 在你自己的 Node.js 应用中 {#in-your-own-nodejs-app}
+
+```bash
+npm install @kaleidorg/mind @qvac/sdk
+```
+
+`@qvac/sdk` 是可选的 peer 依赖，因此引擎在没有它的情况下也能配合 mock provider 运行。快速上手见 [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind)，[kaleido-mind 仓库](https://github.com/kaleidoswap/kaleido-mind)中还有可运行的示例（`examples/node-minimal`、`examples/rgb-agent`）。
 
 ### 从源码构建，用于开发
 

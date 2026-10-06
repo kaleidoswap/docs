@@ -46,9 +46,18 @@ description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种�
   </Accordion>
 
   <Accordion title="我可以在主网上运行吗？">
-    这些工具能够访问主网，但请把它当作最后一步而不是第一步。先用一次性种子在 regtest 或 signet 上起步，在 KaleidoAgent 上保持 `dry_run` 开启，直到 dry-run 的决策看起来都正确，然后再切换网络。
+    这些工具能够访问主网，但请把它当作最后一步而不是第一步。先用一次性种子在 signet 上起步，在 KaleidoAgent 上保持 `dry_run` 开启，直到 dry-run 的决策看起来都正确，然后再切换网络。
 
     另外要注意，不同接入方式的成熟度并不相同：KaleidoAgent 和 MCP 服务器会直接动用真实资金，而 LLM 调错一个工具是真实存在的失败模式。
+  </Accordion>
+
+  <Accordion title="去哪里获取测试资金？">
+    本文档中的一切都运行在 signet 上。用 `KALEIDO_NETWORK=signet` 把 `kaleido-mcp` 指向它，这会选用位于 `https://api.signet.kaleidoswap.com` 的 signet KaleidoSwap API。
+
+    - **RGB 资产：** [KaleidoSwap RGB 水龙头](https://faucet.mutinynet.kaleidoswap.com)会把测试资产发送到你节点生成的 RGB 发票。使用 GitHub 登录。
+    - **节点：** [KaleidoCLI](/cn/cli/installation) 通过 `kaleido setup` 在本地运行一个 signet RGB Lightning Node。
+
+    [构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)会完整演示这两步。
   </Accordion>
 
   <Accordion title="运行起来要花多少钱？">
@@ -99,7 +108,7 @@ description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种�
 其他情况请通过下面任一渠道反馈问题，并附上：
 
 1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
-2. 你所在的网络（regtest、signet 或主网）
+2. 你所在的网络（signet 或主网）
 3. 失败的工具名称和报错文本
 4. 宿主与运行时版本（MCP 客户端、Node.js）
 5. 你的配置，并移除其中的种子和所有密钥

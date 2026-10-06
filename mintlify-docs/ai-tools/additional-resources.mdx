@@ -16,12 +16,24 @@ Every AI surface is public under the [KaleidoSwap organisation](https://github.c
     The on-device engine: tiered funnel, recipe engine, tool contract, memory and retrieval, and the eval harness.
   </Card>
   <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
-    The gateway that composes every domain behind one connection. Published to npm, though the release currently trails `main`.
+    The gateway that composes every domain behind one connection. Published to npm as `kaleido-mcp`; 0.3.0 adds the `KALEIDO_NETWORK=signet` preset.
   </Card>
   <Card title="Rate" icon="mobile" href="https://github.com/kaleidoswap/Rate">
     The React Native mobile wallet that hosts KaleidoMind with voice control.
   </Card>
+  <Card title="kaleido-cli" icon="terminal" href="https://github.com/kaleidoswap/kaleido-cli">
+    The `kaleido` command line, which also runs a local signet RGB Lightning Node in Docker.
+  </Card>
 </CardGroup>
+
+## Test Network
+
+| Resource | Where |
+|----------|-------|
+| KaleidoSwap API (signet) | `https://api.signet.kaleidoswap.com` |
+| RGB faucet (GitHub login) | [faucet.mutinynet.kaleidoswap.com](https://faucet.mutinynet.kaleidoswap.com) |
+| Local signet RGB Lightning Node | [KaleidoCLI](/cli/installation), `kaleido setup` |
+| End-to-end walkthrough | [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent) |
 
 ## Protocol Specifications
 
@@ -47,7 +59,7 @@ Check [Troubleshooting](/ai-tools/troubleshooting) for errors and the [FAQ](/ai-
 For anything else, report a problem through your preferred channel from the options below, including:
 
 1. Which surface and version (MCP server name, KaleidoAgent commit, or Desktop App version)
-2. The network you are on (Regtest, Signet, or mainnet)
+2. The network you are on (signet or mainnet)
 3. The tool name that failed and the error text
 4. Host and runtime versions (MCP client, Node.js)
 5. Your config with the seed and any keys removed

@@ -10,7 +10,7 @@ Each AI surface installs independently. Pick the one that matches what you are b
 |---------|-------------|---------------|
 | **[MCP servers](#mcp-servers)** | `npx` for the gateway, local build for the focused servers | Node.js 20+, an MCP host |
 | **[KaleidoAgent](#kaleidoagent)** | Clone and build from source | Node.js 20+, KaleidoCLI, Nanobot, an LLM API key |
-| **[KaleidoMind](#kaleidomind)** | Ships inside the Desktop App, or build the repo for development | Desktop App, or pnpm and the QVAC SDK |
+| **[KaleidoMind](#kaleidomind)** | Ships inside the Desktop App, `npm install @kaleidorg/mind` for your own host, or build the repo for development | Desktop App, or Node.js and the QVAC SDK (`@qvac/sdk`) |
 
 <Warning>
   Every surface here signs with a real BIP-39 mnemonic or drives a live node. Start on test networks, keep `dry_run` enabled until a setup is verified, and never put a mainnet seed in a file you commit or share.
@@ -18,18 +18,19 @@ Each AI surface installs independently. Pick the one that matches what you are b
 
 ## MCP Servers
 
-`kaleido-mcp` is the quickest path to a first tool call, published to npm:
+`kaleido-mcp` is the quickest path to a first tool call, published to npm. `KALEIDO_NETWORK=signet` points it at the signet KaleidoSwap API and Spark's test network in one variable:
 
 ```bash
-npx -y kaleido-mcp
+KALEIDO_NETWORK=signet npx -y kaleido-mcp
 ```
-<Warning>
-  The npm release currently trails `main`. The published build predates the node
-  lifecycle tools (`kaleido_node_*`) and still exposes the removed order tools,
-  so `npx` will not give you the full surface documented on this page. Until the
-  next release lands, build from source for `kaleido_node_*` and the RFQ swap flow.
-</Warning>
 
+<Note>
+  The docs describe `kaleido-mcp` 0.3.0 and later, which adds the `KALEIDO_NETWORK`
+  preset and the `kaleido_node_*` tools and settles swaps atomically only. If `npx`
+  resolves an older cached version, run `npx -y kaleido-mcp@latest` once.
+</Note>
+
+For the RGB tools you also need an RGB Lightning Node. [KaleidoCLI](/cli/installation) runs one on signet in Docker, see [Build a Local RGB Agent](/ai-tools/build-local-rgb-agent) for the full path.
 
 Three per-wallet servers, `wdk-wallet-mcp`, `wdk-wallet-spark-mcp`, and `wdk-wallet-liquid-mcp`, remain standalone rather than folded into the gateway and build from source:
 
@@ -70,6 +71,14 @@ The fastest path. The [Desktop App](/desktop-app/getting-started/installation) b
 <Note>
   KaleidoMind depends on a local AI runtime and may not be available on Windows yet. Every trading and node feature works without it, so run the app in **Only Node** mode if Mind is unavailable on your platform.
 </Note>
+
+### In your own Node.js app
+
+```bash
+npm install @kaleidorg/mind @qvac/sdk
+```
+
+`@qvac/sdk` is an optional peer dependency, so the engine also runs without it against a mock provider. The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) has the quickstart, and the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) carries runnable examples (`examples/node-minimal`, `examples/rgb-agent`).
 
 ### From source, for development
 

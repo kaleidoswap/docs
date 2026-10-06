@@ -52,18 +52,18 @@ If you have an integration still pointing at `kaleidoswap-mcp` or `l402-gateway-
 
 ## Installation & Configuration
 
-`kaleido-mcp` is published to npm, which is the quickest way to a first tool call:
+`kaleido-mcp` is published to npm, which is the quickest way to a first tool call. Start on signet:
 
 ```bash
-npx -y kaleido-mcp
+KALEIDO_NETWORK=signet npx -y kaleido-mcp
 ```
-<Warning>
-  The npm release currently trails `main`. The published build predates the node
-  lifecycle tools (`kaleido_node_*`) and still exposes the removed order tools,
-  so `npx` will not give you the full surface documented on this page. Until the
-  next release lands, build from source for `kaleido_node_*` and the RFQ swap flow.
-</Warning>
 
+<Note>
+  This page documents `kaleido-mcp` 0.3.0 and later. 0.3.0 adds the `KALEIDO_NETWORK`
+  preset and the `kaleido_node_*` lifecycle tools, and drops the order-based swap
+  tools in favour of atomic swaps. If `npx` resolves an older cached version, run
+  `npx -y kaleido-mcp@latest` once, or build from source.
+</Note>
 
 In practice an MCP host runs this for you, point its config at the command (see [Client Configuration](#client-configuration) below). For development, or to run a specific commit, build from source instead:
 
@@ -77,24 +77,36 @@ npm run build
 Either way, the server reads the same environment variables and speaks stdio by default:
 
 ```bash
-# stdio (Claude Desktop, KaleidoAgent, ...)
-WDK_SEED="word1 word2 ..." node dist/index.js
+# stdio (Claude Desktop, Claude Code, KaleidoAgent, ...)
+KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 
 # HTTP transport
-PORT=3010 WDK_SEED="word1 word2 ..." node dist/index.js
+PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 ```
+
+### Network Preset
+
+`KALEIDO_NETWORK` picks a set of defaults in one variable. It accepts `mainnet` (the default) or `signet`:
+
+| Preset | KaleidoSwap API | Spark network |
+|--------|-----------------|---------------|
+| `mainnet` | `https://api.kaleidoswap.com` | `MAINNET` |
+| `signet` | `https://api.signet.kaleidoswap.com` | Spark's test network (`REGTEST` in the Spark SDK) |
+
+The preset only fills in defaults. Any variable you set explicitly, such as `KALEIDOSWAP_API_URL` or `SPARK_NETWORK`, wins over it. An unknown value stops the server at startup rather than silently falling back to mainnet. `RLN_NODE_URL` is not part of the preset: point it at your own node, which on signet is usually the one [KaleidoCLI](/cli/installation) runs on `http://localhost:3001`.
 
 | Env var | Required | Description |
 |---------|----------|--------------|
+| `KALEIDO_NETWORK` | No | `mainnet` (default) or `signet`. Sets the defaults in [Network Preset](#network-preset) |
 | `WDK_SEED` | Yes, for Spark tools | BIP-39 mnemonic for the Spark wallet. The server still boots without it, the Spark tools are just disabled |
-| `SPARK_NETWORK` | No | `MAINNET` or `REGTEST` |
+| `SPARK_NETWORK` | No | Overrides the preset's Spark network: `MAINNET`, or `REGTEST` for Spark's test network |
 | `SPARK_SCAN_API_KEY` | No | SparkScan API key |
 | `SPARK_USDT_TOKEN` | No | Default Spark token identifier |
 | `RLN_NODE_URL` | No | RLN daemon URL, default `http://localhost:3001` |
-| `KALEIDOSWAP_API_URL` | No | KaleidoSwap API URL, default `https://api.kaleidoswap.com` |
+| `KALEIDOSWAP_API_URL` | No | Overrides the preset's KaleidoSwap API URL. `KALEIDO_API_URL` is accepted as well |
 | `KALEIDO_BIN` | No | Path to the `kaleido` binary, for the node lifecycle tools |
 | `KALEIDO_NODE_URL` | No | Node URL passed as `--node-url` to the node lifecycle tools |
-| `KALEIDO_API_URL` | No | API URL passed as `--api-url` to the node lifecycle tools |
+| `KALEIDO_API_URL` | No | API URL passed as `--api-url` to the node lifecycle tools, and a fallback for `KALEIDOSWAP_API_URL` |
 | `KALEIDO_ENV_NAME` | No | Default environment name for the node lifecycle tools |
 | `PORT` | No | Enable Streamable HTTP transport instead of stdio |
 | `MCP_AUTH_TOKEN` | No | Bearer token for HTTP mode |
@@ -181,7 +193,7 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
     | `kaleidoswap_lsp_quote_asset_channel` | Quote a new channel pre-loaded with an RGB asset (USDT, XAUT) |
     | `kaleidoswap_lsp_create_asset_channel` 🔒 | Order a new asset-preloaded channel from the LSP |
 
-    Configured with `KALEIDOSWAP_API_URL`. See the [Swap Protocol](/api-reference/swap-protocol) and [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) references for the underlying endpoints.
+    Configured with `KALEIDO_NETWORK`, or `KALEIDOSWAP_API_URL` for a custom endpoint. Swaps are atomic only: the order-based tools (`kaleidoswap_place_order`, `kaleidoswap_get_order_status` and the rest) were removed in 0.3.0. See the [Swap Protocol](/api-reference/swap-protocol) and [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) references for the underlying endpoints.
   </Accordion>
 
   <Accordion title="MPP / L402 payments (mpp_*, l402_*)">
@@ -229,28 +241,35 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
 
 ## Client Configuration
 
-Add a server to an MCP host such as Claude Desktop. `npx` works for the published gateway; the standalone wallet servers run from a local build.
+Add a server to an MCP host such as Claude Desktop or Claude Code. `npx` works for the published gateway; the standalone wallet servers run from a local build.
 
 <Warning>
   These configuration files hold a real BIP-39 mnemonic in plain text. Start on test networks and never commit or share a config containing a mainnet seed.
 </Warning>
 
 <CodeGroup>
-```json kaleido-mcp
+```json Claude Desktop
 {
   "mcpServers": {
     "kaleido": {
       "command": "npx",
       "args": ["-y", "kaleido-mcp"],
       "env": {
+        "KALEIDO_NETWORK": "signet",
         "WDK_SEED": "your twelve word seed phrase",
-        "SPARK_NETWORK": "REGTEST",
-        "RLN_NODE_URL": "http://localhost:3001",
-        "KALEIDOSWAP_API_URL": "https://api.kaleidoswap.com"
+        "RLN_NODE_URL": "http://localhost:3001"
       }
     }
   }
 }
+```
+
+```bash Claude Code
+claude mcp add kaleido \
+  --env KALEIDO_NETWORK=signet \
+  --env RLN_NODE_URL=http://localhost:3001 \
+  --env WDK_SEED="your twelve word seed phrase" \
+  -- npx -y kaleido-mcp
 ```
 
 ```json wdk-wallet-mcp
@@ -283,13 +302,15 @@ Add a server to an MCP host such as Claude Desktop. `npx` works for the publishe
 ```
 </CodeGroup>
 
+On Claude Desktop the file is `claude_desktop_config.json` (**Settings > Developer > Edit Config**). `WDK_SEED` is optional: leave it out and the Spark tools are disabled while the RGB node, DEX, payment and market tools keep working. The standalone Spark server takes no network preset, so it sets `SPARK_NETWORK` directly; `REGTEST` is the name the Spark SDK gives its hosted test network.
+
 ## First Run
 
 Go read-only first, then quoting, then execution. Every step after the first one moves real value.
 
 <Steps>
   <Step title="Add the gateway to your host">
-    Drop the `kaleido-mcp` block into your MCP host's config, pointing `KALEIDOSWAP_API_URL` at a test environment and `SPARK_NETWORK` at `REGTEST`. The full JSON is in [Client Configuration](#client-configuration) above.
+    Drop the `kaleido-mcp` block into your MCP host's config with `KALEIDO_NETWORK` set to `signet`. The full JSON is in [Client Configuration](#client-configuration) above.
   </Step>
 
   <Step title="Restart the host">
@@ -320,7 +341,7 @@ Go read-only first, then quoting, then execution. Every step after the first one
     Ask for a price without placing anything:
 
     ```
-    Quote 100000 sats of BTC into USDT. Do not place an order.
+    Quote 100000 sats of BTC into USDT. Do not execute anything.
     ```
 
     `kaleidoswap_get_quote` returns an `rfq_id`, raw amounts, the fee, and an expiry. Read the raw amounts carefully: they are in the asset's smallest unit, not display units.

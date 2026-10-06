@@ -16,12 +16,24 @@ description: "KaleidoSwap AI 工具的相关链接：各个源码仓库、MCP �
     本地端引擎：分层漏斗、recipe 引擎、工具契约、记忆与检索，以及评测框架。
   </Card>
   <Card title="kaleido-mcp" icon="server" href="https://github.com/kaleidoswap/kaleido-mcp">
-    把所有领域组合到一条连接背后的统一网关。已发布到 npm。
+    把所有领域组合到一条连接背后的统一网关。以 `kaleido-mcp` 发布到 npm；0.3.0 新增 `KALEIDO_NETWORK=signet` 预设。
   </Card>
   <Card title="Rate" icon="mobile" href="https://github.com/kaleidoswap/Rate">
     以语音控制承载 KaleidoMind 的 React Native 移动钱包。
   </Card>
+  <Card title="kaleido-cli" icon="terminal" href="https://github.com/kaleidoswap/kaleido-cli">
+    `kaleido` 命令行工具，也可以在 Docker 中运行本地 signet RGB Lightning Node。
+  </Card>
 </CardGroup>
+
+## 测试网络 {#test-network}
+
+| 资源 | 位置 |
+|----------|-------|
+| KaleidoSwap API（signet） | `https://api.signet.kaleidoswap.com` |
+| RGB 水龙头（GitHub 登录） | [faucet.mutinynet.kaleidoswap.com](https://faucet.mutinynet.kaleidoswap.com) |
+| 本地 signet RGB Lightning Node | [KaleidoCLI](/cn/cli/installation)，`kaleido setup` |
+| 端到端演练 | [构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent) |
 
 ## 协议规范
 
@@ -47,7 +59,7 @@ description: "KaleidoSwap AI 工具的相关链接：各个源码仓库、MCP �
 其他情况请通过下面任一渠道反馈问题，并附上：
 
 1. 使用的接入方式与版本（MCP 服务器名称、KaleidoAgent 提交号，或桌面应用版本）
-2. 你所在的网络（regtest、signet 或主网）
+2. 你所在的网络（signet 或主网）
 3. 失败的工具名称和报错文本
 4. 宿主与运行时版本（MCP 客户端、Node.js）
 5. 你的配置，并移除其中的种子和所有密钥

@@ -112,7 +112,7 @@ KaleidoMind works with `@qvac/sdk` 0.13.1 and later and is tested with 0.21. Sav
 
 ```js agent.mjs
 import { createInterface } from 'node:readline/promises';
-import { completion, cancel, loadModel, QWEN3_5_4B_MULTIMODAL_Q4_K_M } from '@qvac/sdk';
+import { completion, cancel, loadModel, QWEN3_5_2B_MULTIMODAL_Q4_K_M } from '@qvac/sdk';
 import { Funnel, ToolRegistry, confirmReadback } from '@kaleidorg/mind';
 import { McpToolSource } from '@kaleidorg/mind/mcp';
 import { createQvacProvider } from '@kaleidorg/mind/qvac';
@@ -136,11 +136,15 @@ await kaleido.connect();
 
 // 2. A local model through QVAC (downloaded on first run)
 const modelId = await loadModel({
-  modelSrc: QWEN3_5_4B_MULTIMODAL_Q4_K_M,
+  modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M,
   modelType: 'llm',
   modelConfig: { ctx_size: 8192, tools: true },
 });
-const provider = createQvacProvider({ completion, cancel, getModelId: () => modelId });
+const provider = createQvacProvider({
+  completion, cancel, getModelId: () => modelId,
+  defaultMaxTokens: 1536, // Qwen3.5 reasons before answering; leave room for both
+  maxThinkingTokens: 512,
+});
 
 // 3. The tiered funnel, with a confirmation prompt before any spend
 const funnel = new Funnel({ provider, tools: new ToolRegistry([kaleido]) });
@@ -168,7 +172,7 @@ node agent.mjs
 The first start downloads the model. Every fund-moving tool pauses on the `onConfirm` callback, so nothing leaves the node until you type `y`.
 
 <Note>
-  This is a minimal host. The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) and the `examples/node-minimal` and `examples/rgb-agent` folders in the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) go further, with skills, recipes, and a larger model. The example loads Qwen3.5 4B (about 2.7 GB). On a phone or a small laptop use `QWEN3_5_2B_MULTIMODAL_Q4_K_M` (about 1.3 GB); on a 16 GB machine `QWEN3_5_9B_MULTIMODAL_Q4_K_M` plans multi-step requests better. Smaller models garble the arguments of calls such as `rln_issue_asset`.
+  This is a minimal host. The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) and the `examples/node-minimal` and `examples/rgb-agent` folders in the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) go further, with skills, recipes, and a larger model. The example loads Qwen3.5 2B (about 1.3 GB), which handled every signet RGB wallet task in our tests. `QWEN3_5_4B_MULTIMODAL_Q4_K_M` (about 2.7 GB) is as accurate but about twice as slow; the 0.8B model loops on wallet actions. The token caps in the sample leave room for its reasoning before the answer.
 </Note>
 
 ## 5. Prompts to Try

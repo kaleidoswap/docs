@@ -65,8 +65,22 @@ LLM, embedding, speech-to-text, and text-to-speech inference all run through the
 
 | Package | Version |
 |---------|---------|
-| `@qvac/sdk` | The core engine works with 0.13 and later. Install the latest release, which is what the hosts and evals are tested against |
+| `@qvac/sdk` | The core engine works with 0.13.1 and later and is tested with 0.21. P2P delegation needs 0.13.1–0.18: QVAC removed it in 0.19 |
 | `@kaleidorg/mind` | Takes `@qvac/sdk` as an optional peer dependency, so the engine also runs with no model at all against the mock provider |
+
+### Recommended models
+
+KaleidoMind 0.8 recommends the Qwen3.5 family. Every model below is a `@qvac/sdk` registry constant, so `loadModel({ modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M })` downloads and caches it. Qwen3 and Hermes 3 are no longer recommended: the small Qwen3 models garbled the arguments of multi-field wallet calls such as `rln_issue_asset`.
+
+| Model | `@qvac/sdk` constant | Download | RAM | Use |
+|---|---|---|---|---|
+| Qwen3.5 0.8B | `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` | 0.53 GB | ~1.5 GB | Smoke tests only; loops on wallet actions |
+| Qwen3.5 2B | `QWEN3_5_2B_MULTIMODAL_Q4_K_M` | 1.3 GB | ~3 GB | **Default.** Passed all 7 signet RGB wallet tasks, 45–150 s per question on an M4 laptop |
+| Qwen3.5 4B | `QWEN3_5_4B_MULTIMODAL_Q4_K_M` | 2.7 GB | ~5 GB | Same correctness as 2B, about twice as slow |
+| Qwen3.5 9B | `QWEN3_5_9B_MULTIMODAL_Q4_K_M` | 5.7 GB | ~9 GB | 16 GB machines; slow for interactive chat |
+| Qwen3.6 35B-A3B (MoE) | `QWEN3_6_35B_A3B_MULTIMODAL_Q4_K_M` | 22 GB | ~26 GB | 32 GB+ machines |
+
+The same list is exported as `QWEN35_MODELS` from `@kaleidorg/mind/qvac`.
 
 `createQvacProvider` turns the SDK's `completion` into the engine's `LLMProvider`. The SDK functions are injected rather than imported, so the host owns the model lifecycle (`loadModel`, `unloadModel`) and the engine never pulls QVAC into a bundle that does not need it.
 
@@ -88,7 +102,7 @@ For a step-by-step version on signet, follow [Build a Local RGB Agent](/ai-tools
 | Host | Role |
 |------|------|
 | [Rate](https://github.com/kaleidoswap/Rate) | React Native mobile wallet, with local LLM, speech-to-text, neural text-to-speech, and the hands-free voice loop |
-| [Desktop App](/desktop-app/getting-started/introduction) | Runs the engine as in-app chat through the Tauri sidecar (`apps/provider`), which consumes `kaleido-mcp` as a stdio tool source, and can act as the paired inference peer for a phone |
+| [Desktop App](/desktop-app/getting-started/introduction) | Runs the engine as in-app chat through the Tauri sidecar (`apps/provider`), which consumes `kaleido-mcp` as a stdio tool source, and can act as the paired inference peer for a phone (phone pairing is paused in desktop app v0.5.1) |
 
 The fastest way to try it is the Desktop App. [Download the latest release](https://kaleidoswap.com/downloads) and follow the [installation guide](/desktop-app/getting-started/installation).
 

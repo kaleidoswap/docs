@@ -65,8 +65,22 @@ LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本
 
 | 包 | 版本 |
 |---------|---------|
-| `@qvac/sdk` | 核心引擎支持 0.13 及以上版本。建议安装最新版本，宿主与评测都以它为测试基准 |
+| `@qvac/sdk` | 核心引擎支持 0.13.1 及以上版本，并以 0.21 为测试基准。P2P 委托需要 0.13.1–0.18：QVAC 在 0.19 中移除了该功能 |
 | `@kaleidorg/mind` | 把 `@qvac/sdk` 作为可选 peer 依赖，因此引擎在完全没有模型的情况下也能配合 mock provider 运行 |
+
+### 推荐模型
+
+KaleidoMind 0.8 推荐 Qwen3.5 系列。下表中的每个模型都是 `@qvac/sdk` 注册表常量，`loadModel({ modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M })` 会自动下载并缓存。不再推荐 Qwen3 和 Hermes 3：较小的 Qwen3 模型会弄乱 `rln_issue_asset` 等多字段钱包调用的参数。
+
+| 模型 | `@qvac/sdk` 常量 | 下载大小 | 内存 | 用途 |
+|---|---|---|---|---|
+| Qwen3.5 0.8B | `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` | 0.53 GB | 约 1.5 GB | 仅用于冒烟测试；执行钱包操作时会陷入循环 |
+| Qwen3.5 2B | `QWEN3_5_2B_MULTIMODAL_Q4_K_M` | 1.3 GB | 约 3 GB | **默认。** 在 M4 笔记本上通过全部 7 项 signet RGB 钱包任务，每个问题 45–150 秒 |
+| Qwen3.5 4B | `QWEN3_5_4B_MULTIMODAL_Q4_K_M` | 2.7 GB | 约 5 GB | 正确率与 2B 相同，速度约慢一倍 |
+| Qwen3.5 9B | `QWEN3_5_9B_MULTIMODAL_Q4_K_M` | 5.7 GB | 约 9 GB | 16 GB 内存的机器；交互式聊天较慢 |
+| Qwen3.6 35B-A3B（MoE） | `QWEN3_6_35B_A3B_MULTIMODAL_Q4_K_M` | 22 GB | 约 26 GB | 32 GB 以上内存的机器 |
+
+同一份列表也以 `QWEN35_MODELS` 从 `@kaleidorg/mind/qvac` 导出。
 
 `createQvacProvider` 把 SDK 的 `completion` 转换为引擎所需的 `LLMProvider`。SDK 函数通过注入而非导入的方式传入，因此由宿主掌控模型生命周期（`loadModel`、`unloadModel`），引擎也不会把 QVAC 打进不需要它的包里。
 
@@ -88,7 +102,7 @@ LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本
 | 宿主 | 角色 |
 |------|------|
 | [Rate](https://github.com/kaleidoswap/Rate) | React Native 移动钱包，内含本地 LLM、语音转文字、神经网络文字转语音，以及免手操作的语音循环 |
-| [桌面应用](/cn/desktop-app/getting-started/introduction) | 通过 Tauri sidecar（`apps/provider`）把引擎作为应用内聊天运行，该 sidecar 以 stdio 工具源方式接入 `kaleido-mcp`，同时还能作为手机的配对推理节点 |
+| [桌面应用](/cn/desktop-app/getting-started/introduction) | 通过 Tauri sidecar（`apps/provider`）把引擎作为应用内聊天运行，该 sidecar 以 stdio 工具源方式接入 `kaleido-mcp`，同时还能作为手机的配对推理节点（桌面应用 v0.5.1 中手机配对功能暂停） |
 
 最快的体验方式是桌面应用。[下载最新版本](https://kaleidoswap.com/downloads)，然后按照[安装指南](/cn/desktop-app/getting-started/installation)操作。
 

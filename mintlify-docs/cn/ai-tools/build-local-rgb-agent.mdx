@@ -108,11 +108,11 @@ npm init -y && npm pkg set type=module
 npm install @kaleidorg/mind @qvac/sdk @modelcontextprotocol/sdk
 ```
 
-KaleidoMind 支持 `@qvac/sdk` 0.13 及以上版本，建议安装最新版本。把下面的代码保存为 `agent.mjs`：
+KaleidoMind 支持 `@qvac/sdk` 0.13.1 及以上版本，并以 0.21 为测试基准。把下面的代码保存为 `agent.mjs`：
 
 ```js agent.mjs
 import { createInterface } from 'node:readline/promises';
-import { completion, cancel, loadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk';
+import { completion, cancel, loadModel, QWEN3_5_2B_MULTIMODAL_Q4_K_M } from '@qvac/sdk';
 import { Funnel, ToolRegistry, confirmReadback } from '@kaleidorg/mind';
 import { McpToolSource } from '@kaleidorg/mind/mcp';
 import { createQvacProvider } from '@kaleidorg/mind/qvac';
@@ -136,11 +136,15 @@ await kaleido.connect();
 
 // 2. 通过 QVAC 加载本地模型（首次运行时下载）
 const modelId = await loadModel({
-  modelSrc: QWEN3_600M_INST_Q4,
+  modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M,
   modelType: 'llm',
   modelConfig: { ctx_size: 8192, tools: true },
 });
-const provider = createQvacProvider({ completion, cancel, getModelId: () => modelId });
+const provider = createQvacProvider({
+  completion, cancel, getModelId: () => modelId,
+  defaultMaxTokens: 1536, // Qwen3.5 reasons before answering; leave room for both
+  maxThinkingTokens: 512,
+});
 
 // 3. 分层漏斗，任何花费之前都会弹出确认
 const funnel = new Funnel({ provider, tools: new ToolRegistry([kaleido]) });
@@ -168,7 +172,7 @@ node agent.mjs
 首次启动会下载模型。每个动用资金的工具都会在 `onConfirm` 回调处暂停，在你输入 `y` 之前，任何资金都不会离开节点。
 
 <Note>
-  这是一个最小的宿主。[`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) 以及 [kaleido-mind 仓库](https://github.com/kaleidoswap/kaleido-mind)中的 `examples/node-minimal` 和 `examples/rgb-agent` 目录走得更远，包含 skills、recipe 和更大的模型。0.6B 模型能很好地处理快速路径和 recipe；对于开放式请求，Qwen3 1.7B 或 4B 这类更大的模型表现明显更好。
+  这是一个最小的宿主。[`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) 以及 [kaleido-mind 仓库](https://github.com/kaleidoswap/kaleido-mind)中的 `examples/node-minimal` 和 `examples/rgb-agent` 目录走得更远，包含 skills、recipe 和更大的模型。示例加载 Qwen3.5 2B（约 1.3 GB），在我们的测试中它完成了所有 signet RGB 钱包任务。`QWEN3_5_4B_MULTIMODAL_Q4_K_M`（约 2.7 GB）同样准确，但速度约慢一倍；0.8B 模型在钱包操作上会陷入循环。示例中的 token 上限为模型回答前的推理留出了空间。
 </Note>
 
 ## 5. 可以尝试的提示词 {#5-prompts-to-try}

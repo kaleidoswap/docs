@@ -20,10 +20,10 @@ you ─▶ KaleidoMind (QVAC model, local) ─▶ kaleido-mcp (stdio) ─▶ RGB
 | Requirement | Why |
 |-------------|-----|
 | Node.js 20+ | Runs `kaleido-mcp` and the KaleidoMind host |
-| Python 3.10+ | Runs KaleidoCLI |
+| Python 3.11+ | Runs KaleidoCLI |
 | Docker with Compose | Runs the RGB Lightning Node |
 | A GitHub account | Signs you in to the RGB faucet |
-| About 1 GB of free disk | For the local model and the node's data |
+| About 3 GB of free disk | For the local model (1.3 GB), the node image and its data |
 
 No API key and no hosted LLM are needed.
 
@@ -46,6 +46,8 @@ kaleido node info      # confirms the node answers on http://localhost:3001
 
 KaleidoCLI calls this network `mutinynet`; it is the same signet that the KaleidoSwap signet API and the RGB faucet use. Write down the mnemonic that `kaleido node init` prints.
 
+If port 3001 is already taken, `kaleido setup` picks the next free port. `kaleido node list` shows the URL; use it as `RLN_NODE_URL` in the steps below.
+
 <Tip>
   The [Node Environments](/cli/node-environments) page covers running several nodes, switching between them, and reading logs.
 </Tip>
@@ -56,7 +58,7 @@ RGB assets live on Bitcoin UTXOs, so the node needs a little signet BTC before i
 
 <Steps>
   <Step title="Get signet BTC">
-    Print an on-chain address and send it coins from the public [Mutinynet faucet](https://faucet.mutinynet.com):
+    Print an on-chain address and send it coins from the public [Mutinynet faucet](https://faucet.mutinynet.com). The faucet asks you to sign in with GitHub or to pay a small Lightning invoice:
 
     ```bash
     kaleido wallet address
@@ -74,13 +76,23 @@ RGB assets live on Bitcoin UTXOs, so the node needs a little signet BTC before i
   </Step>
 
   <Step title="Get test RGB assets">
-    Create an RGB invoice. Leave out the asset ID to accept any asset:
+    Open the [KaleidoSwap RGB faucet](https://faucet.mutinynet.kaleidoswap.com) and sign in with GitHub. Copy the USDT or XAUT asset ID it lists, and create an RGB invoice for it:
 
     ```bash
-    kaleido asset invoice
+    kaleido asset invoice <asset-id>
     ```
 
-    Open the [KaleidoSwap RGB faucet](https://faucet.mutinynet.kaleidoswap.com), sign in with GitHub, and paste the invoice. Once the transfer confirms, `kaleido asset refresh` followed by `kaleido asset list` shows the asset.
+    Paste the invoice in the faucet's RGB on-chain tab. Each claim sends 100 USDT or 0.1 XAUT, up to 5 claims a day. Once the transfer confirms, `kaleido asset refresh` followed by `kaleido asset list` shows the asset. The faucet's Lightning tab needs a route to your node, so it only works after the next step.
+  </Step>
+
+  <Step title="Buy a channel from the KaleidoSwap LSP">
+    Swaps and Lightning payments need a channel. The KaleidoSwap LSP opens one to your node, optionally with USDT or XAUT on its side, and you pay a fee on-chain:
+
+    - Channel size: 50,000 to 1,000,000 sat, with up to 1,000 USDT or XAUT per channel. A 200,000 sat channel costs about 3,400 sat in fees.
+    - With an agent: `Buy a channel from the KaleidoSwap LSP preloaded with 10 USDT` runs `kaleidoswap_lsp_get_info`, `kaleidoswap_lsp_quote_asset_channel` and `kaleidoswap_lsp_create_asset_channel`. Pay the fee to the address the order returns.
+    - In KaleidoSwap Desktop: Channels → Order New Channel.
+
+    Allow a few blocks for the channel to open. Swap limits per trade are 0.000001 to 0.01 BTC and 0.5 to 1,000 USDT or XAUT.
   </Step>
 </Steps>
 
@@ -99,6 +111,10 @@ The server logs `network: signet` and waits on stdio. You do not need to keep it
 </Tip>
 
 ## 4. Wire a Local QVAC Model with KaleidoMind
+
+<Tip>
+  Want a ready-made project instead? `npm create @kaleidorg/mind my-agent` generates the RGB agent example with `start:offline` (no model, no node), `start:mock` (local model, fake node), `eval:mock` and `start` (your node) scripts. Set `RLN_NODE_URL` before `npm start`.
+</Tip>
 
 Create a project and install the engine, the QVAC SDK, and the MCP client:
 
@@ -265,6 +281,6 @@ More fixes are in [AI Tools Troubleshooting](/ai-tools/troubleshooting).
     Watch prices with `l402_get_price` and `kaleidoswap_get_spreads`, and rebalance between BTC and USDT with atomic swaps. Keep the confirmation gate on until the decisions look right.
   </Card>
   <Card title="RGB issuance" icon="coins">
-    Issue a ticket or loyalty token as a new RGB asset. Today this works from the CLI (`kaleido asset issue nia`) and against KaleidoMind's mock wallet; `kaleido-mcp` does not expose an issuance tool yet.
+    Issue a ticket or loyalty token as a new RGB asset with `rln_issue_asset` (it needs free colorable UTXOs), or from the CLI with `kaleido asset issue nia`.
   </Card>
 </CardGroup>

@@ -108,11 +108,11 @@ npm init -y && npm pkg set type=module
 npm install @kaleidorg/mind @qvac/sdk @modelcontextprotocol/sdk
 ```
 
-KaleidoMind works with `@qvac/sdk` 0.13 and later; installing the latest release is recommended. Save this as `agent.mjs`:
+KaleidoMind works with `@qvac/sdk` 0.13.1 and later and is tested with 0.21. Save this as `agent.mjs`:
 
 ```js agent.mjs
 import { createInterface } from 'node:readline/promises';
-import { completion, cancel, loadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk';
+import { completion, cancel, loadModel, QWEN3_5_4B_MULTIMODAL_Q4_K_M } from '@qvac/sdk';
 import { Funnel, ToolRegistry, confirmReadback } from '@kaleidorg/mind';
 import { McpToolSource } from '@kaleidorg/mind/mcp';
 import { createQvacProvider } from '@kaleidorg/mind/qvac';
@@ -136,7 +136,7 @@ await kaleido.connect();
 
 // 2. A local model through QVAC (downloaded on first run)
 const modelId = await loadModel({
-  modelSrc: QWEN3_600M_INST_Q4,
+  modelSrc: QWEN3_5_4B_MULTIMODAL_Q4_K_M,
   modelType: 'llm',
   modelConfig: { ctx_size: 8192, tools: true },
 });
@@ -168,7 +168,7 @@ node agent.mjs
 The first start downloads the model. Every fund-moving tool pauses on the `onConfirm` callback, so nothing leaves the node until you type `y`.
 
 <Note>
-  This is a minimal host. The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) and the `examples/node-minimal` and `examples/rgb-agent` folders in the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) go further, with skills, recipes, and a larger model. A 0.6B model handles the fast path and the recipes well; for open-ended requests a larger model such as Qwen3 1.7B or 4B does noticeably better.
+  This is a minimal host. The [`@kaleidorg/mind` README](https://www.npmjs.com/package/@kaleidorg/mind) and the `examples/node-minimal` and `examples/rgb-agent` folders in the [kaleido-mind repository](https://github.com/kaleidoswap/kaleido-mind) go further, with skills, recipes, and a larger model. The example loads Qwen3.5 4B (about 2.7 GB). On a phone or a small laptop use `QWEN3_5_2B_MULTIMODAL_Q4_K_M` (about 1.3 GB); on a 16 GB machine `QWEN3_5_9B_MULTIMODAL_Q4_K_M` plans multi-step requests better. Smaller models garble the arguments of calls such as `rln_issue_asset`.
 </Note>
 
 ## 5. Prompts to Try

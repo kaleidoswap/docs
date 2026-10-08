@@ -134,20 +134,54 @@ window.addEventListener('webln:ready', async () => {
 
 ### TypeScript 支持
 
-[`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) 包（当前版本 0.3.0）提供 `window.rgb` 的类型声明，以及一个 `requestProvider()` 辅助函数：当页面先于钱包运行时，它会等待 `rgb:ready` 事件：
+[`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) 包提供 `window.rgb` 的类型声明、提供方发现机制、一个内存版模拟钱包，以及一套一致性检查。该仓库中的 [`SPEC.md`](https://github.com/kaleidoswap/webrgb/blob/main/SPEC.md) 就是本提供方所实现的接口契约。
 
 ```bash
 npm install @kaleidorg/webrgb
 ```
 
 ```typescript
-import { requestProvider } from "@kaleidorg/webrgb";
+import { requestProvider, isProviderError, supports } from "@kaleidorg/webrgb";
 
-const rgb = await requestProvider(); // 返回带类型的 RgbProvider，找不到时以 METHOD_NOT_SUPPORTED 拒绝
-await rgb.enable();
+// 解析 window.rgb；若页面先于钱包运行，则等待钱包就绪。
+const rgb = await requestProvider({ enable: true });
+
+const info = await rgb.getInfo();
+if (supports(info, "makeLnInvoice")) {
+  // 钱包的 RGB 运行时是一个闪电节点
+}
 ```
 
-`requestProvider()` 也会解析为第一个响应发现请求的钱包。可能同时存在多个 RGB 钱包的页面，可改用 `listProviders()` 和 `onProviderAnnounced()`。扩展会以 `rgb:announceProvider`（名称 `KaleidoSwap`，rdns `com.kaleidoswap.extension`）响应 `rgb:requestProvider` 事件。
+拒绝信息会穿过 `postMessage` 边界离开钱包，因此页面捕获到的是一个携带 `code` 的普通 `Error`——请用 `isProviderError(err)` 判断，不要用 `instanceof`。
+
+从 0.3.0 起，`listAssets()` 与 `listTransfers()` 始终返回数组；包中的 `toAssetArray()` / `toTransferArray()` 可兼容那些把数组包起来的钱包。
+
+### 在没有扩展的情况下开发
+
+`@kaleidorg/webrgb/mock` 是一个内存版提供方，它执行与真实提供方相同的规则——`enable()` 之前返回 `NOT_ENABLED`，对不在 `getInfo().methods` 中的方法返回 `METHOD_NOT_SUPPORTED`，并且确认环节可以设置为拒绝——因此在没有安装钱包的情况下也能开发和测试 DApp。
+
+```typescript
+import { installMockProvider } from "@kaleidorg/webrgb/mock";
+
+const { provider, uninstall } = installMockProvider({ protocol: "RGB_LN" });
+```
+
+[playground](https://kaleidoswap.github.io/webrgb/) 可以针对扩展或该模拟钱包调用每个方法，并实时记录调用、结果和错误码。`@kaleidorg/webrgb/conformance` 只使用只读调用来检查钱包是否符合规范，因此不会弹出任何确认。
+
+### 提供方发现
+
+`window.rgb` 只有一个位置，只能由一个钱包占据，因此扩展还会以 EIP-6963 的方式宣告自身：它在加载时派发 `rgb:announceProvider`，并在页面派发 `rgb:requestProvider` 时作出响应，事件携带 `{ info: { uuid, name, rdns }, provider }`，其 `rdns` 为 `com.kaleidoswap.extension`。
+
+```typescript
+import { listProviders } from "@kaleidorg/webrgb";
+
+// 所有作出响应的已安装 RGB 钱包，按 rdns 去重。
+for (const { info, provider } of await listProviders()) {
+  console.log(info.name, info.rdns);
+}
+```
+
+发现机制是增量的：直接读取 `window.rgb` 仍然有效，`requestProvider()` 会采用最先到达的那一个。
 
 ### 支持的方法
 
@@ -157,13 +191,13 @@ await rgb.enable();
 | `getInfo()` | `{ ready, network, protocol, methods }`——未连接 RGB 钱包时 `ready` 为 `false` |
 | `getAddress()` | RGB 钱包的比特币地址，用于锚定 RGB 状态 |
 | `blindReceive(args)` | 盲化 UTXO 接收发票（可选 `assetId`：省略则生成接受任意资产的发票；可选 `amount`、`durationSeconds`、`minConfirmations`，最低为 3） |
-| `decodeRgbInvoice(invoice)` | 读取 RGB 发票请求的资产和金额（`{ assetId, amount, … }`；任意金额发票的 `amount` 为 `null`）。不弹出提示 |
 | `issueAsset(args)` | 发行新资产（`schema: "nia"`、`ticker`、`name`、`amounts`、`precision`）；仅当钱包可发行时才出现在 `methods` 中 |
 | `listAssets()` | 钱包持有的资产 |
 | `getAssetBalance(assetId)` | 单个资产的 `{ assetId, balance }` |
 | `sendAsset(args)` | 按接收方的 RGB 发票发送（`{ invoice }`），或显式指定（`assetId`、`amount`、`recipientId`） |
 | `listTransfers(assetId?)` | 转账历史，可按资产过滤 |
 | `getTransferStatus(id, assetId?)` | 按索引、接收方 ID 或 txid 查询单笔转账 |
+| `decodeRgbInvoice(invoice)` | 在据此发送之前，读取发票的内容——资产、金额、接收方。只读，因此不会弹出确认；不限金额的发票其 `amount` 为 `null` |
 | `makeLnInvoice(args)` | 携带资产的 BOLT-11 发票（`assetId`，可选 `assetAmount`、`amountSats`、`description`、`expirySeconds`）；仅限 RGB 闪电钱包 |
 | `payLnInvoice(args)` | 支付携带资产的 BOLT-11 发票（`{ invoice }`）；仅限 RGB 闪电钱包 |
 | `on(event, listener)` / `off(event, listener)` | 订阅 `transferReceived` 和 `transferSettled` |

@@ -134,20 +134,54 @@ Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the 
 
 ### TypeScript Support
 
-The [`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) package (current version 0.3.0) ships the `window.rgb` declarations and a `requestProvider()` helper that waits for the `rgb:ready` event when the page runs before the wallet:
+The [`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) package ships the `window.rgb` declarations, provider discovery, an in-memory mock wallet and a conformance suite. [`SPEC.md`](https://github.com/kaleidoswap/webrgb/blob/main/SPEC.md) in that repository is the interface contract this provider implements.
 
 ```bash
 npm install @kaleidorg/webrgb
 ```
 
 ```typescript
-import { requestProvider } from "@kaleidorg/webrgb";
+import { requestProvider, isProviderError, supports } from "@kaleidorg/webrgb";
 
-const rgb = await requestProvider(); // typed RgbProvider, or rejects with METHOD_NOT_SUPPORTED
-await rgb.enable();
+// Resolves window.rgb, or waits for the wallet if the page ran first.
+const rgb = await requestProvider({ enable: true });
+
+const info = await rgb.getInfo();
+if (supports(info, "makeLnInvoice")) {
+  // the wallet's RGB runtime is a Lightning node
+}
 ```
 
-`requestProvider()` also resolves to the first wallet that answers discovery. Pages that may see several RGB wallets can use `listProviders()` and `onProviderAnnounced()` instead. The extension answers the `rgb:requestProvider` event with `rgb:announceProvider` (name `KaleidoSwap`, rdns `com.kaleidoswap.extension`).
+A rejection crosses a `postMessage` boundary on its way out of the wallet, so what a page catches is a plain `Error` carrying `code` — test it with `isProviderError(err)`, never `instanceof`.
+
+`listAssets()` and `listTransfers()` always resolve to arrays from 0.3.0 on; `toAssetArray()` / `toTransferArray()` in the package tolerate wallets that wrap them.
+
+### Building without the extension
+
+`@kaleidorg/webrgb/mock` is an in-memory provider that enforces the same rules a real one does — `NOT_ENABLED` before `enable()`, `METHOD_NOT_SUPPORTED` for anything absent from `getInfo().methods`, a confirmation step you can make refuse — so a DApp can be built and tested with no wallet installed.
+
+```typescript
+import { installMockProvider } from "@kaleidorg/webrgb/mock";
+
+const { provider, uninstall } = installMockProvider({ protocol: "RGB_LN" });
+```
+
+The [playground](https://kaleidoswap.github.io/webrgb/) drives every method against the extension or against that mock, with a live log of calls, results and error codes. `@kaleidorg/webrgb/conformance` checks a wallet against the spec using read-only calls only, so it raises no confirmation.
+
+### Discovery
+
+`window.rgb` is a single slot and only one wallet can own it, so the extension also announces itself, EIP-6963 style. It dispatches `rgb:announceProvider` on load and in answer to any `rgb:requestProvider` a page dispatches, carrying `{ info: { uuid, name, rdns }, provider }` — its `rdns` is `com.kaleidoswap.extension`.
+
+```typescript
+import { listProviders } from "@kaleidorg/webrgb";
+
+// Every installed RGB wallet that answers, deduplicated by rdns.
+for (const { info, provider } of await listProviders()) {
+  console.log(info.name, info.rdns);
+}
+```
+
+Discovery is additive: reading `window.rgb` directly still works, and `requestProvider()` settles on whichever arrives first.
 
 ### Supported Methods
 
@@ -157,13 +191,13 @@ await rgb.enable();
 | `getInfo()` | `{ ready, network, protocol, methods }` — `ready` is `false` when no RGB wallet is connected |
 | `getAddress()` | Bitcoin address of the RGB wallet, used to anchor RGB state |
 | `blindReceive(args)` | Blinded-UTXO receive invoice (optional `assetId`: omit it for an invoice that accepts any asset; optional `amount`, `durationSeconds`, `minConfirmations`, never below 3) |
-| `decodeRgbInvoice(invoice)` | Read the asset and amount an RGB invoice requests (`{ assetId, amount, … }`; `amount` is `null` for any-amount). No prompt |
 | `issueAsset(args)` | Issue a new asset (`schema: "nia"`, `ticker`, `name`, `amounts`, `precision`); listed in `methods` only when the wallet can mint |
 | `listAssets()` | Assets held by the wallet |
 | `getAssetBalance(assetId)` | `{ assetId, balance }` for one asset |
 | `sendAsset(args)` | Send against a receiver's RGB invoice (`{ invoice }`) or explicitly (`assetId`, `amount`, `recipientId`) |
 | `listTransfers(assetId?)` | Transfer history, optionally filtered by asset |
 | `getTransferStatus(id, assetId?)` | One transfer by index, recipient id or txid |
+| `decodeRgbInvoice(invoice)` | What an invoice asks for — asset, amount, recipient — before sending against it. Read-only, so it raises no confirmation; `amount` is `null` for an any-amount invoice |
 | `makeLnInvoice(args)` | BOLT-11 invoice carrying an asset (`assetId`, optional `assetAmount`, `amountSats`, `description`, `expirySeconds`); RGB Lightning wallets only |
 | `payLnInvoice(args)` | Pay a BOLT-11 invoice that carries an asset (`{ invoice }`); RGB Lightning wallets only |
 | `on(event, listener)` / `off(event, listener)` | Subscribe to `transferReceived` and `transferSettled` |

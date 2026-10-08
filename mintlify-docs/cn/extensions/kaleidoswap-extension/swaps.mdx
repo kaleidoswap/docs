@@ -49,12 +49,7 @@ KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户
   </Step>
 
   <Step title="核对">
-    交换预览界面会显示：
-    - 支出资产和金额
-    - 获得资产和金额
-    - 汇率
-    - 费用明细
-    - 总成本
+    **交换核对**（Swap Review）界面会显示你支付和收到的金额、**提供方**（Provider，KaleidoSwap 或 Flashnet）、**汇率**（Rate）、**费用**（Fee）、**报价 ID**（Quote ID），以及实时的**有效期**（Expires）倒计时。如果报价过期，按钮会变为**刷新报价**（Refresh Quote）。
   </Step>
 
   <Step title="确认">
@@ -62,16 +57,16 @@ KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户
   </Step>
 
   <Step title="跟踪状态">
-    交换状态界面会显示一个三步进度跟踪器：
+    对于 KaleidoSwap 做市方交换，状态界面会显示一个三步进度跟踪器：
     - 请求中
     - 原子交换
     - 收尾中
 
-    随后给出成功或失败的结果。
+    随后给出成功或失败的结果。Flashnet 交换则只显示一个**正在 Spark 上结算…**（Settling on Spark…）状态。
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/24-swap-review.png" alt="交换核对界面，在「确认交换」按钮上方显示支付与收到金额、提供方、汇率、费用、报价 ID 和有效期" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/24-swap-review.png" alt="交换核对界面，在「确认交换」按钮上方显示支付与收到金额、提供方、汇率、费用、报价 ID，以及 mm:ss 格式的有效期倒计时" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="spark-swap-usdb" title="在 Spark 上将 BTC 兑换为 USDB" portrait />
 
@@ -95,7 +90,7 @@ Flashnet 交换内置了 5% 的最大滑点限制：最小输出金额由该限�
 
 ## 交换状态
 
-确认后，状态界面会通过三个步骤跟踪交换进度：
+确认 KaleidoSwap 做市方交换后，状态界面会通过三个步骤跟踪进度：
 
 | 步骤 | 说明 |
 |------|-------------|
@@ -103,12 +98,12 @@ Flashnet 交换内置了 5% 的最大滑点限制：最小输出金额由该限�
 | **原子交换**（Atomic Swap） | 交换正在原子性地执行 |
 | **收尾中**（Completing） | 交换正在完成收尾 |
 
-交换结束后，界面会显示成功结果。如果某个步骤失败，则会显示带有失败细节的错误信息。
+交换结束后，界面会显示成功结果。如果某个步骤失败，则会显示带有失败细节的错误信息。Flashnet 交换不使用跟踪器，在结算完成前只显示一个**正在 Spark 上结算…**状态。
 
-<img src="/assets/images/extension/25-swap-status.png" alt="交换进行中，三步进度跟踪器显示请求中、原子交换和收尾中，并展示正在交换的交易对" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/25-swap-status.png" alt="KaleidoSwap 做市方交换进行中，三步进度跟踪器显示请求中、原子交换和收尾中，BTC 金额以聪显示" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-如果没有可用的兼容交易场所或交易对，KaleidoSwap 扩展会显示空状态而不是报价。存入、提取、余额和设置等钱包功能仍然可用。
+如果没有可用的兼容交易场所或交易对，KaleidoSwap 扩展会显示空状态而不是报价。接收、发送、余额和设置等钱包功能仍然可用。
 </Note>
 
 ## 使用建议

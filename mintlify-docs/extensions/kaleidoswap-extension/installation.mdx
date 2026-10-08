@@ -10,11 +10,11 @@ The KaleidoSwap Extension is built as a Manifest V3 web extension. The first clo
 
 | Browser | Supported |
 |---------|-----------|
-| **Google Chrome** | Closed beta target |
-| **Brave** | Closed beta target |
-| **Edge** | Closed beta target |
-| **Opera** | Closed beta target |
-| **Firefox** | Not part of the first closed beta unless a Firefox build is provided |
+| **Google Chrome** | Supported (Developer Mode) |
+| **Brave** | Supported |
+| **Arc** | Supported |
+| **Edge / Opera** | Chromium-based; not covered by the beta guide |
+| **Firefox** | Not shipped; there is no Firefox AMO listing |
 | **Safari** | Not yet |
 
 ## Installation
@@ -92,11 +92,13 @@ After installation, clicking the KaleidoSwap icon in your toolbar opens the wall
 
 <img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-1. **Welcome screen** - Create a new wallet or import an existing phrase
-2. **Password setup** - Create a secure password to protect the local wallet
-3. **Recovery phrase backup** - Save the phrase that controls Spark, Arkade, and Nostr identity
-4. **Optional RLN setup** - Connect an RGB Lightning Node, or skip and connect it later
-5. **Ready** - Continue to the wallet dashboard
+1. **Welcome screen** - Create New Wallet or Import Existing Wallet (12 or 24-word phrase)
+2. **Password setup** - Create a password that encrypts the wallet on this device
+3. **Recovery phrase** (new wallets) - Save the 12 words that control Spark, Arkade, Liquid, RGB, and the derived Nostr identity
+4. **Passkey** (optional) - Unlock with biometrics or a security key
+5. **Nostr identity** (new wallets) - Keep the derived identity or import an existing key
+6. **RGB setup** - Use this device (recommended) or connect your own RGB Lightning Node
+7. **Beta notice** - Acknowledge the beta risk notice; the dashboard opens
 
 See [Getting Started](/extensions/kaleidoswap-extension/getting-started) for more information.
 
@@ -116,8 +118,12 @@ The KaleidoSwap Extension requests the following Chrome extension permissions:
 
 The manifest also declares `host_permissions` for the specific endpoints the wallet talks to: KaleidoSwap services, block explorers and indexers, the RGB proxy, Spark/Flashnet, Arkade, and price APIs.
 
+The manifest also lists optional host permissions. The wallet asks for access only when you point it at your own endpoint (for example an LND node, an Esplora indexer, or a VSS server).
+
 <Note>
 The KaleidoSwap Extension stores the encrypted mnemonic in `chrome.storage.local`. Network calls are made only for the accounts and services you connect.
+
+If Chrome Sync is on, Chrome may copy the encrypted seed, password hash and salts to Google's servers; you can disable extension sync in `chrome://settings/syncSetup/advanced`.
 </Note>
 
 ## Updating

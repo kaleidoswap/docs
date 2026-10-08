@@ -24,23 +24,23 @@ When you first open the KaleidoSwap Extension, the onboarding flow guides you th
   </Step>
 
   <Step title="Back Up the Recovery Phrase">
-    New wallets generate a 12-word recovery phrase. This BIP39 phrase controls the Spark, Arkade, Liquid, and RGB-L1 accounts, plus the default Nostr identity derived by the extension. Restoring the wallet later always starts from this phrase.
+    New wallets generate a 12-word recovery phrase. This BIP39 phrase controls the Spark, Arkade, Liquid, and RGB-L1 accounts, plus the default Nostr identity derived by the extension. Restoring the wallet later always starts from this phrase. To continue, tick **I have saved my recovery phrase in a secure location**.
   </Step>
 
   <Step title="Passkey (Optional)">
-    Optionally register a passkey (WebAuthn) so you can unlock the wallet with your device's biometrics or security key instead of typing the password. You can skip this and add a passkey later from Settings.
+    Optionally register a passkey (WebAuthn) so you can unlock the wallet with your device's biometrics or security key instead of typing the password. You can skip this and add a passkey later from **Settings > Security**.
   </Step>
 
   <Step title="Nostr Identity">
-    New wallets get a Nostr identity derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your existing key (`nsec1…` or 64-character hex) here instead; it is stored encrypted. Skipping keeps the derived identity.
+    New wallets get a Nostr identity derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your existing key (`nsec1…` or 64-character hex) here instead; it is stored encrypted. Skipping keeps the derived identity. This step appears for new wallets only; when importing, you can import a Nostr key later under **Settings > Nostr > Nostr Identity**.
   </Step>
 
   <Step title="RGB Setup">
-    Choose how RGB should connect:
-    - **Node-less (recommended)** - Self-custodial RGB assets and BTC on Bitcoin L1, running entirely on your device. No node to run.
-    - **RLN node** - Connect your own RGB Lightning Node to add Lightning channels and maker-based RGB swaps on top of RGB. Experimental and test-network only.
+    On the **Choose your RGB wallet setup** screen, pick how RGB should run, then select **Continue**:
+    - **Use this device (Recommended)** - Self-custodial RGB assets and BTC on Bitcoin L1, running entirely on your device. No node to run.
+    - **Connect my node** - Connect your own RGB Lightning Node to add Lightning channels and maker-based RGB swaps on top of RGB. Experimental and test-network only.
 
-    You can change this later in Settings. The two backings are mutually exclusive.
+    You can change this later in **Settings > RGB**. The two backings are mutually exclusive.
   </Step>
 
   <Step title="Restore RGB Backup (Import Only)">
@@ -48,7 +48,7 @@ When you first open the KaleidoSwap Extension, the onboarding flow guides you th
   </Step>
 
   <Step title="Done">
-    Continue to the wallet. The extension starts with Spark, Arkade, Liquid, and RGB accounts, and adds RLN features when you connect a node.
+    Continue to the wallet. A one-time beta notice ("Beta — real funds at risk") asks you to confirm with **I understand**. The extension starts with Spark, Arkade, Liquid, and RGB accounts, and adds RLN features when you connect a node.
   </Step>
 </Steps>
 
@@ -64,58 +64,53 @@ When restoring a wallet, always use the **BIP39 recovery phrase**, not a Nostr k
 
 ### Node-less RGB (RGB-L1)
 
-The default RGB backing runs RGB on Bitcoin L1 entirely inside the extension (WebAssembly), no node required. It connects to mainnet by default through an Esplora indexer (a default is provided; you can supply your own in **Settings > RGB-L1**), auto-creates blinded receive invoices, manages UTXOs for you, and backs up RGB state to encrypted cloud (VSS) and local file backups.
+The default RGB backing runs RGB on Bitcoin L1 entirely inside the extension (WebAssembly), no node required. It connects to mainnet by default through an Esplora indexer (a default is provided; you can supply your own in **Settings > RGB > Node-less** (Indexer URL)), auto-creates blinded receive invoices, manages UTXOs for you, and backs up RGB state to encrypted cloud (VSS) and local file backups.
 
 ### RGB Lightning Node
 
 RLN is optional and experimental. Connect it if you want RGB Lightning channels, RGB invoices over Lightning, or maker-based RGB swaps.
 
-<img src="/assets/images/extension/04-rln-optional.png" alt="KaleidoSwap Extension RLN opt-in" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/04-rln-optional.png" alt="RGB setup screen headed Choose your RGB wallet setup, with Use this device (Recommended) and Connect my node options and a Continue button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 The extension can reach your RLN over two transports:
 
-- **Direct** - Enter the **RLN Node URL** (the node endpoint, such as `http://localhost:3001`) and an optional **Biscuit / JWT token** when your node requires one.
-- **Nostr Wallet Connect (NWC)** - Paste a `nostr+walletconnect://` connection string (for example, from the KaleidoSwap Desktop App). Your node stays remote and only signed requests travel over the relay.
+- **Direct** - Enter the **Node URL** (the node endpoint, such as `http://localhost:3001`) and an optional **Biscuit / JWT token** when your node requires one.
+- **Wallet Connect** - Paste a `nostr+walletconnect://` connection string (for example, from the KaleidoSwap Desktop App). Your node stays remote and only signed requests travel over the relay.
 
-Both transports share the same maker URL for RGB swaps.
+The **Maker URL** for RGB swaps is required for Direct and optional for Wallet Connect.
 
 <img src="/assets/images/extension/05-rln-connect.png" alt="KaleidoSwap Extension RLN connection form" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-RGB Lightning is shown as an experimental test-network feature in onboarding. You can skip it and connect later from Settings. Connecting an RLN node replaces the node-less RGB-L1 backing.
+RGB Lightning is shown as an experimental test-network feature in onboarding. You can skip it and connect later from **Settings > RGB**. Connecting an RLN node replaces the node-less RGB-L1 backing.
 </Note>
 
 ## Dashboard Overview
 
 After setup, the dashboard shows account status and assets across the connected protocols.
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard with colour-coded network status chips, the BTC balance card with Receive, Swap, and Send, and Your Assets with the filter toggle" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Account Status
 
-The dashboard surfaces Spark, Arkade, Liquid, and RGB account state. Each account chip shows whether it is ready, offline, optional, or still syncing. If a connected account stops responding (for example, a balance call keeps timing out), its chip turns amber with a **Not responding** state and the dashboard shows a dismissible banner with a **Retry** action.
+The dashboard header shows colour-coded network status chips for your Spark, Arkade, Liquid, and RGB accounts; tapping a chip opens that account's settings. If a connected account stops responding (for example, a balance call keeps timing out), its chip turns amber with a **Not responding** state and the dashboard shows a dismissible banner with a **Retry** action.
 
 ### Asset Filters
 
-Use the asset and network filters to focus on:
+The filters are collapsed behind a toggle next to **Your Assets**. Open it to focus on:
 
-- BTC across all protocols
-- Spark assets
-- Arkade assets
-- Liquid assets (L-BTC and issued assets such as USDt)
-- RGB assets (node-less or via RLN)
-- Bitcoin L1, Lightning, Spark, Arkade, and Liquid network slices
+- **Network**: All, On-chain, Lightning, Spark, Arkade, Liquid
+- **Asset**: All, BTC, RGB, Spark, Arkade, Liquid (L-BTC and issued assets such as USDt)
 
-Assets with the same ticker across backings are merged into one dashboard row, and you can hide individual assets from the list.
+Assets with the same ticker across backings are merged into one dashboard row. To hide individual assets, use **Manage asset list**.
 
 ### Actions
 
 | Action | Description |
 |--------|-------------|
-| **Deposit** | Generate a receive address or invoice for the selected asset and account route |
-| **Withdraw** | Send to a detected destination type through the best compatible route |
-| **Swap** | Open the in-extension swap interface |
-| **Bridge** | Move funds between Spark and external chains |
+| **Receive** | Pick an asset and a receive route, then share the address, invoice, or QR code. Bridging in from another chain also starts here (**Bridge from another chain**) |
+| **Swap** | Open the in-extension swap interface (also in the bottom navigation) |
+| **Send** | Paste any destination; the wallet detects its type and suggests a compatible account |
 
 ## Lock and Unlock
 
@@ -141,8 +136,6 @@ Use **Settings > Lock Wallet** to lock immediately.
 ### Changing Lock Timeout
 
 Go to **Settings > Security** to adjust the auto-lock timeout (from 1 minute to 1 hour, or never). The Bitcoin unit display is an inline picker on the main Settings page.
-
-<img src="/assets/images/extension/06-wallet-ready.png" alt="KaleidoSwap Extension ready" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ---
 

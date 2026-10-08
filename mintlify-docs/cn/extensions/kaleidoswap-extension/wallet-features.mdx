@@ -1,7 +1,7 @@
 ---
 title: "钱包"
 sidebarTitle: "钱包"
-description: "在 KaleidoSwap 扩展中管理多协议账户、资产、存入、提取和交易记录——一个跑在浏览器里的完整比特币分层钱包，覆盖 Spark、Arkade、Liquid 和 RGB。"
+description: "在 KaleidoSwap 扩展中管理多协议账户、资产、接收、发送和交易记录——一个跑在浏览器里的完整比特币分层钱包，覆盖 Spark、Arkade、Liquid 和 RGB。"
 ---
 
 import { FeatureVideo } from "/snippets/feature-video.mdx";
@@ -17,10 +17,11 @@ KaleidoSwap 扩展从同一组助记词派生多个协议账户：
 | **Liquid** | L-BTC 以及 USDt 等 Liquid 资产 | 无节点、自主保管；默认主网 |
 | **RGB-L1** | Bitcoin L1 上的 RGB 资产和 BTC | 无节点，运行于 WebAssembly；默认主网 |
 | **RGB Lightning（RLN）** | 通过闪电通道流转的 RGB 资产 | 可选、实验性；连接后会替换 RGB-L1 后端 |
+| **Bark** | Second 的 Ark 上的 BTC | 仅限测试网络（signet）；支持闪电收付；在**设置 > Bark**（Settings > Bark）中接收和入场 |
 
 ## 资产管理
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘：网络状态标签、带接收、交换和发送按钮的 BTC 余额卡片，以及带筛选开关的你的资产列表" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 查看余额
 
@@ -37,7 +38,7 @@ KaleidoSwap 仪表盘会显示你的全部资产：
 
 ### 隐藏资产
 
-在资产管理视图中，你可以隐藏不想显示在仪表盘上的资产。隐藏的资产余额不受影响，只是从列表中移除，直到你取消隐藏。
+通过「你的资产」(Your Assets) 旁的**管理资产列表**（Manage asset list）按钮，你可以隐藏不想显示在仪表盘上的资产。隐藏的资产余额不受影响，只是从列表中移除，直到你取消隐藏。
 
 ### 资产详情
 
@@ -65,6 +66,7 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 | **BOLT11 发票** | Lightning 支付 | `lnbc1...` |
 | **Lightning Address** | Lightning 支付 | `name@example.com` |
 | **LNURL-pay** | Lightning 支付 | `lnurl1...` |
+| **BOLT12 offer** | Lightning 支付 | `lno1...` |
 | **RGB 发票** | RGB 资产转移 | `rgb:...` |
 | **比特币地址** | 链上支付 | `bc1q...`、`3...`、`1...` |
 | **Liquid 地址／URI** | Liquid 转移 | `lq1...`、`liquidnetwork:...` |
@@ -77,15 +79,15 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 
 <Steps>
   <Step title="输入目标">
-    粘贴或输入目标地址、发票或公钥。KaleidoSwap 扩展会自动识别支付类型。
+    粘贴、输入或扫描（二维码图片）目标地址或发票。KaleidoSwap 扩展会自动识别支付类型。
   </Step>
 
   <Step title="输入金额">
-    对于地址和 keysend，请输入以聪或 BTC 计的金额。对于发票，金额会从发票中自动填入。**最大**（Max）会填入可用余额，并在链上发送时预留网络费用，确保交易能够真正广播。
+    对于地址、Lightning Address、LNURL-pay 和未指定金额的发票，请输入以聪计的金额，或点击输入框旁的单位切换为法币。对于带金额的发票，金额会自动填入。**最大**（Max）会填入可用余额，并在链上发送时预留网络费用。链上发送提供**慢 / 普通 / 快 / 自定义**（Slow / Normal / Fast / Custom）几档费率。
   </Step>
 
   <Step title="核对">
-    核对支付详情：
+    选择**核对支付**（Review Payment），核对支付详情：
     - 目标
     - 金额
     - 所选路由／账户
@@ -93,84 +95,97 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
   </Step>
 
   <Step title="确认">
-    点击**发送**（Send）执行支付。状态页面会显示结果。
+    选择**确认并发送**（Confirm & Send）执行支付。状态页面会显示结果。如果一笔闪电支付几分钟后仍处于待处理状态，发送功能会对该目标保持锁定；请到**记录**（Activity）中查看，不要重复支付。
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示以聪计的金额、费率选项，以及在 Spark 和 Arkade 之间的建议路由" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示以聪计的余额、费率选项、路由列表和「核对支付」按钮" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Note>
+从 Arkade 支付闪电会使用 Arkade Intents 交换。它**只支持发票**：Lightning Address 和 LNURL 会被拒绝。确认前，核对页面会显示求解方（solver）及其费用。在主网上，默认求解方是 Ark Labs（第三方）。
+</Note>
+
+<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="通过 Arkade Intents 交换从 Arkade 支付闪电发票的发送核对页面，显示求解方和求解方费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="send-to-lightning-address" title="向闪电地址付款" portrait />
+
+### 以法币输入金额
+
+金额可以用法币输入：点击金额输入框旁的单位，即可在聪和法币之间切换，或选择其他币种。实际发送的始终是聪，换算后的数字随价格变动。凡是表单要求输入 BTC 金额的地方都支持此功能。
+
+### 支付链接
+
+在网页上点击 `bitcoin:`、`lightning:` 或 `lnurl:` 链接，会打开钱包并进入已预填的发送界面，或弹出 LNURL-auth / LNURL-withdraw 提示。
 
 ## 接收支付
 
 根据所选资产和已连接的账户，生成发票和地址以接收 Spark、Arkade、Liquid、Bitcoin L1、Lightning 和 RGB 上支持的资产。
 
-<img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap 存入流程" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/09-deposit.png" alt="接收资产选择界面，包含搜索、比特币（下一步选择目标账户）、你的资产、添加资产，以及从其他链跨链转入" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="deposit-options" title="跨比特币各层的收款选项" portrait />
-
-### 接收标签页
-
-可用的接收方式取决于所选资产和已连接的账户：
-
-| 路由 | 生成内容 |
-|-------|-------------------|
-| **Spark** | Spark 地址或 Spark Lightning 发票 |
-| **Arkade** | Arkade 地址、入场地址或兼容的接收路由 |
-| **Liquid** | 用于 L-BTC 或已发行资产的 Liquid 地址 |
-| **Bitcoin L1** | 用于链上接收的比特币地址 |
-| **Lightning** | 所选账户支持时生成 BOLT11 发票 |
-| **RGB** | 盲化 RGB 发票（无节点），或 RLN 已连接时的 RGB 闪电发票 |
 
 ### 接收流程
 
 <Steps>
   <Step title="选择资产">
-    选择 BTC 或其他受支持的资产。
+    点击**接收**（Receive），然后选择**比特币**（Bitcoin，下一步再选账户）、**你的资产**（Your assets）中的一项、**添加资产**（Add an asset），或**从其他链跨链转入**（Bridge from another chain）。
   </Step>
 
   <Step title="选择路由">
-    选择一个可用的账户路由，例如 Spark、Arkade、Liquid、Bitcoin L1、Lightning 或 RGB。
+    选择**按方式**（By method，即付款方如何支付：比特币地址、闪电发票、Spark 转账、Arkade 转账、Boarding、Liquid 地址）或**按账户**（By account，即资金到达的位置）。每一行都会显示预计速度和费用。
   </Step>
 
-  <Step title="生成">
-    创建发票或地址。界面会同时显示二维码和文本内容。
+  <Step title="设置金额（可选）">
+    留空表示任意金额，也可以输入以聪计的金额，或点击单位后以你的法币输入。
   </Step>
 
   <Step title="分享">
-    - **复制**（Copy）发票／地址到剪贴板
-    - **显示二维码**（Show QR）供付款方扫描
-    - 过期的闪电发票会被**标记**出来，并可重新生成
+    复制地址或发票，或显示二维码。过期的闪电发票会被标记出来，并可重新生成。
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/15-receive-generated.png" alt="接收 BTC 的界面，包含二维码、RLN、Spark、Arkade 和 Liquid 的目标账户标签页，以及生成的 Arkade 地址和链上入场地址" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+| 账户 | 接收方式 |
+|---------|-----------------|
+| **Spark** | Spark 转账、闪电发票、比特币地址（转入 Spark 的静态存入地址） |
+| **Arkade** | Arkade 转账、Boarding（链上转入 Arkade）、通过 Arkade Intents 交换接收闪电 |
+| **Liquid** | Liquid 地址（L-BTC 和 Liquid 资产） |
+| **RGB（无节点）** | Bitcoin L1 上的 RGB 发票 |
+| **闪电节点** | 比特币地址和闪电发票，在 RGB Lightning 节点上还包括通过闪电流转的 RGB 资产 |
+
+<img src="/assets/images/extension/15-receive-generated.png" alt="接收 BTC 的界面，包含路由选择器（按方式／按账户）、二维码，以及可在聪和法币之间切换的金额输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### RGB 发票
+
+RGB 表单可以把发票限定为某一种资产，也可以接受**任意 RGB 资产**（Any RGB asset），包括钱包尚未持有的资产。金额为可选项。在**高级**（Advanced）中可以设置有效期和接收模式：**盲化**（Blinded，具备隐私性，会使用你的一个空闲 UTXO）或**见证**（Witness，由付款方追加 BTC 为输出提供资金）。发票显示在屏幕上时，会自动检测到入账支付。
+
+<img src="/assets/images/extension/36-receive-rgb-invoice.png" alt="RGB 发票接收表单，已选择任意 RGB 资产，金额可选，并展开高级选项显示有效期以及盲化或见证接收模式" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="receive-usdt-rgb" title="在 RGB 上接收 USDT" portrait />
 
-## 存入与提取
+## 接收与发送
 
-### 存入
+### 接收
 
-把 BTC 或受支持的资产存入所选账户：
+把 BTC 或受支持的资产接收到所选账户：
 
-1. 在仪表盘上点击**存入**（Deposit）
+1. 在仪表盘上点击**接收**（Receive）
 2. 选择资产和路由
-3. 生成地址或发票
+3. 复制地址或发票，或显示二维码
 4. 从外部钱包或服务发送资金
 
-### 提取
+### 发送
 
-提取是从所选账户发送到已识别的目标：
+发送是从所选账户支付到已识别的目标：
 
-1. 在仪表盘上点击**提取**（Withdraw）
-2. 粘贴比特币地址、闪电发票、Lightning Address、LNURL、RGB 发票、Liquid 地址或 `liquidnetwork:` URI、Spark 地址，或 Arkade 目标
+1. 在仪表盘上点击**发送**（Send）
+2. 粘贴比特币地址、闪电发票、BOLT12 offer、Lightning Address、LNURL、RGB 发票、Liquid 地址或 `liquidnetwork:` URI、Spark 地址，或 Arkade 目标
 3. 输入金额
-4. 核对建议路由并确认
+4. 选择**核对支付**（Review Payment），核对建议路由后选择**确认并发送**（Confirm & Send）
 
-<img src="/assets/images/extension/16-withdraw-form.png" alt="提取界面，列出它接受的全部目标格式：Lightning、Bitcoin、Spark、Liquid、Arkade、RGB，以及跨链 USDC 或 USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/16-withdraw-form.png" alt="空白的发送界面，「可发送至」面板列出 Lightning、Bitcoin、Spark、Liquid、Arkade、RGB，以及跨链 USDC 或 USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-从 Spark 提取到外部链（EVM 网络、Solana 等）的方式，请参见[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
+从 Spark 发送到外部链（EVM 网络、Solana 等）的方式，请参见[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
 
 ## 交易记录
 
@@ -180,49 +195,53 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 
 - 列出所有已连接账户的近期交易；各数据源并发加载并渐进渲染
 - 每条记录显示：类型、金额、状态、承载网络和时间戳
-- 可按交易类型或状态筛选
+- 提供**全部 / 转入 / 交换 / 转出**（All / In / Swap / Out）标签页、状态筛选（**全部状态 / 已确认 / 待处理 / 失败**，All Status / Confirmed / Pending / Failed），以及网络标签（全部、链上、Lightning、Spark、Arkade、Liquid，视已启用的账户而定）
 
 <img src="/assets/images/extension/17-activity-list.png" alt="记录标签页列出已接收的交易及其金额和时间戳，可按全部、链上或 Lightning 筛选" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 交易详情
 
-点击任意交易可查看：
-- 完整交易详情
-- 交易 ID
-- 金额和费用
-- 承载网络和状态
-- 时间戳
+点击任意交易，可查看支付哈希或交易 ID、日期、网络、状态、费用、发票；已支付的闪电发票还会显示可复制的**原像**（Preimage），作为支付凭证。NWC 和 zap 支付会显示客户端、中继和 NIP-57 收据。
 
-<img src="/assets/images/extension/18-transaction-detail.png" alt="展开后的交易详情，显示支付哈希、日期、承载网络和已完成状态" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/18-transaction-detail.png" alt="展开后的一笔转出闪电支付，显示支付哈希、日期、网络、已完成状态，以及可复制的原像一行" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## 设置
 
-通过齿轮图标或底部导航进入设置。
+从底部导航打开**设置**（Settings）。页面分为**账户**（Accounts）、**支付**（Payments）、**安全**（Security）和**应用**（App）几个部分，底部是**锁定钱包**（Lock Wallet）和**断开账户**（Disconnect Accounts）。
 
-<img src="/assets/images/extension/11-settings.png" alt="KaleidoSwap 设置界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/11-settings.png" alt="设置主页面，顶部是账户列表，下方依次是支付、安全和应用部分" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 账户
 
 - **Spark** - 网络选择、SDK 详情和连接状态
 - **Arkade** - 网络选择、VTXO 设置、入场流程、生命周期设置，以及可选的轮换地址（HD）模式（支持通过 gap scan 恢复）
+- **Arkade Intents** - 通过 RFQ 求解方用 Arkade 余额收付闪电。在**设置 > Arkade > Arkade Intents**（Settings > Arkade > Arkade Intents）中配置。收付都使用常规的发送和接收界面。核对页面会显示求解方费用；卡住的交换可以在同一设置页面中退款。
+- **RGB** - 选择后端：**无节点**（Node-less，在设备上运行的 RGB，BTC 位于 Bitcoin L1；可设置网络、索引器 URL 和可选的 RGB 传输接口端点）或 **RLN 节点**（RLN node，通过直连或 Wallet Connect 连接你自己的 RGB Lightning Node）。在这里还可以管理 **UTXO**（UTXOs，可着色、已着色和普通 UTXO）、**发行资产**（Issue asset，从钱包铸造新资产）以及 RGB **备份**（Backup）
 - **Liquid** - 网络选择以及 Esplora/waterfalls 同步接口端点（已提供一个高速默认端点，你也可以填入自己的）
-- **RGB-L1** - 网络选择，以及无节点账户使用的 Esplora 索引器和 RGB proxy 接口端点
-- **RGB & Lightning** - 可选的 RLN 账户（直连 URL 或 NWC），可在实验性设置中启用
+- **Bark** - Second 的 Ark 网络：支持闪电收付的 BTC。仅限测试网络（signet）
+- **Lightning Node** - 连接一个外部闪电节点，用于存入、提取和余额：**RGB Lightning 节点**、**LND**（REST HTTPS URL 加一个受限 macaroon）或 **Nostr Wallet Connect**。Core Lightning 和 LDK 显示为即将推出。同一时间只能启用一个节点
+- **Nostr** - Nostr 身份（Nostr Identity）、Nostr Connect 和 Wallet Connect
 
-<img src="/assets/images/extension/22-settings-accounts.png" alt="设置中的账户部分，Spark、Arkade、RGB 和 Liquid 均显示为已连接状态" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/22-settings-accounts.png" alt="设置中的账户部分，列出 Spark、Arkade、RGB（Beta）、Liquid、Bark、Lightning Node 和 Nostr" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/38-settings-rgb.png" alt="设置中的 RGB 页面，包含无节点和 RLN 节点两种后端、UTXO、发行资产和备份" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/35-settings-lightning-node.png" alt="设置中的闪电节点选择界面，包含 RGB Lightning 节点、LND 和 Nostr Wallet Connect，Core Lightning 和 LDK 标注为即将推出" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### KaleidoSwap 用户名
 
-你可以在设置中申领一个 **Lightning Address 用户名**（`yourname@kaleidoswap.me`）。输入时会实时检查可用性，申领后它会关联到你的钱包以接收闪电支付，并在你恢复钱包时自动重新关联。
+你可以在**设置 > 支付 > Lightning Address**（Settings > Payments > Lightning Address）中申领一个 **Lightning Address 用户名**（`yourname@kaleidoswap.me`）。该用户名需要先连接 Spark，并指向你的 Spark 地址。输入时会实时检查可用性，并在你恢复钱包时自动重新关联。如果它不同步了，使用**刷新目标**（Refresh target）；如果想换个名字，使用**释放此用户名**（Release this handle）。
 
 <img src="/assets/images/extension/20-handle-claim.png" alt="申领地址界面，包含名称输入框、kaleidoswap.me 后缀和实时可用性检查" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Nostr
 
-- **Nostr 账户**（Nostr Account） - 查看公钥（npub）、在可用时查看／导出会话私钥，以及重新派生或导入身份
-- **已连接应用**（Connected Apps） - 查看连接到钱包的每个网站和应用，并可逐项撤销权限
-- **Nostr Connect（NIP-46）** - 生成 `bunker://` 连接字符串，让外部 Nostr 应用远程请求签名
-- **Nostr Wallet Connect** - 通过二维码以 NWC 方式配对外部应用，并设置带金额上限的预算
+- **设置 > Nostr > Nostr 身份**（Settings > Nostr > Nostr Identity） - 查看公钥（npub）、在可用时查看／导出会话私钥，以及导入密钥，或把已导入的密钥恢复为从助记词派生的身份
+- **设置 > 已连接应用**（Settings > Connected Apps） - 查看连接到钱包的每个网站和应用（包括 NIP-46（bunker）客户端），并可逐项撤销权限
+- **设置 > Nostr > Nostr Connect**（NIP-46） - 生成 `bunker://` 连接字符串，让外部 Nostr 应用远程请求签名
+- **设置 > Nostr > Wallet Connect** - 通过二维码以 NWC 方式配对外部应用，并设置带金额上限的预算
+
+<img src="/assets/images/extension/39-settings-nostr.png" alt="设置中的 Nostr 页面，包含 Nostr 身份、Nostr Connect 和 Wallet Connect 三个入口" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Warning>
 切勿分享你的 Nostr 私钥（nsec）。任何拿到这个密钥的人都能签名事件并以你的身份行事。
@@ -230,10 +249,13 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 
 ### 安全
 
+**设置 > 安全**（Settings > Security）是一个子页面，包含：
+
 - **修改密码**（Change Password） - 更新钱包密码
 - **Passkey 登录**（Passkey Login） - 注册或移除用于解锁钱包的 passkey（WebAuthn）
-- **自动锁定超时**（Auto-lock Timeout） - 设置无操作超时时间，从 1 分钟到 1 小时，或永不锁定
-- **备份钱包**（Backup Wallet） - 确认密码后显示助记词，并管理 RGB 备份（无节点账户的加密 VSS 云备份和本地备份文件，或 RLN 的 RGB 节点备份归档）
+- **备份钱包**（Backup Wallet） - 确认密码后显示助记词；连接 RLN 时还可创建 RGB Lightning 节点备份文件。无节点 RGB 的备份位于**设置 > RGB > 备份**（Settings > RGB > Backup）。
+- **自动锁定计时**（Auto-Lock Timer） - 设置无操作超时时间，从 1 分钟到 1 小时，或永不锁定
+- **Chrome 同步说明** - 说明 Chrome 同步可能复制哪些数据，以及如何关闭扩展同步
 
 <img src="/assets/images/extension/23-backup-wallet.png" alt="备份钱包界面，解密助记词前要求输入密码，并附带警告和备份覆盖范围的说明" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -247,18 +269,18 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 | **法币**（Fiat Currency） | USD、EUR、GBP、JPY、CHF、CAD、CNY、KRW |
 | **语言**（Language） | 英语、西班牙语、法语、德语、葡萄牙语、日语、意大利语、韩语、中文 |
 
-自动锁定超时时间位于**设置 > 安全**（Settings > Security）下。
+应用部分还包含**在完整标签页中打开**（Open in Full Tab）、**发送反馈**（Send Feedback，报告问题，可选择附加脱敏的诊断信息或下载诊断信息）以及**关于**（About）。自动锁定超时时间位于**设置 > 安全**下。
 
 ### 全标签页视图
 
 钱包通常在浏览器侧边栏（或工具栏弹出窗口）中打开。如果需要更大的操作空间，可使用**设置 > 在完整标签页中打开**（Settings > Open in Full Tab），把钱包作为完整浏览器标签页打开。
 
-<img src="/assets/images/extension/21-full-tab-view.png" alt="钱包以完整浏览器标签页而非侧边栏运行，全宽显示解锁界面" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/21-full-tab-view.png" alt="已解锁的钱包仪表盘以完整浏览器标签页而非侧边栏运行" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 关于
 
 - 扩展版本和构建信息
-- 文档、GitHub 和支持渠道的链接
+- GitHub 和文档（Documentation）链接，以及**报告问题**（Report Issue，发送邮件至 beta@kaleidoswap.com）
 
 ---
 

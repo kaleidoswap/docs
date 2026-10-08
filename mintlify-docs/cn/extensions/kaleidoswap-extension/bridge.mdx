@@ -10,7 +10,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 **跨链桥**（Bridge）通过 **Flashnet Orchestra** 在你的 Spark 账户和外部区块链之间转移资金。它支持双向操作：
 
 - **存入**（Deposit） - 从外部链发送资产（例如以太坊或 Solana 上的 USDC），并在 Spark 账户中收到 **BTC** 或 **USDB**。
-- **提取**（Withdraw） - 从 Spark 发送到外部链上受支持的目标。在提取流程中粘贴外部链地址后，扩展会自动识别兼容的跨链路由。
+- **提取**（Withdraw） - 从 Spark 发送到外部链上受支持的目标。在发送（Send）流程中粘贴外部链地址后，扩展会自动识别兼容的跨链路由。
 
 <Note>
 跨链桥用于跨链转移资金。要在钱包内部把一种资产换成另一种，请使用[交换](/cn/extensions/kaleidoswap-extension/swaps)。
@@ -18,7 +18,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## 支持的网络
 
-可用路由来自 Flashnet Orchestra，会随时间变化。跨链桥界面中出现的网络包括 Ethereum、Base、Arbitrum、Optimism、Polygon、Solana、Tron、Avalanche、BNB Chain、HyperCore 和 HyperEVM，常见资产有 BTC、USDT 和 USDC。
+可用路由来自 Flashnet Orchestra，会随时间变化。跨链桥界面中出现的网络包括 Ethereum、Base、Arbitrum、Optimism、Polygon、Solana、Tron、Avalanche、BNB Chain、HyperCore 和 HyperEVM，常见资产有 BTC、USDT 和 USDC。转入来源由 Orchestra 动态列出；默认来源是 **Polygon 上的 USDT**。
 
 在资产选择器中使用**网络筛选器**和 **BTC / USDT / USDC 快捷标签**可以缩小路由列表。
 
@@ -28,7 +28,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 <Steps>
   <Step title="打开跨链桥">
-    从仪表盘打开**跨链桥**。
+    在仪表盘上点击**接收**（Receive），然后在资产列表下方选择**从其他链跨链转入**（Bridge from another chain）。
   </Step>
 
   <Step title="选择来源">
@@ -60,7 +60,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## 跨链转出（提取）
 
-跨链提取从常规的**提取**流程开始：
+跨链提取从常规的**发送**流程开始。转出目标经过筛选：**Ethereum、Base、Arbitrum、Optimism、Polygon、Solana 上的 USDC 或 USDT**。
 
 <Steps>
   <Step title="粘贴目标地址">
@@ -80,7 +80,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/30-bridge-withdraw.png" alt="提取流程中识别出的跨链提取，显示目标网络、接收地址、接收代币、固定输出金额和费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/30-bridge-withdraw.png" alt="发送界面中识别出的跨链提取，显示目标网络、接收地址、接收代币、固定输出金额和费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="btc-to-usdt-evm" title="将 BTC 以 USDT 形式发送到 EVM 链" portrait />
 

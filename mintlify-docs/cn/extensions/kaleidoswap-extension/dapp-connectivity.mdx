@@ -42,6 +42,8 @@ KaleidoSwap 扩展会把标准钱包提供方注入浏览器页面，DApp 在获
 | `USER_REJECTED` | 用户拒绝了连接或确认提示 |
 | `NOT_ENABLED` | 在该来源的 `enable()` 完成之前就调用了提供方 |
 | `METHOD_NOT_SUPPORTED` | 已连接的钱包无法提供该方法（例如在无节点的 RGB 钱包上使用 RGB 闪电功能） |
+| `INVALID_PARAMS` | 参数格式错误，例如 `assetId` 无效，或向 `payLnInvoice` 传入任意金额发票（`window.rgb`） |
+| `ASSET_NOT_FOUND` | 钱包不认识该资产；在 `blindReceive` 中省略 `assetId` 即可接受任意资产（`window.rgb`） |
 | `INTERNAL_ERROR` | 其他所有情况，钱包的说明在 `error.message` 中 |
 
 ## WebLN 提供方
@@ -104,7 +106,7 @@ window.addEventListener('webln:ready', async () => {
 |--------|-------------|
 | `enable()` | 连接 DApp 并为该来源请求授权 |
 | `getInfo()` | 获取节点／网络信息和支持的方法 |
-| `getAddress()` | 获取链上接收地址 |
+| `getAddress(opts?)` | 获取链上接收地址。传入 `{ protocol: "LIQUID" }`（或其他账户）可获取该账户的地址。需要站点已连接 |
 | `signPsbt(psbtHex)` | 签名 PSBT 中属于本钱包的输入 |
 | `finalizePsbt(psbtHex)` | 把已签名的 PSBT 终结为可广播的 hex |
 | `broadcastTransaction(txHex)` | 广播已签名的原始交易 |
@@ -113,7 +115,7 @@ window.addEventListener('webln:ready', async () => {
 | `sendTransaction(address, amount)` | 发送链上支付 |
 
 <Note>
-部分 DApp 会探测 `window.bitcoin`（Bitcoin Wallet Standard 提供方），替代或同时配合 `window.webbtc` 使用。它基于同一套钱包密钥暴露 `connect()`、`getAccounts()`、`getPublicKey()`、`signMessage()`、`signPsbt()`、`pushPsbt()` 和 `sendBitcoin()`。
+部分 DApp 会探测 `window.bitcoin`（Bitcoin Wallet Standard 提供方），替代或同时配合 `window.webbtc` 使用。它基于同一套钱包密钥暴露 `connect()`、`requestAccounts()`、`getAccounts()`、`getPublicKey()`、`signMessage()`、`signPsbt()`、`pushPsbt()`、`sendBitcoin()` 和 `disconnect()`。
 </Note>
 
 ### PSBT 确认
@@ -132,7 +134,7 @@ window.addEventListener('webln:ready', async () => {
 
 ### TypeScript 支持
 
-[`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) 包提供 `window.rgb` 的类型声明，以及一个 `requestProvider()` 辅助函数：当页面先于钱包运行时，它会等待 `rgb:ready` 事件：
+[`@kaleidorg/webrgb`](https://github.com/kaleidoswap/webrgb) 包（当前版本 0.3.0）提供 `window.rgb` 的类型声明，以及一个 `requestProvider()` 辅助函数：当页面先于钱包运行时，它会等待 `rgb:ready` 事件：
 
 ```bash
 npm install @kaleidorg/webrgb
@@ -145,6 +147,8 @@ const rgb = await requestProvider(); // 返回带类型的 RgbProvider，找不�
 await rgb.enable();
 ```
 
+`requestProvider()` 也会解析为第一个响应发现请求的钱包。可能同时存在多个 RGB 钱包的页面，可改用 `listProviders()` 和 `onProviderAnnounced()`。扩展会以 `rgb:announceProvider`（名称 `KaleidoSwap`，rdns `com.kaleidoswap.extension`）响应 `rgb:requestProvider` 事件。
+
 ### 支持的方法
 
 | 方法 | 说明 |
@@ -152,7 +156,8 @@ await rgb.enable();
 | `enable()` | 连接 DApp；与其他提供方共用同一份来源授权 |
 | `getInfo()` | `{ ready, network, protocol, methods }`——未连接 RGB 钱包时 `ready` 为 `false` |
 | `getAddress()` | RGB 钱包的比特币地址，用于锚定 RGB 状态 |
-| `blindReceive(args)` | 某资产的盲化 UTXO 接收发票（`assetId`，可选 `amount`、`durationSeconds`、`minConfirmations`） |
+| `blindReceive(args)` | 盲化 UTXO 接收发票（可选 `assetId`：省略则生成接受任意资产的发票；可选 `amount`、`durationSeconds`、`minConfirmations`，最低为 3） |
+| `decodeRgbInvoice(invoice)` | 读取 RGB 发票请求的资产和金额（`{ assetId, amount, … }`；任意金额发票的 `amount` 为 `null`）。不弹出提示 |
 | `issueAsset(args)` | 发行新资产（`schema: "nia"`、`ticker`、`name`、`amounts`、`precision`）；仅当钱包可发行时才出现在 `methods` 中 |
 | `listAssets()` | 钱包持有的资产 |
 | `getAssetBalance(assetId)` | 单个资产的 `{ assetId, balance }` |
@@ -223,6 +228,7 @@ KaleidoSwap 扩展在 `window.nostr` 上注入完整的 **NIP-07** 提供方，N
 | `signEvent(event)` | 签名一个 Nostr 事件 |
 | `getRelays()` | 返回已配置的中继 |
 | `signSchnorr(sigHash)` | 用 Nostr 密钥签名 32 字节哈希 |
+| `hashAndSignSchnorr(message)` | 对消息做哈希，并用 Nostr 密钥签名该哈希 |
 | `nip04.encrypt(pubkey, plaintext)` / `nip04.decrypt(pubkey, ciphertext)` | NIP-04 加密 |
 | `nip44.encrypt(pubkey, plaintext)` / `nip44.decrypt(pubkey, ciphertext)` | NIP-44 加密 |
 
@@ -241,9 +247,11 @@ window.addEventListener('nostr:ready', async () => {
 });
 ```
 
+如果你拒绝了某个站点的连接，`window.nostr` 在该页面剩余的生命周期内不再弹出提示，钱包也会在 10 分钟内记住对该站点的拒绝。
+
 ## Nostr Connect（NIP-46）
 
-除了页面内的 NIP-07 签名，扩展还可以为支持 [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md)（nsecBunker）的 Nostr 应用充当**远程签名器**。在**设置 > Nostr Connect**（Settings > Nostr Connect）中生成 `bunker://` 连接字符串，粘贴到客户端应用中，签名请求随后会通过 Nostr 中继传输，并在扩展中批准。活跃的 NIP-46 会话会出现在**已连接应用**（Connected Apps）中，可在那里查看和撤销。
+除了页面内的 NIP-07 签名，扩展还可以为支持 [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md)（nsecBunker）的 Nostr 应用充当**远程签名器**。在**设置 > Nostr > Nostr Connect**（Settings > Nostr > Nostr Connect）中生成 `bunker://` 连接字符串，粘贴到客户端应用中，签名请求随后会通过 Nostr 中继传输，并在扩展中批准。活跃的 NIP-46 会话会出现在**已连接应用**（Connected Apps）中，可在那里查看和撤销。
 
 <img src="/assets/images/extension/34-nostr-connect-bunker.png" alt="Nostr Connect 远程签名界面，显示监听状态、生成的 bunker 连接字符串和撤销操作" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -253,7 +261,7 @@ window.addEventListener('nostr:ready', async () => {
 
 ### 面向开发者
 
-凡是不在同一浏览器中运行的网页之外的一切——移动应用、桌面客户端、机器人和后端——都应通过 NWC 集成。扩展充当 [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **钱包服务**；任何 NIP-47 客户端库都能与之配合，无需任何 KaleidoSwap 专有的实现。在**设置 > Nostr Wallet Connect**（Settings > Nostr Wallet Connect）中生成的配对字符串采用标准格式：
+凡是不在同一浏览器中运行的网页之外的一切——移动应用、桌面客户端、机器人和后端——都应通过 NWC 集成。扩展充当 [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **钱包服务**；任何 NIP-47 客户端库都能与之配合，无需任何 KaleidoSwap 专有的实现。在**设置 > Nostr > Wallet Connect**（Settings > Nostr > Wallet Connect）中生成的配对字符串采用标准格式：
 
 ```text
 nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secret>
@@ -271,6 +279,7 @@ nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secre
 | `lookup_invoice` | 按支付哈希或 BOLT-11 查询发票 |
 | `list_transactions` | 最近的收付款记录 |
 | `sign_message` | 用节点密钥签名消息 |
+| `pay_keysend` | 仅当当前闪电后端支持 keysend 时才会声明 |
 
 每个已配对的客户端都有独立的消费预算，可在**设置 > 已连接应用**（Settings > Connected Apps）中查看和撤销。预算内的支付无需提示即可完成；超出预算的支付会打开与页面内提供方相同的确认窗口。
 
@@ -280,7 +289,7 @@ nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secre
 
 <img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="连接授权提示，显示发起请求的站点来源、它申请的访问权限，以及默认的「合理」授权级别和拒绝、允许两个操作" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-**设置 > 已连接应用**（Settings > Connected Apps）列出连接到钱包的每个站点和应用，并显示各自被授予的能力。你可以随时撤销单项能力，或彻底断开某个站点。
+**设置 > 已连接应用**（Settings > Connected Apps）列出连接到钱包的每个站点和应用（包括 NIP-46（bunker）客户端），并显示各自被授予的能力。你可以随时撤销单项能力，或彻底断开某个站点。
 
 <img src="/assets/images/extension/33-connected-sites.png" alt="已连接应用界面，列出已连接的应用、Nostr Wallet Connect 会话，以及用于屏蔽站点的输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -294,13 +303,13 @@ KaleidoSwap 扩展从钱包助记词（或导入的身份）派生 Nostr 身份�
 
 ### Nostr 密钥管理
 
-你的 Nostr 密钥对在**设置 > Nostr 账户**（Settings > Nostr Account）中管理：
+你的 Nostr 密钥对在**设置 > Nostr > Nostr 身份**（Settings > Nostr > Nostr Identity）中管理：
 
 - 查看公钥（`npub`）
 - 钱包处于解锁状态时查看／复制会话私钥
-- 从钱包助记词重新派生身份
+- 导入密钥，或把已导入的密钥恢复为从助记词派生的身份
 
-默认情况下，身份由助记词派生（NIP-06）。如果你已经有 Nostr 身份，可以在初始设置时或之后从设置中导入自己的密钥（`nsec1…` 或 64 位十六进制字符串）；它会被加密存储，并在所有原本使用派生身份的场景中生效。
+默认情况下，身份由助记词派生（NIP-06）。如果你已经有 Nostr 身份，可以在初始设置时或之后从**设置 > Nostr > Nostr 身份**中导入自己的密钥（`nsec1…` 或 64 位十六进制字符串）；它会被加密存储，并在所有原本使用派生身份的场景中生效。
 
 ## 浏览器授权流程
 

@@ -24,23 +24,23 @@ description: "在 KaleidoSwap 扩展中创建或导入钱包、备份助记词�
   </Step>
 
   <Step title="备份助记词">
-    新钱包会生成 12 词助记词。这组 BIP39 助记词控制 Spark、Arkade、Liquid 和 RGB-L1 账户，以及扩展派生的默认 Nostr 身份。日后恢复钱包始终从这组助记词开始。
+    新钱包会生成 12 词助记词。这组 BIP39 助记词控制 Spark、Arkade、Liquid 和 RGB-L1 账户，以及扩展派生的默认 Nostr 身份。日后恢复钱包始终从这组助记词开始。勾选「我已将助记词保存在安全的位置」(I have saved my recovery phrase in a secure location) 后才能继续。
   </Step>
 
   <Step title="Passkey（可选）">
-    你可以选择注册一个 passkey（WebAuthn），用设备的生物识别或安全密钥解锁钱包，而不必输入密码。也可以先跳过，之后在设置（Settings）中再添加。
+    你可以选择注册一个 passkey（WebAuthn），用设备的生物识别或安全密钥解锁钱包，而不必输入密码。也可以先跳过，之后在**设置 > 安全**（Settings > Security）中再添加。
   </Step>
 
   <Step title="Nostr 身份">
-    新钱包会获得一个从助记词派生的 Nostr 身份（NIP-06）。如果你已经有 Nostr 身份，可以在这一步导入已有密钥（`nsec1…` 或 64 位十六进制字符串），密钥会加密存储。跳过则保留派生出的身份。
+    新钱包会获得一个从助记词派生的 Nostr 身份（NIP-06）。如果你已经有 Nostr 身份，可以在这一步导入已有密钥（`nsec1…` 或 64 位十六进制字符串），密钥会加密存储。跳过则保留派生出的身份。此步骤仅在创建新钱包时出现；导入钱包时，可稍后在**设置 > Nostr > Nostr 身份**（Settings > Nostr > Nostr Identity）中导入 Nostr 密钥。
   </Step>
 
   <Step title="RGB 设置">
-    选择 RGB 的连接方式：
-    - **无节点（推荐）** - 完全在你的设备上运行的自主保管 RGB 资产和 Bitcoin L1 上的 BTC，无需运行节点。
-    - **RLN 节点** - 连接你自己的 RGB Lightning Node，在 RGB 之上增加闪电通道和基于做市方的 RGB 交换。实验性功能，仅支持测试网络。
+    在「选择你的 RGB 钱包设置」(Choose your RGB wallet setup) 界面选择 RGB 的运行方式，然后点击「继续」(Continue)：
+    - **使用此设备（推荐）**（Use this device） - 完全在你的设备上运行的自主保管 RGB 资产和 Bitcoin L1 上的 BTC，无需运行节点。
+    - **连接我的节点**（Connect my node） - 连接你自己的 RGB Lightning Node，在 RGB 之上增加闪电通道和基于做市方的 RGB 交换。实验性功能，仅支持测试网络。
 
-    之后可以在设置中更改。两种后端互斥。
+    之后可以在**设置 > RGB**（Settings > RGB）中更改。两种后端互斥。
   </Step>
 
   <Step title="恢复 RGB 备份（仅导入时）">
@@ -48,7 +48,7 @@ description: "在 KaleidoSwap 扩展中创建或导入钱包、备份助记词�
   </Step>
 
   <Step title="完成">
-    进入钱包。扩展会以 Spark、Arkade、Liquid 和 RGB 账户启动，连接节点后再加入 RLN 相关功能。
+    进入钱包。一次性的测试版提示（「Beta — real funds at risk」）会要求你点击「我了解」(I understand) 确认。扩展会以 Spark、Arkade、Liquid 和 RGB 账户启动，连接节点后再加入 RLN 相关功能。
   </Step>
 </Steps>
 
@@ -64,58 +64,53 @@ description: "在 KaleidoSwap 扩展中创建或导入钱包、备份助记词�
 
 ### 无节点 RGB（RGB-L1）
 
-默认的 RGB 后端完全在扩展内部（WebAssembly）运行 Bitcoin L1 上的 RGB，无需节点。它默认通过 Esplora 索引器连接主网（已提供默认端点，你也可以在**设置 > RGB-L1**（Settings > RGB-L1）中填入自己的），自动创建盲化接收发票，替你管理 UTXO，并把 RGB 状态备份到加密云端（VSS）和本地文件。
+默认的 RGB 后端完全在扩展内部（WebAssembly）运行 Bitcoin L1 上的 RGB，无需节点。它默认通过 Esplora 索引器连接主网（已提供默认端点，你也可以在**设置 > RGB > 无节点**（Settings > RGB > Node-less）的索引器 URL（Indexer URL）中填入自己的），自动创建盲化接收发票，替你管理 UTXO，并把 RGB 状态备份到加密云端（VSS）和本地文件。
 
 ### RGB Lightning Node
 
 RLN 是可选的实验性功能。如果你需要 RGB 闪电通道、通过 Lightning 传输的 RGB 发票，或基于做市方的 RGB 交换，可以连接它。
 
-<img src="/assets/images/extension/04-rln-optional.png" alt="KaleidoSwap 扩展中的 RLN 可选启用界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/04-rln-optional.png" alt="「RGB 设置」界面，标题为选择你的 RGB 钱包设置，提供「使用此设备（推荐）」和「连接我的节点」两个选项以及「继续」按钮" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 扩展可以通过两种传输方式连接你的 RLN：
 
-- **直连**（Direct）- 填入 **RLN Node URL**（节点接口端点，例如 `http://localhost:3001`），以及节点要求时的可选 **Biscuit / JWT token**。
-- **Nostr Wallet Connect（NWC）** - 粘贴 `nostr+walletconnect://` 连接字符串（例如来自 KaleidoSwap 桌面应用）。你的节点保持远程，只有签名后的请求经中继传输。
+- **直连**（Direct）- 填入**节点 URL**（Node URL，节点接口端点，例如 `http://localhost:3001`），以及节点要求时的可选 **Biscuit / JWT token**。
+- **Wallet Connect** - 粘贴 `nostr+walletconnect://` 连接字符串（例如来自 KaleidoSwap 桌面应用）。你的节点保持远程，只有签名后的请求经中继传输。
 
-两种传输方式共用同一个 RGB 交换做市方 URL。
+用于 RGB 交换的**做市方 URL**（Maker URL）在直连方式下必填，在 Wallet Connect 方式下可选。
 
 <img src="/assets/images/extension/05-rln-connect.png" alt="KaleidoSwap 扩展的 RLN 连接表单" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-在初始设置中，RGB Lightning 被标注为面向测试网络的实验性功能。你可以先跳过，之后在设置中连接。连接 RLN 节点会替换掉无节点的 RGB-L1 后端。
+在初始设置中，RGB Lightning 被标注为面向测试网络的实验性功能。你可以先跳过，之后在**设置 > RGB**中连接。连接 RLN 节点会替换掉无节点的 RGB-L1 后端。
 </Note>
 
 ## 仪表盘概览
 
 设置完成后，仪表盘会显示各个已连接协议的账户状态和资产。
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘：按颜色区分的网络状态标签、带接收、交换和发送按钮的 BTC 余额卡片，以及带筛选开关的你的资产列表" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 账户状态
 
-仪表盘会展示 Spark、Arkade、Liquid 和 RGB 账户的状态。每个账户标签会显示它处于就绪、离线、可选还是仍在同步。如果某个已连接账户停止响应（例如余额请求持续超时），对应标签会变为琥珀色并显示**无响应**（Not responding）状态，同时仪表盘会出现一条可关闭的横幅，附带**重试**（Retry）操作。
+仪表盘顶部以按颜色区分的网络状态标签展示 Spark、Arkade、Liquid 和 RGB 账户的状态；点击某个标签会打开该账户的设置。如果某个已连接账户停止响应（例如余额请求持续超时），对应标签会变为琥珀色并显示**无响应**（Not responding）状态，同时仪表盘会出现一条可关闭的横幅，附带**重试**（Retry）操作。
 
 ### 资产筛选
 
-使用资产和网络筛选器可以聚焦于：
+筛选器默认收起在**你的资产**（Your Assets）旁的开关后面。展开后可以聚焦于：
 
-- 所有协议中的 BTC
-- Spark 资产
-- Arkade 资产
-- Liquid 资产（L-BTC 以及 USDt 等已发行资产）
-- RGB 资产（无节点或通过 RLN）
-- Bitcoin L1、Lightning、Spark、Arkade 和 Liquid 各网络分片
+- **网络**：全部、链上、Lightning、Spark、Arkade、Liquid
+- **资产**：全部、BTC、RGB、Spark、Arkade、Liquid（L-BTC 以及 USDt 等已发行资产）
 
-不同后端中代码相同的资产会合并为仪表盘上的同一行，你也可以从列表中隐藏单个资产。
+不同后端中代码相同的资产会合并为仪表盘上的同一行。要隐藏单个资产，请使用**管理资产列表**（Manage asset list）。
 
 ### 操作
 
 | 操作 | 说明 |
 |--------|-------------|
-| **存入**（Deposit） | 为所选资产和账户路由生成接收地址或发票 |
-| **提取**（Withdraw） | 通过最合适的兼容路由发送到已识别的目标类型 |
-| **交换**（Swap） | 打开扩展内的交换界面 |
-| **跨链**（Bridge） | 在 Spark 与外部链之间转移资金 |
+| **接收**（Receive） | 选择资产和接收路由，然后分享地址、发票或二维码。从其他链跨链转入也从这里开始（**从其他链跨链转入**（Bridge from another chain）） |
+| **交换**（Swap） | 打开扩展内的交换界面（底部导航栏中也有入口） |
+| **发送**（Send） | 粘贴任意目标，钱包会识别其类型并推荐兼容的账户 |
 
 ## 锁定与解锁
 
@@ -141,8 +136,6 @@ KaleidoSwap 扩展会在一段时间无操作后自动锁定。锁定后，扩�
 ### 修改锁定超时时间
 
 进入**设置 > 安全**（Settings > Security）调整自动锁定超时时间（从 1 分钟到 1 小时，或永不锁定）。比特币单位显示是设置主页面上的一个内嵌选择器。
-
-<img src="/assets/images/extension/06-wallet-ready.png" alt="KaleidoSwap 扩展就绪界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ---
 

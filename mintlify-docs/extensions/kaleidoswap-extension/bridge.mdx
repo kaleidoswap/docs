@@ -10,7 +10,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 The **Bridge** moves funds between your Spark account and external blockchains through **Flashnet Orchestra**. It works in both directions:
 
 - **Deposit** - Send assets from an external chain (for example USDC on Ethereum or Solana) and receive **BTC** or **USDB** on your Spark account.
-- **Withdraw** - Send from Spark to a supported destination on an external chain. Pasting an external-chain address in the Withdraw flow detects the compatible bridge routes automatically.
+- **Withdraw** - Send from Spark to a supported destination on an external chain. Pasting an external-chain address in the Send flow detects the compatible bridge routes automatically.
 
 <Note>
 The Bridge moves funds across chains. To exchange one asset for another inside your wallet, use [Swaps](/extensions/kaleidoswap-extension/swaps).
@@ -18,7 +18,7 @@ The Bridge moves funds across chains. To exchange one asset for another inside y
 
 ## Supported Networks
 
-Available routes come from Flashnet Orchestra and can change over time. Networks surfaced in the bridge UI include Ethereum, Base, Arbitrum, Optimism, Polygon, Solana, Tron, Avalanche, BNB Chain, HyperCore, and HyperEVM, with common assets such as BTC, USDT, and USDC.
+Available routes come from Flashnet Orchestra and can change over time. Networks surfaced in the bridge UI include Ethereum, Base, Arbitrum, Optimism, Polygon, Solana, Tron, Avalanche, BNB Chain, HyperCore, and HyperEVM, with common assets such as BTC, USDT, and USDC. Inbound sources are listed dynamically from Orchestra; the default source is **USDT on Polygon**.
 
 Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asset picker to narrow the route list.
 
@@ -28,7 +28,7 @@ Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asse
 
 <Steps>
   <Step title="Open Bridge">
-    Open **Bridge** from the dashboard.
+    On the dashboard, tap **Receive**, then choose **Bridge from another chain** under the asset list.
   </Step>
 
   <Step title="Pick the Source">
@@ -60,7 +60,7 @@ Use the **network filter** and the **BTC / USDT / USDC quick chips** in the asse
 
 ## Bridging Out (Withdraw)
 
-Cross-chain withdrawals start from the regular **Withdraw** flow:
+Cross-chain withdrawals start from the regular **Send** flow. Outbound destinations are curated: **USDC or USDT on Ethereum, Base, Arbitrum, Optimism, Polygon, Solana**.
 
 <Steps>
   <Step title="Paste the Destination">
@@ -80,7 +80,7 @@ Cross-chain withdrawals start from the regular **Withdraw** flow:
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/30-bridge-withdraw.png" alt="Cross-chain withdrawal detected in the Withdraw flow, with destination network, recipient address, receive token, exact-out amount, and fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/30-bridge-withdraw.png" alt="Cross-chain withdrawal detected inside the Send screen, with destination network, recipient address, receive token, exact-out amount, and fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="btc-to-usdt-evm" title="Sending BTC out as USDT on an EVM chain" portrait />
 

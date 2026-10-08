@@ -20,7 +20,7 @@ Most requests never reach the model at all.
 |------|---------|------|
 | `T0` fast path | "balance", "address", "btc price" | Zero inferences, instant |
 | `T2` recipe | "pay bob 3 EUR", "buy 0.001 BTC" | About one inference (the model may assist slot extraction), then a deterministic chain, confirm-gated |
-| `T1` agentic loop | Everything else | Skill-scoped LLM, can P2P-delegate hard or novel chains to a paired desktop's bigger model |
+| `T1` agentic loop | Everything else | Skill-scoped LLM on the local model |
 
 - **T0, fast path.** Deterministic pattern match, no inference. Balance checks, addresses, spot prices.
 - **T2, recipe engine.** A skill carries the ordered plan (resolve, price, convert, confirm, send); the model only fills the slots. That makes multi-step flows reliable even on a ~0.6B parameter model, instead of asking the model to plan the whole chain itself.
@@ -32,7 +32,7 @@ The model sees identical tool names and schemas everywhere, only *how a tool exe
 
 | Surface | Tool execution | Confirm before spend |
 |---------|----------------|----------------------|
-| Mobile (Rate) | In-process WDK adapters (fully on-device, private); P2P-delegate to a paired desktop optional | Confirmation sheet |
+| Mobile (Rate) | In-process WDK adapters (fully on-device, private) | Confirmation sheet |
 | Desktop | `kaleido-mcp` consumed as a stdio tool source (namespaced `spark_*`/`rln_*`/`kaleidoswap_*`) | Confirmation dialog |
 | Eval / CLI | Canned stub handlers for reproducible benchmarks | Auto-approve (asserts the gate fired) |
 
@@ -61,11 +61,11 @@ Skills are Agent-Skills-spec playbooks (`SKILL.md` plus progressive disclosure) 
 
 ## QVAC: On-Device Inference
 
-LLM, embedding, speech-to-text, and text-to-speech inference all run through the [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk), Tether's local AI runtime, locally on-device by default, or delegated to an explicitly paired, user-controlled desktop for heavier work. Published as the `@kaleidorg/mind/qvac` subpath so the SDK stays a peer dependency rather than a hard requirement of core. Memory and RAG (long-term recall, wallet-history retrieval, merchant discovery) also route through QVAC's embeddings, with near-duplicate consolidation to keep memory from bloating.
+LLM, embedding, speech-to-text, and text-to-speech inference all run through the [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk), Tether's local AI runtime, locally on the device. Offloading inference to another device is planned but not available yet. Published as the `@kaleidorg/mind/qvac` subpath so the SDK stays a peer dependency rather than a hard requirement of core. Memory and RAG (long-term recall, wallet-history retrieval, merchant discovery) also route through QVAC's embeddings, with near-duplicate consolidation to keep memory from bloating.
 
 | Package | Version |
 |---------|---------|
-| `@qvac/sdk` | The core engine works with 0.13.1 and later and is tested with 0.21. P2P delegation needs 0.13.1–0.18: QVAC removed it in 0.19 |
+| `@qvac/sdk` | The core engine works with 0.13.1 and later and is tested with 0.21 |
 | `@kaleidorg/mind` | Takes `@qvac/sdk` as an optional peer dependency, so the engine also runs with no model at all against the mock provider |
 
 ### Recommended models
@@ -102,7 +102,7 @@ For a step-by-step version on signet, follow [Build a Local RGB Agent](/ai-tools
 | Host | Role |
 |------|------|
 | [Rate](https://github.com/kaleidoswap/Rate) | React Native mobile wallet, with local LLM, speech-to-text, neural text-to-speech, and the hands-free voice loop |
-| [Desktop App](/desktop-app/getting-started/introduction) | Runs the engine as in-app chat through the Tauri sidecar (`apps/provider`), which consumes `kaleido-mcp` as a stdio tool source, and can act as the paired inference peer for a phone (phone pairing is paused in desktop app v0.5.1) |
+| [Desktop App](/desktop-app/getting-started/introduction) | Runs the engine as in-app chat through the Tauri sidecar (`apps/provider`), which consumes `kaleido-mcp` as a stdio tool source |
 
 The fastest way to try it is the Desktop App. [Download the latest release](https://kaleidoswap.com/downloads) and follow the [installation guide](/desktop-app/getting-started/installation).
 

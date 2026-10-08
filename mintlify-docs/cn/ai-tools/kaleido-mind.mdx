@@ -20,7 +20,7 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 |------|---------|------|
 | `T0` 快速通道 | "balance"、"address"、"btc price" | 零次推理，即时返回 |
 | `T2` recipe | "pay bob 3 EUR"、"buy 0.001 BTC" | 约一次推理（模型可协助提取参数槽），随后是确定性链路，需确认才继续 |
-| `T1` 代理循环 | 其余全部请求 | 由 skill 限定范围的 LLM，可通过 P2P 把困难或新型链路委托给已配对桌面端的更大模型 |
+| `T1` 代理循环 | 其余全部请求 | 由 skill 限定范围、运行在本地模型上的 LLM |
 
 - **T0，快速通道。** 确定性模式匹配，零推理。余额查询、地址、现货价格。
 - **T2，recipe 引擎。** 由 skill 承载有序的执行计划（解析、定价、换算、确认、发送），模型只负责填充参数槽。这让多步流程即使在约 0.6B 参数的模型上也足够可靠，而不是要求模型自己规划整条链路。
@@ -32,7 +32,7 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 
 | 接入方式 | 工具执行方式 | 花费前确认 |
 |---------|----------------|----------------------|
-| 移动端（Rate） | 进程内 WDK 适配器（完全本地端、私密）；可选通过 P2P 委托给已配对的桌面端 | 确认面板 |
+| 移动端（Rate） | 进程内 WDK 适配器（完全本地端、私密） | 确认面板 |
 | 桌面端 | 以 stdio 工具源方式接入 `kaleido-mcp`（命名空间为 `spark_*`/`rln_*`/`kaleidoswap_*`） | 确认对话框 |
 | 评测 / CLI | 预置的桩处理器，用于可复现的基准测试 | 自动批准（同时断言把关已触发） |
 
@@ -61,11 +61,11 @@ Skills 是符合 Agent Skills 规范的操作手册（`SKILL.md` 加渐进式披
 
 ## QVAC：本地端推理
 
-LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本地 AI 运行时 [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) 完成，默认在本地端运行，较重的任务也可以委托给用户明确配对并自行掌控的桌面端。它以 `@kaleidorg/mind/qvac` 子路径发布，使该 SDK 保持为 peer 依赖，而不是 core 的硬性依赖。记忆与 RAG（长期回忆、钱包历史检索、商户发现）同样走 QVAC 的嵌入能力，并通过近重复内容合并来避免记忆膨胀。
+LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本地 AI 运行时 [QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) 完成，在本地设备上运行。将推理转移到其他设备的功能已在规划中，但目前尚不可用。它以 `@kaleidorg/mind/qvac` 子路径发布，使该 SDK 保持为 peer 依赖，而不是 core 的硬性依赖。记忆与 RAG（长期回忆、钱包历史检索、商户发现）同样走 QVAC 的嵌入能力，并通过近重复内容合并来避免记忆膨胀。
 
 | 包 | 版本 |
 |---------|---------|
-| `@qvac/sdk` | 核心引擎支持 0.13.1 及以上版本，并以 0.21 为测试基准。P2P 委托需要 0.13.1–0.18：QVAC 在 0.19 中移除了该功能 |
+| `@qvac/sdk` | 核心引擎支持 0.13.1 及以上版本，并以 0.21 为测试基准 |
 | `@kaleidorg/mind` | 把 `@qvac/sdk` 作为可选 peer 依赖，因此引擎在完全没有模型的情况下也能配合 mock provider 运行 |
 
 ### 推荐模型
@@ -102,7 +102,7 @@ KaleidoMind 0.8 推荐 Qwen3.5 系列。下表中的每个模型都是 `@qvac/sd
 | 宿主 | 角色 |
 |------|------|
 | [Rate](https://github.com/kaleidoswap/Rate) | React Native 移动钱包，内含本地 LLM、语音转文字、神经网络文字转语音，以及免手操作的语音循环 |
-| [桌面应用](/cn/desktop-app/getting-started/introduction) | 通过 Tauri sidecar（`apps/provider`）把引擎作为应用内聊天运行，该 sidecar 以 stdio 工具源方式接入 `kaleido-mcp`，同时还能作为手机的配对推理节点（桌面应用 v0.5.1 中手机配对功能暂停） |
+| [桌面应用](/cn/desktop-app/getting-started/introduction) | 通过 Tauri sidecar（`apps/provider`）把引擎作为应用内聊天运行，该 sidecar 以 stdio 工具源方式接入 `kaleido-mcp` |
 
 最快的体验方式是桌面应用。[下载最新版本](https://kaleidoswap.com/downloads)，然后按照[安装指南](/cn/desktop-app/getting-started/installation)操作。
 

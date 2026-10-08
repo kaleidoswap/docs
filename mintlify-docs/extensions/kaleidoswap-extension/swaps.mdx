@@ -4,6 +4,8 @@ sidebarTitle: "Swaps"
 description: "Swap assets directly in the KaleidoSwap Extension by requesting a quote, executing, and tracking your swap across supported networks"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 ## Overview
 
 The KaleidoSwap Extension includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
@@ -13,6 +15,8 @@ The KaleidoSwap Extension includes an in-extension swap surface. It can use Kale
 <Note>
 Swaps exchange one asset for another inside your wallet. To move funds between Spark and external chains (EVM networks, Solana, and more), use the [Bridge](/extensions/kaleidoswap-extension/bridge) instead.
 </Note>
+
+<FeatureVideo name="usdt-on-rgb-swap" title="Atomic BTC to USDT swap on RGB over Lightning" portrait />
 
 ## Prerequisites
 
@@ -68,6 +72,8 @@ The amount input is gated by your **spendable** balance for the selected source 
 </Steps>
 
 <img src="/assets/images/extension/24-swap-review.png" alt="Swap Review screen showing pay and receive amounts, provider, rate, fee, quote ID, and expiry above the Confirm Swap button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="spark-swap-usdb" title="Swapping BTC to USDB on Spark" portrait />
 
 ## Real-Time Quotes
 

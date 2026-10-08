@@ -4,6 +4,8 @@ sidebarTitle: "Wallet"
 description: "Manage accounts, assets, deposits, withdrawals, and activity in the KaleidoSwap Extension, a full Bitcoin wallet that runs in your browser"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 ## Accounts
 
 The KaleidoSwap Extension derives multiple protocol accounts from one recovery phrase:
@@ -69,6 +71,8 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
 | **Spark address** | Spark transfer | Spark address string |
 | **Arkade route** | Arkade transfer or offboard route | Arkade-compatible destination |
 
+<FeatureVideo name="address-auto-routing" title="Pasting any destination: the wallet picks the network" portrait />
+
 ### Send Flow
 
 <Steps>
@@ -95,11 +99,15 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
 
 <img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, amount in sats, fee rate options, and the suggested route across Spark and Arkade" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
+<FeatureVideo name="send-to-lightning-address" title="Paying a Lightning address" portrait />
+
 ## Receiving Payments
 
 Generate invoices and addresses to receive supported assets across Spark, Arkade, Liquid, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
 
 <img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="deposit-options" title="Receive options across Bitcoin layers" portrait />
 
 ### Receive Tabs
 
@@ -137,6 +145,8 @@ Available receive methods depend on the selected asset and connected account:
 </Steps>
 
 <img src="/assets/images/extension/15-receive-generated.png" alt="Receive BTC screen with a QR code, destination account tabs for RLN, Spark, Arkade, and Liquid, and the generated Arkade and on-chain boarding addresses" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="receive-usdt-rgb" title="Receiving USDT on RGB" portrait />
 
 ## Deposit and Withdraw
 

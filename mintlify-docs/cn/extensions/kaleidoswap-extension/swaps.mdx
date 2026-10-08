@@ -4,6 +4,8 @@ sidebarTitle: "交换"
 description: "在 KaleidoSwap 扩展中直接完成资产交换：获取报价、核对费用与有效期、执行原子交换，并跨多个受支持的比特币分层网络跟踪进度。"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 ## 概览
 
 KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户已连接时，它可以使用 KaleidoSwap 做市方交易对；当 Spark 池可用时，它可以使用 Spark/Flashnet 路由。
@@ -13,6 +15,8 @@ KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户
 <Note>
 交换是在你的钱包内部把一种资产换成另一种。要在 Spark 与外部链（EVM 网络、Solana 等）之间转移资金，请改用[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
 </Note>
+
+<FeatureVideo name="usdt-on-rgb-swap" title="通过闪电网络在 RGB 上原子交换 BTC 与 USDT" portrait />
 
 ## 前置条件
 
@@ -68,6 +72,8 @@ KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户
 </Steps>
 
 <img src="/assets/images/extension/24-swap-review.png" alt="交换核对界面，在「确认交换」按钮上方显示支付与收到金额、提供方、汇率、费用、报价 ID 和有效期" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="spark-swap-usdb" title="在 Spark 上将 BTC 兑换为 USDB" portrait />
 
 ## 实时报价
 

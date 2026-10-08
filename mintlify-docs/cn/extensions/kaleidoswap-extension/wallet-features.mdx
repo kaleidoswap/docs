@@ -4,6 +4,8 @@ sidebarTitle: "钱包"
 description: "在 KaleidoSwap 扩展中管理多协议账户、资产、存入、提取和交易记录——一个跑在浏览器里的完整比特币分层钱包，覆盖 Spark、Arkade、Liquid 和 RGB。"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 ## 账户
 
 KaleidoSwap 扩展从同一组助记词派生多个协议账户：
@@ -69,6 +71,8 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 | **Spark 地址** | Spark 转移 | Spark 地址字符串 |
 | **Arkade 路由** | Arkade 转移或离场路由 | 兼容 Arkade 的目标 |
 
+<FeatureVideo name="address-auto-routing" title="粘贴任意地址，钱包自动选择网络" portrait />
+
 ### 发送流程
 
 <Steps>
@@ -95,11 +99,15 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 
 <img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示以聪计的金额、费率选项，以及在 Spark 和 Arkade 之间的建议路由" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
+<FeatureVideo name="send-to-lightning-address" title="向闪电地址付款" portrait />
+
 ## 接收支付
 
 根据所选资产和已连接的账户，生成发票和地址以接收 Spark、Arkade、Liquid、Bitcoin L1、Lightning 和 RGB 上支持的资产。
 
 <img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap 存入流程" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="deposit-options" title="跨比特币各层的收款选项" portrait />
 
 ### 接收标签页
 
@@ -137,6 +145,8 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 </Steps>
 
 <img src="/assets/images/extension/15-receive-generated.png" alt="接收 BTC 的界面，包含二维码、RLN、Spark、Arkade 和 Liquid 的目标账户标签页，以及生成的 Arkade 地址和链上入场地址" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="receive-usdt-rgb" title="在 RGB 上接收 USDT" portrait />
 
 ## 存入与提取
 

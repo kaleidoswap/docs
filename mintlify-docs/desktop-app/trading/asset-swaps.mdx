@@ -14,13 +14,15 @@ Asset swaps let you exchange one asset for another through the KaleidoSwap platf
 Before you can swap, make sure you have:
 
 1. **A funded wallet** — You need a balance of the asset you want to swap. See [Deposits](/desktop-app/wallet/deposits).
-2. **An open channel** — The channel must have sufficient capacity for the swap amount, and it must include the RGB asset you want to trade. See [Opening Channels](/desktop-app/channels/opening-channel) or [Buy a Channel](/desktop-app/channels/order-new-channel).
+2. **An open channel** — The channel must have sufficient capacity for the swap amount, and it must include the RGB asset you want to trade. See [Opening Channels](/desktop-app/channels/opening-channel) or [Buy a Channel](/desktop-app/channels/order-new-channel). Without a channel for the asset, the button reads **Buy USDT in Channel** (or the asset you chose) and takes you to buy one.
+
+If the account has no maker URL, Market Maker, DCA and Limit Orders ask for one.
 
 ## Performing an Asset Swap
 
 <Steps>
   <Step title="Navigate to Trading">
-    Click on the **"Trading"** tab in the left sidebar. Select the **"Market Maker"** tab to start.
+    In the sidebar, open **Trading → Market Maker**.
   </Step>
 
   <Step title="Select assets">
@@ -32,11 +34,11 @@ Before you can swap, make sure you have:
   </Step>
 
   <Step title="Review and confirm">
-    Check the exchange rate and any fees. Click **"Swap"** to execute the transaction.
+    Check the exchange rate and any fees. Click **Swap Now**, review the **Confirm Swap** dialog, and click **Confirm Swap**.
   </Step>
 
   <Step title="Wait for confirmation">
-    The swap executes atomically over the Lightning Network. Once complete, you'll see a success confirmation.
+    The swap executes atomically over the Lightning Network. The swap details show its status until it is **Succeeded**.
   </Step>
 </Steps>
 
@@ -47,14 +49,9 @@ Before you can swap, make sure you have:
 The **Trading** section groups several ways to trade, each on its own tab:
 
 - **Market Maker** — Trade against a connected market maker's live quotes. Swaps execute atomically at the maker's current rate. This is the default and the flow described above.
-- **Manual Swaps** — Request and confirm individual swaps yourself, choosing the maker and reviewing each quote before executing.
-- **DCA** — Automate BTC accumulation with fixed-interval buys or downside price triggers. Each successful execution converts a fixed amount into BTC.
-
-![DCA trading interface](/assets/images/desktop-app/24_dca.png)
-
-- **Limit Orders** — Set a target price for a trading pair; when the market reaches your price, the swap executes automatically.
-
-![Limit Order trading interface](/assets/images/desktop-app/25_limit-order.png)
+- **Manual Swaps** — Swap directly with another node: as **Maker** you create a swap string and execute it; as **Taker** you whitelist the counterparty's swap string.
+- **DCA** — Automate BTC accumulation with fixed-interval buys or downside price triggers. See [DCA Orders](/desktop-app/trading/dca).
+- **Limit Orders** — Set a target price for a trading pair; when the market reaches your price, the swap executes automatically. See [Limit Orders](/desktop-app/trading/limit-orders).
 - **Nostr P2P** *(coming soon)* — Peer-to-peer trading over Nostr, trading directly with other users without relying on a centralized maker.
 
 ## Supported Trading Pairs
@@ -70,7 +67,7 @@ The **Available Trading Pairs** panel in the app always reflects the pairs your 
 
 ## Swap History
 
-View your past swaps in the **"History"** tab for record-keeping and reconciliation.
+View your past swaps in **History → Swaps** in the sidebar for record-keeping and reconciliation.
 
 ## Troubleshooting
 

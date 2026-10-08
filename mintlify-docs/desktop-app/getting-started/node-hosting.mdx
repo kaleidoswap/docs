@@ -89,6 +89,8 @@ make logs
 
 Have a look at the [README.md file](https://github.com/kaleidoswap/docker-images/blob/main/README.md) for more information on the different commands and options.
 
+The Desktop App v0.5.1 requires RGB Lightning Node 0.10.0 or later. With Docker, use the `kaleidoswap/rgb-lightning-node:0.10.0` image.
+
 ## Option 2: Direct Installation on a VPS
 
 For advanced users who prefer complete control over their server environment, you can install the RGB Lightning Node directly on a VPS or bare-metal server.
@@ -105,9 +107,11 @@ For advanced users who prefer complete control over their server environment, yo
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/RGB-Tools/rgb-lightning-node --recurse-submodules --shallow-submodules
+git clone https://github.com/kaleidoswap/rgb-lightning-node --branch v0.10.0 --recurse-submodules --shallow-submodules
 cd rgb-lightning-node
 ```
+
+The Desktop App v0.5.1 requires RGB Lightning Node 0.10.0 or later.
 
 2. Install the binary:
 
@@ -130,9 +134,9 @@ Replace:
 
 4. When unlocking the node, you'll need to provide:
 
-- Bitcoin RPC connection details
 - Indexer URL
 - RGB proxy endpoint
+- Bitcoin Core RPC details only if you want Lightning to sync from your own node
 
 ### VPS Firewall Configuration
 When running on a VPS, you'll need to configure the firewall to allow necessary connections
@@ -251,15 +255,11 @@ For testnet3 testing, you can use:
 
 #### Signet (Mutinynet) Environment
 
-For signet testing, you can use:
+For signet testing, you can use the example below. By default on Mutinynet the app sends only the indexer URL and RGB proxy endpoint, with no `bitcoind_rpc_*` fields; add them (as in the examples above) only if you want Lightning to sync from your own Bitcoin Core node.
 
 ```json
 {
   "password": "<YOUR_NODE_PASSWORD>",
-  "bitcoind_rpc_username": "user",
-  "bitcoind_rpc_password": "default_password",
-  "bitcoind_rpc_host": "bitcoind.signet.kaleidoswap.com",
-  "bitcoind_rpc_port": 38332,
   "indexer_url": "https://esplora.signet.kaleidoswap.com",
   "proxy_endpoint": "rpcs://proxy.iriswallet.com/0.2/json-rpc"
 }

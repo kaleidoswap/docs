@@ -14,13 +14,15 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 开始交换之前，请确认你已具备：
 
 1. **已注资的钱包** —— 你需要持有想要换出的资产余额。参见[存入资金](/cn/desktop-app/wallet/deposits)。
-2. **已开通的通道** —— 通道容量必须足够覆盖交换数量，并且包含你想交易的 RGB 资产。参见[开通通道](/cn/desktop-app/channels/opening-channel)或[购买通道](/cn/desktop-app/channels/order-new-channel)。
+2. **已开通的通道** —— 通道容量必须足够覆盖交换数量，并且包含你想交易的 RGB 资产。参见[开通通道](/cn/desktop-app/channels/opening-channel)或[购买通道](/cn/desktop-app/channels/order-new-channel)。如果还没有该资产的通道，按钮会显示为「在通道中购买 USDT」(Buy USDT in Channel)（或你所选的资产），点击即可前往购买。
+
+如果账户没有配置做市商 URL，做市商、DCA 和限价订单页面会要求你填写一个。
 
 ## 执行资产交换
 
 <Steps>
   <Step title="进入交易页面">
-    点击左侧边栏的**「交易」(Trading)** 标签，然后选择**「做市商」(Market Maker)** 标签开始。
+    在侧边栏中打开「交易 → 做市商」(Trading → Market Maker)。
   </Step>
 
   <Step title="选择资产">
@@ -32,11 +34,11 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
   </Step>
 
   <Step title="核对并确认">
-    核对汇率和各项费用，点击**「交换」(Swap)** 执行交易。
+    核对汇率和各项费用，点击「立即交换」(Swap Now)，在「确认交换」(Confirm Swap) 对话框中核对后点击「确认交换」。
   </Step>
 
   <Step title="等待确认">
-    交换会通过闪电网络原子化执行。完成后，你会看到成功确认提示。
+    交换会通过闪电网络原子化执行。交换详情会持续显示其状态，直到变为「成功」(Succeeded)。
   </Step>
 </Steps>
 
@@ -47,14 +49,9 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 **交易**区域把几种交易方式分别放在各自的标签页中：
 
 - **做市商** —— 基于已连接做市商的实时报价交易。交换按做市方的当前汇率原子化执行。这是默认模式，也就是上文描述的流程。
-- **手动交换** (Manual Swaps) —— 自行发起并确认单笔交换，可以选择做市方，并在执行前逐笔核对报价。
-- **DCA** —— 通过固定周期买入或下跌价格触发来自动积累 BTC。每次成功执行都会把固定金额换成 BTC。
-
-![DCA 交易界面](/assets/images/desktop-app/24_dca.png)
-
-- **限价单** (Limit Orders) —— 为某个交易对设定目标价格；当市场达到该价格时，交换会自动执行。
-
-![限价单交易界面](/assets/images/desktop-app/25_limit-order.png)
+- **手动交换** (Manual Swaps) —— 直接与另一个节点交换：作为「做市方」(Maker) 创建交换字符串并执行；作为「接单方」(Taker) 将对方的交换字符串加入白名单。
+- **DCA** —— 通过固定周期买入或下跌价格触发来自动积累 BTC。参见[定投订单](/cn/desktop-app/trading/dca)。
+- **限价单** (Limit Orders) —— 为某个交易对设定目标价格；当市场达到该价格时，交换会自动执行。参见[限价订单](/cn/desktop-app/trading/limit-orders)。
 - **Nostr P2P** *（即将推出）* —— 通过 Nostr 进行点对点交易，无需依赖中心化做市方，直接与其他用户成交。
 
 ## 支持的交易对
@@ -70,7 +67,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## 交换历史
 
-在**「历史」(History)** 标签中查看过往交换记录，便于留档和对账。
+在侧边栏的「历史 → 交换」(History → Swaps) 中查看过往交换记录，便于留档和对账。
 
 ## 故障排查
 

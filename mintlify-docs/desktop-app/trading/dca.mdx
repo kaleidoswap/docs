@@ -13,7 +13,7 @@ DCA (dollar-cost averaging) orders buy bitcoin with a fixed amount of USDT on a 
 
 1. **A USDT Lightning channel** — DCA spends USDT from a ready channel that holds USDT. Without one, the page offers **Buy USDT in Channel**. See [Buy a Channel](/desktop-app/channels/order-new-channel).
 2. **Receive room for BTC** — each buy credits sats to that channel, so it needs enough BTC inbound capacity.
-3. **A maker** — the account needs a maker URL (set by default).
+3. **A maker** — the account needs a maker URL (set by default on Mutinynet; on other networks the page asks for a maker URL).
 
 ## Creating a DCA Order
 
@@ -34,6 +34,10 @@ DCA (dollar-cost averaging) orders buy bitcoin with a fixed amount of USDT on a 
     Click **Create Order**. The order card shows the interval and a countdown to the next buy.
   </Step>
 </Steps>
+
+The **DCA** tab automates BTC accumulation with fixed-interval buys or downside price triggers; each successful execution converts a fixed amount into BTC.
+
+![DCA trading interface](/assets/images/desktop-app/24_dca.png)
 
 ## How Executions Work
 

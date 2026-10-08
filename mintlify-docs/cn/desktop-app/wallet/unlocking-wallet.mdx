@@ -15,15 +15,15 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
    启动 KaleidoSwap 桌面应用。
 
 2. **选择账户**  
-   选择与你要使用的节点关联的账户。
+   在启动界面的「你的账户」(Your Accounts) 下点击该账户。
 
-3. **运行节点**  
-   在账户仪表盘中启动节点。  
-   如果节点处于锁定状态，解锁界面会自动出现。
+3. **切换到该账户**  
+   在对话框中点击「切换到此节点」(Switch to This Node)。本地节点会随之启动；如果节点处于锁定状态，会出现解锁界面。  
+   对于容器已停止的 Docker 账户，点击「启动 Docker 节点」(Start Docker Node)。
 
 4. **输入密码**  
-   在密码输入框中输入你初始化节点时使用的密码。  
-   <img src="/assets/images/desktop-app/7_unlock_wallet.png" alt="KaleidoSwap 桌面应用的钱包解锁界面，带密码输入框" width={1919} height={985} />
+   在「钱包密码」(Wallet Password) 中输入密码，然后点击「解锁钱包」(Unlock Wallet)。  
+   <img src="/assets/images/desktop-app/7_unlock_wallet.png" alt="KaleidoSwap 桌面应用的钱包解锁界面，带密码输入框" width={1600} height={1000} />
 
 ## 解锁前的节点同步
 
@@ -31,7 +31,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 这一过程的耗时取决于需要同步的区块数量，而这又取决于节点离线了多久。  
 请耐心等待节点完成这一步。
 
-<img src="/assets/images/desktop-app/8_unlocking_animation.png" alt="RGB Lightning Node 解锁过程中的加载动画" width={1919} height={986} />
+<img src="/assets/images/desktop-app/8_unlocking_animation.png" alt="RGB Lightning Node 解锁过程中的加载动画" width={1600} height={1000} />
 
 ## 理解解锁参数
 
@@ -41,11 +41,10 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 - **网络**  
   网络在账户创建时即固定 —— 解锁时不需要选择。解锁界面只会连接到该账户已配置的网络（例如 regtest、signet、Mutinynet 或测试网）。
 
-- **高级设置** (Advanced Settings)  
-  这些设置取自节点的账户配置。如有需要，可在解锁前于工具栏中调整：
-  - Bitcoin Core 的 RPC 认证信息  
-  - Electrum 索引器地址  
-  - 与 RGB Lightning Node 通信所用的 RGB proxy 和端口设置  
+- **连接信息** (Connection Details)  
+  只读面板，显示节点 URL (Node URL)、Bitcoind RPC（未设置 Bitcoin Core 节点时显示「Not used: syncing from the indexer」）、索引器 (Indexer) 和 RGB 代理 (RGB Proxy)。如需修改，可在「你的账户」下账户卡片菜单中点击「编辑」(Edit)，或解锁后在设置中修改。
+
+「登出」(Logout，右上角账户菜单) 会在节点上重新锁定钱包并返回启动界面。
 
 ---
 

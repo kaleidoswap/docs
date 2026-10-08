@@ -13,7 +13,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 1. **USDT 闪电通道** —— 定投从一条已就绪且持有 USDT 的通道中支出 USDT。如果没有，页面会提供**「在通道中购买 USDT」(Buy USDT in Channel)**。参见[购买通道](/cn/desktop-app/channels/order-new-channel)。
 2. **接收 BTC 的空间** —— 每次买入都会把聪记入该通道，因此通道需要足够的 BTC 入站容量。
-3. **做市商** —— 账户需要配置做市商 URL（默认已设置）。
+3. **做市商** —— 账户需要配置做市商 URL（Mutinynet 上默认已设置；其他网络上页面会要求你填写做市商 URL）。
 
 ## 创建定投订单
 
@@ -34,6 +34,10 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
     点击**「创建订单」(Create Order)**。订单卡片会显示买入间隔和距离下次买入的倒计时。
   </Step>
 </Steps>
+
+**DCA** 标签通过固定周期买入或下跌价格触发来自动积累 BTC；每次成功执行都会把固定金额换成 BTC。
+
+![定投交易界面](/assets/images/desktop-app/24_dca.png)
 
 ## 执行方式
 

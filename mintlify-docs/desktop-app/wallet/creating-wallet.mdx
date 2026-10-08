@@ -5,44 +5,49 @@ description: "Create a new wallet in the KaleidoSwap Desktop App by generating y
 
 import { FeatureVideo } from "/snippets/feature-video.mdx";
 
-When you first launch the app, you'll need to choose the kind of node you want to connect your wallet to. You have two options: either to use a remote node or a Local one. The first option requires you to connect to an already running RGB Lightning Node, while the second automatically initialize one on the device you are using and stores data on it. In this guide we will show the flow for the local node option since it is the easiest way to start testing the KaleidoSwap app.
+When you first launch the app, the welcome screen asks what to run: **Node + Mind** (default), **Only Node** or **Only Mind**. With a node mode you then pick **Remote Node** (connect to a node you or a provider already run) or **Local Node** (the app runs one on this device). For a local node you choose a backend: **Native Binary** (macOS and Linux) or **Docker Container** (Recommended, all platforms, requires Docker Desktop to be running). This guide follows the local node path.
 
-<img src="/assets/images/desktop-app/0_home.png" alt="KaleidoSwap Desktop App start screen with node connection options" width={1919} height={985} />
+<img src="/assets/images/desktop-app/0_home.png" alt="KaleidoSwap Desktop App start screen with node connection options" width={1600} height={1000} />
 
 <FeatureVideo name="desktop-onboarding" title="Creating a new wallet on a local node" />
 
 ## Create New Wallet
 
-To start the creation process, you first need to select "Create New Wallet" option:
+Choose **Local Node**, select a backend, then click **Create New Wallet**.
 
-<img src="/assets/images/desktop-app/1_create_new_wallet.png" alt="Create New Wallet option in the KaleidoSwap Desktop App" width={1919} height={988} />
+<img src="/assets/images/desktop-app/1_create_new_wallet.png" alt="Create New Wallet option in the KaleidoSwap Desktop App" width={1600} height={1000} />
 
 Then, you will need proceed with the following steps:
 
-1. **Assign a name** to your new account and **select the network** you want to use. The network selector offers Regtest (and its Local, Docker and Bitfinex variants), Signet, Mutinynet and Testnet as testing environments. Mainnet is not yet selectable.
-<img src="/assets/images/desktop-app/2_creation_step1.png" alt="Wallet creation step 1: account name and network selection" width={1919} height={985} />
-2. **Set a Secure Password**: Enter a strong password to protect your wallet and then click on "Initialize Node". This will trigger the initialization of your node on your machine. 
-<img src="/assets/images/desktop-app/3_creation_step2.png" alt="Wallet creation step 2: setting a secure password and initializing the node" width={1919} height={986} />
-3. **Backup**: After the node has been initialized, write down the mnemonic phrase provided and store it securely.
-<img src="/assets/images/desktop-app/4_creation_step3.png" alt="Wallet creation step 3: mnemonic backup phrase to write down" width={1919} height={988} />
-4. **Verify** recovery phrase: you will be asked to enter back your recovery seed for security purposes.
-<img src="/assets/images/desktop-app/5_creation_step4.png" alt="Wallet creation step 4: recovery phrase verification" width={1918} height={987} />
+1. **Accept the terms**: a **Terms & Privacy Policy** dialog opens first. Read the linked Terms of Service and Privacy Policy, then click **Accept & Continue**.
+<img src="/assets/images/desktop-app/33_terms.png" alt="Terms & Privacy Policy dialog with Accept & Continue" width={1600} height={1000} />
+2. **Assign a name** to your new account (the shuffle icon generates one) and **select the network**. Mutinynet is the default; Regtest, Local Regtest, Local Docker Regtest, Signet and Testnet are also listed. Mainnet is not yet selectable. **Advanced Settings** holds the indexer, RGB proxy and optional Bitcoin Core node. Click **Set Password**.
+<img src="/assets/images/desktop-app/2_creation_step1.png" alt="Wallet creation step 1: account name and network selection" width={1600} height={1000} />
+3. **Set a Secure Password**: enter and confirm a password of at least 8 characters (the checklist also suggests an uppercase letter and a number), then click **View Recovery Phrase**. This starts and initializes the node on your machine, which takes a moment.
+<img src="/assets/images/desktop-app/3_creation_step2.png" alt="Wallet creation step 2: setting a secure password and initializing the node" width={1600} height={1000} />
+4. **Backup**: click the blurred area or **Reveal** to show your 12-word recovery phrase (make sure no one can see your screen). Write it down and store it offline. **Copy** works only while the phrase is visible. Click **Verify Recovery Phrase**. **Skip backup (not recommended)** is available but leaves you without a verified backup.
+<img src="/assets/images/desktop-app/4_creation_step3.png" alt="Wallet creation step 3: mnemonic backup phrase to write down" width={1600} height={1000} />
+5. **Verify**: type the full phrase in order (words autocomplete), then click **Complete Setup**. The node unlocks and the dashboard opens.
+<img src="/assets/images/desktop-app/5_creation_step4.png" alt="Wallet creation step 4: recovery phrase verification" width={1600} height={1000} />
 
 After that, some moments will be required to unlock your new local node and you will then land to the home page of KaleidoSwap, ready to start operating with it!
 
+<Warning>
+Wallets created with the bundled node of v0.5.0 or earlier, and their backups, cannot be opened by v0.5.1. Before upgrading, close channels and move funds out with v0.5.0, then create a new wallet.
+</Warning>
 
 
 ## Select Account
 
 If instead of creating a new account you need to select an existing one, you can select it among the ones that has been previously saved on the left menu, even if it has not been initialized. Here is the procedure:
 
-1. **Select Account**: From the menu on the left.
-2. Click on **Select Node** after checking that it's the correct account.
-3. **Unlock Wallet** Enter the previously generated password to unlock the local RGB Lightning Node instance.
+1. Click the account under **Your Accounts** on the left.
+2. In the **Switch Node** dialog, check the connection details and click **Switch to This Node**.
+3. On **Unlock Your Wallet**, enter the password and click **Unlock Wallet**.
 
 Please note that unlocking your node could take a while due to a current limitation experienced in the RGB Lightning Network code.
 
-<img src="/assets/images/desktop-app/6_home_with_account.png" alt="KaleidoSwap home screen with saved accounts in the left menu" width={1919} height={987} />
+<img src="/assets/images/desktop-app/6_home_with_account.png" alt="KaleidoSwap home screen with saved accounts in the left menu" width={1600} height={1000} />
 
 ---
 

@@ -21,12 +21,8 @@ description: "在 KaleidoSwap 桌面应用中创建和恢复闪电通道备份�
 ## 创建通道备份
 
 <Steps>
-  <Step title="打开设置">
-    点击应用右上角的按钮打开下拉菜单，然后选择 **「设置」(Settings)**。
-  </Step>
-
-  <Step title="点击备份钱包">
-    在设置面板中点击 **「备份钱包」(Backup Wallet)**。
+  <Step title="打开备份钱包">
+    打开右上角的账户菜单并点击「备份钱包」(Backup Wallet)，或进入「设置 → 安全与备份 → 备份钱包」(Settings → Security & Backup → Backup Wallet)。
   </Step>
 
   <Step title="选择保存位置">
@@ -38,7 +34,7 @@ description: "在 KaleidoSwap 桌面应用中创建和恢复闪电通道备份�
   </Step>
 
   <Step title="创建备份">
-    点击 **「创建备份」(Create Backup)**。加密后的备份文件会保存到你选择的位置。
+    点击 **「创建备份」(Create Backup)**。加密后的备份文件会保存到你选择的位置。备份完成前节点会保持锁定状态。
   </Step>
 </Steps>
 
@@ -60,11 +56,15 @@ description: "在 KaleidoSwap 桌面应用中创建和恢复闪电通道备份�
 如果需要在新设备上恢复钱包：
 
 1. 重新安装 KaleidoSwap 桌面应用
-2. 在初始设置流程中选择 **「恢复钱包」(Restore Wallet)**
-3. 选择你的备份文件，并输入创建备份时设置的节点密码
+2. 在欢迎界面选择「本地节点」(Local Node)，选定后端，然后选择「恢复钱包」(Restore Wallet)
+3. 输入「账户名称」(Account Name)，选择网络，选择「备份文件」(Backup File) 并输入其「密码」(Password)（即创建备份时设置的节点密码），然后点击「恢复钱包」
 4. 等待节点启动并完成同步
 
 由于备份包含完整的节点状态，恢复后通道会照常继续运行——既不需要输入助记词，也不会触发强制关闭。
+
+<Warning>
+  使用 v0.5.0 或更早版本创建的备份无法在 v0.5.1 中恢复。
+</Warning>
 
 <Warning>
   备份文件使用你的节点密码加密。没有这个密码，备份文件无法解密，也无法恢复。

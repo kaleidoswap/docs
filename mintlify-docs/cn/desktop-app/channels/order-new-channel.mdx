@@ -9,36 +9,36 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## 概览
 
-通过 LSP 开通通道大致分为四步：
-1. 连接 LSP。
-2. 配置通道订单。
-3. 完成付款。
-4. 开通通道。
+「购买通道」(Buy Channel) 向导分为五步：
+1. **LSP 连接** (LSP Connection)。
+2. **配置通道** (Configure Channel)。
+3. **通道订单** (Channel Order)。
+4. **付款** (Payment)。
+5. **完成** (Complete)。
 
 <FeatureVideo name="desktop-buy-usdt-channel" title="从 KaleidoSwap LSP 购买带 USDT 流动性的通道" />
 
 ## 第 1 步：连接 LSP
 
-首先，进入「通道」(Channels) 页面的 **「购买通道」(Buy Channel)** 标签页，然后连接到一个 LSP：
-1. 输入 LSP 的 URL，或直接选择默认的 KaleidoSwap LSP。
-2. 界面会显示 LSP 的连接串。
-3. 确认连接后继续。
+在侧边栏中打开「流动性 → 购买通道」(Liquidity → Buy Channel)。你账户的 LSP 显示在「已连接 LSP」(Connected LSP) 下（在 Mutinynet 上为 KaleidoSwap LSP）。如需使用其他 LSP，在「连接新 LSP → LSP 服务器 URL」(Connect New LSP → LSP server URL) 中输入其 URL，然后点击「获取 LSP 信息」(Fetch LSP Info)。接着点击「配置通道」(Configure Channel)。
 <img src="/assets/images/desktop-app/12_connect_lsp.png" alt="在桌面应用中连接闪电服务提供商" width={1412} height={702} />
 
 
 ## 第 2 步：配置通道订单
 
-1. 设定**通道容量**（以聪为单位），也就是通道的总大小（最小 50,000 聪，最大 16,777,215 聪）。
-2. 选择你要购买的**出向流动性**。这是 LSP 为你的通道投入的数量，剩余容量则成为你的入向流动性。例如：一条 100 万聪的通道，出向流动性为 70 万聪，那么入向容量就是 30 万聪。
+1. 设定「通道容量（聪）」(Channel Capacity (sats))：可选 100k/250k/500k/1M 预设值或拖动滑块。最小 50,000 聪；最大值取 16,777,215 聪与 LSP 上限中的较小者。
+2. 设定「出向余额」(Outbound Balance)，即你购买的「当前可发送」(Available to send now) 金额；其余部分为你「可接收」(Can receive) 的额度。例如：一条 100 万聪的通道，出向流动性为 70 万聪，那么入向容量就是 30 万聪。
 3. 选择 LSP 需要保证通道保持开启的时长（**通道时长**），可选项如下：
 - 1 个月（4,320 个区块）
 - 3 个月（12,960 个区块）
 - 6 个月（25,920 个区块）
 <img src="/assets/images/desktop-app/13_channel_order.png" alt="LSP 通道订单表单及容量选项" width={1006} height={991} />
 
-4. [可选] 启用「添加资产」(Add Asset) 选项并选择所需资产，即可在通道中请求 RGB 资产。随后你需要指定希望 LSP 投入的资产数量。注意：目前 RGB 资产只能由 LSP 一方提供。
+4. [可选] 在「添加 RGB 资产」(Add RGB Asset) 下选择一种资产（例如 USDT）替代「无资产」(No Asset)，并设定数量。你也可以通过设置该资产的「当前可发送」来预先购买其中一部分；价格来自实时报价。
 
 <img src="/assets/images/desktop-app/14_channel_order_assets.png" alt="通道订单表单中的 RGB 资产选择" width={952} height={866} />
+
+点击「查看详情」(Review Details)，核对「通道订单」(Channel Order) 摘要，然后点击「继续付款」(Continue to Payment)。
 
 ## 第 3 步：完成付款
 
@@ -47,6 +47,8 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 - LSP 服务费用，各家提供商的收费标准不同。下面列出默认 KaleidoSwap LSP 的费用结构。
 
 ### KaleidoSwap LSP 费用结构
+表单会显示 LSP 的实时费用估算（开通费、容量费和时长费）；以下数字仅为示例。
+
 使用 KaleidoSwap LSP 时：
 - 开通费：1,000 聪（每条通道一次性收取）
 - 容量费：通道总容量的 1%
@@ -61,27 +63,14 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
   - 总费用：15,320 聪。
   ```
 
-你可以选择链上或通过闪电网络付款，资金既可以来自 KaleidoSwap 钱包中已有的余额，也可以来自其他钱包。
-
-### 闪电网络付款
-- 扫描二维码或复制闪电发票。
-- 使用外部闪电钱包付款，或勾选「使用钱包资金支付」(Pay with wallet funds) 复选框，用 KaleidoSwap 钱包中的余额付款（如余额充足）。
-- 付款金额包含：
-  - 通道容量。
-  - LSP 费用（基础费用 + 时间锁费用）。
-  - 网络费用。
-
-### 链上付款
-- 向界面提供的地址转入比特币，可使用外部钱包，也可勾选「使用钱包资金支付」(Pay with wallet funds) 复选框，用 KaleidoSwap 钱包中的余额付款（如余额充足）。
-- 请按界面显示的金额精确转账。
-- 等待区块链确认。
-<img src="/assets/images/desktop-app/15_pay_the_channel.png" alt="通道订单付款界面及闪电发票" width={969} height={987} />
+「付款」(Payment) 步骤会显示「应付金额」(Amount to Pay)、「付款剩余时间」(Payment expires in) 倒计时，以及一个「统一付款二维码」(Unified payment QR，链上 + 闪电)，旁边列出链上地址和闪电发票。可以从任意外部钱包付款，或点击「使用钱包资金支付」(Pay with Wallet Funds)，选择闪电或链上（并选择费率），然后点击「支付」(Pay) 确认。付款金额包含你的出向余额、预先购买的资产（如有）以及 LSP 费用。
+<img src="/assets/images/desktop-app/15_pay_the_channel.png" alt="通道订单付款界面及统一付款二维码" width={969} height={987} />
 
 ## 第 4 步：开通通道
 
 付款确认后：
-1. LSP 开始开通通道。
-2. 等待 LSP 声明的区块链确认数（大约 6 个区块，在主网上约为一小时）。
+1. LSP 开始开通通道，订单随之完成。
+2. 通道会以「待处理」(Pending) 状态出现在「管理通道」(Manage Channels) 中，直到其注资交易得到确认（LSP 声明的确认数约为 6 个区块，在主网上约为一小时）。
 3. 通道随即激活，并具备你所指定的：
    - 总容量。
    - 出向流动性。
@@ -103,11 +92,7 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## 退款政策
 
-如果付款后通道开通失败：
-1. 记下界面上显示的 `order_id`。
-2. 携带订单 ID 联系支持团队。
-3. 如被要求，请提供付款凭证。
-4. 核实后即会处理退款。
+如果付款后订单失败，系统会自动将链上退款退回你的钱包。如果 24 小时内仍未到账，请凭失败界面上显示的「订单 ID」(Order ID)（点击「复制订单 ID」(Copy Order ID)）联系该 LSP。
 
 ## 最佳实践
 

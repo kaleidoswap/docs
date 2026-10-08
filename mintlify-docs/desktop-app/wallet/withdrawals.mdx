@@ -8,20 +8,20 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 Withdrawing funds from your wallet allows you to send Bitcoin or RGB assets to other addresses, according to the following process:
 
 
-1. **Open Withdraw**: Click the **"Withdraw"** quick action button in the left sidebar (also available from the **Quick Actions** menu). This opens the Withdraw modal.
-2. **Withdrawal Method**: The withdrawal method is selected automatically when you paste a Bitcoin on-chain address, a Lightning invoice / address, or an RGB invoice.
-3. **Enter Amount**: Specify the amount of Bitcoin or RGB asset to be withdrawn.
-4. **Fee Rate**: slow, normal or fast for on-chain transaction.
-5. **Review Transaction**: Double-check the details.
-6. **Confirm and Send**: Click "Withdraw" to initiate the transaction.
+1. **Open Withdraw**: Click **Withdraw** at the bottom of the left sidebar to open **Withdraw Funds**.
+2. **Paste a destination** in **Address or Invoice**: a Bitcoin address, Lightning invoice, Lightning address or RGB invoice. The type is detected automatically.
+3. **Enter Amount** (use **Max** for your full balance). Lightning amounts are capped by channel capacity.
+4. **Fee Rate** (on-chain): **Slow**, **Normal**, **Fast** or **Custom**.
+5. Click **Withdraw** (on-chain), **Pay Invoice** (Lightning) or **Send RGB Asset** (RGB).
+6. **Confirm Withdrawal**: review the details and click **Confirm**.
 
 <FeatureVideo name="desktop-withdrawals" title="Withdrawing bitcoin on-chain" />
 
-<img src="/assets/images/desktop-app/20_withdraw_menu.png" alt="Withdraw menu with on-chain and Lightning options" width={603} height={280} />
+<img src="/assets/images/desktop-app/20_withdraw_menu.png" alt="Withdraw Funds dialog with a single address or invoice field" width={603} height={280} />
 
 <img src="/assets/images/desktop-app/21_withdraw-step2.png" alt="Withdraw step 2 details and confirmation" width={599} height={612} />
 
-**Differences between BTC and RGB on-chain withdrawal**: The steps to withdraw RGB assets are almost identical to those required to withdraw BTC, with the only difference being that you paste the recipient's RGB invoice instead of a Bitcoin address. Both blinded-UTXO and witness (address-based) invoice forms are supported, and the app detects the invoice type automatically when you paste it.
+**Differences between BTC and RGB on-chain withdrawal**: The steps to withdraw RGB assets are almost identical to those required to withdraw BTC, with the only difference being that you paste the recipient's RGB invoice instead of a Bitcoin address. Both blinded-UTXO and witness (address-based) invoice forms are supported, and the app detects the invoice type automatically when you paste it. For a witness RGB invoice you also set **Bitcoin Amount (sats) for Witness UTXO** (minimum 512 sats, 1,000-2,000 recommended). **Send as Gift/Donation** sends without receiver validation.
 
 ---
 

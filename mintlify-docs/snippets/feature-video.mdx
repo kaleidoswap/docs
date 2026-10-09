@@ -1,0 +1,35 @@
+{/*
+  A short, silent, looping clip of a flow in the app. The clips live in
+  /assets/videos/<name>.mp4 with a poster frame at /assets/videos/<name>.jpg;
+  they are recorded from the shipped app with kaleido-demo-studio.
+
+    import { FeatureVideo } from "/snippets/feature-video.mdx";
+
+    <FeatureVideo name="desktop-dca" title="Creating a DCA order" />
+
+  `portrait` sizes the browser-extension clips (a 320px-wide popup).
+*/}
+
+export const FeatureVideo = ({ name, title, portrait = false }) => (
+  <video
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="metadata"
+    poster={`/assets/videos/${name}.jpg`}
+    title={title}
+    aria-label={title}
+    style={{
+      width: "100%",
+      maxWidth: portrait ? "320px" : "100%",
+      height: "auto",
+      display: "block",
+      margin: "1.5rem auto",
+      borderRadius: "12px",
+      border: "1px solid rgba(127, 127, 127, 0.25)",
+    }}
+  >
+    <source src={`/assets/videos/${name}.mp4`} type="video/mp4" />
+  </video>
+);

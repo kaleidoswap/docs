@@ -42,6 +42,8 @@ Every provider rejects with an `Error` that carries a `code` property, so a DApp
 | `USER_REJECTED` | The user declined the connection or the confirmation prompt |
 | `NOT_ENABLED` | The provider was called before `enable()` resolved for this origin |
 | `METHOD_NOT_SUPPORTED` | The connected wallet cannot serve this method (for example RGB over Lightning on a node-less RGB wallet) |
+| `INVALID_PARAMS` | Malformed arguments, e.g. a bad `assetId` or an any-amount invoice to `payLnInvoice` (`window.rgb`) |
+| `ASSET_NOT_FOUND` | The wallet does not know this asset; omit `assetId` in `blindReceive` to accept any asset (`window.rgb`) |
 | `INTERNAL_ERROR` | Anything else, with the wallet's message in `error.message` |
 
 ## WebLN Provider
@@ -104,7 +106,7 @@ window.addEventListener('webln:ready', async () => {
 |--------|-------------|
 | `enable()` | Connect the DApp and request approval for the origin |
 | `getInfo()` | Get node/network information and supported methods |
-| `getAddress()` | Get an on-chain receive address |
+| `getAddress(opts?)` | Get an on-chain receive address. Pass `{ protocol: "LIQUID" }` (or another account) to get that account's address. Requires a connected site |
 | `signPsbt(psbtHex)` | Sign wallet-owned inputs in a PSBT |
 | `finalizePsbt(psbtHex)` | Finalize a signed PSBT into broadcastable hex |
 | `broadcastTransaction(txHex)` | Broadcast a raw, signed transaction |
@@ -113,7 +115,7 @@ window.addEventListener('webln:ready', async () => {
 | `sendTransaction(address, amount)` | Send an on-chain payment |
 
 <Note>
-Some DApps probe `window.bitcoin` (a Bitcoin Wallet Standard provider) instead of, or alongside, `window.webbtc`. It exposes `connect()`, `getAccounts()`, `getPublicKey()`, `signMessage()`, `signPsbt()`, `pushPsbt()`, and `sendBitcoin()` over the same wallet keys.
+Some DApps probe `window.bitcoin` (a Bitcoin Wallet Standard provider) instead of, or alongside, `window.webbtc`. It exposes `connect()`, `requestAccounts()`, `getAccounts()`, `getPublicKey()`, `signMessage()`, `signPsbt()`, `pushPsbt()`, `sendBitcoin()`, and `disconnect()` over the same wallet keys.
 </Note>
 
 ### PSBT Confirmations
@@ -188,7 +190,7 @@ Discovery is additive: reading `window.rgb` directly still works, and `requestPr
 | `enable()` | Connect the DApp; shares the origin approval with the other providers |
 | `getInfo()` | `{ ready, network, protocol, methods }` — `ready` is `false` when no RGB wallet is connected |
 | `getAddress()` | Bitcoin address of the RGB wallet, used to anchor RGB state |
-| `blindReceive(args)` | Blinded-UTXO receive invoice for an asset (`assetId`, optional `amount`, `durationSeconds`, `minConfirmations`) |
+| `blindReceive(args)` | Blinded-UTXO receive invoice (optional `assetId`: omit it for an invoice that accepts any asset; optional `amount`, `durationSeconds`, `minConfirmations`, never below 3) |
 | `issueAsset(args)` | Issue a new asset (`schema: "nia"`, `ticker`, `name`, `amounts`, `precision`); listed in `methods` only when the wallet can mint |
 | `listAssets()` | Assets held by the wallet |
 | `getAssetBalance(assetId)` | `{ assetId, balance }` for one asset |
@@ -261,6 +263,7 @@ The KaleidoSwap Extension injects a full **NIP-07** provider at `window.nostr`, 
 | `signEvent(event)` | Sign a Nostr event |
 | `getRelays()` | Return the configured relays |
 | `signSchnorr(sigHash)` | Sign a 32-byte hash with the Nostr key |
+| `hashAndSignSchnorr(message)` | Hash a message and sign the hash with the Nostr key |
 | `nip04.encrypt(pubkey, plaintext)` / `nip04.decrypt(pubkey, ciphertext)` | NIP-04 encryption |
 | `nip44.encrypt(pubkey, plaintext)` / `nip44.decrypt(pubkey, ciphertext)` | NIP-44 encryption |
 
@@ -279,9 +282,11 @@ window.addEventListener('nostr:ready', async () => {
 });
 ```
 
+If you deny a site's connection, `window.nostr` stops prompting for the rest of that page, and the wallet remembers the denial for that site for 10 minutes.
+
 ## Nostr Connect (NIP-46)
 
-Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for Nostr apps that support [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) (nsecBunker). From **Settings > Nostr Connect**, generate a `bunker://` connection string and paste it into the client app; signing requests then travel over Nostr relays and are approved in the extension. Active NIP-46 sessions appear in Connected Apps, where they can be reviewed and revoked.
+Beyond in-page NIP-07 signing, the extension can act as a **remote signer** for Nostr apps that support [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) (nsecBunker). From **Settings > Nostr > Nostr Connect**, generate a `bunker://` connection string and paste it into the client app; signing requests then travel over Nostr relays and are approved in the extension. Active NIP-46 sessions appear in Connected Apps, where they can be reviewed and revoked.
 
 <img src="/assets/images/extension/34-nostr-connect-bunker.png" alt="Nostr Connect remote signing screen with a listening status, the generated bunker connection string, and a revoke action" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -291,7 +296,7 @@ The extension can also expose the wallet to external apps over **Nostr Wallet Co
 
 ### For Developers
 
-NWC is the integration path for anything that is not a web page in the same browser — mobile apps, desktop clients, bots and backends. The extension acts as the [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **wallet service**; any NIP-47 client library works against it, so nothing KaleidoSwap-specific is required. The pairing string generated in **Settings > Nostr Wallet Connect** has the standard shape:
+NWC is the integration path for anything that is not a web page in the same browser — mobile apps, desktop clients, bots and backends. The extension acts as the [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) **wallet service**; any NIP-47 client library works against it, so nothing KaleidoSwap-specific is required. The pairing string generated in **Settings > Nostr > Wallet Connect** has the standard shape:
 
 ```text
 nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secret>
@@ -309,6 +314,7 @@ The service announces NIP-47 version `1.0` with `nip04` and `nip44_v2` encryptio
 | `lookup_invoice` | Look up an invoice by payment hash or BOLT-11 |
 | `list_transactions` | Recent incoming and outgoing payments |
 | `sign_message` | Sign a message with the node key |
+| `pay_keysend` | Advertised only when the active Lightning backend supports keysend |
 
 Each paired client gets its own spending budget, visible and revocable under **Settings > Connected Apps**. A payment within budget settles without a prompt; anything over it opens the same confirmation window the in-page providers use.
 
@@ -318,7 +324,7 @@ When a connected site makes a sensitive request, the KaleidoSwap Extension asks 
 
 <img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="Connection approval prompt showing the requesting site origin, the access it asks for, and the Reasonable consent default with Deny and Allow actions" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-**Settings > Connected Apps** lists every site and app connected to the wallet, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
+**Settings > Connected Apps** lists every site and app connected to the wallet, including NIP-46 (bunker) clients, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
 
 <img src="/assets/images/extension/33-connected-sites.png" alt="Connected Apps screen listing connected apps, Nostr Wallet Connect sessions, and a field to block a site" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -332,13 +338,13 @@ The KaleidoSwap Extension derives a Nostr identity from the wallet recovery phra
 
 ### Nostr Key Management
 
-Your Nostr keypair is managed in **Settings > Nostr Account**:
+Your Nostr keypair is managed in **Settings > Nostr > Nostr Identity**:
 
 - View your public key (`npub`)
 - View/copy the session private key when the wallet is unlocked
-- Re-derive identity from the wallet recovery phrase
+- Import a key, or revert an imported key to the identity derived from your recovery phrase
 
-By default the identity is derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your own key (`nsec1…` or 64-character hex) during onboarding or later from Settings; it is stored encrypted and used everywhere the derived identity would be.
+By default the identity is derived from the recovery phrase (NIP-06). If you already have a Nostr identity, you can import your own key (`nsec1…` or 64-character hex) during onboarding or later from **Settings > Nostr > Nostr Identity**; it is stored encrypted and used everywhere the derived identity would be.
 
 ## Browser Approval Flow
 

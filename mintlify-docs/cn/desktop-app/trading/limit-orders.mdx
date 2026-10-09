@@ -1,0 +1,53 @@
+---
+title: 限价订单
+description: "在 KaleidoSwap 桌面应用中下限价订单：设定目标 BTC 价格，市场到达该价格时应用自动通过闪电网络完成交换。"
+---
+
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
+限价订单会在市场到达你设定的价格时自动完成交换。交换本身是与 KaleidoSwap 做市商通过闪电网络进行的原子交换，与手动[交换资产](/cn/desktop-app/trading/asset-swaps)相同。
+
+<FeatureVideo name="desktop-limit-order" title="价格下跌时成交的 BTC 限价买单" />
+
+## 前置条件
+
+1. **USDT 闪电通道** —— 订单从一条已就绪且持有 USDT 的通道中支出或接收。参见[购买通道](/cn/desktop-app/channels/order-new-channel)。
+2. **足够的余额** —— 你的闪电通道中需要有足够的支付资产。
+
+<Tip>
+创建限价订单前，先打开一次**「交易」→「做市商」(Market Maker)**，让应用加载可用的交易对。
+</Tip>
+
+## 下限价订单
+
+<Steps>
+  <Step title="打开限价订单页面">
+    在侧边栏打开**「交易」(Trading)**，选择**「限价订单」(Limit Orders)**，然后点击**「新建限价订单」(New Limit Order)**。
+  </Step>
+
+  <Step title="选择支付和接收的资产">
+    买卖方向由资产方向决定：用 BTC 支付为卖出，用 USDT 支付为买入。使用交换箭头按钮切换方向。输入支付数量；接收数量会根据你的限价估算。
+  </Step>
+
+  <Step title="设置限价">
+    以每 BTC 的 USDT 价格输入限价，或点击市场价格以其为起点。买单在市场价格等于或低于限价时成交；卖单在市场价格等于或高于限价时成交。如果该价格会立即成交，表单会提示你。
+  </Step>
+
+  <Step title="选择有效期并下单">
+    选择 **1h**、**4h**、**24h**、**1w**、**30d** 或 **Never**，然后点击**「下限价订单」(Place Limit Order)**。
+  </Step>
+</Steps>
+
+![限价订单交易界面](/assets/images/desktop-app/25_limit-order.png)
+
+## 订单成交
+
+应用在打开且节点已解锁时，大约每 20 秒检查一次每个进行中订单的做市商价格。价格越过你的限价后，应用会请求报价、初始化交换、在你的节点上将其加入白名单并执行，每一步都会以提示消息显示。
+
+已成交的订单会带着成交价移到**「历史」(History)** 标签。展开卡片上的**「执行历史」(Execution History)** 可以查看每次尝试。
+
+<Note>
+如果报价比你的限价差 3% 以上，执行会被拒绝。失败的尝试会让订单保持进行中，并在下次检查时重试；因余额不足而失败的订单会被暂停。
+</Note>
+
+使用卡片上的**「立即成交」(Fill Now)** 可以不等限价、按当前价格执行；使用**「暂停」(Pause)** 暂停订单，使用**「取消」(Cancel)** 结束订单。

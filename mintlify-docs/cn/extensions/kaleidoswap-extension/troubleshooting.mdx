@@ -16,7 +16,7 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
     3. 使用本地节点时，确认它运行在预期端口上
     4. 使用远程节点时，检查网络／防火墙设置
     5. 使用 Biscuit／认证令牌时，确认**令牌仍然有效**
-    6. 尝试在 Settings > RGB 中断开再重新连接
+    6. 在**设置 > RGB > RLN 节点**（Settings > RGB > RLN node）中重新连接；LND/NWC 则在**设置 > Lightning Node**（Settings > Lightning Node）中重新连接
   </Accordion>
 
   <Accordion title="交易场所连不上" icon="plug-circle-xmark">
@@ -36,8 +36,8 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
     1. 确认 KaleidoSwap 扩展**已安装并已解锁**
     2. 刷新网页
     3. 检查扩展是否对该站点**已启用**
-    4. 确认 DApp 使用的是标准提供方——KaleidoSwap 扩展注入 `window.webln`（WebLN）、`window.webbtc`、`window.nostr`（NIP-07）和 `window.bitcoin`
-    5. 有些应用会等待就绪事件——扩展会派发 `webln:ready`、`webbtc:ready`、`nostr:ready` 和 `bitcoin:ready`
+    4. 确认 DApp 使用的是标准提供方——KaleidoSwap 扩展注入 `window.webln`（WebLN）、`window.webbtc`、`window.nostr`（NIP-07）、`window.bitcoin` 和 `window.rgb`
+    5. 有些应用会等待就绪事件——扩展会派发 `webln:ready`、`webbtc:ready`、`nostr:ready`、`bitcoin:ready` 和 `rgb:ready`
   </Accordion>
 </AccordionGroup>
 
@@ -51,8 +51,17 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
     1. 检查**余额**是否充足
     2. 确认**目标地址**填写正确
     3. Lightning 支付需要确认到目标存在可用**路由**
-    4. 检查节点是否**在线且已同步**
+    4. 检查发送账户是否**在线且已同步**
     5. 稍等一会儿再重试
+  </Accordion>
+
+  <Accordion title="闪电支付一直处于待处理状态" icon="hourglass-half">
+    **现象：** 一笔闪电支付显示为待处理，且发送功能对该目标被锁定
+
+    **解决办法：**
+    1. 钱包会在大约 3 分钟内持续检查支付状态；请等待它完成或失败
+    2. 支付待处理期间，发送功能会对该目标保持锁定，以免重复支付
+    3. 到**记录**（Activity）中查看最终状态，不要重复支付
   </Accordion>
 
   <Accordion title="发票生成失败" icon="receipt">
@@ -85,9 +94,10 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
 
     **解决办法：**
     1. KaleidoSwap 扩展无法找回密码
-    2. **卸载**扩展并**重新安装**
-    3. 导入助记词
-    4. 设置新密码，并重新连接可选服务
+    2. 在锁定界面选择**忘记密码？重置钱包**（Forgot password? Reset wallet），并输入 `RESET` 确认。这会从当前浏览器中清除钱包。
+    3. 选择**导入已有钱包**（Import Existing Wallet）并输入助记词
+    4. 设置新密码
+    5. 恢复 RGB 状态（通过云端备份提示或备份文件），并重新连接闪电节点等可选服务
   </Accordion>
 
   <Accordion title="余额不更新" icon="arrows-rotate">
@@ -95,7 +105,7 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
 
     **解决办法：**
     1. 检查**节点连接**状态
-    2. 在仪表盘上下拉**刷新**
+    2. 点击余额卡片上的**刷新余额**（Refresh balances）
     3. 关闭扩展弹出窗口再重新打开
     4. 确认节点**已同步**
   </Accordion>
@@ -109,17 +119,17 @@ description: "解决 KaleidoSwap 扩展中的节点连接、支付和 DApp 提�
 
 1. 浏览器名称和版本
 2. KaleidoSwap 扩展版本（Settings > About）
-3. 节点类型和版本
+3. 闪电节点类型（RGB Lightning 节点、LND、NWC），如已连接
 4. 复现步骤
 5. 错误信息或截图
-6. 控制台日志（右键点击扩展弹出窗口 > Inspect > Console）
+6. 诊断信息：**设置 > 发送反馈**（Settings > Send Feedback）→ **在消息中附加诊断信息**（Append diagnostics to message），或**下载诊断信息**（Download diagnostics）
 
 <CardGroup cols={2}>
   <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
     向社群提问。
   </Card>
-  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
-    紧急问题的直接支持渠道。
+  <Card title="报告 Bug" icon="envelope" href="mailto:beta@kaleidoswap.com">
+    提交 Bug 报告和测试版反馈。
   </Card>
 </CardGroup>
 

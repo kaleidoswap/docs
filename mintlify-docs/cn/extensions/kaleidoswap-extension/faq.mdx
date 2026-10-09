@@ -8,7 +8,7 @@ description: "关于 KaleidoSwap 扩展的常见问题：浏览器支持、多�
 
 <AccordionGroup>
   <Accordion title="KaleidoSwap 扩展支持哪些浏览器？">
-    首个封闭测试面向基于 Chromium 的浏览器，例如 Google Chrome、Brave、Microsoft Edge 和 Opera，通过开发者模式加载私有测试版 zip 包安装。如果提供了 Firefox 构建，Firefox 支持会另行测试。Safari 暂不支持。
+    封闭测试支持 Google Chrome（开发者模式）、Brave 和 Arc，通过私有测试版 zip 包安装。Edge 和 Opera 基于 Chromium，但测试版安装指南未覆盖。Firefox 尚未发布（没有 Firefox AMO 上架），Safari 暂不支持。
   </Accordion>
 
   <Accordion title="在哪里获取封闭测试版构建？">
@@ -23,6 +23,8 @@ description: "关于 KaleidoSwap 扩展的常见问题：浏览器支持、多�
     - **远程节点**：通过 URL 或 **Nostr Wallet Connect** 访问。
 
     请注意，无节点 RGB-L1 账户和 RLN 账户是 RGB 资产的两种互斥后端。
+
+    对于闪电网络，可在**设置 > Lightning Node**（Settings > Lightning Node）中一次连接一个外部节点：RGB Lightning 节点、LND（REST URL 和 macaroon），或任意 Nostr Wallet Connect 钱包。它的余额会计入资产组合，并在发送时作为付款来源出现。
   </Accordion>
 
   <Accordion title="KaleidoSwap 扩展是托管的吗？">
@@ -42,31 +44,32 @@ description: "关于 KaleidoSwap 扩展的常见问题：浏览器支持、多�
     - Arkade 账户上可用时的 **Arkade 原生资产**
     - Liquid 账户上的 **Liquid 资产**，例如 USDt
     - Bitcoin L1 上的 **RGB 资产**，通过无节点 RGB-L1 账户，或在连接 RGB Lightning Node 时通过 Lightning
+    - **Bark 上的 BTC**（Second 的 Ark），仅限测试网络（signet）
   </Accordion>
 
   <Accordion title="如何备份钱包？">
-    进入**设置 > 备份钱包**（Settings > Backup Wallet），重新输入密码后即可显示并复制助记词。同一界面也提供无节点账户的 RGB 备份指引。
+    进入**设置 > 安全 > 备份钱包**（Settings > Security > Backup Wallet），输入密码解密后即可复制助记词。无节点 RGB 的备份（自动云端备份、加密备份文件、恢复）位于**设置 > RGB > 备份**（Settings > RGB > Backup）。
 
     请分别离线保存以下内容：
     - 用于 Spark、Arkade、Liquid、RGB-L1 和派生 Nostr 身份的 **KaleidoSwap 扩展助记词**
     - 如果你使用 RGB Lightning Node，还需保存较新的 **RGB 节点备份文件**
     - 如果节点由你另行管理，还需保存 **RLN 节点助记词或节点备份材料**
 
-    无节点 **RGB-L1 账户会自动备份**：在发送、接收和 UTXO 变化等钱包活动之后，它会备份到加密云端（VSS）。你也可以在备份界面手动导出本地加密备份文件。重新导入钱包时，初始设置流程会询问是否从云端备份恢复——只有在你明确同意后才会执行恢复。
+    无节点 **RGB-L1 账户会自动备份**：在发送、接收和 UTXO 变化等钱包活动之后，它会备份到加密云端（VSS）。你也可以在**设置 > RGB > 备份**中手动导出本地加密备份文件。重新导入钱包时，初始设置流程会询问是否从云端备份恢复——只有在你明确同意后才会执行恢复。
   </Accordion>
 
   <Accordion title="忘记密码怎么办？">
     KaleidoSwap 扩展无法帮你找回密码。如果忘记了密码，你需要：
-    1. 卸载并重新安装扩展
-    2. 导入助记词
+    1. 在锁定界面选择**忘记密码？重置钱包**（Forgot password? Reset wallet），并输入 `RESET` 确认。这会从当前浏览器中清除钱包。
+    2. 选择**导入已有钱包**（Import Existing Wallet）并输入助记词
     3. 设置新密码
-    4. 重新连接 RGB Lightning Node 等可选服务
+    4. 恢复 RGB 状态（通过云端备份提示或备份文件），并重新连接闪电节点等可选服务
 
     Spark、Arkade、Liquid 和派生的 Nostr 身份都可以从助记词恢复，无节点 RGB-L1 的状态可以在初始设置流程中从云端（VSS）备份恢复。RGB Lightning Node 的状态必须用该节点自己的备份材料恢复。
   </Accordion>
 
   <Accordion title="可以同时连接多个节点吗？">
-    KaleidoSwap 扩展管理 Spark、Arkade、Liquid、RGB-L1 以及可选的 RLN 账户。对于 RLN，同一时间只能连接一个节点接口端点（直连 URL 或 NWC）。
+    KaleidoSwap 扩展管理 Spark、Arkade、Liquid、RGB-L1 以及可选的 RLN 账户。对于 RLN，同一时间只能连接一个节点接口端点（直连 URL 或 NWC）。对于闪电网络，可在**设置 > Lightning Node**中一次连接一个外部节点：RGB Lightning 节点、LND（REST URL 和 macaroon），或任意 Nostr Wallet Connect 钱包。它的余额会计入资产组合，并在发送时作为付款来源出现。
   </Accordion>
 
   <Accordion title="自动锁定是怎么工作的？">
@@ -86,17 +89,17 @@ description: "关于 KaleidoSwap 扩展的常见问题：浏览器支持、多�
 
 1. 浏览器名称和版本
 2. KaleidoSwap 扩展版本（Settings > About）
-3. 节点类型和版本
+3. 闪电节点类型（RGB Lightning 节点、LND、NWC），如已连接
 4. 复现步骤
 5. 错误信息或截图
-6. 控制台日志（右键点击扩展弹出窗口 > Inspect > Console）
+6. 诊断信息：**设置 > 发送反馈**（Settings > Send Feedback）→ **在消息中附加诊断信息**（Append diagnostics to message），或**下载诊断信息**（Download diagnostics）
 
 <CardGroup cols={2}>
   <Card title="Telegram 社群" icon="telegram" href="https://t.me/kaleidoswap">
     向社群提问。
   </Card>
-  <Card title="邮件支持" icon="envelope" href="mailto:support@kaleidoswap.com">
-    紧急问题的直接支持渠道。
+  <Card title="报告 Bug" icon="envelope" href="mailto:beta@kaleidoswap.com">
+    提交 Bug 报告和测试版反馈。
   </Card>
 </CardGroup>
 

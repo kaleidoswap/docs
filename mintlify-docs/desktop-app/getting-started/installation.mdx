@@ -4,6 +4,10 @@ sidebarTitle: "Installation"
 description: "Install the KaleidoSwap Desktop App on macOS, Windows, or Linux, with downloads, system requirements, and setup explained step by step"
 ---
 
+<Warning>
+Wallets created with the bundled node of v0.5.0 or earlier, and their backups, cannot be opened by v0.5.1. Before upgrading, close channels and move funds out with v0.5.0, then create a new wallet.
+</Warning>
+
 ## Installation Methods
 
 You can install the KaleidoSwap Desktop App in two ways:
@@ -29,7 +33,7 @@ You can install the KaleidoSwap Desktop App in two ways:
 #### Platform-Specific Instructions
 
 **Windows:**
-- The RGB Lightning Node integration is not yet fully supported natively on Windows. To get started with RLN on Windows, run it in a Docker container and connect remotely — see [Node Hosting](/desktop-app/getting-started/node-hosting), or [Troubleshooting](/desktop-app/support/troubleshooting#connectivity) for other remote-node options
+- The Native Binary node backend is not available on Windows. To run a local node on Windows, choose **Local Node → Docker Container** in the app (requires Docker Desktop to be running), or connect to a remote node — see [Node Hosting](/desktop-app/getting-started/node-hosting), or [Troubleshooting](/desktop-app/support/troubleshooting#connectivity) for other remote-node options
 - Install [vcpkg](https://github.com/microsoft/vcpkg) to install libraries like **openssl** and **sqlite3**
 - Ensure **Microsoft Visual C++** is installed (via Visual Studio or Build Tools)
 
@@ -64,6 +68,10 @@ If you prefer not to run a node on your local machine, you can connect to a remo
 - **Self-hosted remote node**: Learn how to set up your own RGB Lightning Node on a VPS or server by following our [RGB Lightning Node Hosting](/desktop-app/getting-started/node-hosting) guide.
 - **Hosted provider**: Connect to a professionally managed node from a service provider like ThunderStack.
 
+<Note>
+  Remote nodes must run RGB Lightning Node **0.10.0 or later** (e.g. `kaleidoswap/rgb-lightning-node:0.10.0`).
+</Note>
+
 **Advantages of remote nodes:**
 - No local resources required
 - 24/7 availability (for hosted solutions)
@@ -75,13 +83,15 @@ For complete control and privacy, you can run a node directly on your machine:
 
 - Follow the [Creating a New Wallet](/desktop-app/wallet/creating-wallet) guide to set up a local wallet with an integrated RGB Lightning Node.
 
+The app runs the node either as a **Native Binary** (macOS/Linux) or in a **Docker Container** (all platforms; the app pulls and manages the container).
+
 **Advantages of local nodes:**
 - Full control over your node
 - Enhanced privacy
 - No dependency on external services
 
 <Note>
-  Local node integration is not yet fully supported natively on **Windows**. Windows users should choose Option 1 above (a remote node, self-hosted via [Docker](/desktop-app/getting-started/node-hosting) or a hosted provider like ThunderStack) — see [Troubleshooting](/desktop-app/support/troubleshooting#connectivity) for details.
+  On **Windows** the Native Binary backend is not available. Choose **Local Node → Docker Container** (requires Docker Desktop to be running) or connect to a remote node.
 </Note>
 
 Choose the option that best fits your technical skills and requirements before proceeding with the KaleidoSwap setup.

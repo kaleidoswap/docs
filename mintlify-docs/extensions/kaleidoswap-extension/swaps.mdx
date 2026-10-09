@@ -4,6 +4,8 @@ sidebarTitle: "Swaps"
 description: "Swap assets directly in the KaleidoSwap Extension by requesting a quote, executing, and tracking your swap across supported networks"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 ## Overview
 
 The KaleidoSwap Extension includes an in-extension swap surface. It can use KaleidoSwap maker pairs when the optional RGB Lightning Node account is connected, and it can use Spark/Flashnet routes when Spark pools are available.
@@ -13,6 +15,8 @@ The KaleidoSwap Extension includes an in-extension swap surface. It can use Kale
 <Note>
 Swaps exchange one asset for another inside your wallet. To move funds between Spark and external chains (EVM networks, Solana, and more), use the [Bridge](/extensions/kaleidoswap-extension/bridge) instead.
 </Note>
+
+<FeatureVideo name="usdt-on-rgb-swap" title="Atomic BTC to USDT swap on RGB over Lightning" portrait />
 
 ## Prerequisites
 
@@ -45,12 +49,7 @@ The amount input is gated by your **spendable** balance for the selected source 
   </Step>
 
   <Step title="Review">
-    The swap preview screen shows:
-    - From asset and amount
-    - To asset and amount
-    - Exchange rate
-    - Fee breakdown
-    - Total cost
+    The **Swap Review** screen shows what you pay and receive, the **Provider** (KaleidoSwap or Flashnet), **Rate**, **Fee**, **Quote ID**, and a live **Expires** countdown. If the quote expires, the button becomes **Refresh Quote**.
   </Step>
 
   <Step title="Confirm">
@@ -58,16 +57,18 @@ The amount input is gated by your **spendable** balance for the selected source 
   </Step>
 
   <Step title="Track Status">
-    The swap status screen shows a three-step progress tracker:
+    For KaleidoSwap maker swaps, the status screen shows a three-step progress tracker:
     - Requesting
     - Atomic Swap
     - Completing
 
-    followed by a success or failure result.
+    followed by a success or failure result. Flashnet swaps show a single **Settling on Spark…** state instead.
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/24-swap-review.png" alt="Swap Review screen showing pay and receive amounts, provider, rate, fee, quote ID, and expiry above the Confirm Swap button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/24-swap-review.png" alt="Swap Review screen showing pay and receive amounts, provider, rate, fee, quote ID, and an mm:ss Expires countdown above the Confirm Swap button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="spark-swap-usdb" title="Swapping BTC to USDB on Spark" portrait />
 
 ## Real-Time Quotes
 
@@ -89,7 +90,7 @@ Flashnet swaps enforce a built-in maximum slippage of 5%: the minimum output amo
 
 ## Swap Status
 
-After confirming, the status screen tracks the swap through three steps:
+After confirming a KaleidoSwap maker swap, the status screen tracks it through three steps:
 
 | Step | Description |
 |------|-------------|
@@ -97,12 +98,12 @@ After confirming, the status screen tracks the swap through three steps:
 | **Atomic Swap** | The swap is executing atomically |
 | **Completing** | The swap is being finalized |
 
-When the swap finishes, the screen shows a success result. If a step fails, an error message with the failure details is shown instead.
+When the swap finishes, the screen shows a success result. If a step fails, an error message with the failure details is shown instead. Flashnet swaps skip the tracker and show a single **Settling on Spark…** state until they settle.
 
-<img src="/assets/images/extension/25-swap-status.png" alt="Swap in progress with a three step tracker for requesting, atomic swap, and completing, showing the pair being exchanged" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/25-swap-status.png" alt="KaleidoSwap maker swap in progress with the three step tracker for requesting, atomic swap, and completing, and the BTC amount in sats" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-If no compatible venue or pair is available, the KaleidoSwap Extension shows an empty state instead of a quote. Wallet features such as deposits, withdrawals, balances, and settings still work.
+If no compatible venue or pair is available, the KaleidoSwap Extension shows an empty state instead of a quote. Wallet features such as receives, sends, balances, and settings still work.
 </Note>
 
 ## Tips

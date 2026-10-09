@@ -39,7 +39,7 @@ Releases also include `.sig` files and a `latest.json`. These are **Tauri update
 
 ## SHA256 Checksum Verification
 
-The SHA256 hash for each artifact is listed in the `manifest.txt` file, available as a build artifact on each CI run. The manifest is signed by the developer with GPG (detached signature `manifest.txt.sig`), using a key stored on a YubiKey.
+The SHA256 hash for each artifact is listed in the `manifest.txt` file, available as a build artifact on each CI run. The manifest is signed by the developer with GPG (detached signature `manifest.txt.sig`), using a key stored on a YubiKey. Manifests are published per platform (macOS and Linux); Windows builds currently have no manifest entry.
 
 ### Prerequisites
 
@@ -105,19 +105,19 @@ Compute the SHA256 hash of your download and compare it with the entry in `manif
 
 <CodeGroup>
 ```sh macOS
-shasum -a 256 KaleidoSwap_0.5.0_aarch64.dmg
+shasum -a 256 KaleidoSwap_0.5.1_aarch64.dmg
 ```
 
 ```sh Linux
-sha256sum -c manifest.txt --ignore-missing
+sha256sum KaleidoSwap_0.5.1_amd64.AppImage
 ```
 
 ```powershell Windows (PowerShell)
-Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.0_x64_en-US.msi
+Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.1_x64_en-US.msi
 ```
 </CodeGroup>
 
-The hash must match the manifest entry exactly. If it does not, delete the file and re-download it.
+On Linux, compare the output with the matching line in `manifest.txt` (manifest lines are `filename: checksum`, so `sha256sum -c` cannot read them). Windows builds currently have no manifest entry. The hash must match the manifest entry exactly. If it does not, delete the file and re-download it.
 
 ## macOS: Additional Platform Verification
 

@@ -89,6 +89,8 @@ make logs
 
 关于各命令和选项的更多信息，请查看 [README.md 文件](https://github.com/kaleidoswap/docker-images/blob/main/README.md)。
 
+桌面应用 v0.5.1 要求 RGB Lightning Node 0.10.0 或更高版本。使用 Docker 时，请使用 `kaleidoswap/rgb-lightning-node:0.10.0` 镜像。
+
 ## 方案 2：在 VPS 上直接安装
 
 如果你是希望完全掌控服务器环境的高级用户，可以把 RGB Lightning Node 直接安装在 VPS 或裸金属服务器上。
@@ -105,9 +107,11 @@ make logs
 1. 克隆仓库：
 
 ```bash
-git clone https://github.com/RGB-Tools/rgb-lightning-node --recurse-submodules --shallow-submodules
+git clone https://github.com/kaleidoswap/rgb-lightning-node --branch v0.10.0 --recurse-submodules --shallow-submodules
 cd rgb-lightning-node
 ```
+
+桌面应用 v0.5.1 要求 RGB Lightning Node 0.10.0 或更高版本。
 
 2. 安装二进制文件：
 
@@ -130,9 +134,9 @@ rgb-lightning-node <data-dir>/ --daemon-listening-port 3001 \
 
 4. 解锁节点时，你需要提供：
 
-- Bitcoin RPC 连接信息
 - 索引器 URL
 - RGB proxy 接口端点
+- Bitcoin Core RPC 连接信息（仅当你希望闪电网络从自己的节点同步时才需要）
 
 ### VPS 防火墙配置
 在 VPS 上运行时，你需要配置防火墙以放行必要的连接
@@ -251,15 +255,11 @@ ThunderStack 是一套基于云的方案，为 RGB 和闪电网络应用提供�
 
 #### signet（Mutinynet）环境
 
-在 signet 上测试时，可以使用：
+在 signet 上测试时，可以使用下面的示例。在 Mutinynet 上，应用默认只发送索引器 URL 和 RGB proxy 接口端点，不包含 `bitcoind_rpc_*` 字段；只有当你希望闪电网络从自己的 Bitcoin Core 节点同步时，才需要像上面的示例那样添加这些字段。
 
 ```json
 {
   "password": "<YOUR_NODE_PASSWORD>",
-  "bitcoind_rpc_username": "user",
-  "bitcoind_rpc_password": "default_password",
-  "bitcoind_rpc_host": "bitcoind.signet.kaleidoswap.com",
-  "bitcoind_rpc_port": 38332,
   "indexer_url": "https://esplora.signet.kaleidoswap.com",
   "proxy_endpoint": "rpcs://proxy.iriswallet.com/0.2/json-rpc"
 }

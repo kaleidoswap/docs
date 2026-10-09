@@ -1,0 +1,53 @@
+---
+title: Limit Orders
+description: "Place limit orders in the KaleidoSwap Desktop App: set a target BTC price and the app swaps automatically over Lightning when the market reaches it"
+---
+
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
+A limit order swaps automatically when the market reaches a price you set. The swap itself is an atomic swap with the KaleidoSwap market maker over Lightning, the same as a manual [asset swap](/desktop-app/trading/asset-swaps).
+
+<FeatureVideo name="desktop-limit-order" title="A limit order to buy BTC that fills when the price drops" />
+
+## Prerequisites
+
+1. **A USDT Lightning channel** — the order spends from, or receives into, a ready channel that holds USDT. See [Buy a Channel](/desktop-app/channels/order-new-channel).
+2. **Enough balance** for the asset you pay with, in your Lightning channels.
+
+<Tip>
+Open **Trading → Market Maker** once before creating a limit order, so the app has loaded the available trading pairs.
+</Tip>
+
+## Placing a Limit Order
+
+<Steps>
+  <Step title="Open Limit Orders">
+    In the sidebar, open **Trading** and select **Limit Orders**, then click **New Limit Order**.
+  </Step>
+
+  <Step title="Choose what you pay and receive">
+    The side follows the direction: paying with BTC is a sell, paying with USDT is a buy. Use the swap-arrows button to flip it. Enter the amount you pay; the amount you receive is estimated from your limit price.
+  </Step>
+
+  <Step title="Set the limit price">
+    Enter the price in USDT per BTC, or click the market price to start from it. A buy fills when the market is at or below your price; a sell when it is at or above it. If the price would fill immediately, the form warns you.
+  </Step>
+
+  <Step title="Pick an expiration and place the order">
+    Choose **1h**, **4h**, **24h**, **1w**, **30d** or **Never**, then click **Place Limit Order**.
+  </Step>
+</Steps>
+
+![Limit Order trading interface](/assets/images/desktop-app/25_limit-order.png)
+
+## When the Order Fills
+
+While the app is open and your node is unlocked, it checks the maker's price for each active order about every 20 seconds. When the price crosses your limit, it requests a quote, initializes the swap, whitelists it on your node and executes it, showing each step in a toast.
+
+A filled order moves to the **History** tab with its execution price. Expand **Execution History** on the card to see each attempt.
+
+<Note>
+An execution is rejected if the quoted price is more than 3% worse than your limit. A failed attempt keeps the order active, so it is retried at the next check; orders that fail for insufficient balance are paused.
+</Note>
+
+Use **Fill Now** on a card to execute at the current price without waiting for the limit, **Pause** to hold an order, and **Cancel** to end it.

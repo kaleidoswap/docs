@@ -10,7 +10,7 @@ description: "Use KaleidoMind chat in the KaleidoSwap Desktop App to check balan
 
 Chat is the conversational surface of [KaleidoMind](/ai-tools/kaleido-mind), the on-device assistant bundled with the Desktop App. You ask in plain language; the model reads your wallet and node through tools and drafts the action. Nothing moves until you confirm.
 
-Enable it from **Settings > Capabilities** by choosing **Node + Mind**. See [Brain](/desktop-app/kaleidomind/brain) for what runs behind it.
+Choose **Node + Mind** or **Only Mind** on the welcome screen or in **Settings → Capabilities**, or click **Activate Mind** in the sidebar. See [Brain](/desktop-app/kaleidomind/brain) for what runs behind it.
 
 ## What You Can Ask
 
@@ -20,11 +20,11 @@ Enable it from **Settings > Capabilities** by choosing **Node + Mind**. See [Bra
 | **"Buy 1 USDT"** | Quotes the maker and runs the full atomic swap behind a single confirmation showing the real numbers |
 | **"Buy a channel"** | Orders inbound BTC liquidity, or an RGB asset channel pre-loaded via the LSP, as a one-confirmation flow |
 
-Read-only questions are free to ask. Anything that moves funds stops at a confirmation sheet first.
+Read-only questions are free to ask. Anything that moves funds stops first at a confirmation card with **Approve** and **Decline**. If the account has no maker URL, chat says swap and channel tools are unavailable.
 
 ## Confirmation Before Spend
 
-Every fund-moving action is gated. The confirmation sheet is built from the resolved call — the actual amounts, assets, and destination — not from the model's description of it, so a wrong unit or recipient shows up where you can catch it.
+Every fund-moving action is gated. The confirmation card is built from the resolved call — the actual amounts, assets, and destination — not from the model's description of it, so a wrong unit or recipient shows up where you can catch it.
 
 The model cannot bypass this gate. It is part of the tool contract, not a UI courtesy.
 

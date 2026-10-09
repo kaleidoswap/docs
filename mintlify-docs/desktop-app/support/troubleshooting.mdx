@@ -18,11 +18,11 @@ description: "Fix failed trades, wallet restore, and LSP connection problems in 
   </Accordion>
 
   <Accordion title="Can't type the channel capacity I want" icon="sliders">
-    **Symptoms**: The Channel Capacity field rejects manual input, or only accepts values that start with "50000".
+    **Symptoms**: The Channel Capacity value jumps to a lower number.
 
-    **Cause**: 50,000 sats is the minimum channel capacity, and the field validates against that floor as you type.
+    **Cause**: The field caps at the most you can fund from your on-chain balance; the 50,000-sat minimum is checked when you click **Continue**.
 
-    **Solution**: Select the field's contents and retype the full number in one go, rather than editing digit by digit — for example, select all and type `500000` instead of trying to change the leading digits of an existing value. Any amount is accepted as long as it is 50,000 sats or higher.
+    **Solution**: Use the 100k/250k/500k/1M presets or the slider, or deposit more BTC.
   </Accordion>
 </AccordionGroup>
 
@@ -34,6 +34,14 @@ description: "Fix failed trades, wallet restore, and LSP connection problems in 
     1. Use the backup file you created
     2. Decrypt the backup file with your password
     3. Wait for the node to sync
+
+    Backups from v0.5.0 or earlier cannot be restored by v0.5.1.
+  </Accordion>
+
+  <Accordion title="Unlock says the node runs an unsupported version" icon="code-compare">
+    **Cause**: The app requires RGB Lightning Node 0.10.0 or later.
+
+    **Solution**: Upgrade the node to RGB Lightning Node 0.10.0 or later, then unlock again.
   </Accordion>
 </AccordionGroup>
 
@@ -45,27 +53,27 @@ description: "Fix failed trades, wallet restore, and LSP connection problems in 
 
     **Solutions**:
     1. Check your internet connection is stable
-    2. Verify the LSP URL — default is `https://api.mutinynet2.kaleidoswap.com/`, under Settings → Maker & LSP Settings
+    2. Verify the LSP URL — on Mutinynet the default is `https://api.mutinynet2.kaleidoswap.com/` (other networks have no default), under Settings → Maker & LSP Settings
     3. Check firewall/VPN settings; required ports are 9735 (Lightning P2P) and 3001 (node API)
     4. Visit the LSP's status page, or switch to a different LSP if available
   </Accordion>
 
-  <Accordion title="RGB Lightning Node isn't available locally on Windows" icon="ban">
-    **Symptoms**: No option to run a local node on Windows, or local node setup fails.
+  <Accordion title="Native Binary isn't available on Windows" icon="ban">
+    **Symptoms**: Native Binary shows "Not available" on Windows.
 
-    **Cause**: The RGB Lightning Node integration is not yet fully supported natively on Windows.
+    **Cause**: The native node does not run on Windows.
 
     **Solutions**:
-    1. Connect to a **remote node** instead — self-host on Linux or macOS, or run it in a Docker container and connect to it remotely. See [Node Hosting](/desktop-app/getting-started/node-hosting) for both options
-    2. Or use a professionally managed option like [ThunderStack](/desktop-app/getting-started/node-hosting#option-3-hosted-provider-thunderstack)
-    3. Trading and wallet features work the same way over a remote connection — only local node hosting is affected
+    1. Install and start Docker Desktop, then choose **Local Node → Docker Container**
+    2. Or connect to a remote node (see [Node Hosting](/desktop-app/getting-started/node-hosting)), for example a managed option like [ThunderStack](/desktop-app/getting-started/node-hosting#option-3-hosted-provider-thunderstack)
+    3. Trading and wallet features work the same way with a Docker or remote node
   </Accordion>
 
   <Accordion title="My self-hosted node won't start" icon="server">
     **Symptoms**: The node exits during startup, or the Desktop App cannot reach its API.
 
     **Checks**:
-    1. Confirm Bitcoin Core is running and that the configured RPC host, port, username, and password are reachable from the node
+    1. If you configured a Bitcoin Core node, confirm it is running and reachable at the configured `user:password@host:port`; otherwise the node syncs from the indexer only
     2. Confirm the configured indexer and RGB proxy endpoints are online
     3. Review the node logs for the first startup error, then restart after correcting the related connection setting
   </Accordion>
@@ -74,7 +82,7 @@ description: "Fix failed trades, wallet restore, and LSP connection problems in 
     **Symptoms**: The app reports that the remote node is unreachable or stays disconnected.
 
     **Checks**:
-    1. Verify the node URL in **Settings > Node Connection** and confirm the node is running and unlocked
+    1. Verify the node URL in **Settings → Node Connection Settings** and confirm the node is running and unlocked
     2. Make sure the server firewall allows the node API port (default: `3001`) and Lightning peer traffic on `9735`
     3. If you use a VPN, reverse proxy, or tunnel, confirm it forwards traffic to the same address and port configured in the app
   </Accordion>
@@ -83,7 +91,7 @@ description: "Fix failed trades, wallet restore, and LSP connection problems in 
     **Symptoms**: The node remains in a syncing state and wallet or channel actions are unavailable.
 
     **Checks**:
-    1. Allow Bitcoin Core to finish synchronizing before retrying
+    1. If you configured a Bitcoin Core node, confirm it is running and reachable at the configured `user:password@host:port`; otherwise the node syncs from the indexer only
     2. Check that the configured Electrum or Esplora indexer is caught up with the selected network
     3. Verify the node, Bitcoin backend, and indexer all use the same network
   </Accordion>

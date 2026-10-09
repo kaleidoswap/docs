@@ -4,7 +4,7 @@ sidebarTitle: "Settings"
 description: "Configure the KaleidoSwap Desktop App, from network selection to node connection and interface preferences"
 ---
 
-The Settings panel is accessible from the drop-down menu in the upper right corner of the app. It is organized into **Application Settings**, **Maker & LSP Settings**, and **Node Connection Settings**, with **Security & Backup** and **Node Status** panels alongside. Most changes take effect after clicking **Save**; changes under Node Connection Settings additionally require a node restart.
+The Settings panel is accessible from the drop-down menu in the upper right corner of the app. It is organized into **Application Settings**, **Maker & LSP Settings**, and **Node Connection Settings**, with **Security & Backup** and **Node Status** panels alongside. Most changes take effect after clicking **Save Settings**; for node connection changes a **Restart Node?** dialog offers **Restart Now** or **Later**.
 
 ## Application Settings
 
@@ -39,7 +39,7 @@ The Settings panel is accessible from the drop-down menu in the upper right corn
 
 ### Theme
 
-Dark mode is the only supported theme. Light mode was disabled to avoid inconsistent rendering across screens, so Settings has no theme switch and the app ignores your operating system's preference.
+The **Theme** row is fixed to **Dark**; dark mode is the only supported theme. Light mode was disabled to avoid inconsistent rendering across screens, so Settings has no theme switch and the app ignores your operating system's preference.
 
 ## Maker & LSP Settings
 
@@ -53,12 +53,12 @@ Dark mode is the only supported theme. Light mode was disabled to avoid inconsis
 
 **What it does:** Sets the URL of the Lightning Service Provider your node connects to for channel liquidity and swap routing. This usually matches your default Maker URL.
 
-**When to change it:** The default is pre-configured and works for most users. You may want to change it if you run your own LSP, your preferred LSP has a different URL, or the default is unreachable.
+**When to change it:** On Mutinynet the KaleidoSwap maker/LSP is pre-configured; on other networks there is no default, so enter your maker's URL. You may also want to change it if you run your own LSP, your preferred LSP has a different URL, or the default is unreachable.
 
 ## Node Connection Settings
 
 <Note>
-  These settings require a node restart to take effect. After saving, the app will prompt you to **Restart Node** so the new connection settings are applied.
+  These settings require a node restart to take effect. After clicking **Save Settings**, a **Restart Node?** dialog offers **Restart Now** or **Later**.
 </Note>
 
 ### Node Connection String
@@ -67,9 +67,9 @@ Dark mode is the only supported theme. Light mode was disabled to avoid inconsis
 
 **When to change it:** By default the app manages a built-in local node. Change this if you are connecting to a remote or self-hosted RGB Lightning Node, or switching between node instances.
 
-### Bitcoin RPC
+### Bitcoin Core node (Optional · Advanced)
 
-**What it does:** The Bitcoin Core RPC connection string the node uses to reach its bitcoind backend.
+**What it does:** Leave empty to sync from the indexer (default, nothing to install). Set `user:password@host:port` to have Lightning sync from your own Bitcoin Core node.
 
 ### Indexer URL
 
@@ -79,11 +79,15 @@ Dark mode is the only supported theme. Light mode was disabled to avoid inconsis
 
 **What it does:** The RGB proxy endpoint used for exchanging RGB transfer data.
 
+### Bearer Token
+
+**What it does:** Optional token sent to a remote node that requires authentication.
+
 <Note>
   Changing any node connection setting will reconnect the app to a different node or backend. Make sure the target node and services are running and accessible before saving, then restart the node when prompted.
 </Note>
 
-<img src="/assets/images/desktop-app/30_settings-node.png" alt="Node Connection settings panel" width={909} height={622} />
+<img src="/assets/images/desktop-app/30_settings-node.png" alt="Node Connection settings panel" width={1600} height={1000} />
 
 ## Security & Backup
 
@@ -91,13 +95,13 @@ The Security & Backup panel provides:
 
 - **View Recovery Phrase** — reveal your wallet's mnemonic seed phrase
 - **Change Password** — update the wallet encryption password
-- **Backup** — create an encrypted backup of your channel state. See the [Channel Backups](/desktop-app/channels/channel-backups) page for full instructions.
+- **Backup** — create an encrypted backup of the full node data. See the [Channel Backups](/desktop-app/channels/channel-backups) page for full instructions.
 
 <img src="/assets/images/desktop-app/31_settings-security.png" alt="Security and Backup settings panel" width={435} height={397} />
 
 ## Node Status
 
-Shows whether the node is running or offline and whether it is a local or remote node. From here you can **Logout** (locks the node) or **Shutdown** the node. For local nodes, live node logs are also shown at the bottom of the Settings page.
+Shows whether the node is running or offline and whether it is a local or remote node. From here you can **Logout** or **Shutdown** the node. **Logout** locks the node (and stops a local node), then returns to the start screen. For local nodes, **Node Logs** appear at the bottom with export and clear actions.
 
 <img src="/assets/images/desktop-app/32_settings-node-status.png" alt="Node Status and logs panel" width={433} height={326} />
 

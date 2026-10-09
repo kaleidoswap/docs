@@ -39,7 +39,7 @@ description: 如何用经 GPG 签名的 SHA256 校验和清单验证 KaleidoSwap
 
 ## SHA256 校验和验证
 
-每个构建产物的 SHA256 哈希都列在 `manifest.txt` 文件中，该文件可作为每次 CI 运行的构建产物获取。清单由开发者用 GPG 签名（分离签名 `manifest.txt.sig`），所用密钥存放在 YubiKey 上。
+每个构建产物的 SHA256 哈希都列在 `manifest.txt` 文件中，该文件可作为每次 CI 运行的构建产物获取。清单由开发者用 GPG 签名（分离签名 `manifest.txt.sig`），所用密钥存放在 YubiKey 上。清单按平台发布（macOS 和 Linux）；Windows 构建目前没有清单条目。
 
 ### 前置条件
 
@@ -105,19 +105,19 @@ gpg: Good signature from "Walter (Kaleidoswap Developer) <walter@kaleidoswap.com
 
 <CodeGroup>
 ```sh macOS
-shasum -a 256 KaleidoSwap_0.5.0_aarch64.dmg
+shasum -a 256 KaleidoSwap_0.5.1_aarch64.dmg
 ```
 
 ```sh Linux
-sha256sum -c manifest.txt --ignore-missing
+sha256sum KaleidoSwap_0.5.1_amd64.AppImage
 ```
 
 ```powershell Windows (PowerShell)
-Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.0_x64_en-US.msi
+Get-FileHash -Algorithm SHA256 KaleidoSwap_0.5.1_x64_en-US.msi
 ```
 </CodeGroup>
 
-哈希必须与清单条目完全一致。如果不一致，请删除文件并重新下载。
+在 Linux 上，将输出与 `manifest.txt` 中对应的那一行比对（清单的每一行格式为 `filename: checksum`，`sha256sum -c` 无法读取）。Windows 构建目前没有清单条目。哈希必须与清单条目完全一致。如果不一致，请删除文件并重新下载。
 
 ## macOS 平台的额外校验
 

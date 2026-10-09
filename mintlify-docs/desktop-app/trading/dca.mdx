@@ -1,0 +1,56 @@
+---
+title: DCA Orders
+description: "Buy bitcoin on a schedule with DCA orders in the KaleidoSwap Desktop App: recurring USDT to BTC swaps paid from your USDT Lightning channel"
+---
+
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
+DCA (dollar-cost averaging) orders buy bitcoin with a fixed amount of USDT on a schedule. Each execution is an atomic swap with the KaleidoSwap market maker over Lightning: the USDT leaves your USDT channel and the sats arrive in the same channel.
+
+<FeatureVideo name="desktop-dca" title="Creating a weekly DCA order and running its first buy" />
+
+## Prerequisites
+
+1. **A USDT Lightning channel** — DCA spends USDT from a ready channel that holds USDT. Without one, the page offers **Buy USDT in Channel**. See [Buy a Channel](/desktop-app/channels/order-new-channel).
+2. **Receive room for BTC** — each buy credits sats to that channel, so it needs enough BTC inbound capacity.
+3. **A maker** — the account needs a maker URL (set by default on Mutinynet; on other networks the page asks for a maker URL).
+
+## Creating a DCA Order
+
+<Steps>
+  <Step title="Open DCA">
+    In the sidebar, open **Trading** and select **DCA**. The page shows the current BTC price, your average buy price, active schedules and successful buys, plus your channel status.
+  </Step>
+
+  <Step title="Start a new order">
+    Click **New DCA Order**. Choose **Scheduled** to buy on a fixed cadence, or **Price Target** to buy once BTC drops by a set percentage (it re-arms after each buy).
+  </Step>
+
+  <Step title="Set the amount and interval">
+    Enter the **Amount per buy (USDT)**. The form estimates the sats each buy brings in and what stays in your channel afterwards. Pick how often to buy: **1h**, **4h**, **8h**, **24h** or **1w**.
+  </Step>
+
+  <Step title="Create the order">
+    Click **Create Order**. The order card shows the interval and a countdown to the next buy.
+  </Step>
+</Steps>
+
+The **DCA** tab automates BTC accumulation with fixed-interval buys or downside price triggers; each successful execution converts a fixed amount into BTC.
+
+![DCA trading interface](/assets/images/desktop-app/24_dca.png)
+
+## How Executions Work
+
+The app checks due orders while it is open and your node is unlocked. When an order is due, it requests a USDT → BTC quote, initializes the swap with the maker, whitelists it on your node and executes it. Progress shows as a toast, ending with the sats bought.
+
+To run a buy immediately, click **Execute** on the order card. This does not change the schedule's cadence; the next buy is counted from this one.
+
+<Note>
+A buy is skipped and the order paused if the USDT balance in your channels is lower than the amount per buy. Quotes more than 2% below the expected amount are rejected as excessive slippage.
+</Note>
+
+## Order History
+
+Expand an order card to see each execution: date, USDT spent, sats received, price paid and fee. The summary line shows the number of buys, total sats and your average price, which the page also compares with the current BTC price.
+
+Use **Pause** to stop an order temporarily and **Cancel** to end it. Closed orders move to the **History** tab.

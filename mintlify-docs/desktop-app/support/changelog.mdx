@@ -4,7 +4,34 @@ sidebarTitle: "Changelog"
 description: "KaleidoSwap Desktop App version history: new features, changes, and fixes shipped in each release for macOS, Windows, and Linux, from the latest build back to alpha."
 ---
 
-## v0.5.0 (Current)
+## v0.5.1 (Current)
+
+**Released:** 7 October 2026
+
+<Warning>
+Requires RGB Lightning Node 0.10.0 or later, bundled or remote. Wallets created on the bundled node of v0.5.0 or earlier, and their backups, cannot be opened by v0.5.1. Before upgrading, close channels and send BTC and RGB assets out with v0.5.0, then create a new wallet.
+</Warning>
+
+### Added
+
+- Bundled RGB Lightning Node 0.10.0.
+- Indexer-only sync: Bitcoin Core is now an optional, advanced setting.
+- Safer recovery-phrase backup: the phrase stays blurred until revealed.
+- Redesigned receive screen with live detection of incoming on-chain payments, shown with their confirmation count.
+
+### Changed
+
+- Mutinynet is the default network; Bitfinex regtest removed.
+- Mainnet and Testnet have no default maker; trading screens ask for a maker URL.
+- KaleidoMind runtime updated; phone pairing paused.
+- Clearer error when a node runs an unsupported version.
+
+### Fixed
+
+- Limit orders no longer pre-fill the market price and fill immediately.
+- NWC RGB payments, RGB invoice regeneration, channel-order asset units, KaleidoMind tool arguments and the Stop button.
+
+## v0.5.0
 
 **Released:** 10 July 2026
 

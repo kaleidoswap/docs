@@ -17,7 +17,7 @@ KaleidoSwap generates a mnemonic when you create a new wallet. You must back it 
 
 <Steps>
   <Step title="Generate Mnemonic">
-    During wallet creation, the app displays your **12-word mnemonic phrase**. This is generated locally on your device — it is never sent to any server.
+    During wallet creation, the app displays your **12-word mnemonic phrase**. This is generated locally on your device — it is never sent to any server. The phrase stays blurred until you click **Reveal**.
   </Step>
 
   <Step title="Write It Down">
@@ -31,9 +31,11 @@ KaleidoSwap generates a mnemonic when you create a new wallet. You must back it 
   </Step>
 
   <Step title="Confirm Your Mnemonic">
-    The app will ask you to confirm the phrase by entering selected words. This step verifies that you have correctly recorded your mnemonic before proceeding.
+    The app will ask you to confirm the phrase by typing the full phrase in order, then clicking **Complete Setup**. This step verifies that you have correctly recorded your mnemonic before proceeding.
   </Step>
 </Steps>
+
+You can view it later in **Settings → Security & Backup → View Recovery Phrase**.
 
 ## What Happens If You Lose Your Mnemonic?
 
@@ -47,6 +49,10 @@ If you still have access to your device and remember your password, the app will
 ## Restoring an Existing Wallet
 
 Importing a wallet directly from a 12-word mnemonic is not currently supported. To recover an existing wallet, choose **Restore Wallet** during the setup flow and provide your encrypted [backup file](/desktop-app/channels/channel-backups) along with the node password used to create it. Keep your mnemonic backed up regardless — it remains the root of your wallet keys.
+
+<Warning>
+  Wallets created with the bundled node of v0.5.0 or earlier, and their backups, cannot be opened by v0.5.1. Before upgrading, close channels and move funds out with v0.5.0, then create a new wallet.
+</Warning>
 
 ---
 

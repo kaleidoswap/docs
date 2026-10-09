@@ -20,14 +20,14 @@ description: "Fix common KaleidoSwap AI tool problems, covering MCP connection f
   <Accordion title="Server starts then exits immediately" icon="circle-xmark">
     **Symptoms**: The host reports the process died on launch.
 
-    **Cause**: A required environment variable is missing. The standalone `wdk-wallet-spark-mcp` refuses to start without `WDK_SPARK_SEED`. `kaleido-mcp` is more forgiving: without `WDK_SEED`, or without the optional `@tetherto/wdk-wallet-spark` package, it still boots, logs a warning or install hint, and disables the Spark tools. On `KALEIDO_NETWORK=mainnet` it does refuse to start without `KALEIDOSWAP_API_URL`, since there is no public mainnet API.
+    **Cause**: A required environment variable is missing. In `kaleido-mcp`, without `WDK_SEED`, or without the optional `@tetherto/wdk-wallet-spark` package, it still boots, logs a warning or install hint, and disables the Spark tools. On `KALEIDO_NETWORK=mainnet` it does refuse to start without `KALEIDOSWAP_API_URL`, since there is no public mainnet API.
 
     **Solutions**:
-    1. Confirm the seed variable is set in the `env` block of the host config, not in your shell (the host does not inherit your shell environment).
-    2. Verify the mnemonic is a valid BIP-39 phrase with words separated by single spaces.
+    1. Inspect the startup error and the environment passed by the MCP client; a GUI client may not inherit your shell variables.
+    2. On mainnet, set `KALEIDOSWAP_API_URL`. A seed is not required for a market-only signet startup.
     3. Run the server by hand with the same env vars to see the error directly:
        ```bash
-       WDK_SPARK_SEED="your twelve word seed phrase" node dist/index.js
+       KALEIDO_NETWORK=signet npx -y kaleido-mcp
        ```
   </Accordion>
 

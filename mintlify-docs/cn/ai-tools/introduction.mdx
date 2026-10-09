@@ -26,9 +26,27 @@ KaleidoSwap 通过开源软件，把交换、钱包和节点基础设施开放�
 </CardGroup>
 
 <Warning>
-  这里的每一种接入方式都会使用真实的 BIP-39 助记词签名，或直接驱动一个运行中的节点。请参阅[安装](/cn/ai-tools/installation)，了解如何把测试种子与主网种子分开保管。
+  市场查询和离线示例不需要钱包资金；实际钱包操作使用已配置的钱包或节点。请参阅[安装](/cn/ai-tools/installation)，了解如何把测试种子与主网种子分开保管。
 </Warning>
 
 ## 我该选哪一个？
 
 决策表见「快速上手」中的[选择接入方式](/cn/ai-tools/getting-started#pick-a-surface)，随后可直接进入安装或首次运行。
+
+## 发布基线
+
+| 包 | 版本 | 用途 |
+| --- | --- | --- |
+| `kaleido-mcp` | `0.5.0` | 统一 MCP 服务器 |
+| `@kaleidorg/mind` | `0.11.0` | 代理引擎与可选本地数据集 |
+| `@kaleidorg/mind-provider` | `0.11.0` | Mind Node 辅助进程 |
+| `@kaleidorg/create-mind` | `0.3.6` | 项目生成器 |
+
+Mind 要求 QVAC >=0.20.0；本基线使用 0.21.0 验证。
+HTTP 默认仅绑定本机，远程绑定必须配置认证。默认诊断日志不保存自由文本；数据集收集需要明确启用。
+迁移说明见 [MCP 更新日志](https://github.com/kaleidoswap/kaleido-mcp/blob/main/CHANGELOG.md)、
+[Mind 更新日志](https://github.com/kaleidoswap/kaleido-mind/blob/main/CHANGELOG.md) 和
+[数据集指南](https://github.com/kaleidoswap/kaleido-mind/blob/main/docs/DATASETS.md)。
+
+真实模型质量评测、应用内同意与审核界面、精选数据集和微调属于后续工作。
+本次发布提供库级能力，不会自动收集用户数据或训练模型。

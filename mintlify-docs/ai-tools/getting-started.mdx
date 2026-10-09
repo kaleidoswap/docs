@@ -4,7 +4,7 @@ sidebarTitle: "Getting Started"
 description: "Pick the right way to connect an AI agent to Bitcoin, MCP servers, KaleidoAgent, or KaleidoMind, with the prerequisites and the spend gate each one gives you"
 ---
 
-Four surfaces expose the same Bitcoin tools to a model, and they differ mostly in who runs the agent loop and what stops a spend. This page covers what to have in place first, which surface fits, and how each one gates the calls that move value.
+Choose between an MCP connection, an embedded Mind engine and the KaleidoAgent service. Skills customize behavior within these integrations. This page covers what to have in place first, which surface fits, and how each one gates the calls that move value.
 
 ## Before You Start
 
@@ -26,7 +26,7 @@ If you have not installed anything yet, start with [Installation](/ai-tools/inst
 | Talk to a wallet by chat or voice, on-device | [KaleidoMind](/ai-tools/kaleido-mind) |
 | Change agent behavior without touching code | [Skills](/ai-tools/skills) |
 
-Whichever surface you pick, the first run follows the same order: a read-only call, then a wallet call, then a quote, and only then an execution. That order is diagnostic as much as it is cautious. A failure at the read-only step is a connection problem, a failure at the wallet step is a seed or network problem, and anything that reaches a quote has both already ruled out.
+Whichever surface you pick, the first run follows the same order: a read-only call, then a wallet call, then a quote, and only then an execution. That order is diagnostic as much as it is cautious. Inspect the tool error at each step: market data can fail upstream, wallet reads need their own prerequisites, and a successful quote does not verify settlement capacity.
 
 Each surface carries its own walkthrough: [MCP Servers](/ai-tools/mcp-servers#first-run) and [KaleidoAgent](/ai-tools/kaleido-agent#first-run). KaleidoMind ships inside a host rather than running on its own, so its first run is the [Desktop App installation](/desktop-app/getting-started/installation). [Skills](/ai-tools/skills) change how an agent behaves on any of these surfaces, they are not a surface of their own.
 
@@ -36,7 +36,7 @@ The two agent surfaces gate spending differently, and it is worth knowing which 
 
 | Surface | Gate |
 |---------|------|
-| **[KaleidoMind](/ai-tools/kaleido-mind)** | Structural. Every fund-moving tool is marked `requiresConfirmation`, so the engine pauses for the host's confirmation sheet. The model cannot bypass it |
+| **[KaleidoMind](/ai-tools/kaleido-mind)** | The engine gates tools marked `requiresConfirmation`. Hosts must classify custom tools correctly and provide an approval callback; check MCP adapter compatibility for the installed version |
 | **[KaleidoAgent](/ai-tools/kaleido-agent)** | Mixed. `dry_run` is enforced in code; the other risk limits in `agent.config.json` are rules given to the model, not an independent ceiling |
 | **[MCP servers](/ai-tools/mcp-servers)** | Whatever your host provides. Most MCP clients prompt per tool call, but that is the client's behaviour, not the server's |
 

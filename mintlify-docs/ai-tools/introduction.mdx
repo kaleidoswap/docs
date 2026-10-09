@@ -26,10 +26,30 @@ The product overview lives at [kaleidoswap.com/products/ai-tools](https://kaleid
 </CardGroup>
 
 <Warning>
-  Every tool surface here signs with a real BIP-39 mnemonic or drives a live node. See [Installation](/ai-tools/installation) for how to keep test and mainnet seeds apart.
+  Market queries and offline examples do not require funded wallets; live wallet operations use the configured wallet or node. See [Installation](/ai-tools/installation) for how to keep test and mainnet seeds apart.
 </Warning>
 
 ## Which one do I need?
 
 See [Pick a Surface](/ai-tools/getting-started#pick-a-surface) in Getting Started for the decision table, then jump straight to install or first run.
 
+
+## Release baseline
+
+| Package | Version | Role |
+| --- | --- | --- |
+| `kaleido-mcp` | `0.5.0` | Unified MCP server |
+| `@kaleidorg/mind` | `0.11.0` | Agent engine and opt-in local datasets |
+| `@kaleidorg/mind-provider` | `0.11.0` | Node sidecar for Mind |
+| `@kaleidorg/create-mind` | `0.3.6` | Starter generator |
+
+Mind requires QVAC >=0.20.0; this baseline was tested with 0.21.0.
+HTTP now defaults to loopback and remote binding requires authentication.
+Mind's default diagnostic logs omit free text; dataset collection requires explicit opt-in.
+See the [MCP changelog](https://github.com/kaleidoswap/kaleido-mcp/blob/main/CHANGELOG.md),
+[Mind changelog](https://github.com/kaleidoswap/kaleido-mind/blob/main/CHANGELOG.md), and
+[dataset guide](https://github.com/kaleidoswap/kaleido-mind/blob/main/docs/DATASETS.md) for migration details.
+
+Model-quality benchmarks, application consent/review UI, curated datasets and fine-tuning
+are follow-up work. The release provides the library primitives; it does not automatically
+collect customer data or train models.

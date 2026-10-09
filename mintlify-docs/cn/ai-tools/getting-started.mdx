@@ -4,7 +4,7 @@ sidebarTitle: "快速上手"
 description: "选择把 AI 代理接入比特币的方式：MCP 服务器、KaleidoAgent 还是 KaleidoMind，以及每一种的前置条件和花费把关机制。"
 ---
 
-四种接入方式把同一套比特币工具交给模型，区别主要在于谁来跑代理循环、以及什么东西拦住一笔花费。这一页负责在它们之间做选择：先要准备什么、哪一种适合你，以及每一种如何为动用资金的调用把关。
+可选择 MCP 连接、嵌入式 Mind 引擎或 KaleidoAgent 服务；Skills 用于调整这些集成中的行为。这一页负责在它们之间做选择：先要准备什么、哪一种适合你，以及每一种如何为动用资金的调用把关。
 
 ## 开始之前
 
@@ -36,7 +36,7 @@ description: "选择把 AI 代理接入比特币的方式：MCP 服务器、Kale
 
 | 接入方式 | 把关机制 |
 |---------|------|
-| **[KaleidoMind](/cn/ai-tools/kaleido-mind)** | 结构性把关。每个会动用资金的工具都标记了 `requiresConfirmation`，引擎会暂停并等待宿主的确认面板。模型无法绕过 |
+| **[KaleidoMind](/cn/ai-tools/kaleido-mind)** | 引擎为标记了 `requiresConfirmation` 的工具请求批准。宿主必须正确标记自定义工具，并提供确认回调；MCP 兼容性取决于所安装的适配器版本 |
 | **[KaleidoAgent](/cn/ai-tools/kaleido-agent)** | 混合把关。`dry_run` 在代码层面强制生效；`agent.config.json` 中其余风险上限是给模型的规则，不是独立的上限 |
 | **[MCP 服务器](/cn/ai-tools/mcp-servers)** | 取决于你的宿主客户端。多数 MCP 客户端会为每次工具调用弹出确认，但那是客户端的行为，不是服务器的 |
 

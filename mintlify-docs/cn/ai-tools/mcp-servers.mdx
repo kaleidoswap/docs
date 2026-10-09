@@ -4,51 +4,18 @@ sidebarTitle: "MCP 服务器"
 description: "用于比特币钱包、KaleidoSwap DEX 和闪电付费 API 的类型化 Model Context Protocol 工具：服务器清单、工具集与客户端配置一次讲清。"
 ---
 
-KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 和支付能力开放给 AI 代理（Claude Desktop、[KaleidoAgent](/cn/ai-tools/kaleido-agent)、基于 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的宿主，或任何其他 [MCP](https://modelcontextprotocol.io) 客户端），另外还有三个仍然独立存在的按钱包划分的服务器。
+KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 和支付能力开放给 AI 代理（Claude Desktop、[KaleidoAgent](/cn/ai-tools/kaleido-agent)、基于 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的宿主，或任何其他 [MCP](https://modelcontextprotocol.io) 客户端），新集成应使用这个统一服务器。它已取代早期的独立钱包服务器；旧集成的迁移说明位于本页末尾。
 
-## 为什么只用一个服务器
+## 需要准备什么
 
-早期存在多个各管一域的 MCP 服务器：一个 KaleidoSwap DEX 服务器、一个 MPP/L402 支付服务器，以及 RLN 和 Spark 各自的钱包服务器。DEX 与支付服务器此后已合并进 `kaleido-mcp`，它在同一条连接下重新暴露了完全相同的工具契约：
+| 操作 | 前置条件 |
+|---|---|
+| 市场查询与报价 | MCP 客户端和 Node.js；不需要种子或本地节点 |
+| RGB 钱包与 RGB 原子交换 | 可访问且已解锁的 RGB Lightning Node |
+| Spark 或 Liquid 钱包 | 可选钱包包及其助记词 |
+| 潜水艇交换 | 可选 swap SDK、Node.js 22+ 和已配置的付款钱包 |
 
-<CardGroup cols={2}>
-  <Card title="一条连接" icon="plug">
-    代理宿主只需配置一个 MCP 服务器，而不是接四五个。
-  </Card>
-  <Card title="工具名不变" icon="fingerprint">
-    工具契约（`kaleidoswap_*`、`wdk_*`、`spark_*`、`mpp_*`、`l402_*`）与原来的单域服务器完全一致，无需重新学习。
-  </Card>
-  <Card title="只需维护一处" icon="wrench">
-    缺陷修复和新工具都落在同一个仓库，而不是在多个仓库里重复。
-  </Card>
-  <Card title="持续维护" icon="check">
-    独立的 `kaleidoswap-mcp` 和 `l402-gateway-mcp` 仓库已归档。后续开发都在 `kaleido-mcp` 中进行。
-  </Card>
-</CardGroup>
-
-## 可用的服务器
-
-| 服务器 | 工具前缀 | 覆盖范围 |
-|--------|-------------|--------|
-| [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp) | `kaleidoswap_*`、`wdk_*`、`spark_*`、`mpp_*`、`l402_*`、`kaleido_node_*` | 统一网关。下面所有领域，一条连接全包 |
-| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node 钱包：余额、RGB 与 BOLT11 发票、支付、通道、原子交换接单方 |
-| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark 钱包：余额、闪电收付、代币转账、BTC 桥接的存入与提取 |
-| [wdk-wallet-liquid-mcp](https://github.com/kaleidoswap/wdk-wallet-liquid-mcp) | `liquid_*` | Liquid 钱包：L-BTC 与资产余额、保密地址、发送，底层由进程内的 LWK 钱包支撑，无需外部守护进程 |
-
-<Note>
-  `kaleido-mcp` 的工具直接构建在 kaleido-sdk 和 WDK 工具包之上，而不是代理那些单域服务器：它是同一批工具契约的组合，而不是对那些进程的封装。为便于迁移，遗留的 `rln_*` 以及通用 `get_*` 行情别名仍然保留。
-</Note>
-
-### 已退役的服务器 {#retired-servers}
-
-以下仓库已归档。它们自己的 README 都指向 `kaleido-mcp`，并声明不再更新：
-
-| 仓库 | 取代者 |
-|------|---------------|
-| `kaleidoswap-mcp` | kaleido-mcp 中的 `kaleidoswap_*` 工具 |
-| `l402-gateway-mcp` | kaleido-mcp 中的 `mpp_*` / `l402_*` 工具 |
-| `kaleido-node-mcp` | 节点生命周期工具已移植为 `kaleido_node_*`；该仓库同时具备的钱包、资产、通道、支付、行情和交换工具已被弃用，改用 kaleido-mcp 中现有的、由 SDK 支撑的工具 |
-
-如果你的集成仍然直接指向 `kaleidoswap-mcp` 或 `l402-gateway-mcp`，请改指 `kaleido-mcp`。工具名和参数都没有变化。
+模型通过 MCP 客户端调用工具。直接在终端启动服务器只会等待协议请求，不会打开聊天界面。
 
 ## 安装与配置 {#installation-and-configuration}
 
@@ -155,7 +122,7 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
     | `spark_get_spark_invoices` | 查询一张或多张 Spark 发票的状态 |
     | `spark_mpp_pay` 🔒 | 从 Spark 钱包支付一个 MPP 闪电挑战 |
 
-    在独立的 `wdk-wallet-spark-mcp` 服务器上通过 `WDK_SPARK_SEED` 配置，另有可选的 `SPARK_NETWORK`、`SPARK_SCAN_API_KEY` 和 `SPARK_USDT_TOKEN`。
+    在 `kaleido-mcp` 中设置 `WDK_SEED` 并安装可选包 `@tetherto/wdk-wallet-spark`。`SPARK_NETWORK`、`SPARK_SCAN_API_KEY` 和 `SPARK_USDT_TOKEN` 可选。
   </Accordion>
 
   <Accordion title="RLN，即 RGB Lightning Node（wdk_*，别名 rln_*）">
@@ -254,7 +221,7 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 把服务器添加到 Claude Desktop 或 Claude Code 这类 MCP 宿主中。已发布的网关用 `npx` 即可；独立的钱包服务器则从本地构建运行。
 
 <Warning>
-  这些配置文件以明文保存着真实的 BIP-39 助记词。请先在测试网络上起步，绝不要提交或分享包含主网种子的配置。
+  下方初始配置不需要助记词。如果之后添加钱包种子，请将配置保密，并排除在版本控制之外。
 </Warning>
 
 <CodeGroup>
@@ -263,10 +230,9 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
   "mcpServers": {
     "kaleido": {
       "command": "npx",
-      "args": ["-y", "-p", "kaleido-mcp", "-p", "@tetherto/wdk-wallet-spark", "kaleido-mcp"],
+      "args": ["-y", "kaleido-mcp"],
       "env": {
         "KALEIDO_NETWORK": "signet",
-        "WDK_SEED": "your twelve word seed phrase",
         "RLN_NODE_URL": "http://localhost:3001"
       }
     }
@@ -278,45 +244,15 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 claude mcp add kaleido \
   --env KALEIDO_NETWORK=signet \
   --env RLN_NODE_URL=http://localhost:3001 \
-  --env WDK_SEED="your twelve word seed phrase" \
-  -- npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark kaleido-mcp
-```
-
-```json wdk-wallet-mcp
-{
-  "mcpServers": {
-    "wdk_wallet": {
-      "command": "node",
-      "args": ["/path/to/wdk-wallet-mcp/dist/index.js"],
-      "env": {
-        "RLN_NODE_URL": "http://localhost:3001"
-      }
-    }
-  }
-}
-```
-
-```json wdk-wallet-spark-mcp
-{
-  "mcpServers": {
-    "wdk_wallet_spark": {
-      "command": "node",
-      "args": ["/path/to/wdk-wallet-spark-mcp/dist/index.js"],
-      "env": {
-        "WDK_SPARK_SEED": "your twelve word seed phrase",
-        "SPARK_NETWORK": "REGTEST"
-      }
-    }
-  }
-}
+  -- npx -y kaleido-mcp
 ```
 </CodeGroup>
 
-在 Claude Desktop 中，配置文件是 `claude_desktop_config.json`（**Settings > Developer > Edit Config**）。`WDK_SEED` 和 `@tetherto/wdk-wallet-spark` 包都是可选的：不提供时 Spark 工具会被禁用，而 RGB 节点、DEX、支付和行情工具照常可用。独立的 Spark 服务器没有网络预设，因此直接设置 `SPARK_NETWORK`；`REGTEST` 是 Spark SDK 对其托管测试网络的命名。
+在 Claude Desktop 中，配置文件是 `claude_desktop_config.json`（**Settings > Developer > Edit Config**）。`WDK_SEED` 和 `@tetherto/wdk-wallet-spark` 包都是可选的：不提供时 Spark 工具会被禁用，而 RGB 节点、DEX、支付和行情工具照常可用。`REGTEST` 是 Spark SDK 对其托管测试网络的命名。
 
 ## 首次运行 {#first-run}
 
-顺序是先只读，再报价，最后执行 —— 因为除第一步之外，每一步都会动用真实价值。
+先查询市场和钱包，再请求报价，最后才执行。余额查询和报价不会转移资金；支付与执行工具才会。
 
 <Steps>
   <Step title="把网关添加到宿主客户端">
@@ -334,17 +270,17 @@ claude mcp add kaleido \
     What is the current Bitcoin price and the Fear and Greed index?
     ```
 
-    这会触发 `l402_get_price` 和 `l402_get_sentiment`。只要有回答，连接就是通的。
+    这会触发 `l402_get_price` 和 `l402_get_sentiment`。请核对客户端是否报告了成功的工具调用；仅有模型文字回答不能证明连接成功。
   </Step>
 
   <Step title="确认钱包已接好">
-    接着确认钱包工具能正常解析：
+    启用可选 Spark 包并设置种子后，再确认钱包工具能正常解析：
 
     ```
     Show me my Spark balance and my Spark address.
     ```
 
-    这会调用 `spark_get_balance` 和 `spark_get_address`。这一步报错说明是种子或网络问题，而不是连接问题。
+    这会调用 `spark_get_balance` 和 `spark_get_address`。如果工具发现成功但调用失败，请检查可选钱包包、种子、网络及工具返回的错误。
   </Step>
 
   <Step title="交易前先报价">
@@ -366,7 +302,7 @@ claude mcp add kaleido \
   通用 MCP 宿主是保护最弱的一条路径。`kaleido-mcp` 不编码确认标志，所以如果你的客户端自动批准工具调用，LLM 就能不经询问地从配置的钱包中花钱。在完全弄清客户端如何处理批准之前，请只使用测试网络种子。
 </Warning>
 
-## 跨服务器的原子交换 {#atomic-swap-across-servers}
+## 原子交换流程 {#atomic-swap-across-servers}
 
 一笔原子交换需要 DEX 工具和钱包工具配合。`kaleido-mcp` 用它的 `kaleidoswap_*` 工具与做市方通信，并用 `wdk_*` 工具驱动接单方节点。任何一步都不涉及托管，HTLC 在闪电网络上结算。
 
@@ -390,3 +326,30 @@ mpp_request_challenge(url)          → challenge { invoice, challenge_id }
 wdk_mpp_pay(invoice, challenge_id)  → payment credential
 mpp_submit_credential(url, cred)    → { ok, data, receipt }
 ```
+
+
+## 运行时兼容性
+
+排查集成问题时，请核对实际安装的包版本。使用 QVAC 的 Mind 宿主需要
+`@qvac/sdk >=0.20.0`。`kaleidoswap_submarine_*` 工具还需要可选的
+`@kaleidorg/swap-sdk` 包，以及 Node.js 22 或更新版本。
+工具出现在目录中不代表钱包、节点或可选依赖已配置完成。
+`/health` 成功仅表示 HTTP 进程正在运行。
+
+[自动生成的 MCP 参考](https://github.com/kaleidoswap/kaleido-mcp/blob/main/docs/TOOLS.md)
+列出了当前参数结构。固定版本的集成应查看对应 release tag 中的参考。
+
+## 已退役的服务器 {#retired-servers}
+
+下列名称仅用于旧集成迁移，不是需要额外安装的服务器：
+
+| 旧入口 | 当前用法 |
+|---|---|
+| `wdk-wallet-mcp` | `kaleido-mcp` 中的 `wdk_*` |
+| `wdk-wallet-spark-mcp` | `spark_*` 加可选 Spark 包；用 `WDK_SEED` 替代 `WDK_SPARK_SEED` |
+| `wdk-wallet-liquid-mcp` | `liquid_*` 加可选 Liquid 包 |
+| `kaleidoswap-mcp` | `kaleidoswap_*`；已移除的 REST 订单流程请改为原子交换 |
+| `l402-gateway-mcp` | `mpp_*` / `l402_*` |
+| `kaleido-node-mcp` | `kaleido_node_*` 管理节点，`wdk_*` 操作钱包 |
+
+宿主需要的 `rln_*` 别名仍可保留。新建原始 MCP 集成应使用规范名称，迁移参数前请核对所安装版本的自动生成参数结构。

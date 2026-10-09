@@ -28,7 +28,7 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 
 ## 统一的工具契约，多种传输方式
 
-模型在任何地方看到的工具名称和 schema 都完全相同，只有*工具如何执行*会因接入方式而异：
+宿主把工具源接入同一个引擎。MCP 从服务器发现参数结构，进程内适配器则绑定核心契约。名称和参数可能不同，请核对实际连接的工具源，不要假设各传输方式完全兼容：
 
 | 接入方式 | 工具执行方式 | 花费前确认 |
 |---------|----------------|----------------------|
@@ -36,7 +36,7 @@ description: "驱动 KaleidoSwap 代理式钱包的本地端推理引擎：分�
 | 桌面端 | 以 stdio 工具源方式接入 `kaleido-mcp`（命名空间为 `spark_*`/`rln_*`/`kaleidoswap_*`） | 确认对话框 |
 | 评测 / CLI | 预置的桩处理器，用于可复现的基准测试 | 自动批准（同时断言把关已触发） |
 
-规范的工具契约以 `ToolDef[]` 的形式定义在 core 中，其 `spend` 标记会映射为 `requiresConfirmation: true`。每个会动用资金的工具都带有这个标记，**Engine 会在执行前暂停并调用宿主的 `onConfirm`**，因此模型永远无法绕过花费把关。确认面板上的复述文本是确定性的、以语音优先方式生成（例如 *"Send 4,800 sats to bob over Spark. Confirm?"*），由已解析的调用内容拼装，而不是由模型生成，所以单位或收款方写错时会显示出来，便于被发现。
+规范的工具契约以 `ToolDef[]` 的形式定义在 core 中，其 `spend` 标记会映射为 `requiresConfirmation: true`。对带有此标记的工具，**Engine 会在执行前暂停并调用宿主的 `onConfirm`**。自定义工具必须声明风险，MCP 分类则取决于所安装的适配器版本。确认面板上的复述文本是确定性的、以语音优先方式生成（例如 *"Send 4,800 sats to bob over Spark. Confirm?"*），由已解析的调用内容拼装，而不是由模型生成，所以单位或收款方写错时会显示出来，便于被发现。
 
 ### 各分层的钱包工具
 
@@ -65,12 +65,12 @@ LLM、嵌入、语音转文字和文字转语音推理全部通过 Tether 的本
 
 | 包 | 版本 |
 |---------|---------|
-| `@qvac/sdk` | 核心引擎支持 0.13.1 及以上版本，并以 0.21 为测试基准 |
+| `@qvac/sdk` | 当前包声明的可选 peer 依赖为 >=0.20.0，并以 0.21.0 为测试基准 |
 | `@kaleidorg/mind` | 把 `@qvac/sdk` 作为可选 peer 依赖，因此引擎在完全没有模型的情况下也能配合 mock provider 运行 |
 
 ### 推荐模型
 
-KaleidoMind 0.8 推荐 Qwen3.5 系列。下表中的每个模型都是 `@qvac/sdk` 注册表常量，`loadModel({ modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M })` 会自动下载并缓存。不再推荐 Qwen3 和 Hermes 3：较小的 Qwen3 模型会弄乱 `rln_issue_asset` 等多字段钱包调用的参数。
+KaleidoMind 推荐 Qwen3.5 系列。下表中的每个模型都是 `@qvac/sdk` 注册表常量，`loadModel({ modelSrc: QWEN3_5_2B_MULTIMODAL_Q4_K_M })` 会自动下载并缓存。不再推荐 Qwen3 和 Hermes 3：较小的 Qwen3 模型会弄乱 `rln_issue_asset` 等多字段钱包调用的参数。
 
 | 模型 | `@qvac/sdk` 常量 | 下载大小 | 内存 | 用途 |
 |---|---|---|---|---|
@@ -108,8 +108,8 @@ KaleidoMind 0.8 推荐 Qwen3.5 系列。下表中的每个模型都是 `@qvac/sd
 
 ## 与 KaleidoAgent 的关系 {#relationship-to-kaleidoagent}
 
-[KaleidoAgent](/cn/ai-tools/kaleido-agent) 是一个独立的常驻 Node.js 服务（Nanobot 运行时、定时调度、Telegram），它早于 KaleidoMind 的 `Engine`，并且**尚未**迁移到该引擎上，而是直接对接 Anthropic 或 OpenAI 运行自己的代理循环。两者在概念上是同一个思路（在工具注册表之上运行带确认把关的代理循环）的两次实现。让二者收敛 —— 即由 KaleidoAgent 承载 KaleidoMind 的 `Engine` 而不再用自己的循环 —— 是一条已知但尚未启动的整合路径；在那之前，请把它们当作两个都消费 `kaleido-mcp` 的独立系统。
+[KaleidoAgent](/cn/ai-tools/kaleido-agent) 是一个独立的常驻 Node.js 服务（Nanobot 运行时、定时调度、Telegram），它早于 KaleidoMind 的 `Engine`，并且**尚未**迁移到该引擎上，仍使用自己的运行时，但已经复用 `@kaleidorg/mind` 发布的 skill 操作手册。两者在概念上是同一个思路（在工具注册表之上运行带确认把关的代理循环）的两次实现。让二者收敛 —— 即由 KaleidoAgent 承载 KaleidoMind 的 `Engine` 而不再用自己的循环 —— 是一条已知但尚未启动的整合路径；在那之前，请把它们当作两个都消费 `kaleido-mcp` 的独立系统。
 
 ## 发布与子路径
 
-从 `packages/core` 以 `@kaleidorg/mind` 发布，包含这些子路径：`./mcp`（MCP 工具源辅助函数）、`./skills`（skill 加载器）、`./logger`、`./qvac`（本地端推理适配器）和 `./testing`（mock 钱包与脚本化 provider）。npm 上还有 `apps/provider`，即桌面应用嵌入的 Tauri 桌面 sidecar，包名为 `@kaleidorg/mind-provider`。`apps/cli` 中的 CLI 供仓库内的终端与评测使用，不对外发布。
+从 `packages/core` 以 `@kaleidorg/mind` 发布，包含这些子路径：`./mcp`（MCP 工具源辅助函数）、`./skills`（skill 加载器）、`./logger`、`./qvac`（本地端推理适配器）、`./openai`（兼容 OpenAI 的模型服务器）、`./kaleidoswap`、`./lsps1`、`./submarine`、`./bitrefill`、`./flashnet`、`./knowledge` 和 `./testing`（mock 钱包与脚本化 provider）。npm 上还有 `apps/provider`，即桌面应用嵌入的 Tauri 桌面 sidecar，包名为 `@kaleidorg/mind-provider`。`apps/cli` 中的 CLI 供仓库内的终端与评测使用，不对外发布。

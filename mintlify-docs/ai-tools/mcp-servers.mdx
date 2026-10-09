@@ -4,7 +4,7 @@ sidebarTitle: "MCP Servers"
 description: "Typed Model Context Protocol tools for Bitcoin wallets, the KaleidoSwap DEX, and Lightning-paid APIs, covering the server list, tool surface, and client setup"
 ---
 
-KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, a single unified server, plus three per-wallet servers that remain standalone.
+KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, the unified server recommended for new integrations. It supersedes the earlier standalone wallet servers; their entries below are migration references.
 
 ## Why One Server
 
@@ -25,7 +25,7 @@ Several focused, single-domain MCP servers existed early on: a KaleidoSwap DEX s
   </Card>
 </CardGroup>
 
-## Available Servers
+## Unified Server and Legacy Migration References
 
 | Server | Tool prefix | Covers |
 |--------|-------------|--------|
@@ -122,6 +122,19 @@ The preset only fills in defaults. Any variable you set explicitly, such as `KAL
 | `PORT` | No | Enable Streamable HTTP transport instead of stdio |
 | `MCP_AUTH_TOKEN` | No | Bearer token for HTTP mode |
 
+### Runtime Compatibility
+
+Check the installed package versions when diagnosing an integration. QVAC-backed
+Mind hosts require `@qvac/sdk >=0.20.0`. The `kaleidoswap_submarine_*` tools also
+need the optional `@kaleidorg/swap-sdk` package and Node.js 22 or newer.
+A tool appearing in the catalog does not guarantee that its wallet, node or
+optional dependency is configured. A successful `/health` response only confirms
+that the HTTP process is running.
+
+The [generated MCP reference](https://github.com/kaleidoswap/kaleido-mcp/blob/main/docs/TOOLS.md)
+lists the current schemas. Use the reference at your installed release tag when
+building a version-pinned integration.
+
 ### Legacy Aliases
 
 Some tools are still reachable under older names (`rln_*` for `wdk_*`, generic `get_*` for the `l402_get_*` market tools) for backward compatibility with earlier integrations. New integrations should use the canonical `wdk_*` / `l402_*` names.
@@ -156,7 +169,7 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
     | `spark_get_spark_invoices` | Query status of one or more Spark invoices |
     | `spark_mpp_pay` 🔒 | Pay an MPP Lightning challenge from the Spark wallet |
 
-    Configured with `WDK_SPARK_SEED` on the standalone `wdk-wallet-spark-mcp` server, plus optional `SPARK_NETWORK`, `SPARK_SCAN_API_KEY`, and `SPARK_USDT_TOKEN`.
+    In kaleido-mcp, configure `WDK_SEED` and install the optional `@tetherto/wdk-wallet-spark` package. `SPARK_NETWORK`, `SPARK_SCAN_API_KEY`, and `SPARK_USDT_TOKEN` are optional. The legacy standalone server used `WDK_SPARK_SEED`.
   </Accordion>
 
   <Accordion title="RLN, RGB Lightning Node (wdk_*, alias rln_*)">

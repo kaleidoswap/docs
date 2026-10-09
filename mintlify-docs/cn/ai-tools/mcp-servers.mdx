@@ -4,7 +4,7 @@ sidebarTitle: "MCP 服务器"
 description: "用于比特币钱包、KaleidoSwap DEX 和闪电付费 API 的类型化 Model Context Protocol 工具：服务器清单、工具集与客户端配置一次讲清。"
 ---
 
-KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 和支付能力开放给 AI 代理（Claude Desktop、[KaleidoAgent](/cn/ai-tools/kaleido-agent)、基于 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的宿主，或任何其他 [MCP](https://modelcontextprotocol.io) 客户端），另外还有三个仍然独立存在的按钱包划分的服务器。
+KaleidoSwap 通过 **`kaleido-mcp`** 这一个统一服务器，把钱包、DEX 和支付能力开放给 AI 代理（Claude Desktop、[KaleidoAgent](/cn/ai-tools/kaleido-agent)、基于 [KaleidoMind](/cn/ai-tools/kaleido-mind) 的宿主，或任何其他 [MCP](https://modelcontextprotocol.io) 客户端），新集成应使用这个统一服务器。它已取代早期的独立钱包服务器；下方保留的独立服务器条目用于迁移参考。
 
 ## 为什么只用一个服务器
 
@@ -390,3 +390,15 @@ mpp_request_challenge(url)          → challenge { invoice, challenge_id }
 wdk_mpp_pay(invoice, challenge_id)  → payment credential
 mpp_submit_credential(url, cred)    → { ok, data, receipt }
 ```
+
+
+## 运行时兼容性
+
+排查集成问题时，请核对实际安装的包版本。使用 QVAC 的 Mind 宿主需要
+`@qvac/sdk >=0.20.0`。`kaleidoswap_submarine_*` 工具还需要可选的
+`@kaleidorg/swap-sdk` 包，以及 Node.js 22 或更新版本。
+工具出现在目录中不代表钱包、节点或可选依赖已配置完成。
+`/health` 成功仅表示 HTTP 进程正在运行。
+
+[自动生成的 MCP 参考](https://github.com/kaleidoswap/kaleido-mcp/blob/main/docs/TOOLS.md)
+列出了当前参数结构。固定版本的集成应查看对应 release tag 中的参考。

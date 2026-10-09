@@ -8,12 +8,12 @@ description: "安装 KaleidoSwap AI 工具：MCP 服务器网关、KaleidoAgent 
 
 | 接入方式 | 安装路径 | 前置条件 |
 |---------|-------------|---------------|
-| **[MCP 服务器](#mcp-servers)** | 网关用 `npx`，专用服务器需本地构建 | Node.js 20+，一个 MCP 宿主客户端 |
+| **[MCP 服务器](#mcp-servers)** | `npx -y kaleido-mcp` | Node.js 20+，一个 MCP 宿主客户端 |
 | **[KaleidoAgent](#kaleidoagent)** | 克隆仓库并从源码构建 | Node.js 20+、KaleidoCLI、Nanobot、一个 LLM API 密钥 |
-| **[KaleidoMind](#kaleidomind)** | 随桌面应用一起提供，在你自己的宿主中 `npm install @kaleidorg/mind`，或构建仓库用于开发 | 桌面应用，或 Node.js 与 QVAC SDK（`@qvac/sdk`） |
+| **[KaleidoMind](#kaleidomind)** | 随桌面应用一起提供，在你自己的宿主中 `npm install @kaleidorg/mind`，或构建仓库用于开发 | 项目模板需要 Node.js；仅本地推理需要 QVAC |
 
 <Warning>
-  这里的每一种接入方式都会使用真实的 BIP-39 助记词签名，或直接驱动一个运行中的节点。请先在测试网络上起步，在配置验证通过之前保持 `dry_run` 开启，并且永远不要把主网种子写入会被提交或分享的文件。
+  可以先在无资金条件下试用：MCP 市场查询不需要钱包，Mind 提供离线示例。连接钱包时使用测试网络，并避免提交或分享种子。`dry_run` 是 KaleidoAgent 的设置，不是 MCP 或 Mind 的通用选项。
 </Warning>
 
 ## MCP 服务器 {#mcp-servers}
@@ -25,30 +25,17 @@ KALEIDO_NETWORK=signet npx -y kaleido-mcp
 ```
 
 <Note>
-  本文档描述的是 `kaleido-mcp` 0.3.0 及以上版本：它新增了 `KALEIDO_NETWORK` 预设和
-  `kaleido_node_*` 工具，并且只通过原子交换结算。如果 `npx` 解析到了较旧的缓存版本，
-  请运行一次 `npx -y kaleido-mcp@latest`。
+  直接启动 stdio 服务器会等待 MCP 客户端请求，不会显示聊天提示。
+  请将命令加入客户端配置，再发起工具调用。
 </Note>
 
-自 0.3.1 起，Spark 和 Liquid 钱包是可选的，普通的 `npx` 不会安装它们。如需启用，请运行 `npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp`，并设置 `WDK_SEED` / `LIQUID_MNEMONIC`。
+Spark 和 Liquid 钱包是可选的，普通的 `npx` 不会安装它们。如需启用，请运行 `npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark -p @kaleidorg/wdk-wallet-liquid kaleido-mcp`，并设置 `WDK_SEED` / `LIQUID_MNEMONIC`。
 
 使用 RGB 工具还需要一个 RGB Lightning Node。[KaleidoCLI](/cn/cli/installation) 可以在 Docker 中运行一个 signet 节点，完整流程见[构建本地 RGB 代理](/cn/ai-tools/build-local-rgb-agent)。
 
-另有三个按钱包划分的服务器 `wdk-wallet-mcp`、`wdk-wallet-spark-mcp` 和 `wdk-wallet-liquid-mcp`，它们保持独立而未并入网关，需要从源码构建：
-
-```bash
-git clone https://github.com/kaleidoswap/wdk-wallet-mcp.git
-cd wdk-wallet-mcp
-npm install
-npm run build
-node dist/index.js
-```
-
-<Note>
-  `kaleidoswap-mcp` 和 `l402-gateway-mcp` 已归档，它们各自的 README 也建议集成方改用 `kaleido-mcp`。新项目请不要再克隆或构建它们。
-</Note>
-
-完整的环境变量参考、stdio 与 HTTP 传输方式的对比、按领域划分的工具清单，以及每个服务器的客户端配置 JSON，请查看 [MCP 服务器页面](/cn/ai-tools/mcp-servers)。
+统一服务器已包含早期钱包服务器的功能域。工具目录和客户端配置见
+[MCP 服务器](/cn/ai-tools/mcp-servers)，旧集成请参阅
+[迁移说明](/cn/ai-tools/mcp-servers#retired-servers)。
 
 ## KaleidoAgent {#kaleidoagent}
 
@@ -65,6 +52,18 @@ npm run install:all
 ## KaleidoMind {#kaleidomind}
 
 KaleidoMind 是嵌入宿主应用中的引擎，而不是一个独立安装的程序。
+
+### 先试用离线项目
+
+```bash
+npm create @kaleidorg/mind my-agent
+cd my-agent
+npm install
+npm run start:offline
+```
+
+预期输出：示例余额、模拟发票和模拟转账。不需要节点、模型下载或真实资金。
+下一步可用 `npm run start:mock` 加载本地模型，钱包仍保持模拟状态。
 
 ### 通过桌面应用
 
@@ -87,7 +86,8 @@ npm install @kaleidorg/mind @qvac/sdk
 ```bash
 git clone https://github.com/kaleidoswap/kaleido-mind.git
 cd kaleido-mind
-pnpm install && pnpm -r build
+corepack enable
+pnpm install --frozen-lockfile && pnpm build
 ```
 
 `apps/cli` 中的 CLI 负责本地模型管理，也可以直接运行代理：

@@ -4,51 +4,19 @@ sidebarTitle: "MCP Servers"
 description: "Typed Model Context Protocol tools for Bitcoin wallets, the KaleidoSwap DEX, and Lightning-paid APIs, covering the server list, tool surface, and client setup"
 ---
 
-KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, the unified server recommended for new integrations. It supersedes the earlier standalone wallet servers; their entries below are migration references.
+KaleidoSwap exposes its wallet, DEX, and payment functionality to AI agents (Claude Desktop, [KaleidoAgent](/ai-tools/kaleido-agent), [KaleidoMind](/ai-tools/kaleido-mind)-based hosts, or any other [MCP](https://modelcontextprotocol.io) client) through **`kaleido-mcp`**, the unified server recommended for new integrations. It supersedes the earlier standalone wallet servers; see the migration notes at the end of this page.
 
-## Why One Server
+## What you need
 
-Several focused, single-domain MCP servers existed early on: a KaleidoSwap DEX server, an MPP/L402 payment server, per-wallet servers for RLN and Spark. The DEX and payment servers have since been consolidated into `kaleido-mcp`, which re-exposes the same tool contracts under one connection:
+| Operation | Prerequisite |
+|---|---|
+| Market reads and quotes | MCP client and Node.js; no seed or local node |
+| RGB wallet and atomic RGB swaps | Reachable, unlocked RGB Lightning Node |
+| Spark or Liquid wallet | Optional wallet package and its mnemonic |
+| Submarine swaps | Optional swap SDK, Node.js 22+, and a configured funding wallet |
 
-<CardGroup cols={2}>
-  <Card title="One connection" icon="plug">
-    An agent host configures a single MCP server instead of wiring up four or five.
-  </Card>
-  <Card title="Same tool names" icon="fingerprint">
-    Tool contracts (`kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`) are unchanged from the original focused servers, nothing to relearn.
-  </Card>
-  <Card title="One place to maintain" icon="wrench">
-    Bug fixes and new tools land in one repo instead of being duplicated across several.
-  </Card>
-  <Card title="Actively maintained" icon="check">
-    The standalone `kaleidoswap-mcp` and `l402-gateway-mcp` repos are archived. `kaleido-mcp` is where ongoing work happens.
-  </Card>
-</CardGroup>
-
-## Unified Server and Legacy Migration References
-
-| Server | Tool prefix | Covers |
-|--------|-------------|--------|
-| [kaleido-mcp](https://github.com/kaleidoswap/kaleido-mcp) | `kaleidoswap_*`, `wdk_*`, `spark_*`, `mpp_*`, `l402_*`, `kaleido_node_*` | The unified gateway. Every domain below, in one connection |
-| [wdk-wallet-mcp](https://github.com/kaleidoswap/wdk-wallet-mcp) | `wdk_*` | RGB Lightning Node wallet: balances, RGB and BOLT11 invoices, payments, channels, atomic swap taker |
-| [wdk-wallet-spark-mcp](https://github.com/kaleidoswap/wdk-wallet-spark-mcp) | `spark_*` | Spark wallet: balances, Lightning receive and pay, token transfers, BTC bridge deposits and withdrawals |
-| [wdk-wallet-liquid-mcp](https://github.com/kaleidoswap/wdk-wallet-liquid-mcp) | `liquid_*` | Liquid wallet: L-BTC and asset balances, confidential addresses, sends, backed by an in-process LWK wallet with no external daemon |
-
-<Note>
-  `kaleido-mcp` implements its tools directly on kaleido-sdk and the WDK toolkit rather than proxying the focused servers: it is a composition of the same tool contracts, not a wrapper around those processes. Legacy `rln_*` and generic `get_*` market aliases remain in place for migration.
-</Note>
-
-### Retired Servers
-
-These repos are archived. Their own READMEs point to `kaleido-mcp` and say they receive no further updates:
-
-| Repo | Superseded by |
-|------|---------------|
-| `kaleidoswap-mcp` | `kaleidoswap_*` tools in kaleido-mcp |
-| `l402-gateway-mcp` | `mpp_*` / `l402_*` tools in kaleido-mcp |
-| `kaleido-node-mcp` | Node-lifecycle tools ported as `kaleido_node_*`; the wallet, asset, channel, payment, market, and swap tools that repo also had were dropped in favor of the SDK-backed tools already in kaleido-mcp |
-
-If you have an integration still pointing at `kaleidoswap-mcp` or `l402-gateway-mcp` directly, point it at `kaleido-mcp` instead. The tool names and arguments did not change.
+The model calls tools through your MCP client. Starting the server in a terminal
+only waits for protocol requests; it does not open a chat.
 
 ## Installation & Configuration
 
@@ -169,7 +137,7 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
     | `spark_get_spark_invoices` | Query status of one or more Spark invoices |
     | `spark_mpp_pay` 🔒 | Pay an MPP Lightning challenge from the Spark wallet |
 
-    In kaleido-mcp, configure `WDK_SEED` and install the optional `@tetherto/wdk-wallet-spark` package. `SPARK_NETWORK`, `SPARK_SCAN_API_KEY`, and `SPARK_USDT_TOKEN` are optional. The legacy standalone server used `WDK_SPARK_SEED`.
+    In kaleido-mcp, configure `WDK_SEED` and install the optional `@tetherto/wdk-wallet-spark` package. `SPARK_NETWORK`, `SPARK_SCAN_API_KEY`, and `SPARK_USDT_TOKEN` are optional.
   </Accordion>
 
   <Accordion title="RLN, RGB Lightning Node (wdk_*, alias rln_*)">
@@ -265,10 +233,10 @@ All tools below are served by `kaleido-mcp` over a single connection. The 🔒 i
 
 ## Client Configuration
 
-Add a server to an MCP host such as Claude Desktop or Claude Code. `npx` works for the published gateway; the standalone wallet servers run from a local build.
+Add the unified server to your MCP client. Start with market reads and add wallet packages only when you need them.
 
 <Warning>
-  These configuration files hold a real BIP-39 mnemonic in plain text. Start on test networks and never commit or share a config containing a mainnet seed.
+  The starter configuration below needs no mnemonic. If you later add wallet seeds, keep that configuration private and out of version control.
 </Warning>
 
 <CodeGroup>
@@ -277,10 +245,9 @@ Add a server to an MCP host such as Claude Desktop or Claude Code. `npx` works f
   "mcpServers": {
     "kaleido": {
       "command": "npx",
-      "args": ["-y", "-p", "kaleido-mcp", "-p", "@tetherto/wdk-wallet-spark", "kaleido-mcp"],
+      "args": ["-y", "kaleido-mcp"],
       "env": {
         "KALEIDO_NETWORK": "signet",
-        "WDK_SEED": "your twelve word seed phrase",
         "RLN_NODE_URL": "http://localhost:3001"
       }
     }
@@ -292,45 +259,15 @@ Add a server to an MCP host such as Claude Desktop or Claude Code. `npx` works f
 claude mcp add kaleido \
   --env KALEIDO_NETWORK=signet \
   --env RLN_NODE_URL=http://localhost:3001 \
-  --env WDK_SEED="your twelve word seed phrase" \
-  -- npx -y -p kaleido-mcp -p @tetherto/wdk-wallet-spark kaleido-mcp
-```
-
-```json wdk-wallet-mcp
-{
-  "mcpServers": {
-    "wdk_wallet": {
-      "command": "node",
-      "args": ["/path/to/wdk-wallet-mcp/dist/index.js"],
-      "env": {
-        "RLN_NODE_URL": "http://localhost:3001"
-      }
-    }
-  }
-}
-```
-
-```json wdk-wallet-spark-mcp
-{
-  "mcpServers": {
-    "wdk_wallet_spark": {
-      "command": "node",
-      "args": ["/path/to/wdk-wallet-spark-mcp/dist/index.js"],
-      "env": {
-        "WDK_SPARK_SEED": "your twelve word seed phrase",
-        "SPARK_NETWORK": "REGTEST"
-      }
-    }
-  }
-}
+  -- npx -y kaleido-mcp
 ```
 </CodeGroup>
 
-On Claude Desktop the file is `claude_desktop_config.json` (**Settings > Developer > Edit Config**). `WDK_SEED` and the `@tetherto/wdk-wallet-spark` package are optional: leave them out and the Spark tools are disabled while the RGB node, DEX, payment and market tools keep working. The standalone Spark server takes no network preset, so it sets `SPARK_NETWORK` directly; `REGTEST` is the name the Spark SDK gives its hosted test network.
+On Claude Desktop the file is `claude_desktop_config.json` (**Settings > Developer > Edit Config**). `WDK_SEED` and the `@tetherto/wdk-wallet-spark` package are optional: leave them out and the Spark tools are disabled while the RGB node, DEX, payment and market tools keep working. `REGTEST` is the name the Spark SDK gives its hosted test network.
 
 ## First Run
 
-Go read-only first, then quoting, then execution. Every step after the first one moves real value.
+Start with market reads, then wallet reads, then a quote. Reading balances and requesting a quote do not move funds; payment and execution tools do.
 
 <Steps>
   <Step title="Add the gateway to your host">
@@ -348,17 +285,17 @@ Go read-only first, then quoting, then execution. Every step after the first one
     What is the current Bitcoin price and the Fear and Greed index?
     ```
 
-    That exercises `l402_get_price` and `l402_get_sentiment`. If it answers, the connection works.
+    That exercises `l402_get_price` and `l402_get_sentiment`. Check that the client reports successful tool calls; a model-generated answer alone does not verify the connection.
   </Step>
 
   <Step title="Check the wallet is wired">
-    Now confirm the wallet tools resolve:
+    After enabling the optional Spark package and seed, confirm the wallet tools resolve:
 
     ```
     Show me my Spark balance and my Spark address.
     ```
 
-    This calls `spark_get_balance` and `spark_get_address`. An error here is a seed or network problem, not a connection problem.
+    This calls `spark_get_balance` and `spark_get_address`. If discovery succeeded but this call fails, check the optional wallet package, seed, network and the tool error.
   </Step>
 
   <Step title="Quote before you trade">
@@ -380,7 +317,7 @@ Go read-only first, then quoting, then execution. Every step after the first one
   A generic MCP host is the least protected path. `kaleido-mcp` does not encode a confirmation flag, so if your client auto-approves tool calls, an LLM can spend from the configured wallet without asking you. Use a test network seed until you know how your client handles approvals.
 </Warning>
 
-## Atomic Swap Across Servers
+## Atomic Swap Flow {#atomic-swap-across-servers}
 
 An atomic swap needs the DEX tools and the wallet tools together. `kaleido-mcp` speaks to the maker via its `kaleidoswap_*` tools and drives the taker node via its `wdk_*` tools. Nothing is custodied at any step, and the HTLC settles on Lightning.
 
@@ -405,3 +342,20 @@ wdk_mpp_pay(invoice, challenge_id)  → payment credential
 mpp_submit_credential(url, cred)    → { ok, data, receipt }
 ```
 
+
+## Retired Servers
+
+These names are migration references, not additional servers to install:
+
+| Older entry point | Current path |
+|---|---|
+| `wdk-wallet-mcp` | `wdk_*` in `kaleido-mcp` |
+| `wdk-wallet-spark-mcp` | `spark_*` plus the optional Spark package; use `WDK_SEED` instead of `WDK_SPARK_SEED` |
+| `wdk-wallet-liquid-mcp` | `liquid_*` plus the optional Liquid package |
+| `kaleidoswap-mcp` | `kaleidoswap_*`; use atomic swaps instead of the removed REST order flow |
+| `l402-gateway-mcp` | `mpp_*` / `l402_*` |
+| `kaleido-node-mcp` | `kaleido_node_*` for lifecycle operations; `wdk_*` for the wallet |
+
+Keep existing `rln_*` aliases where required by your host. For new raw MCP
+integrations prefer canonical names and check the generated schemas for your
+installed version before migrating arguments.

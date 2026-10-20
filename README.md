@@ -27,7 +27,7 @@ All documentation lives in the `mintlify-docs/` directory. Each section below ma
 
 ## Translations
 
-English is the default language and lives at the root of `mintlify-docs/`. The Simplified Chinese translation mirrors that tree one-to-one under `mintlify-docs/cn/`, and both are declared under `navigation.languages` in `docs.json`. Adding or removing a page means updating both trees. The Wallet Engine section is currently English-only.
+English is the default language and lives at the root of `mintlify-docs/`. The Simplified Chinese translation mirrors that tree one-to-one under `mintlify-docs/cn/`, and both are declared under `navigation.languages` in `docs.json`.
 
 Read [TRANSLATION-GUIDE.md](TRANSLATION-GUIDE.md) before touching `cn/`, and run the parity checks after any change:
 

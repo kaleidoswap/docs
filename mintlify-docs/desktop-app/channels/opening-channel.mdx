@@ -3,26 +3,30 @@ title: Opening Channels
 description: "Open a Lightning channel in the KaleidoSwap Desktop App by choosing a peer, setting capacity, and adding Bitcoin L2 assets for multi-asset trading"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 KaleidoSwap allows you to use the Lightning Network both by itself and with RGB assets on top of it. The former option is useful for generic LN operations, while the latter is to operate with RGB assets over the LN.
+
+<FeatureVideo name="desktop-open-channel" title="Opening a channel with bitcoin and USDT to a peer" />
 
 ## Opening a Channel
 
 The following is the procedure that will allow you to open a LN channel on your node. As mentioned in step 4, you can open it with or without adding a RGB asset on top of it.
 
-1. Open the **Channels** section and select the **"Open Channel"** tab.
-2. **Select a Peer** either by inserting the node ID or public key of the peer or by selecting a suggested node. <img src="/assets/images/desktop-app/16_peer_connection.png" alt="Peer selection with node ID field and suggested Lightning nodes" width={1332} height={757} />
-3. Specify the amount of Bitcoin to allocate to the channel. This will represent the total capacity of the channel. <img src="/assets/images/desktop-app/17_channel_amount.png" alt="Channel capacity selection with Bitcoin amount input" width={954} height={870} />
+1. In the sidebar, open **Liquidity → Open Channel**.
+2. **Select a Peer**: pick a **Suggested Node** (e.g. KaleidoSwap LSP), a **Connected Peer**, or **Connect manually** with `pubkey@host:port`. Click **Configure Channel** (and **Connect** if the app asks to connect to the peer first). <img src="/assets/images/desktop-app/16_peer_connection.png" alt="Peer selection with node ID field and suggested Lightning nodes" width={1332} height={757} />
+3. Set **Channel Capacity** (presets or slider; minimum 50,000 sats, maximum your spendable on-chain balance). <img src="/assets/images/desktop-app/17_channel_amount.png" alt="Channel capacity selection with Bitcoin amount input" width={954} height={870} />
 4. [Optional] **Add RGB Assets** by doing the following: 
-   - Click "Add Asset".
-   - Select the RGB assets you want to include. Note that you need to already have received or generated the asset in advance to open a channel with it. If your purpose is to include an asset that you don't already have seen in your wallet - as it's usually the case for first time users - the best way to proceed is to [buy a channel](/desktop-app/channels/order-new-channel) instead.
-   - Define how much of each asset to allocate to the channel.
+   - Under **Add RGB Assets**, pick an asset from the dropdown instead of **No Asset**.
+   - Only assets you hold on-chain are listed, so you need to already have received or issued the asset to open a channel with it. If your purpose is to include an asset that you don't already have seen in your wallet - as it's usually the case for first time users - the best way to proceed is to [buy a channel](/desktop-app/channels/order-new-channel) instead.
+   - Set the amount to allocate to the channel.
 This step is required if you want to use the channel to swap one or more RGB assets. <img src="/assets/images/desktop-app/18_add_rgb_asset.png" alt="Adding an RGB asset to the new Lightning channel" width={958} height={706} />
-5. Select a **Transaction Fee Rate** and go to "Next".
-6. **Double-check** all the information:
+5. Choose a **Fee Rate** (Slow/Normal/Fast/Custom), a **Channel Lock Duration**, and whether it is a **Public Channel**. Click **Continue**.
+6. **Double-check** all the information on **Review & Confirm**:
    - Bitcoin amount.
    - RGB asset amounts (if present).
    - Peer information.
-7. **Open Channel**: Click "Confirm" to initiate the channel opening process.
+7. **Open Channel**: on **Review & Confirm**, click **Open Channel**. The channel then shows as **Pending** in **Manage Channels** until the funding transaction confirms.
 
 ## Channel Opening Process
 

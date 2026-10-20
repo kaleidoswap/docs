@@ -4,7 +4,7 @@ sidebarTitle: "设置"
 description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位与语言、做市商与 LSP 接入，以及节点连接、安全备份和节点状态等各项设置"
 ---
 
-设置面板可从应用右上角的下拉菜单打开。它分为 **应用设置**(Application Settings)、**做市商与 LSP 设置**(Maker & LSP Settings) 和 **节点连接设置**(Node Connection Settings) 三部分，旁边还有 **安全与备份**(Security & Backup) 和 **节点状态**(Node Status) 面板。多数修改在点击 **「保存」(Save)** 后生效；节点连接设置下的修改还需要重启节点。
+设置面板可从应用右上角的下拉菜单打开。它分为 **应用设置**(Application Settings)、**做市商与 LSP 设置**(Maker & LSP Settings) 和 **节点连接设置**(Node Connection Settings) 三部分，旁边还有 **安全与备份**(Security & Backup) 和 **节点状态**(Node Status) 面板。多数修改在点击「保存设置」(Save Settings) 后生效；修改节点连接设置时，会弹出「重启节点？」(Restart Node?) 对话框，可选择「立即重启」(Restart Now) 或「稍后」(Later)。
 
 ## 应用设置
 
@@ -39,7 +39,7 @@ description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位�
 
 ### 主题 (Theme)
 
-应用只支持深色模式。浅色模式已被停用，以避免不同界面渲染不一致，因此设置中没有主题切换开关，应用也会忽略操作系统的主题偏好。
+「主题」(Theme) 一栏固定为「深色」(Dark)；应用只支持深色模式。浅色模式已被停用，以避免不同界面渲染不一致，因此设置中没有主题切换开关，应用也会忽略操作系统的主题偏好。
 
 ## 做市商与 LSP 设置
 
@@ -53,12 +53,12 @@ description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位�
 
 **作用：** 设置节点连接的闪电服务提供商 URL，用于获取通道流动性和交换路由。它通常与你的默认做市商 URL 一致。
 
-**何时需要修改：** 默认值已预先配置好，适用于大多数用户。如果你自己运行 LSP、偏好的 LSP 使用其他 URL，或者默认地址无法访问，就需要修改。
+**何时需要修改：** 在 Mutinynet 上已预先配置 KaleidoSwap 做市商/LSP；其他网络没有默认值，需要填写你的做市商 URL。此外，如果你自己运行 LSP、偏好的 LSP 使用其他 URL，或者默认地址无法访问，就需要修改。
 
 ## 节点连接设置
 
 <Note>
-  这些设置需要重启节点才能生效。保存后，应用会提示你 **「重启节点」(Restart Node)**，以便应用新的连接设置。
+  这些设置需要重启节点才能生效。点击「保存设置」后，会弹出「重启节点？」对话框，可选择「立即重启」或「稍后」。
 </Note>
 
 ### 节点连接串 (Node Connection String)
@@ -67,9 +67,9 @@ description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位�
 
 **何时需要修改：** 默认情况下，应用会管理一个内置的本地节点。如果你要连接远程或自建的 RGB Lightning Node，或者要在多个节点实例之间切换，就需要修改这一项。
 
-### Bitcoin RPC
+### Bitcoin Core 节点 (Bitcoin Core node，可选 · 高级)
 
-**作用：** 节点访问其 bitcoind 后端所使用的 Bitcoin Core RPC 连接串。
+**作用：** 留空则从索引器同步（默认，无需安装任何东西）。填写 `user:password@host:port` 后，闪电网络会从你自己的 Bitcoin Core 节点同步。
 
 ### 索引器 URL (Indexer URL)
 
@@ -79,11 +79,15 @@ description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位�
 
 **作用：** 用于交换 RGB 转账数据的 RGB 代理接口端点。
 
+### Bearer 令牌 (Bearer Token)
+
+**作用：** 可选令牌，发送给需要身份验证的远程节点。
+
 <Note>
   修改任何节点连接设置，都会让应用连接到另一个节点或后端。保存前请确认目标节点及相关服务正在运行且可以访问，然后在收到提示时重启节点。
 </Note>
 
-<img src="/assets/images/desktop-app/30_settings-node.png" alt="节点连接设置面板" width={909} height={622} />
+<img src="/assets/images/desktop-app/30_settings-node.png" alt="节点连接设置面板" width={1600} height={1000} />
 
 ## 安全与备份
 
@@ -91,13 +95,13 @@ description: "配置 KaleidoSwap 桌面应用：应用模式、比特币单位�
 
 - **查看助记词**(View Recovery Phrase) — 显示钱包的助记词种子短语
 - **修改密码**(Change Password) — 更新钱包的加密密码
-- **备份**(Backup) — 创建通道状态的加密备份。完整说明请参见[通道备份](/cn/desktop-app/channels/channel-backups)页面。
+- **备份**(Backup) — 创建完整节点数据的加密备份。完整说明请参见[通道备份](/cn/desktop-app/channels/channel-backups)页面。
 
 <img src="/assets/images/desktop-app/31_settings-security.png" alt="安全与备份设置面板" width={435} height={397} />
 
 ## 节点状态
 
-显示节点当前是运行中还是已离线，以及它是本地节点还是远程节点。在这里你可以 **「登出」(Logout)**（锁定节点）或 **「关闭」(Shutdown)** 节点。对于本地节点，设置页面底部还会显示实时的节点日志。
+显示节点当前是运行中还是已离线，以及它是本地节点还是远程节点。在这里你可以 **「登出」(Logout)** 或 **「关闭」(Shutdown)** 节点。「登出」会锁定节点（本地节点还会被停止），然后返回启动界面。对于本地节点，页面底部会显示「节点日志」(Node Logs)，并提供导出和清空操作。
 
 <img src="/assets/images/desktop-app/32_settings-node-status.png" alt="节点状态与日志面板" width={433} height={326} />
 

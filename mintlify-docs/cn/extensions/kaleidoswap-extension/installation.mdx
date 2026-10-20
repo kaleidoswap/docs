@@ -10,11 +10,11 @@ KaleidoSwap 扩展基于 Manifest V3 构建。首个封闭测试版以 Chromium 
 
 | 浏览器 | 是否支持 |
 |---------|-----------|
-| **Google Chrome** | 封闭测试目标浏览器 |
-| **Brave** | 封闭测试目标浏览器 |
-| **Edge** | 封闭测试目标浏览器 |
-| **Opera** | 封闭测试目标浏览器 |
-| **Firefox** | 除非提供 Firefox 构建版本，否则不在首个封闭测试范围内 |
+| **Google Chrome** | 支持（开发者模式） |
+| **Brave** | 支持 |
+| **Arc** | 支持 |
+| **Edge / Opera** | 基于 Chromium，但测试版安装指南未覆盖 |
+| **Firefox** | 尚未发布，也没有 Firefox AMO 上架 |
 | **Safari** | 暂不支持 |
 
 ## 安装
@@ -92,11 +92,13 @@ KaleidoSwap 扩展的首个版本是仅限邀请的封闭测试。目前还没�
 
 <img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap 扩展首次启动界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-1. **欢迎界面** - 创建新钱包或导入已有助记词
-2. **设置密码** - 创建一个安全密码来保护本地钱包
-3. **备份助记词** - 保存控制 Spark、Arkade 和 Nostr 身份的助记词
-4. **可选的 RLN 设置** - 连接 RGB Lightning Node，或跳过并稍后再连接
-5. **完成** - 进入钱包仪表盘
+1. **欢迎界面** - 「创建新钱包」(Create New Wallet) 或「导入已有钱包」(Import Existing Wallet)（12 词或 24 词助记词）
+2. **设置密码** - 创建一个密码，用于在本设备上加密钱包
+3. **助记词**（仅新钱包） - 保存控制 Spark、Arkade、Liquid、RGB 以及派生 Nostr 身份的 12 个词
+4. **Passkey**（可选） - 使用生物识别或安全密钥解锁
+5. **Nostr 身份**（仅新钱包） - 保留派生的身份，或导入已有密钥
+6. **RGB 设置** - 「使用此设备」（推荐），或连接你自己的 RGB Lightning Node
+7. **测试版提示** - 确认测试版风险提示后进入仪表盘
 
 更多信息请参见[快速开始](/cn/extensions/kaleidoswap-extension/getting-started)。
 
@@ -116,8 +118,12 @@ KaleidoSwap 扩展会申请以下 Chrome 扩展权限：
 
 manifest 中还为钱包实际访问的接口端点声明了 `host_permissions`：KaleidoSwap 服务、区块浏览器与索引器、RGB proxy、Spark/Flashnet、Arkade 以及价格 API。
 
+manifest 还列出了可选的主机权限。只有当你把钱包指向自己的接口端点（例如 LND 节点、Esplora 索引器或 VSS 服务器）时，钱包才会请求相应访问权限。
+
 <Note>
 KaleidoSwap 扩展把加密后的助记词存储在 `chrome.storage.local` 中。只有你主动连接的账户和服务才会产生网络请求。
+
+如果开启了 Chrome 同步，Chrome 可能会把加密的种子、密码哈希和盐值复制到 Google 的服务器；你可以在 `chrome://settings/syncSetup/advanced` 中关闭扩展同步。
 </Note>
 
 ## 更新

@@ -1,8 +1,10 @@
 ---
 title: "Wallet"
 sidebarTitle: "Wallet"
-description: "Manage accounts, assets, deposits, withdrawals, and activity in the KaleidoSwap Extension, a full Bitcoin wallet that runs in your browser"
+description: "Manage accounts, assets, receives, sends, and activity in the KaleidoSwap Extension, a full Bitcoin wallet that runs in your browser"
 ---
+
+import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 ## Accounts
 
@@ -15,10 +17,11 @@ The KaleidoSwap Extension derives multiple protocol accounts from one recovery p
 | **Liquid** | L-BTC and Liquid assets such as USDt | Node-less and self-custodial; mainnet by default |
 | **RGB-L1** | RGB assets and BTC on Bitcoin L1 | Node-less, runs in WebAssembly; mainnet by default |
 | **RGB Lightning (RLN)** | RGB assets over Lightning channels | Optional, experimental; replaces the RGB-L1 backing when connected |
+| **Bark** | BTC on Second's Ark | Test network (signet) only; Lightning in and out; receive and boarding from **Settings > Bark** |
 
 ## Asset Management
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard with network status chips, the BTC balance card with Receive, Swap, and Send, and Your Assets with the filter toggle" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Viewing Balances
 
@@ -35,7 +38,7 @@ Assets with the same ticker across backings are merged into a single dashboard r
 
 ### Hiding Assets
 
-You can hide assets you don't want on the dashboard from the manage-assets view. Hidden assets keep their balances; they are just removed from the list until you unhide them.
+You can hide assets you don't want on the dashboard from the **Manage asset list** button beside Your Assets. Hidden assets keep their balances; they are just removed from the list until you unhide them.
 
 ### Asset Details
 
@@ -63,25 +66,28 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
 | **BOLT11 invoice** | Lightning payment | `lnbc1...` |
 | **Lightning address** | Lightning payment | `name@example.com` |
 | **LNURL-pay** | Lightning payment | `lnurl1...` |
+| **BOLT12 offer** | Lightning payment | `lno1...` |
 | **RGB invoice** | RGB asset transfer | `rgb:...` |
 | **Bitcoin address** | On-chain payment | `bc1q...`, `3...`, `1...` |
 | **Liquid address / URI** | Liquid transfer | `lq1...`, `liquidnetwork:...` |
 | **Spark address** | Spark transfer | Spark address string |
 | **Arkade route** | Arkade transfer or offboard route | Arkade-compatible destination |
 
+<FeatureVideo name="address-auto-routing" title="Pasting any destination: the wallet picks the network" portrait />
+
 ### Send Flow
 
 <Steps>
   <Step title="Enter Destination">
-    Paste or type the destination address, invoice, or pubkey. The KaleidoSwap Extension auto-detects the payment type.
+    Paste, type, or scan (QR image) the destination address or invoice. The KaleidoSwap Extension auto-detects the payment type.
   </Step>
 
   <Step title="Enter Amount">
-    For addresses and keysend, enter the amount in sats or BTC. For invoices, the amount is pre-filled from the invoice. **Max** fills the spendable balance and, for on-chain sends, reserves the network fee so the transaction can actually broadcast.
+    For addresses, Lightning addresses, LNURL-pay and amountless invoices, enter the amount in sats, or tap the unit beside the field to switch to fiat. For invoices with an amount it is pre-filled. **Max** fills the spendable balance and, for on-chain sends, reserves the network fee. On-chain sends offer **Slow / Normal / Fast / Custom** fee rates.
   </Step>
 
   <Step title="Review">
-    Review the payment details:
+    Select **Review Payment** and check the payment details:
     - Destination
     - Amount
     - Selected route/account
@@ -89,78 +95,97 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 
   <Step title="Confirm">
-    Click **Send** to execute the payment. A status screen shows the result.
+    Select **Confirm & Send** to execute the payment. A status screen shows the result. If a Lightning payment is still pending after a few minutes, Send stays blocked for that destination; check **Activity** instead of paying again.
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, amount in sats, fee rate options, and the suggested route across Spark and Arkade" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, balance in sats, fee rate options, the route list, and the Review Payment button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<Note>
+Paying Lightning from Arkade uses an Arkade Intents swap. It pays **invoices only**: Lightning addresses and LNURL are refused. The review shows the solver and its fee before you confirm. On mainnet the default solver is Ark Labs (third party).
+</Note>
+
+<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="Send review for a Lightning invoice paid from Arkade through an Arkade Intents swap, showing the solver and the solver fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="send-to-lightning-address" title="Paying a Lightning address" portrait />
+
+### Amounts in Fiat
+
+Amounts can be typed in fiat: tap the unit next to an amount field to switch between sats and fiat, or pick another currency. What is sent is always sats, and the converted figure follows the price. This is offered for BTC wherever the form asks for an amount.
+
+### Payment Links
+
+Clicking a `bitcoin:`, `lightning:` or `lnurl:` link on a web page opens the wallet on a pre-filled Send screen, or the LNURL-auth / LNURL-withdraw prompt.
 
 ## Receiving Payments
 
 Generate invoices and addresses to receive supported assets across Spark, Arkade, Liquid, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
 
-<img src="/assets/images/extension/09-deposit.png" alt="KaleidoSwap deposit flow" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/09-deposit.png" alt="Receive asset picker with search, Bitcoin (Choose destination account next), Your assets, Add an asset, and Bridge from another chain" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-### Receive Tabs
-
-Available receive methods depend on the selected asset and connected account:
-
-| Route | What It Generates |
-|-------|-------------------|
-| **Spark** | Spark address or Spark Lightning invoice |
-| **Arkade** | Arkade address, boarding address, or compatible receive route |
-| **Liquid** | Liquid address for L-BTC or issued assets |
-| **Bitcoin L1** | Bitcoin address for on-chain receive |
-| **Lightning** | BOLT11 invoice where the selected account supports it |
-| **RGB** | Blinded RGB invoice (node-less), or RGB Lightning invoice when RLN is connected |
+<FeatureVideo name="deposit-options" title="Receive options across Bitcoin layers" portrait />
 
 ### Receive Flow
 
 <Steps>
-  <Step title="Select Asset">
-    Choose BTC or another supported asset.
+  <Step title="Pick an Asset">
+    Tap **Receive** and choose **Bitcoin** (you pick the account next), one of **Your assets**, **Add an asset**, or **Bridge from another chain**.
   </Step>
 
-  <Step title="Select Route">
-    Pick an available account route, such as Spark, Arkade, Liquid, Bitcoin L1, Lightning, or RGB.
+  <Step title="Pick a Route">
+    Choose **By method** (how the sender pays: Bitcoin address, Lightning invoice, Spark transfer, Arkade transfer, Boarding, Liquid address) or **By account** (where the funds land). Each row shows the expected speed and fee.
   </Step>
 
-  <Step title="Generate">
-    Create the invoice or address. A QR code is displayed along with the text value.
+  <Step title="Set an Amount (Optional)">
+    Leave it empty for any amount, or enter one in sats or, after tapping the unit, in your fiat currency.
   </Step>
 
   <Step title="Share">
-    - **Copy** the invoice/address to clipboard
-    - **Show QR** for the sender to scan
-    - Expired Lightning invoices are **flagged** and can be regenerated
+    Copy the address or invoice, or show the QR code. Expired Lightning invoices are flagged and can be regenerated.
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/15-receive-generated.png" alt="Receive BTC screen with a QR code, destination account tabs for RLN, Spark, Arkade, and Liquid, and the generated Arkade and on-chain boarding addresses" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+| Account | Receive methods |
+|---------|-----------------|
+| **Spark** | Spark transfer, Lightning invoice, Bitcoin address (static deposit address that moves into Spark) |
+| **Arkade** | Arkade transfer, Boarding (on-chain into Arkade), Lightning via an Arkade Intents swap |
+| **Liquid** | Liquid address (L-BTC and Liquid assets) |
+| **RGB (node-less)** | RGB invoice on Bitcoin L1 |
+| **Lightning node** | Bitcoin address and Lightning invoice, including RGB assets over Lightning on an RGB Lightning node |
 
-## Deposit and Withdraw
+<img src="/assets/images/extension/15-receive-generated.png" alt="Receive BTC screen with the route picker (By method / By account), a QR code, and the amount field with the sats/fiat toggle" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-### Deposit
+### RGB Invoices
 
-Deposit BTC or supported assets into the selected account:
+The RGB form can lock the invoice to one asset or accept **Any RGB asset**, including assets the wallet doesn't hold yet. The amount is optional. Under **Advanced** you set the expiry and the receive mode: **Blinded** (with privacy; uses one of your spare UTXOs) or **Witness** (the sender adds BTC to fund the output). While the invoice is on screen, an incoming payment is detected automatically.
 
-1. Click **Deposit** on the dashboard
+<img src="/assets/images/extension/36-receive-rgb-invoice.png" alt="RGB invoice receive form with Any RGB asset selected, an optional amount, and Advanced options open showing expiry and the Blinded or Witness receive mode" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<FeatureVideo name="receive-usdt-rgb" title="Receiving USDT on RGB" portrait />
+
+## Receive and Send
+
+### Receive
+
+Receive BTC or supported assets into the selected account:
+
+1. Click **Receive** on the dashboard
 2. Choose the asset and route
-3. Generate an address or invoice
+3. Copy the address or invoice, or show the QR code
 4. Send funds from an external wallet or service
 
-### Withdraw
+### Send
 
-Withdraw sends from the selected account to a detected destination:
+Send pays from the selected account to a detected destination:
 
-1. Click **Withdraw** on the dashboard
-2. Paste a Bitcoin address, Lightning invoice, Lightning address, LNURL, RGB invoice, Liquid address or `liquidnetwork:` URI, Spark address, or Arkade destination
+1. Click **Send** on the dashboard
+2. Paste a Bitcoin address, Lightning invoice, BOLT12 offer, Lightning address, LNURL, RGB invoice, Liquid address or `liquidnetwork:` URI, Spark address, or Arkade destination
 3. Enter the amount
-4. Review the suggested route and confirm
+4. Select **Review Payment**, check the suggested route, then **Confirm & Send**
 
-<img src="/assets/images/extension/16-withdraw-form.png" alt="Withdraw screen listing every destination format it accepts: Lightning, Bitcoin, Spark, Liquid, Arkade, RGB, and cross-chain USDC or USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/16-withdraw-form.png" alt="Empty Send screen with the What you can send to panel listing Lightning, Bitcoin, Spark, Liquid, Arkade, RGB, and cross-chain USDC or USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-For withdrawals from Spark to external chains (EVM networks, Solana, and more), see [Bridge](/extensions/kaleidoswap-extension/bridge).
+For sends from Spark to external chains (EVM networks, Solana, and more), see [Bridge](/extensions/kaleidoswap-extension/bridge).
 
 ## Activity History
 
@@ -170,49 +195,53 @@ View all your transactions in the **Activity** tab:
 
 - Lists recent transactions across all connected accounts; sources load concurrently and render progressively
 - Each entry shows: type, amount, status, carrier network, and timestamp
-- Filter by transaction type or status
+- Tabs for **All / In / Swap / Out**, a status filter (**All Status / Confirmed / Pending / Failed**), and network chips (All, On-chain, Lightning, Spark, Arkade, Liquid, depending on which accounts are active)
 
 <img src="/assets/images/extension/17-activity-list.png" alt="Activity tab listing received transactions with amount and timestamp, filtered by all, on-chain, or Lightning" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Transaction Details
 
-Click any transaction to see:
-- Full transaction details
-- Transaction ID
-- Amounts and fees
-- Carrier and status
-- Timestamp
+Click any transaction to see the payment hash or transaction ID, date, network, status, fee, invoice, and for paid Lightning invoices a copyable **Preimage** as proof of payment. NWC and zap payments show the client, relay and NIP-57 receipt.
 
-<img src="/assets/images/extension/18-transaction-detail.png" alt="Expanded transaction detail showing payment hash, date, carrier network, and completed status" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/18-transaction-detail.png" alt="Expanded outgoing Lightning payment showing payment hash, date, network, completed status, and the copyable Preimage row" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## Settings
 
-Access settings from the gear icon or bottom navigation.
+Open **Settings** from the bottom navigation. The page is grouped into **Accounts**, **Payments**, **Security**, and **App**, with **Lock Wallet** and **Disconnect Accounts** at the bottom.
 
-<img src="/assets/images/extension/11-settings.png" alt="KaleidoSwap settings" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/11-settings.png" alt="Settings main page with the Accounts list at the top, followed by the Payments, Security, and App sections" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Accounts
 
 - **Spark** - Network selection, SDK details, and connection status
 - **Arkade** - Network selection, VTXO settings, boarding flows, lifecycle settings, and an optional rotating-address (HD) mode with restore via gap scan
+- **Arkade Intents** - Pay and receive Lightning from your Arkade balance through an RFQ solver. Configure it in **Settings > Arkade > Arkade Intents**. Sends and receives use the normal Send and Receive screens. The review shows the solver fee; stuck swaps can be refunded from the same settings page.
+- **RGB** - Choose the backing: **Node-less** (on-device RGB with BTC on Bitcoin L1; network, Indexer URL, optional RGB transport endpoints) or **RLN node** (your own RGB Lightning Node over Direct or Wallet Connect). From here you also manage **UTXOs** (colorable, colored and normal UTXOs), **Issue asset** (mint a new asset from the wallet), and RGB **Backup**
 - **Liquid** - Network selection and the Esplora/waterfalls sync endpoint (a fast default is provided; you can supply your own)
-- **RGB-L1** - Network selection plus the Esplora indexer and RGB proxy endpoints for the node-less account
-- **RGB & Lightning** - Optional RLN account (direct URL or NWC), available through experimental settings
+- **Bark** - Second's Ark network: BTC with Lightning in and out. Test network (signet) only
+- **Lightning Node** - Connect one external Lightning node for deposits, withdrawals, and balance: **RGB Lightning node**, **LND** (REST HTTPS URL plus a restricted macaroon), or **Nostr Wallet Connect**. Core Lightning and LDK are shown as coming soon. Only one node is active at a time
+- **Nostr** - Nostr Identity, Nostr Connect, and Wallet Connect
 
-<img src="/assets/images/extension/22-settings-accounts.png" alt="Settings Accounts section with Spark, Arkade, RGB, and Liquid each showing a connected status" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/22-settings-accounts.png" alt="Settings Accounts section listing Spark, Arkade, RGB (Beta), Liquid, Bark, Lightning Node, and Nostr" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/38-settings-rgb.png" alt="Settings RGB hub with the Node-less and RLN node backings, UTXOs, Issue asset, and Backup" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+<img src="/assets/images/extension/35-settings-lightning-node.png" alt="Settings Lightning Node chooser with RGB Lightning node, LND, and Nostr Wallet Connect, and Core Lightning and LDK marked coming soon" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### KaleidoSwap Handle
 
-You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from Settings. The handle checks availability live as you type, links to your wallet for receiving Lightning payments, and is automatically re-linked when you restore the wallet.
+You can claim a **Lightning address handle** (`yourname@kaleidoswap.me`) from **Settings > Payments > Lightning Address**. The handle needs Spark connected and points at your Spark address. It checks availability live as you type and is automatically re-linked when you restore the wallet. Use **Refresh target** if it falls out of sync, or **Release this handle** to pick a new name.
 
 <img src="/assets/images/extension/20-handle-claim.png" alt="Claim your address screen with a name field, the kaleidoswap.me suffix, and a live availability check" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Nostr
 
-- **Nostr Account** - View your public key (npub), view/export the session private key when available, and re-derive or import your identity
-- **Connected Apps** - Review every site and app connected to the wallet and revoke individual capabilities
-- **Nostr Connect (NIP-46)** - Generate a `bunker://` connection string so external Nostr apps can request signatures remotely
-- **Nostr Wallet Connect** - Pair external apps to the wallet over NWC with a QR code, and set amount-aware budgets
+- **Settings > Nostr > Nostr Identity** - View your public key (npub), view/export the session private key when available, and import a key, or revert an imported key to the identity derived from your recovery phrase
+- **Settings > Connected Apps** - Review every site and app connected to the wallet, including NIP-46 (bunker) clients, and revoke individual capabilities
+- **Settings > Nostr > Nostr Connect** (NIP-46) - Generate a `bunker://` connection string so external Nostr apps can request signatures remotely
+- **Settings > Nostr > Wallet Connect** - Pair external apps to the wallet over NWC with a QR code, and set amount-aware budgets
+
+<img src="/assets/images/extension/39-settings-nostr.png" alt="Settings Nostr hub with the Nostr Identity, Nostr Connect, and Wallet Connect tiles" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Warning>
 Never share your Nostr private key (nsec). Anyone with this key can sign events and act as you.
@@ -220,10 +249,13 @@ Never share your Nostr private key (nsec). Anyone with this key can sign events 
 
 ### Security
 
+**Settings > Security** is a sub-page that holds:
+
 - **Change Password** - Update your wallet password
 - **Passkey Login** - Register or remove a passkey (WebAuthn) for unlocking the wallet
-- **Auto-lock Timeout** - Set the inactivity timeout, from 1 minute to 1 hour, or never
-- **Backup Wallet** - Reveal the recovery phrase after password confirmation and manage RGB backups (encrypted VSS cloud backup and local backup files for the node-less account, or an RGB node backup archive for RLN)
+- **Backup Wallet** - Reveal the recovery phrase after password confirmation, and create an RGB Lightning node backup file when RLN is connected. Node-less RGB backups live under **Settings > RGB > Backup**.
+- **Auto-Lock Timer** - Set the inactivity timeout, from 1 minute to 1 hour, or never
+- **Chrome Sync note** - Explains what Chrome Sync may copy and how to turn off extension sync
 
 <img src="/assets/images/extension/23-backup-wallet.png" alt="Backup Wallet screen requiring the password before decrypting the recovery phrase, with a warning and a summary of what the backup covers" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -237,18 +269,18 @@ Display preferences are inline pickers on the main Settings page:
 | **Fiat Currency** | USD, EUR, GBP, JPY, CHF, CAD, CNY, KRW |
 | **Language** | English, Spanish, French, German, Portuguese, Japanese, Italian, Korean, Chinese |
 
-The auto-lock timeout lives under **Settings > Security**.
+The App section also holds **Open in Full Tab**, **Send Feedback** (report a problem, optionally appending redacted diagnostics or downloading them), and **About**. The auto-lock timeout lives under **Settings > Security**.
 
 ### Full-Tab View
 
 The wallet normally opens in the browser side panel (or a toolbar popup). For a larger workspace, use **Settings > Open in Full Tab** to open the wallet as a full browser tab.
 
-<img src="/assets/images/extension/21-full-tab-view.png" alt="The wallet running as a full browser tab instead of the side panel, showing the unlock screen at full width" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/21-full-tab-view.png" alt="The unlocked wallet dashboard running as a full browser tab instead of the side panel" style={{ maxWidth: "720px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### About
 
 - Extension version and build information
-- Links to documentation, GitHub, and support
+- Links to GitHub and Documentation, and **Report Issue** (email to beta@kaleidoswap.com)
 
 ---
 

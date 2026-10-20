@@ -8,7 +8,7 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
 
 <AccordionGroup>
   <Accordion title="What browsers does the KaleidoSwap Extension support?">
-    The first closed beta targets Chromium-based browsers such as Google Chrome, Brave, Microsoft Edge, and Opera through Developer Mode installation from a private beta zip. Firefox support may be tested separately when a Firefox build is provided. Safari is not yet supported.
+    The closed beta supports Google Chrome (Developer Mode), Brave, and Arc, installed from a private beta zip. Edge and Opera are Chromium-based but not covered by the beta guide. Firefox is not shipped (there is no Firefox AMO listing), and Safari is not yet supported.
   </Accordion>
 
   <Accordion title="Where do I get the closed beta build?">
@@ -23,6 +23,8 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
     - A **remote node** accessible via URL or over **Nostr Wallet Connect**.
 
     Note that the node-less RGB-L1 account and the RLN account are mutually exclusive backings for RGB assets.
+
+    For Lightning, **Settings > Lightning Node** lets you connect one external node at a time: an RGB Lightning node, LND (REST URL and macaroon), or any Nostr Wallet Connect wallet. Its balance counts in the portfolio and it appears as a payment source in Send.
   </Accordion>
 
   <Accordion title="Is the KaleidoSwap Extension custodial?">
@@ -42,31 +44,32 @@ description: "Common questions about the KaleidoSwap Extension, covering browser
     - **Arkade-native assets** when available on the Arkade account
     - **Liquid assets** such as USDt on the Liquid account
     - **RGB assets** on Bitcoin L1 through the node-less RGB-L1 account, or over Lightning when an RGB Lightning Node is connected
+    - **BTC on Bark** (Second's Ark), on the test network (signet) only
   </Accordion>
 
   <Accordion title="How do I back up my wallet?">
-    Go to **Settings > Backup Wallet** to reveal and copy your recovery phrase after re-entering your password. The same screen also covers RGB backup guidance for the node-less account.
+    Go to **Settings > Security > Backup Wallet** to decrypt and copy your recovery phrase with your password. Node-less RGB backups (automatic cloud backup, encrypted backup file, restore) are under **Settings > RGB > Backup**.
 
     Keep separate offline copies of:
     - Your **KaleidoSwap Extension recovery phrase** for Spark, Arkade, Liquid, RGB-L1, and the derived Nostr identity
     - A recent **RGB node backup file** if you use an RGB Lightning Node
     - Your **RLN node seed phrase or node backup material** if the node is managed separately
 
-    The node-less **RGB-L1 account backs itself up automatically** to an encrypted cloud (VSS) backup after wallet activity such as sends, receives, and UTXO changes. A local encrypted backup file can also be exported manually from the backup screen. When you re-import the wallet, onboarding offers to restore from the cloud backup — restore only happens with your explicit consent.
+    The node-less **RGB-L1 account backs itself up automatically** to an encrypted cloud (VSS) backup after wallet activity such as sends, receives, and UTXO changes. A local encrypted backup file can also be exported manually from **Settings > RGB > Backup**. When you re-import the wallet, onboarding offers to restore from the cloud backup — restore only happens with your explicit consent.
   </Accordion>
 
   <Accordion title="What happens if I forget my password?">
     The KaleidoSwap Extension cannot recover your password. If you forget it, you will need to:
-    1. Uninstall and reinstall the extension
-    2. Import your recovery phrase
-    3. Set up a new password
-    4. Reconnect optional services such as your RGB Lightning Node
+    1. On the lock screen, select **Forgot password? Reset wallet** and type `RESET` to confirm. This erases the wallet from this browser.
+    2. Choose **Import Existing Wallet** and enter your recovery phrase
+    3. Set a new password
+    4. Restore RGB state (cloud backup prompt or a backup file) and reconnect optional services such as your Lightning node
     
     Spark, Arkade, Liquid, and the derived Nostr identity are recoverable from the recovery phrase, and node-less RGB-L1 state can be restored from its cloud (VSS) backup during onboarding. RGB Lightning Node state must be recovered from the node's own backup material.
   </Accordion>
 
   <Accordion title="Can I connect to multiple nodes?">
-    The KaleidoSwap Extension manages Spark, Arkade, Liquid, RGB-L1, and optional RLN accounts. For RLN, connect one node endpoint at a time (direct URL or NWC).
+    The KaleidoSwap Extension manages Spark, Arkade, Liquid, RGB-L1, and optional RLN accounts. For RLN, connect one node endpoint at a time (direct URL or NWC). For Lightning, **Settings > Lightning Node** lets you connect one external node at a time: an RGB Lightning node, LND (REST URL and macaroon), or any Nostr Wallet Connect wallet. Its balance counts in the portfolio and it appears as a payment source in Send.
   </Accordion>
 
   <Accordion title="How does auto-lock work?">
@@ -86,17 +89,17 @@ For anything else, report a problem through your preferred channel from the opti
 
 1. Browser name and version
 2. KaleidoSwap Extension version (Settings > About)
-3. Node type and version
+3. Lightning node type (RGB Lightning node, LND, NWC), if connected
 4. Steps to reproduce
 5. Error messages or screenshots
-6. Console logs (right-click extension popup > Inspect > Console)
+6. Diagnostics: **Settings > Send Feedback** → **Append diagnostics to message**, or **Download diagnostics**
 
 <CardGroup cols={2}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
   </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues.
+  <Card title="Report a bug" icon="envelope" href="mailto:beta@kaleidoswap.com">
+    Bug reports and beta feedback.
   </Card>
 </CardGroup>
 

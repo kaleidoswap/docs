@@ -16,7 +16,7 @@ description: "Fix node connection, payment, and DApp provider problems in the Ka
     3. If using a local node, ensure it is running on the expected port
     4. If using a remote node, check network/firewall settings
     5. If using a Biscuit/auth token, verify the **token is valid**
-    6. Try disconnecting and reconnecting in Settings > RGB
+    6. Reconnect from **Settings > RGB > RLN node**, or **Settings > Lightning Node** for LND/NWC
   </Accordion>
 
   <Accordion title="Swap venue not connecting" icon="plug-circle-xmark">
@@ -36,8 +36,8 @@ description: "Fix node connection, payment, and DApp provider problems in the Ka
     1. Ensure the KaleidoSwap Extension is **installed and unlocked**
     2. Refresh the web page
     3. Check that the extension is **enabled** for the site
-    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, `window.nostr` (NIP-07), and `window.bitcoin`
-    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, `nostr:ready`, and `bitcoin:ready`
+    4. Confirm the DApp uses a standard provider -- the KaleidoSwap Extension injects `window.webln` (WebLN), `window.webbtc`, `window.nostr` (NIP-07), `window.bitcoin`, and `window.rgb`
+    5. Some apps wait for a ready event -- the extension dispatches `webln:ready`, `webbtc:ready`, `nostr:ready`, `bitcoin:ready`, and `rgb:ready`
   </Accordion>
 </AccordionGroup>
 
@@ -51,8 +51,17 @@ description: "Fix node connection, payment, and DApp provider problems in the Ka
     1. Check your **balance** is sufficient
     2. Verify the **destination** is correct
     3. For Lightning, ensure there is a **route** to the destination
-    4. Check that your node is **online and synced**
+    4. Check that the sending account is **online and synced**
     5. Try again after a few moments
+  </Accordion>
+
+  <Accordion title="Lightning payment stuck pending" icon="hourglass-half">
+    **Symptoms:** A Lightning payment shows as pending and Send is blocked for that destination
+    
+    **Solutions:**
+    1. The wallet keeps checking the payment status for about 3 minutes; wait for it to settle or fail
+    2. While the payment is pending, Send stays blocked for that destination so it cannot be paid twice
+    3. Check **Activity** for the final status instead of paying again
   </Accordion>
 
   <Accordion title="Invoice generation failed" icon="receipt">
@@ -85,9 +94,10 @@ description: "Fix node connection, payment, and DApp provider problems in the Ka
     
     **Solutions:**
     1. The KaleidoSwap Extension cannot recover passwords
-    2. **Uninstall** the extension and **reinstall**
-    3. Import your recovery phrase
-    4. Set up a new password and reconnect optional services
+    2. On the lock screen, select **Forgot password? Reset wallet** and type `RESET` to confirm. This erases the wallet from this browser.
+    3. Choose **Import Existing Wallet** and enter your recovery phrase
+    4. Set a new password
+    5. Restore RGB state (cloud backup prompt or a backup file) and reconnect optional services such as your Lightning node
   </Accordion>
 
   <Accordion title="Balances not updating" icon="arrows-rotate">
@@ -95,7 +105,7 @@ description: "Fix node connection, payment, and DApp provider problems in the Ka
     
     **Solutions:**
     1. Check your **node connection** status
-    2. Pull down to **refresh** on the dashboard
+    2. Tap **Refresh balances** on the balance card
     3. Close and reopen the extension popup
     4. Verify the node is **synced**
   </Accordion>
@@ -109,17 +119,17 @@ For anything else, report a problem through your preferred channel from the opti
 
 1. Browser name and version
 2. KaleidoSwap Extension version (Settings > About)
-3. Node type and version
+3. Lightning node type (RGB Lightning node, LND, NWC), if connected
 4. Steps to reproduce
 5. Error messages or screenshots
-6. Console logs (right-click extension popup > Inspect > Console)
+6. Diagnostics: **Settings > Send Feedback** → **Append diagnostics to message**, or **Download diagnostics**
 
 <CardGroup cols={2}>
   <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
   </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues.
+  <Card title="Report a bug" icon="envelope" href="mailto:beta@kaleidoswap.com">
+    Bug reports and beta feedback.
   </Card>
 </CardGroup>
 

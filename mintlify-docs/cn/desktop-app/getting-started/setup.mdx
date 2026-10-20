@@ -13,13 +13,17 @@ description: "从零开始配置 KaleidoSwap 桌面应用，按顺序完成安�
 | 前提条件 | 说明 |
 |-------------|---------|
 | **比特币** | 建议至少约 100 万聪（0.01 BTC），用于为通道注资并覆盖费用 |
-| **LSP 连接** | 一个用于开通通道的闪电服务提供商（默认 LSP 已预先配置） |
+| **LSP 连接** | 一个用于开通通道的闪电服务提供商（Mutinynet 上已预先配置；其他网络需填写你的 LSP/做市商 URL） |
 | **RGB 资产** | 在开通通道时分配到通道内，或通过交换获得 |
 
 如果你只想先体验应用而不打算交易，可以先安装并创建钱包，不必存入任何资金。
 
 <Note>
-  网络在账户创建时即固定，之后无法更改，因此请为每个网络分别创建账户。目前可选 regtest、signet、Mutinynet 和测试网；主网暂不可用。
+  网络在账户创建时即固定，之后无法更改，因此请为每个网络分别创建账户。目前可选 Mutinynet（默认）、signet、测试网和 regtest（包括本地和本地 Docker 变体）；主网暂不可用。
+</Note>
+
+<Note>
+  桌面应用 v0.5.1 要求 RGB Lightning Node 0.10.0 或更高版本，且无法打开使用 v0.5.0 或更早版本创建的钱包。升级前请查看[更新日志](/cn/desktop-app/support/changelog)。
 </Note>
 
 ## 配置路径
@@ -32,7 +36,7 @@ description: "从零开始配置 KaleidoSwap 桌面应用，按顺序完成安�
   </Step>
 
   <Step title="决定节点运行在哪里">
-    应用需要一个 RGB Lightning Node。想要完全掌控就在本地运行，也可以部署在服务器上通过网络连接。你可以现在就做决定，或者让账户创建流程为你启动一个本地节点。
+    应用需要一个 RGB Lightning Node。想要完全掌控就在本地运行，也可以部署在服务器上通过网络连接。你可以现在就做决定，或者让账户创建流程为你启动一个本地节点。在本地，节点可以以原生二进制方式运行（macOS/Linux），也可以在 Docker 中运行（所有平台，包括 Windows）。
 
     [节点托管](/cn/desktop-app/getting-started/node-hosting)
   </Step>
@@ -50,13 +54,13 @@ description: "从零开始配置 KaleidoSwap 桌面应用，按顺序完成安�
   </Step>
 
   <Step title="为钱包注资">
-    在链上存入 BTC。要接收 RGB 资产，你还需要一个染色 UTXO，应用可以在存入过程中为你创建。
+    在链上存入 BTC。要接收 RGB 资产，你还需要一个可染色 UTXO（见证接收不需要），应用可以在存入过程中为你创建。
 
     [存入](/cn/desktop-app/wallet/deposits)
   </Step>
 
   <Step title="获得一条通道">
-    交易通过闪电网络进行，因此你需要一条有流动性的通道。可以直接与对等节点开通，也可以从 LSP 购买一条已在内部分配好 RGB 资产的通道。
+    交易通过闪电网络进行，因此你需要一条有流动性的通道。可以直接与对等节点开通，也可以从 LSP 购买一条已在内部分配好 RGB 资产的通道。还可以直接在「交易 → 做市商」(Trading → Market Maker) 中购买资产：如果还没有该资产的通道，「在通道中购买 USDT」(Buy USDT in Channel) 会为你开通一条。
 
     [开通通道](/cn/desktop-app/channels/opening-channel) · [订购新通道](/cn/desktop-app/channels/order-new-channel)
   </Step>

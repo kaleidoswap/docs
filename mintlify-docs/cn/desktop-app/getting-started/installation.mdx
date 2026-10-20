@@ -4,6 +4,10 @@ sidebarTitle: "安装"
 description: "在 macOS、Windows 或 Linux 上安装 KaleidoSwap 桌面应用：下载地址、系统要求、校验二进制文件与节点配置，逐步说明每个环节。"
 ---
 
+<Warning>
+使用 v0.5.0 或更早版本内置节点创建的钱包及其备份，无法在 v0.5.1 中打开。升级前，请先用 v0.5.0 关闭通道并转出资金，然后再创建新钱包。
+</Warning>
+
 ## 安装方式
 
 安装 KaleidoSwap 桌面应用有两种方式：
@@ -29,7 +33,7 @@ description: "在 macOS、Windows 或 Linux 上安装 KaleidoSwap 桌面应用�
 #### 各平台专用说明
 
 **Windows：**
-- RGB Lightning Node 集成在 Windows 上尚未完全原生支持。要在 Windows 上使用 RLN，请在 Docker 容器中运行并远程连接 —— 参见[节点托管](/cn/desktop-app/getting-started/node-hosting)，其他远程节点方案见[故障排查](/cn/desktop-app/support/troubleshooting#connectivity)
+- Windows 上不提供原生二进制 (Native Binary) 节点后端。要在 Windows 上运行本地节点，请在应用中选择「本地节点 → Docker 容器」(Local Node → Docker Container)（需要 Docker Desktop 处于运行状态），或连接远程节点 —— 参见[节点托管](/cn/desktop-app/getting-started/node-hosting)，其他远程节点方案见[故障排查](/cn/desktop-app/support/troubleshooting#connectivity)
 - 安装 [vcpkg](https://github.com/microsoft/vcpkg)，用它安装 **openssl**、**sqlite3** 等库
 - 确认已安装 **Microsoft Visual C++**（通过 Visual Studio 或 Build Tools）
 
@@ -64,6 +68,10 @@ description: "在 macOS、Windows 或 Linux 上安装 KaleidoSwap 桌面应用�
 - **自托管远程节点**：按照 [RGB Lightning Node 托管](/cn/desktop-app/getting-started/node-hosting)指南，在 VPS 或服务器上搭建自己的 RGB Lightning Node。
 - **托管服务商**：连接由 ThunderStack 等服务商专业运维的节点。
 
+<Note>
+  远程节点必须运行 RGB Lightning Node **0.10.0 或更高版本**（例如 `kaleidoswap/rgb-lightning-node:0.10.0`）。
+</Note>
+
 **远程节点的优势：**
 - 不占用本地资源
 - 7×24 可用（托管方案）
@@ -75,13 +83,15 @@ description: "在 macOS、Windows 或 Linux 上安装 KaleidoSwap 桌面应用�
 
 - 按照[创建新钱包](/cn/desktop-app/wallet/creating-wallet)指南，创建一个带集成 RGB Lightning Node 的本地钱包。
 
+应用可以以**原生二进制** (Native Binary，macOS/Linux) 方式运行节点，也可以在 **Docker 容器** (Docker Container，所有平台；由应用拉取并管理容器) 中运行。
+
 **本地节点的优势：**
 - 完全掌控自己的节点
 - 更强的隐私性
 - 不依赖外部服务
 
 <Note>
-  本地节点集成在 **Windows** 上尚未完全原生支持。Windows 用户应选择上面的方案 1（远程节点：通过 [Docker](/cn/desktop-app/getting-started/node-hosting) 自托管，或使用 ThunderStack 等托管服务商）—— 详见[故障排查](/cn/desktop-app/support/troubleshooting#connectivity)。
+  在 **Windows** 上不提供原生二进制后端。请选择「本地节点 → Docker 容器」（需要 Docker Desktop 处于运行状态），或连接远程节点。
 </Note>
 
 在继续 KaleidoSwap 的配置之前，请先选择最符合你技术水平和需求的方案。

@@ -67,7 +67,9 @@
                   "desktop-app/wallet/initializing-mnemonic",
                   "desktop-app/wallet/deposits",
                   "desktop-app/wallet/withdrawals",
-                  "desktop-app/trading/asset-swaps"
+                  "desktop-app/trading/asset-swaps",
+                  "desktop-app/trading/dca",
+                  "desktop-app/trading/limit-orders"
                 ]
               },
               {
@@ -414,7 +416,9 @@
                   "cn/desktop-app/wallet/initializing-mnemonic",
                   "cn/desktop-app/wallet/deposits",
                   "cn/desktop-app/wallet/withdrawals",
-                  "cn/desktop-app/trading/asset-swaps"
+                  "cn/desktop-app/trading/asset-swaps",
+                  "cn/desktop-app/trading/dca",
+                  "cn/desktop-app/trading/limit-orders"
                 ]
               },
               {

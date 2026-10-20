@@ -2,7 +2,7 @@
 
 This repository contains the documentation for KaleidoSwap, built using [Mintlify](https://mintlify.com/).
 
-- **Live docs:** [docs.kaleidoswap.com](https://docs.kaleidoswap.com)
+**Live docs:** [docs.kaleidoswap.com](https://docs.kaleidoswap.com)
 
 ## Documentation Structure
 

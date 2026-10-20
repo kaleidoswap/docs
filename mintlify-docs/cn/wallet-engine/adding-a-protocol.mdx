@@ -1,0 +1,113 @@
+---
+title: "新增一个协议"
+sidebarTitle: "新增协议"
+description: "实现 IProtocolAdapter，添加一条能力清单记录并注册它 —— 路由、统一收款与精简模式都会自动生效，无需改动任何既有代码。"
+---
+
+新增一个协议只涉及三个文件，且**不会**改动任何既有协议的代码路径。如果你的改动需要去编辑另一个协议，说明设计被绕开了 —— 请重新考虑这个方案。
+
+## 1. 实现契约
+
+从 [`examples/minimal-adapter/MemoAdapter.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/examples/minimal-adapter/MemoAdapter.ts) 开始 —— 它用大约 170 行无依赖代码、基于一个内存钱包实现了完整的 `IProtocolAdapter` 契约。它是满足该契约的最小实现，本来就是拿来复制的。
+
+```ts
+import type { ICoreProtocolAdapter, IRgbOperations } from '@kaleidorg/wallet-engine'
+
+export class MyAdapter implements ICoreProtocolAdapter & IRgbOperations {
+  readonly protocolName = 'MYPROTO'
+  readonly supportedLayers = ['MYPROTO_L2']
+  readonly version = '1.0.0'
+  readonly capabilities = PROTOCOL_OPERATIONS.MYPROTO
+
+  async connect(config: ProtocolConfig) {
+    // 在这里懒加载你的 SDK，绝不要放在模块顶层 —— 正是这一点让
+    // 不使用你这个协议的宿主也能安全引入根入口。
+    const { MySdk } = await import('my-protocol-sdk')
+    this.sdk = new MySdk(config)
+  }
+  // …
+}
+```
+
+声明你支持的能力分组（`& IRgbOperations`）会把这些方法变成*必需*而非可选，于是编译器能帮你抓出只实现了一半的分组。
+
+<Warning>
+  **不允许 SDK 类型越过契约。** 请把你 SDK 的数据结构翻译成 `src/types/` 中的领域类型。适配器内部可以宽松地读取 SDK 对象，但只有领域类型可以离开适配器。
+</Warning>
+
+## 2. 在能力清单中描述它
+
+在 [`src/capabilities/index.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/src/capabilities/index.ts) 的 `PROTOCOL_CAPABILITIES` 中加入**一条**记录，再在 `operations.ts` 的 `PROTOCOL_OPERATIONS` 中加入一条。
+
+```ts
+MYPROTO: {
+  protocol: 'MYPROTO',
+  layers: ['MYPROTO_L2'],
+  supportsOnchain: false,
+  supportsLightning: true,
+  supportsAssets: true,
+  supportsSwaps: false,
+  zeroFee: false,
+  staticReceiveAddress: true,
+  boarding: false,
+  invoiceExpiry: true,
+  needsChannelLiquidity: false,
+  wdkModule: '@you/wdk-wallet-myproto',
+  maturity: 'beta',
+},
+```
+
+真正起作用的就是这一步。路由器、UI 和精简模式聚合都读取这些标志 —— 它们从不去问「这是哪个协议？」
+
+<Note>
+  当你开始想为自己的协议单独往 `IProtocolAdapter` 上加方法时，你真正需要的是在这里加一个能力标志。
+</Note>
+
+## 3. 让分类器认识你的地址格式
+
+如果你的协议引入了引擎无法识别的目标格式，请把它加入 [`src/router/destination.ts`](https://github.com/kaleidoswap/wallet-engine/blob/main/src/router/destination.ts)，并列出有能力支付它的协议：
+
+```ts
+if (/^myproto1[a-z0-9]{20,}$/i.test(dest)) {
+  return {
+    kind: 'MYPROTO',
+    layer: 'MYPROTO_L2',
+    format: 'MYPROTO_ADDRESS',
+    candidates: ['MYPROTO'],
+    value: dest,
+  }
+}
+```
+
+`candidates` 是*可能*的集合。某个候选项是否算**直连**路由，还要对照能力清单校验，因此协议绝不会声称自己能结算标志显示它做不到的东西。
+
+## 4. 注册它
+
+```ts
+manager.registerAdapter(new MyAdapter())
+```
+
+如果它是基于 WDK 的，也可以把它加入 `createWdkRegistry`。
+
+## 你免费得到的东西
+
+这三个文件就位之后，无需任何额外改动：
+
+- `CrossProtocolRouter` 会在每个兼容的目标地址上考虑你的协议，并按用户的路由偏好把它与其他协议一起排序。
+- `buildUnifiedReceiveURI` 可以把你的通路和其他通路放进同一个二维码。
+- `aggregateForLite` 会把你的 BTC 余额并入精简模式下那个唯一的「BTC」数值。
+- 使用该引擎的钱包，每个页面都会依据能力清单标志来渲染你的协议。
+
+## 验证
+
+```bash
+npm run build   # tsc 必须保持零报错
+npm test        # vitest
+npm run example:tour
+```
+
+[导览](https://github.com/kaleidoswap/wallet-engine/tree/main/examples/tour)是检验你那条能力清单记录行为是否正确的最快方式：它会打印能力表格、为多个目标地址做路由，并显示哪些协议进入了候选。
+
+<Note>
+  纯函数模块 —— 路由器、披露层、收款、能力清单 —— 必须保持测试完全覆盖。参见 [CONTRIBUTING.md](https://github.com/kaleidoswap/wallet-engine/blob/main/CONTRIBUTING.md) 和 [AGENTS.md](https://github.com/kaleidoswap/wallet-engine/blob/main/AGENTS.md)，后者是面向在该仓库中工作的编码智能体的不变量清单。
+</Note>

@@ -131,9 +131,3 @@ await swap.getSwapStatus(result.swapId)  // pending → confirmed / failed
 `executeSwap` refuses to proceed without the approved quote's `rfqId` and amounts, and rejects a quote that has already expired. The maker binds execution to that `rfqId` and those exact raw amounts — there is no server-side re-quote, so both legs settle at what the user approved or the swap fails with no funds moved. Both legs settle against the account the swap was constructed with — there is no per-swap receiver address.
 
 A second venue sits alongside the RFQ rail for BTC ↔ L-BTC **chain swaps** over the Boltz protocol against a KaleidoSwap maker. RGB always stays on the RFQ path. The engine deliberately never funds a lockup itself: `createSwap` returns the maker's binding amounts and the address to pay, and the host performs the send with its own adapter.
-
-## Next
-
-<Card title="Add a Protocol" icon="puzzle-piece" href="/wallet-engine/adding-a-protocol">
-  Everything above picks up a new protocol with no changes to existing code.
-</Card>

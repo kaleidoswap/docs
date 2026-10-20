@@ -1,0 +1,133 @@
+---
+title: "核心概念"
+sidebarTitle: "核心概念"
+description: "适配器契约、能力清单、跨协议路由器、BIP321 统一收款、精简与高级披露、平台端口与交换。"
+---
+
+## `IProtocolAdapter` —— 契约
+
+每个协议都实现同一个接口：连接、列出资产与交易、创建与解析发票、发送与接收，并可选地提供报价与执行交换。引擎提供两类适配器 —— **原生**适配器（直接集成 SDK）与 **WDK 适配器**。两者满足同一份契约，因此应用代码无法分辨底层是哪一种。
+
+契约被拆解为一个很小的必需核心（`ICoreProtocolAdapter`）加上若干可选的能力分组：
+
+| 分组 | 涵盖范围 |
+|---|---|
+| `IOnchainOperations` | 原生 BTC 发送、交易广播 |
+| `ISimplicityOperations` | Liquid PSET 审阅与签名、Simplicity 编译（实验性） |
+| `IRgbOperations` | RGB 资产、发票、转账 |
+| `ISparkOperations` | Spark 发票、L1 存入认领与归集 |
+| `IArkadeOperations` | VTXO 生命周期、boarding |
+| `ISigningOperations` | 消息与 PSBT 签名 |
+| `IBackupOperations` | 备份与恢复 |
+| `ISwapOperations` | 报价与执行 |
+| `IKeysendOperations` | 自发支付 |
+
+`IProtocolAdapter` 是它们的组合 —— 核心加上各分组的 `Partial<…>` —— 因此扁平的接口面保持不变，所有既有调用点依然可用。新适配器可以写成 `implements ICoreProtocolAdapter & IRgbOperations` 来加入某个分组，从而把该组方法变成*必需*而非可选；调用方也能干净地做类型收窄，不必在整个接口面上到处使用可选链：
+
+```ts
+import { asRgbOperations, asSwapOperations } from '@kaleidorg/wallet-engine'
+
+const rgb = asRgbOperations(adapter)
+if (rgb) await rgb.createRgbInvoice({ assetId, amount })
+```
+
+第三方协议只需实现核心，并用任意符合 `BaseProtocolConfig` 形状的配置连接 —— 无需改动引擎的配置联合类型。
+
+## 能力清单 —— 把差异变成数据
+
+`PROTOCOL_CAPABILITIES` 是每个协议能做什么的唯一事实来源：分层、资产支持、交换，以及 UI 或路由器必须知道的行为差异 —— `zeroFee`、`staticReceiveAddress`、`boarding`、`invoiceExpiry`、`needsChannelLiquidity` —— 外加它背后的 WDK 模块与 `maturity`。
+
+```ts
+import { PROTOCOL_CAPABILITIES, getCapabilities, protocolsForLayer } from '@kaleidorg/wallet-engine'
+
+PROTOCOL_CAPABILITIES.SPARK.zeroFee              // true
+PROTOCOL_CAPABILITIES.RGB_LN.needsChannelLiquidity // true
+protocolsForLayer('BTC_LN')                      // 能在 LN 上结算的协议
+```
+
+<Note>
+  **准则：** 当你想为某一个协议往契约里加方法时，改为在这里加一个能力标志。路由器和 UI 读取能力清单，绝不能按协议名特判。
+</Note>
+
+## `CrossProtocolRouter` —— 在协议*之间*做选择
+
+路由器接收一个目标字符串或一个收款分层，返回能够满足它的协议，并过滤为真正已注册**且**已连接的那些。
+
+```ts
+const { best, routes } = router.resolveSend('lnbc1…')
+```
+
+`routes` 包含每个候选项，并带有一个对照能力清单校验过的 `direct` 标志 —— 只有当某协议确实支持目标所结算的那个接口面时，它才算直连路由。直连路由排在前面，因此 `.best` 要么是真正的直连路由，要么是 `null`。精简模式正是靠这一点成立的：精简模式只用 `.best`，高级模式展示完整的排序列表。
+
+对于同时承载多条通路的统一支付 URI，`resolveUnifiedSend(uri, { preference })` 会把其中出现的每条通路匹配到能结算它的协议，并按用户的 `RoutePreference`（一份按资产划分的分层优先级）对整个集合排序，缺省时回退到闪电优先。
+
+```ts
+const { best, routes } = router.resolveUnifiedSend(bip321Uri, { preference })
+```
+
+BIP353（`₿user@domain`）由宿主解析成 URI 后才会到达路由器。
+
+## 统一收款（BIP321）
+
+`buildUnifiedReceiveURI` 构建**一个** `bitcoin:` URI，同时承载链上以及 Lightning（BOLT11 与 BOLT12）、Spark、Arkade、Liquid 和 RGB。其他钱包会忽略它们不认识的参数；支持 Kaleido 的钱包则能拿到完整菜单，由路由器来选择。
+
+```ts
+const uri = buildUnifiedReceiveURI({
+  btcAddress: 'bc1q…',
+  lightningInvoice: 'lnbc1…',
+  lightningOffer: 'lno1…',
+  liquidAddress: 'lq1…',
+  rgbInvoice: 'rgb:…',
+  label: 'invoice #42',
+})
+```
+
+地址是可选的，因此精简钱包也可以只发布一个仅含闪电或仅含资产的二维码。金额只在取值有限且严格为正时才会写入 —— 零值或负值输入绝不会产生误导性的 `amount=0`，以免付款方钱包按字面读取。
+
+## 披露层 —— 精简与高级
+
+精简与高级是**同一个可随时切换的设置**，不是代码分叉。它决定 UI 暴露多少信息（网络、路由选择器、通道管理、原始 ID），以及路由器自动决策的程度。
+
+```ts
+import { aggregateForLite } from '@kaleidorg/wallet-engine'
+
+const { btc, usd, other } = aggregateForLite(assets)
+```
+
+精简模式把所有 BTC 形态 —— 链上、闪电、Spark、Arkade、Liquid BTC —— 合并成一个「BTC」，并把 Liquid 上的 USDt 合并成一个「USD」。高级模式则按协议、按分层展示同一批数据。
+
+## 平台端口 —— 一次编写，到处运行
+
+引擎从不直接调用平台 API。每个宿主在启动时一次性注入 `IStorageProvider` 和 `IRuntimeProvider`（存储、CSPRNG、时钟），因此同一套引擎可以原样运行在 React Native、浏览器扩展和 Node 上。
+
+```ts
+import { setPlatform, consoleLogger } from '@kaleidorg/wallet-engine'
+
+setPlatform({ storage, runtime, logger: consoleLogger })
+```
+
+需要持久化状态的引擎模块会读取 `getPlatform()?.storage`。正确性依赖持久状态的模块在缺少它时会拒绝运行 —— 链上交换存储会抛出 `NO_PLATFORM`，而不是交出一个它无法持久化的派生索引 —— 而那些状态只是「有则更好」的模块，则回退到一个重新加载后就消失的内存映射。只要在启动时注入平台实现，这两种情况都不会发生。
+
+## 交换
+
+`KaleidoswapSwap` 把 KaleidoSwap 的 **RFQ** 流程 —— 报价、执行、状态 —— 包装在领域类型 `Quote` 和 `SwapResult` 之后，因此没有任何 SDK 类型越过边界。
+
+```ts
+import { KaleidoswapSwap } from '@kaleidorg/wallet-engine/swap'
+
+const swap = new KaleidoswapSwap(rlnAccount, { baseUrl: 'https://api.signet.kaleidoswap.com' })
+
+const quote = await swap.getQuote({
+  fromAsset: 'rgb:USDT…', toAsset: 'BTC',
+  fromLayer: 'RGB_LN',    toLayer: 'BTC_LN',
+  fromAmount: 100,
+})
+
+const result = await swap.executeSwap(quote)
+
+await swap.getSwapStatus(result.swapId)  // pending → confirmed / failed
+```
+
+`executeSwap` 在缺少已批准报价的 `rfqId` 与金额时会拒绝继续，并会拒绝已过期的报价。做市方把执行绑定到该 `rfqId` 和那组确切的原始金额上 —— 服务端不会重新报价，因此两条腿要么按用户批准的条件结算，要么交换失败且不转移任何资金。两条腿都针对创建该交换时所用的账户结算 —— 不存在逐笔交换的收款地址。
+
+在 RFQ 通路之外，还有第二个场所通过 Boltz 协议、对接 KaleidoSwap 做市方处理 BTC ↔ L-BTC **链上交换**。RGB 始终走 RFQ 路径。引擎刻意从不自行为锁定交易出资：`createSwap` 返回做市方的绑定金额和应付地址，由宿主用自己的适配器完成发送。

@@ -69,15 +69,22 @@ description: "关于 KaleidoSwap AI 工具的常见问题：托管方式、种�
   </Accordion>
 
   <Accordion title="怎样阻止代理花钱？">
-    在 KaleidoAgent 上，只有一项控制在代码层面强制生效：`dry_run`。下表其余项是作为运行规则传递给模型的，请当作指引而非支出上限：
+    在 KaleidoAgent 上，只有一项控制在代码层面强制生效：
 
     | 控制项 | 效果 |
     |---------|--------|
-    | `dry_run` | 只模拟决策，不真正执行 |
+    | `dry_run` | 在调用任何工具之前阻止执行。只模拟决策，不真正执行 |
+
+    其余各项是作为运行规则传递给模型的，并不会被独立强制执行，因此请当作指引而非支出上限：
+
+    | 控制项 | 预期效果 |
+    |---------|--------|
     | `max_swap_usd` | 限制单笔交易的上限 |
     | `stop_loss_btc_sats` | 低于某个 BTC 阈值时停止所有交易 |
     | `min_btc_reserve_sats` | 为节点与 Spark 合计保留一个下限 |
     | `max_concurrent_orders` | 限制同时挂出的订单数量 |
+
+    无论模型做出什么决策都能守住的控制，是 `dry_run` 以及把账户余额保持在很小的金额。
 
     在 KaleidoMind 上，等价机制是结构性的而非配置出来的：会动用资金的工具被标记为 `requiresConfirmation`，并暂停等待宿主的确认面板。
   </Accordion>

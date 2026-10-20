@@ -88,6 +88,17 @@ PORT=3010 KALEIDO_NETWORK=signet WDK_SEED="word1 word2 ..." node dist/index.js
 | `PORT` | 否 | 启用 Streamable HTTP 传输，替代 stdio |
 | `MCP_AUTH_TOKEN` | 否 | HTTP 模式下的 Bearer token |
 
+### 运行时兼容性
+
+排查集成问题时，请核对实际安装的包版本。使用 QVAC 的 Mind 宿主需要
+`@qvac/sdk >=0.20.0`。`kaleidoswap_submarine_*` 工具还需要可选的
+`@kaleidorg/swap-sdk` 包，以及 Node.js 22 或更新版本。
+工具出现在目录中不代表钱包、节点或可选依赖已配置完成。
+`/health` 成功仅表示 HTTP 进程正在运行。
+
+[自动生成的 MCP 参考](https://github.com/kaleidoswap/kaleido-mcp/blob/main/docs/TOOLS.md)
+列出了当前参数结构。固定版本的集成应查看对应 release tag 中的参考。
+
 ### 遗留别名
 
 为兼容早期集成，部分工具仍可通过旧名称调用（`rln_*` 对应 `wdk_*`，通用 `get_*` 对应 `l402_get_*` 行情工具）。新的集成应使用规范的 `wdk_*` / `l402_*` 名称。
@@ -326,18 +337,6 @@ mpp_request_challenge(url)          → challenge { invoice, challenge_id }
 wdk_mpp_pay(invoice, challenge_id)  → payment credential
 mpp_submit_credential(url, cred)    → { ok, data, receipt }
 ```
-
-
-## 运行时兼容性
-
-排查集成问题时，请核对实际安装的包版本。使用 QVAC 的 Mind 宿主需要
-`@qvac/sdk >=0.20.0`。`kaleidoswap_submarine_*` 工具还需要可选的
-`@kaleidorg/swap-sdk` 包，以及 Node.js 22 或更新版本。
-工具出现在目录中不代表钱包、节点或可选依赖已配置完成。
-`/health` 成功仅表示 HTTP 进程正在运行。
-
-[自动生成的 MCP 参考](https://github.com/kaleidoswap/kaleido-mcp/blob/main/docs/TOOLS.md)
-列出了当前参数结构。固定版本的集成应查看对应 release tag 中的参考。
 
 ## 已退役的服务器 {#retired-servers}
 

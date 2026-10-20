@@ -48,7 +48,7 @@ mint dev
 
 ## Version checks
 
-SDK and API versions quoted in the docs are defined once in `mintlify-docs/snippets/versions.mdx`. On every pull request, the `Check SDK version` workflow (`scripts/check-sdk-version.sh`) compares the documented SDK version against the latest `kaleido-sdk` on npm and warns if they have drifted. It never blocks a merge.
+SDK and API versions quoted in the docs are defined once in `mintlify-docs/snippets/versions.mdx`. On every pull request, the `Check SDK version` workflow (`scripts/check-sdk-version.sh`) compares the documented SDK version against the latest `kaleido-sdk` on npm and warns if they have drifted.
 
 ## Contributing
 

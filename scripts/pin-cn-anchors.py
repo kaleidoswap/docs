@@ -173,12 +173,17 @@ def main():
             continue
 
         # index by raw slug and by normalised slug, so a fragment this script
-        # already normalised on an earlier run still finds its heading
+        # already normalised on an earlier run still finds its heading.
+        # An English heading may also carry its own explicit {#id} — links aim
+        # at that id, not at the slug of its text, so index it too.
         en_slug_idx = {}
-        for idx, (_, _, title, _) in enumerate(en_h):
+        for idx, (_, _, title, en_pinned) in enumerate(en_h):
             slug = slugify(title)
             en_slug_idx.setdefault(slug, idx)
             en_slug_idx.setdefault(safe_id(slug), idx)
+            if en_pinned:
+                en_slug_idx.setdefault(en_pinned, idx)
+                en_slug_idx.setdefault(safe_id(en_pinned), idx)
 
         lines = cn_text.splitlines()
         changed = False

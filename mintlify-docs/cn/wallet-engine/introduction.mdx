@@ -1,0 +1,69 @@
+---
+title: "多协议比特币 L2 钱包引擎"
+sidebarTitle: "总览"
+description: "KaleidoSwap 钱包背后的无界面内核：一套适配器契约、一个跨协议路由器，以及横跨 Spark、RGB-LN、RGB-L1、Liquid 与 Arkade 的 BIP321 统一收款。"
+---
+
+`@kaleidorg/wallet-engine` 是构建多协议比特币钱包的无界面（headless）内核。它把各条比特币 L2 之间的差异收敛到同一个接口之下，让应用代码在 React Native、浏览器扩展与 Node 宿主上保持一致，并把最难的部分 —— 路由、统一收款、交换、精简/高级两种体验 —— 做成可复用的基础能力。
+
+KaleidoSwap [浏览器扩展](/cn/extensions/introduction)和 `rate` 移动钱包都由它驱动。
+
+<Warning>
+  **Alpha —— 实验阶段。** 该引擎会在比特币 L2 之间转移真实资金。接口尚不稳定，也未经过独立审计。请勿用于你无法承受损失的主网资金。
+</Warning>
+
+## 问题所在
+
+每条比特币 L2 都有自己的 SDK、自己的地址格式和自己的特性差异 —— 通道流动性、boarding 交易、发票过期、零费用转账。一旦钱包要支持多条 L2，`if (protocol === …)` 就会散落到每个页面，而每新增一个协议都要改动所有既有代码路径。
+
+引擎把这些收敛成**一套契约加一份差异数据清单**：
+
+- 页面只调用一个 API —— `ProtocolManager` 或 `CrossProtocolRouter`，从不直接调用协议 SDK。
+- 协议*差异*以数据形式存放在能力清单里，而不是写成应用代码里的分支。
+- 同一套引擎运行在所有宿主上，平台相关的部分由外部注入。
+
+## 你能得到什么
+
+适配器是你自己也能写的那部分。下面这四样，则是你不愿意写第二遍的那部分。
+
+<CardGroup cols={2}>
+  <Card title="跨协议路由器" icon="route">
+    传入一个目标字符串或 BIP321 URI，返回能够结算它的协议排序列表 —— 并已过滤为真正注册且已连接的协议。`.best` 就是自动路由结果。
+  </Card>
+  <Card title="统一收款" icon="qrcode">
+    一个 `bitcoin:` 二维码同时承载链上、BOLT11/BOLT12、Spark、Arkade、Liquid 和 RGB。其他钱包会忽略它们不认识的参数。
+  </Card>
+  <Card title="能力清单" icon="table-list">
+    每个协议的分层、特性差异与限制都以数据形式存在。路由器和你的 UI 读取它，没有任何代码按协议名特判。
+  </Card>
+  <Card title="披露层" icon="eye">
+    精简与高级是同一个可随时切换的设置，而不是两套代码。精简模式把所有 BTC 形态合并为一个「BTC」。
+  </Card>
+</CardGroup>
+
+新增一个协议，这四样都会自动支持，无需改动任何既有协议代码。
+
+## 支持的协议
+
+`Maturity` 是每个协议在能力清单中携带的字段。请在运行时读取它，而不要写死。
+
+| 协议 | 成熟度 | 分层 | 资产 | 交换 | 显著差异 |
+|---|:---:|---|---|:---:|---|
+| **BTC** | `stable` | 链上 | — | — | 仅基础链上能力 |
+| **SPARK** | `beta` | Spark、LN、链上 | Spark 代币 | — | 零费用、静态收款地址 |
+| **RGB-LN** | `beta` | RGB-L1、RGB-LN、BTC-L1、BTC-LN | RGB（USDT、XAUT） | ✅ | 需要通道流动性（LSPS1） |
+| **RGB-L1** | `beta` | RGB-L1、BTC-L1 | RGB（USDT、XAUT） | — | 仅链上，使用本地 rgb-lib |
+| **LIQUID** | `beta` | Liquid、Liquid 资产 | USDt | — | 自有 L1，无闪电网络 |
+| **ARKADE** | `beta` | Arkade、LN | Arkade 资产 | — | boarding 地址、静态收款地址 |
+
+## 它所处的位置
+
+引擎在内部使用 [`kaleido-sdk`](/cn/sdk/introduction) 来对接 KaleidoSwap 协议。引擎的使用者无需直接引入 `kaleido-sdk`。
+
+```
+你的应用           rate · 浏览器扩展
+   ↓
+wallet-engine     路由器 · 统一收款 · 能力清单 · 披露层 · 适配器
+   ↓
+kaleido-sdk       RFQ/maker + RLN 客户端
+```

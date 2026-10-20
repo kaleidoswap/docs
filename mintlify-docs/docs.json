@@ -656,6 +656,27 @@
                 ]
               }
             ]
+          },
+          {
+            "tab": "钱包引擎",
+            "groups": [
+              {
+                "group": "简介",
+                "icon": "flag",
+                "pages": [
+                  "cn/wallet-engine/introduction",
+                  "cn/wallet-engine/getting-started"
+                ]
+              },
+              {
+                "group": "指南",
+                "icon": "book-open",
+                "pages": [
+                  "cn/wallet-engine/concepts",
+                  "cn/wallet-engine/adding-a-protocol"
+                ]
+              }
+            ]
           }
         ],
         "global": {

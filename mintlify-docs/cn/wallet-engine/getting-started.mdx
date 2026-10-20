@@ -1,0 +1,117 @@
+---
+title: "钱包引擎快速开始"
+sidebarTitle: "快速开始"
+description: "安装 @kaleidorg/wallet-engine，运行离线导览，并完成第一次跨协议路由与 BIP321 统一收款 URI 构建。"
+---
+
+## 先跑起来，再安装
+
+想最快看清它的形态，就运行导览 —— 真实的路由器、能力清单与统一收款，配上内存桩适配器。无需节点、无需凭证、无需联网，也无需任何协议 SDK。
+
+```bash
+git clone https://github.com/kaleidoswap/wallet-engine && cd wallet-engine
+npm install
+npm run example:tour
+```
+
+它会打印能力清单、为三个目标地址做路由、构建一个 BIP321 URI，并把四份余额合并为精简模式下的数值。把桩适配器换成 `createWdkRegistry`，就是导览与一个真正转移资金的钱包之间的全部差别。
+
+## 安装
+
+<CodeGroup>
+```bash pnpm
+pnpm add @kaleidorg/wallet-engine
+```
+
+```bash npm
+npm install @kaleidorg/wallet-engine
+```
+
+```bash yarn
+yarn add @kaleidorg/wallet-engine
+```
+</CodeGroup>
+
+### 环境要求
+
+- Node.js 20 或更高版本
+- 推荐 TypeScript 5.x
+- 仅支持 ESM
+
+### 协议 SDK 是可选的对等依赖
+
+唯一的硬依赖是纯密码学基础库（`@noble/*`、`@scure/*`）。每个协议 SDK 都是可选的 `peerDependency` —— 只安装你实际用到的适配器所需的那些。
+
+引入根入口**不会**拉入任何协议 SDK，而每个适配器都在 `connect()` 内部懒加载自己的 SDK，因此缺失的对等依赖只会在你真正加载该适配器子路径时才报错。正是这一点让 MV3 扩展宿主可以引入本引擎，而不必背上所有 L2 SDK。
+
+| 你引入了…… | 还需安装 |
+|---|---|
+| `@kaleidorg/wallet-engine/adapters/wdk`（Spark） | `@tetherto/wdk-wallet-spark` |
+| `…/adapters/wdk`（RGB/RLN） | `@kaleidorg/wdk-wallet-rln` |
+| `…/adapters/wdk/wasm-liquid` | `@kaleidorg/wdk-wallet-liquid` |
+| `…/adapters/wdk/wasm-rgb` | `@utexo/rgb-lib-wasm` |
+| `…/adapters/wdk`（Arkade） | `@arkade-os/wdk` |
+| `…/swap` | `@kaleidorg/wdk-protocol-swap-kaleidoswap`（如需 Boltz 链上交换场所，另加 `@kaleidorg/swap-sdk`） |
+| `…/format` | `kaleido-sdk` |
+
+```bash
+# 例如只用 RGB/RLN 与 Liquid
+pnpm add @kaleidorg/wallet-engine @kaleidorg/wdk-wallet-rln @kaleidorg/wdk-wallet-liquid
+```
+
+<Note>
+  **迁移说明（≤ beta.53 → beta.54）：** 协议 SDK 已从 `dependencies` 移至可选的 `peerDependencies`，不再被传递安装 —— 请把你所用适配器对应的包加入自己的 `package.json`。
+</Note>
+
+## 你的第一个钱包
+
+```ts
+import {
+  ProtocolManager,
+  CrossProtocolRouter,
+  buildUnifiedReceiveURI,
+  aggregateForLite,
+} from '@kaleidorg/wallet-engine'
+// 适配器位于携带 SDK 的子路径下，因此根入口始终不含任何 SDK。
+import { createWdkRegistry } from '@kaleidorg/wallet-engine/adapters/wdk'
+
+// 1. 构建一份基于 WDK 的适配器注册表（选择你需要的协议）。
+const registry = createWdkRegistry({ enabled: ['RGB_LN', 'LIQUID', 'SPARK'] })
+
+// 2. 连接每个协议（配置中携带助记词与接口端点）。
+await registry.get('RGB_LN')!.connect({ protocol: 'RGB_LN', network: 'mainnet' /* … */ })
+await registry.get('LIQUID')!.connect({ protocol: 'LIQUID', network: 'mainnet' /* … */ })
+
+// 3. 一切都通过 manager 驱动 —— 应用代码里不出现任何协议 SDK。
+const manager = new ProtocolManager({ defaultProtocol: 'RGB_LN' })
+for (const a of registry.getAll()) manager.registerAdapter(a)
+
+const assets = await manager.listAllAssets()   // 跨协议统一后的资产列表
+const lite = aggregateForLite(assets)          // { btc, usd, other }
+
+// 4. 由路由器决定用哪个协议支付目标地址。
+const router = new CrossProtocolRouter(registry)
+const { best, routes } = router.resolveSend('lnbc1…')
+
+// 5. 一个任何钱包都能支付的二维码；Kaleido 钱包还能读取更丰富的参数。
+const uri = buildUnifiedReceiveURI({
+  btcAddress: 'bc1q…',
+  lightningInvoice: 'lnbc1…',
+  rgbInvoice: 'rgb:…',
+  liquidAddress: 'lq1…',
+})
+```
+
+## 注入你的平台实现
+
+引擎从不直接调用平台 API。每个宿主在启动时一次性注入存储、CSPRNG 和时钟，正是这一点让同一套引擎可以原样运行在 React Native（SecureStore/MMKV）、浏览器扩展（`chrome.storage`）和 Node 上。
+
+```ts
+import { setPlatform, consoleLogger } from '@kaleidorg/wallet-engine'
+
+setPlatform({
+  storage: myStorageProvider,   // IStorageProvider
+  runtime: myRuntimeProvider,   // IRuntimeProvider —— 随机数与时钟
+  logger: consoleLogger,
+})
+```

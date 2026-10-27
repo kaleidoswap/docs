@@ -1,0 +1,219 @@
+---
+title: "Node SDK Client Reference"
+sidebarTitle: "Client Reference"
+description: "Full reference for KaleidoClient, MakerClient, and RlnClient, covering methods, parameters, and return types in the Node SDK"
+---
+
+## Overview
+
+`KaleidoClient` is the single entry point. You create it once, then work through its two sub-clients:
+
+- **`client.maker`** — the hosted [Maker API](/cli/node-sdk/maker-api-compatibility): market data, quotes, atomic swaps, LSPS1 channel orders
+- **`client.rln`** — your own [RGB Lightning Node](/cli/node-sdk/rln-api-compatibility): wallet, RGB assets, channels, invoices, payments
+
+`client.maker` needs nothing beyond `baseUrl`, while `client.rln` also requires `nodeUrl` / `node_url`. Every method below is listed in both its TypeScript and Python form.
+
+## Client Initialization
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+  apiKey: process.env.KALEIDO_API_KEY,
+  timeout: 30,
+  logLevel: LogLevel.INFO,
+});
+
+client.hasMaker(); // boolean
+client.hasNode();  // boolean
+client.maker;      // MakerClient
+client.rln;        // RlnClient
+```
+
+```python Python
+import logging
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+    api_key=None,
+    timeout=30.0,
+    max_retries=3,
+    cache_ttl=60,
+    log_level=logging.INFO,
+)
+
+client.has_node()  # bool
+client.maker       # MakerClient
+client.rln         # RlnClient, raises if node_url is missing
+```
+</CodeGroup>
+
+## MakerClient (`client.maker`)
+
+### Market Data
+
+| TypeScript | Python | Notes |
+|------------|--------|-------|
+| `listAssets()` | `list_assets()` | List all assets |
+| `listPairs()` | `list_pairs()` | List all trading pairs |
+| `getQuote(body)` | `get_quote(body)` | Request a quote |
+| `getPairRoutes(body)` | `get_pair_routes(pair_ticker)` | TS accepts a request body; Python accepts a pair ticker like `"BTC/USDT"` |
+| `getMarketRoutes(body)` | `get_market_routes(body)` | Discover market routes |
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
+
+const client = KaleidoClient.create();
+
+const assets = await client.maker.listAssets();
+const pairs = await client.maker.listPairs();
+const quote = await client.maker.getQuote({
+  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
+  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
+});
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
+
+client = KaleidoClient.create()
+
+assets = await client.maker.list_assets()
+pairs = await client.maker.list_pairs()
+quote = await client.maker.get_quote(
+    PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+    )
+)
+```
+</CodeGroup>
+
+### Atomic Swaps
+
+| TypeScript | Python | Notes |
+|------------|--------|-------|
+| `initSwap(body)` | `init_swap(body)` | Initialize an atomic swap |
+| `executeSwap(body)` | `execute_swap(body)` | Confirm or execute the swap |
+| `getAtomicSwapStatus(body)` | `get_atomic_swap_status(body)` | Query swap status |
+| `getSwapNodeInfo()` | `get_swap_node_info()` | Maker swap node details |
+
+### LSPS1
+
+| TypeScript | Python | Notes |
+|------------|--------|-------|
+| `getLspInfo()` | `get_lsp_info()` | LSP metadata |
+| `getLspNetworkInfo()` | `get_lsp_network_info()` | LSP network info |
+| `createLspOrder(body)` | `create_lsp_order(body)` | Create LSPS1 order |
+| `getLspOrder(body)` | `get_lsp_order(body)` | Fetch LSPS1 order |
+| `estimateLspFees(body)` | `estimate_lsp_fees(body)` | Estimate order fees |
+| `submitLspRateDecision(body)` | `submit_lsp_rate_decision(body)` | Rate-decision endpoint |
+
+### WebSocket and Streaming
+
+| TypeScript | Python | Notes |
+|------------|--------|-------|
+| `enableWebSocket(wsUrl)` | `enable_websocket(ws_url, user_id=None)` | Create a `WSClient` |
+| `streamQuotes(...)` | `stream_quotes(...)` | Polling quote stream over WebSocket |
+| `streamQuotesByTicker(...)` | `stream_quotes_by_ticker(...)` | Auto-select routes |
+| `streamQuotesForAllRoutes(...)` | `stream_quotes_for_all_routes(...)` | Stream all routes |
+| `getAvailableRoutes(...)` | `get_available_routes(...)` | Route helper |
+
+## RlnClient (`client.rln`)
+
+### Wallet and BTC
+
+| TypeScript | Python |
+|------------|--------|
+| `getNodeInfo()` | `get_node_info()` |
+| `getNetworkInfo()` | `get_network_info()` |
+| `initWallet(body)` | `init_wallet(body)` |
+| `unlockWallet(body)` | `unlock_wallet(body)` |
+| `lockWallet()` | `lock_wallet()` |
+| `changePassword(body)` | `change_password(body)` |
+| `backup(body)` | `backup(body)` |
+| `restore(body)` | `restore(body)` |
+| `shutdown()` | `shutdown()` |
+| `getAddress()` | `get_address()` |
+| `getBtcBalance(skipSync?)` | `get_btc_balance(skip_sync=False)` |
+| `sendBtc(body)` | `send_btc(body)` |
+| `listTransactions(request?)` | `list_transactions(...)` |
+| `listUnspents()` | `list_unspents(...)` |
+| `createUtxos(body)` | `create_utxos(body)` |
+| `estimateFee(body)` | `estimate_fee(body)` |
+
+### RGB Assets
+
+| TypeScript | Python |
+|------------|--------|
+| `listAssets(filterAssetSchemas?)` | `list_assets(filter_asset_schemas=...)` |
+| `getAssetBalance(body)` | `get_asset_balance(body)` |
+| `getAssetMetadata(body)` | `get_asset_metadata(body)` |
+| `getAssetMedia(body)` | `get_asset_media(body)` |
+| `postAssetMedia(body)` | `post_asset_media(body)` |
+| `issueAssetNIA(body)` | `issue_asset_nia(body)` |
+| `issueAssetCFA(body)` | `issue_asset_cfa(body)` |
+| `issueAssetUDA(body)` | `issue_asset_uda(body)` |
+| `issueAssetIFA(body)` | `issue_asset_ifa(body)` |
+| `inflate(body)` | `inflate(body)` |
+| `sendRgb(body)` | `send_rgb(body)` |
+| `listTransfers(body)` | `list_transfers(body)` |
+| `refreshTransfers(body?)` | `refresh_transfers(body=None)` |
+| `syncRgbWallet(body?)` | `sync_rgb_wallet(body=None)` |
+| `failTransfers(body)` | `fail_transfers(body)` |
+| `decodeSwapstring(body)` | `decode_swapstring(body)` |
+
+### Channels, Peers, Invoices, and Payments
+
+| TypeScript | Python |
+|------------|--------|
+| `listChannels()` | `list_channels()` |
+| `openChannel(body)` | `open_channel(body)` |
+| `closeChannel(body)` | `close_channel(body)` |
+| `getChannelId(body)` | `get_channel_id(body)` |
+| `listPeers()` | `list_peers()` |
+| `connectPeer(body)` | `connect_peer(body)` |
+| `disconnectPeer(body)` | `disconnect_peer(body)` |
+| `createLNInvoice(body)` | `create_ln_invoice(body)` |
+| `createRgbInvoice(body)` | `create_rgb_invoice(body)` |
+| `decodeLNInvoice(body)` | `decode_ln_invoice(body)` |
+| `decodeRgbInvoice(body)` | `decode_rgb_invoice(body)` |
+| `getInvoiceStatus(body)` | `get_invoice_status(body)` |
+| `sendPayment(body)` | `send_payment(body)` |
+| `keysend(body)` | `keysend(body)` |
+| `listPayments()` | `list_payments()` |
+| `getPayment(body)` | `get_payment(body)` |
+
+### Swap Coordination and Utilities
+
+| TypeScript | Python | Notes |
+|------------|--------|-------|
+| `getTakerPubkey()` | `get_taker_pubkey()` | Returns node pubkey |
+| `whitelistSwap(body)` | `whitelist_swap(body)` | Accepts request object or raw swapstring |
+| `makerInit(body)` | `maker_init(body)` | Maker-side swap init |
+| `makerExecute(body)` | `maker_execute(body)` | Maker-side execution |
+| `listSwaps()` | `list_swaps()` | List swaps |
+| `getSwap(body)` | `get_swap(body)` | Fetch a swap |
+| `signMessage(body)` | `sign_message(body)` | Utility |
+| `sendOnionMessage(body)` | `send_onion_message(body)` | Utility |
+| `checkIndexerUrl(body)` | `check_indexer_url(body)` | Utility |
+| `checkProxyEndpoint(body)` | `check_proxy_endpoint(body)` | Utility |
+| `revokeToken(body)` | `revoke_token(body)` | Utility |
+
+## Closing the Client
+
+<CodeGroup>
+```typescript TypeScript
+await client.close();
+```
+
+```python Python
+await client.close()
+```
+</CodeGroup>

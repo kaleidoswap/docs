@@ -1,0 +1,100 @@
+---
+title: "Partner Attribution"
+sidebarTitle: "Partner Attribution"
+description: "Attribute the swaps your app creates to your partner organization with the Swap SDK, using a public organization key in client-side code or a secret organization API key on servers"
+---
+
+A partner organization can have the swaps it originates attributed to it, so the volume and fees it drives show up in its own statistics. Attribution is opt-in. Without it, every client creates unattributed swaps.
+
+| | Organization key | Organization API key |
+|---|---|---|
+| Where | Client-side code: web pages, extensions, mobile and desktop apps | Servers and native backends only |
+| What it is | The 64-hex x-only public key registered in the partner panel | A secret: `kld_test_…` (signet, staging) or `kld_live_…` (mainnet) |
+| Sent as | `X-Kaleido-Org-Key`, on swap creation only | `Authorization: Bearer …`, on every request to the maker |
+| Grants | Attribution only | Attribution, the organization's own rate-limit budget, and access to a partners-only maker |
+
+A client carries one or the other, never both. The maker rejects a request with both as `400 attribution_conflict`.
+
+Neither credential authorizes a claim, a refund, or any movement of funds. The per-swap `swapAuth` does that, and it stays separate.
+
+## Organization keys (client-side)
+
+The key is a **label, not a credential**. Anyone can copy it, so it buys the caller no rate limit, discount, or access of its own. That is what makes it safe to ship in a bundle. The private half is used only to claim a revenue-share payout on the organization's own machine; no KaleidoSwap software asks for it.
+
+<CodeGroup>
+```typescript TypeScript
+import { init, createKaleidoOrgClient } from "@kaleidorg/swap-sdk";
+
+await init();
+const client = createKaleidoOrgClient({
+  makerUrl: "https://maker.signet.kaleidoswap.com/v2",
+  orgKey: import.meta.env.VITE_KALEIDOSWAP_ORG_KEY,
+});
+```
+
+```python Python
+client = sdk.SwapClient.kaleido_org("https://maker.signet.kaleidoswap.com/v2", ORG_KEY, None)
+```
+
+```rust Rust
+use kaleidorg_swap_sdk::kaleido::{KaleidoOrgClient, KaleidoOrgClientOptions, OrgKey};
+
+let client = KaleidoOrgClient::new(KaleidoOrgClientOptions {
+    maker_url: "https://maker.signet.kaleidoswap.com/v2".to_string(),
+    org_key: org_key_hex.parse::<OrgKey>()?,
+    timeout: None,
+})?;
+```
+</CodeGroup>
+
+- The key is sent only on `POST /v2/swap/{submarine,reverse,chain}`, `POST /v2/swap/pay`, and the corridor's `POST /v1/swap`, and only to `makerUrl`, which must be `https` unless it is a loopback address.
+- A value that is not a valid curve point is rejected locally.
+- The maker answers each creation with `X-Kaleido-Attribution: none | api_key | org_key`. If an org-keyed creation comes back as anything else, the swap still goes ahead and the SDK logs a warning.
+- A page on another origin needs the maker's edge to allow `X-Kaleido-Org-Key` in CORS. An extension's host permissions make that moot.
+- `PayThroughClient` and `kaleidoswapHttpTransport` take an `orgKey` option too.
+
+## Organization API keys (servers)
+
+<CodeGroup>
+```typescript TypeScript
+import { init, createKaleidoMakerClient } from "@kaleidorg/swap-sdk";
+
+await init();
+const client = createKaleidoMakerClient({
+  makerUrl: "https://maker.signet.kaleidoswap.com/v2",
+  apiKey: process.env.KALEIDOSWAP_API_KEY!,
+});
+
+client.apiKeyEnvironment; // "test"
+client.apiKeyId;          // the key id shown in the partner panel
+```
+
+```python Python
+client = sdk.SwapClient.kaleido_maker(
+    "https://maker.signet.kaleidoswap.com/v2", os.environ["KALEIDOSWAP_API_KEY"], None
+)
+```
+
+```rust Rust
+use kaleidorg_swap_sdk::kaleido::{ApiKey, KaleidoMakerClient, KaleidoMakerClientOptions};
+
+let client = KaleidoMakerClient::new(KaleidoMakerClientOptions {
+    maker_url: "https://maker.signet.kaleidoswap.com/v2".to_string(),
+    api_key: std::env::var("KALEIDOSWAP_API_KEY")?.parse::<ApiKey>()?,
+    timeout: None,
+})?;
+```
+</CodeGroup>
+
+The result is an ordinary client with every route available. How the key is protected:
+
+- It is sent only to the configured maker URL, never to Esplora or a second maker. The URL must be `https` (or loopback) and may not carry userinfo.
+- Native clients decline redirects. In the browser `fetch` owns redirects, so a hop away from the maker is reported after the fact instead.
+- Nothing renders the secret: Rust's `Debug` redacts it, and Python and JavaScript expose only the key ID and environment.
+- A malformed key is rejected locally instead of reaching the maker as a `401`, the same answer a revoked key gets.
+
+<Warning>
+**Never ship an API key in client-side code.** It is valid until revoked and has no origin binding, so anyone holding it can attribute swaps to your organization or exhaust its limits. In TypeScript, `createKaleidoMakerClient` throws in a page, a Web, shared, or service worker, and a browser extension unless you pass `allowBrowser: true`. Use `createKaleidoOrgClient` in client-side code instead.
+</Warning>
+
+Error reporters that capture local variables (Sentry's `includeLocalVariables` or `with_locals`, `pytest --showlocals`) can read the key off a stack frame. Scrub `apiKey` in their before-send hook.

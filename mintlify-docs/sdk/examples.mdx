@@ -1,118 +1,62 @@
 ---
-title: "KaleidoSDK Examples"
+title: "Swap SDK Examples"
 sidebarTitle: "Examples"
-description: "Working KaleidoSDK code examples in TypeScript and Python, covering market data queries and live quote streaming over WebSocket"
+description: "Runnable Swap SDK examples in TypeScript, Python, and Rust against the KaleidoSwap signet maker: pair listing, submarine and reverse swaps, the Arkade corridor, RGB spends, and atomic swaps"
 ---
 
-## Market Data
+The [swap-sdk repository](https://github.com/kaleidoswap/swap-sdk) ships runnable programs. The TypeScript ones run against the live signet maker.
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+## TypeScript
 
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
-
-const [assets, pairs] = await Promise.all([
-  client.maker.listAssets(),
-  client.maker.listPairs(),
-]);
-
-console.log(`Assets: ${assets.assets.length}`);
-console.log(`Pairs: ${pairs.pairs.length}`);
-
-for (const pair of pairs.pairs.slice(0, 5)) {
-  console.log(`${pair.base.ticker}/${pair.quote.ticker}`);
-}
+```bash
+git clone https://github.com/kaleidoswap/swap-sdk && cd swap-sdk/typescript-sdk
+npm install && npm run build
+cd examples && npm install
+node 01-pairs.ts
 ```
 
-```python Python
-from kaleido_sdk import KaleidoClient
+Node 22+ runs the `.ts` files directly.
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com"
-)
+| Example | What it does | Needs |
+|---|---|---|
+| [`01-pairs.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/01-pairs.ts) | Prints every route the maker trades and on what terms | Nothing |
+| [`02-submarine.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/02-submarine.ts) | On-chain BTC → a Lightning invoice; refunds with `--refund` | A swap mnemonic, a BOLT11 invoice, signet bitcoin |
+| [`03-reverse.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/03-reverse.ts) | A Lightning payment → L-BTC on Liquid; claims and broadcasts | A swap mnemonic, a Liquid address, 50,000 signet sats |
+| [`04-corridor.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/04-corridor.ts) | Quotes the Arkade Intents corridor and shows a refusal | Nothing |
+| [`05-rgb-spend.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/05-rgb-spend.ts) | The RGB wallet adapter boundary for claims and refunds | An rgb-lib wallet adapter |
+| [`06-atomic.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/06-atomic.ts) | Quotes, verifies, and tracks an atomic BTC ↔ USDT-RGB swap | A regtest maker with atomic pairs, an rgb-lib wallet |
 
-assets = await client.maker.list_assets()
-pairs = await client.maker.list_pairs()
+Start with `01-pairs.ts`. If it prints a table, the SDK, its WebAssembly binary, and the maker are all reachable.
 
-print(f"Assets: {len(assets.assets)}")
-print(f"Pairs: {len(pairs.pairs)}")
+The examples read their configuration from the environment:
 
-for pair in pairs.pairs[:5]:
-    print(f"{pair.base.ticker}/{pair.quote.ticker}")
+| Variable | Default | Meaning |
+|---|---|---|
+| `KALEIDO_NETWORK` | `signet` | `signet` or `regtest` |
+| `KALEIDO_MAKER_URL` | The network's maker | Override the maker URL |
+| `KALEIDO_SWAP_INDEX` | `0` | BIP85 child index for this swap. Never reuse one |
+| `KALEIDO_SWAP_MNEMONIC` | — | The persisted 12-word swap mnemonic |
+| `BOLT11_INVOICE` | — | `02`: the invoice the maker should pay |
+| `LIQUID_CLAIM_ADDRESS` | — | `03`: where the L-BTC payout lands |
+| `REFUND_ADDRESS` | — | `02 --refund`: where refunded bitcoin lands |
+
+<Note>
+The examples take the swap index from an environment variable so you can see it. A real application keeps a persisted counter.
+</Note>
+
+## Python
+
+[`bindings/python/examples/`](https://github.com/kaleidoswap/swap-sdk/tree/trunk/bindings/python/examples) has `submarine.py`, `reverse.py`, `chain.py`, `corridor_quote.py`, and `rgb_spend.py`. They target the regtest harness; do not run them against real funds.
+
+## Rust
+
+[`examples/`](https://github.com/kaleidoswap/swap-sdk/tree/trunk/examples) has:
+
+- `lusdt_submarine.rs` and `lusdt_reverse.rs`: the full L-USDT ↔ BTC workflow, including the caller-funded PSET claim.
+- `corridor_quote.rs`: an Arkade corridor quote.
+- `signet_smoke.rs`: a read-only check of the signet maker and chain access.
+- `rgb-regtest/`: live USDT-RGB swaps with real rgb-lib wallets on regtest.
+
+```bash
+cargo run --example lusdt_reverse
 ```
-</CodeGroup>
-
-## Atomic Swaps
-
-A swap is a five-step sequence — quote, init, whitelist on your node, execute, then track settlement — and stopping after `initSwap` leaves a locked swap that never executes. The complete flow in both languages is on [How to Swap](/sdk/how-to-swap).
-
-## WebSocket Streaming
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
-
-client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id');
-
-const stop = await client.maker.streamQuotesByTicker(
-  'BTC',
-  'USDT',
-  100000,
-  (quote) => console.log(quote.price),
-  { pollInterval: 2000 }
-);
-
-setTimeout(() => stop(), 10000);
-```
-
-```python Python
-import asyncio
-
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com"
-)
-
-client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id")
-
-stop = await client.maker.stream_quotes_by_ticker(
-    "BTC",
-    "USDT",
-    100000,
-    lambda quote: print(quote["price"]),
-    poll_interval=2.0,
-)
-
-await asyncio.sleep(10)
-stop()
-```
-</CodeGroup>
-
-## Node Operations
-
-For the `client.rln` entry point — the `hasNode()` guard and the first node calls — see [Getting Started](/sdk/getting-started#node-configuration-checks). Every available method is listed in the [Client Reference](/sdk/api-reference#rlnclient-clientrln).
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="How to Swap" icon="arrows-rotate" href="/sdk/how-to-swap">
-    The complete atomic swap sequence: init, whitelist, execute, status.
-  </Card>
-  <Card title="WebSocket" icon="tower-broadcast" href="/sdk/websocket">
-    Streaming options, events, and the low-level `WSClient`.
-  </Card>
-  <Card title="Utilities" icon="calculator" href="/sdk/utilities">
-    Amount conversion, precision handling, and asset pair mapping.
-  </Card>
-  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
-    Every method on `client.maker` and `client.rln`.
-  </Card>
-</CardGroup>

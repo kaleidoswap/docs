@@ -1,6 +1,6 @@
 ---
 title: 'Maker API'
-description: "How KaleidoSDK versions track the Maker API, with the endpoint groups the SDK exposes through client.maker and how to reach them"
+description: "How Node SDK versions track the Maker API, with the endpoint groups the SDK exposes through client.maker and how to reach them"
 ---
 
 The Maker API is hosted by KaleidoSwap and reached over the network, with no infrastructure of your own to run. It enables market data and quoting, maker-side atomic swap coordination, and LSPS1 channel ordering.
@@ -24,7 +24,7 @@ The Maker API provides the following endpoint groups:
 | **LSPS1** | `/api/v1/lsps1/` | Channel ordering, fee estimates, liquidity provisioning, and Lightning channel setup |
 
 <Note>
-The order-based swap endpoints (`/api/v1/swaps/orders/*`) were retired, and the matching SDK methods were removed in **0.1.13**. Use the atomic swap flow instead — see [How to Swap](/sdk/how-to-swap).
+The order-based swap endpoints (`/api/v1/swaps/orders/*`) were retired, and the matching SDK methods were removed in **0.1.13**. Use the atomic swap flow instead — see [How to Swap](/cli/node-sdk/how-to-swap).
 </Note>
 
-Every group is reached through `client.maker`, which needs nothing beyond a `baseUrl` on the client. See [Getting Started](/sdk/getting-started) for the first call, and the [Client Reference](/sdk/api-reference) for every method.
+Every group is reached through `client.maker`, which needs nothing beyond a `baseUrl` on the client. See [Getting Started](/cli/node-sdk/getting-started) for the first call, and the [Client Reference](/cli/node-sdk/api-reference) for every method.

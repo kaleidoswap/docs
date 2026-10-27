@@ -1,0 +1,54 @@
+---
+title: "Pay-through"
+sidebarTitle: "Pay-through"
+description: "Let a payer settle a Lightning invoice while the recipient receives an on-chain payout, using the Swap SDK PayThroughClient with idempotent creation and safe recovery"
+---
+
+Pay-through turns a Lightning payment into an on-chain payout to any address. The payer pays a hold invoice; the maker broadcasts the payout; then the hold settles.
+
+<Warning>
+The payout leg has **no hash lock**: the maker controls it. The payer's Lightning payment stays held until the payout is broadcast, but the payout itself is not enforced on chain. Use the [HTLC swaps](/sdk/swap-types) where that matters.
+</Warning>
+
+The maker must have pay-through enabled. The client needs no WebAssembly initialization:
+
+```typescript TypeScript
+import { PayThroughClient } from "@kaleidorg/swap-sdk/pay-through";
+
+const pay = new PayThroughClient({ makerUrl: "https://maker.signet.kaleidoswap.com/v2" });
+
+if (!(await pay.supportsIdempotency())) {
+  throw new Error("This maker does not support safe retries of pay-through creation");
+}
+
+const request = { destination: recipientAddress, invoiceAmount: 100_000 };
+const idempotencyKey = crypto.randomUUID();
+// Persist request, key, and maker URL BEFORE sending.
+
+const order = await pay.create(request, { idempotencyKey });
+// Persist order (including swapAuth) privately.
+if (order.expiresAt <= Math.floor(Date.now() / 1000)) throw new Error("Invoice expired");
+
+// Show order.invoice, order.payoutAsset, and order.payoutAmount for approval.
+// After the payer's wallet pays order.invoice:
+const status = await pay.status(order.id);
+```
+
+`transaction.mempool` reports the payout broadcast; `invoice.settled` reports that the hold settled.
+
+## What `create` checks
+
+It refuses an order that differs from the request: another destination, another `invoiceAmount`, less than the requested `payoutAmount`, or another asset. It decodes the invoice and refuses one whose amount or payment hash differs from the order. Amounts are safe JavaScript integers; a larger value is rejected, not rounded.
+
+## Idempotent creation and recovery
+
+`create(request, { idempotencyKey })` sends the key as an `Idempotency-Key` header. Use a random UUIDv4 generated with a CSPRNG, persist it before sending, and treat it as a secret: replaying it can recover the order's `swapAuth`.
+
+- Call `supportsIdempotency()` **before the first create**, against the same maker. Older makers can silently ignore the key, so a successful create does not prove support.
+- To recover a lost response, call `create` again with the **same** request, key, maker URL, and credentials.
+- On `PAY_THROUGH_IDEMPOTENCY_IN_FLIGHT`, retry the identical request and key with bounded backoff (a few attempts over one to two minutes).
+- Never change the key while a timeout, `5xx`, or in-flight outcome is unresolved, and never pay a second invoice to recover the first.
+
+Other error codes exported by the subpath: `PAY_THROUGH_IDEMPOTENCY_MISMATCH` (the request differs from the original), `PAY_THROUGH_IDEMPOTENCY_SCOPE_MISMATCH` (different credentials), and `PAY_THROUGH_IDEMPOTENCY_EXPIRED` (the original order expired or is no longer awaiting payment: reconcile it before creating a new one).
+
+Requests time out after `timeoutMs` (30 seconds by default) and accept an optional `signal`. `PayThroughClient` also takes an `orgKey` for [partner attribution](/sdk/partner-attribution).

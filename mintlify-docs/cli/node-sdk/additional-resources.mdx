@@ -1,0 +1,65 @@
+---
+title: "Node SDK: Additional Resources"
+sidebarTitle: "Additional Resources"
+description: "Links for Node SDK builders — source repositories, OpenAPI specifications, node and RGB protocol references, test networks, and support channels"
+---
+
+## Source Repositories
+
+<CardGroup cols={2}>
+  <Card title="SDK Source" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
+    Source, releases, and issue tracking for both language implementations.
+  </Card>
+
+  <Card title="OpenAPI Specifications" icon="file-code" href="https://github.com/kaleidoswap/specs">
+    The specs both SDKs generate their API types from, which is what keeps request and response shapes identical across the two languages.
+  </Card>
+</CardGroup>
+
+## Protocol References
+
+<CardGroup cols={2}>
+  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
+    The node `client.rln` talks to. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
+  </Card>
+
+  <Card title="RGB Protocol Documentation" icon="gem" href="https://docs.rgb.info">
+    Client-side validation, asset interfaces, and the specification itself.
+  </Card>
+</CardGroup>
+
+## Development & Testing
+
+<CardGroup cols={2}>
+  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
+    Get Signet Bitcoin to fund a node and open test channels.
+  </Card>
+
+  <Card title="Mutinynet Explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    Look up the transactions behind `listSwaps` and `refreshTransfers`.
+  </Card>
+</CardGroup>
+
+## Get Help
+
+Check [Troubleshooting](/cli/node-sdk/troubleshooting) for errors and the [FAQ](/cli/node-sdk/faq) for questions.
+
+For anything else, report a problem through your preferred channel from the options below, including:
+
+1. SDK version (`getVersion()` / `get_version()`)
+2. Language and runtime version (Node.js / Python)
+3. Error message and stack trace
+4. Minimal code to reproduce
+5. Environment (Signet / Mainnet)
+
+<CardGroup cols={3}>
+  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+    Ask the community.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
+    Report a bug on the relevant repository.
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support for urgent issues.
+  </Card>
+</CardGroup>

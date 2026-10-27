@@ -1,65 +1,41 @@
 ---
-title: "KaleidoSDK: Additional Resources"
+title: "Swap SDK: Additional Resources"
 sidebarTitle: "Additional Resources"
-description: "Links for KaleidoSDK builders — source repositories, OpenAPI specifications, node and RGB protocol references, test networks, and support channels"
+description: "Links for Swap SDK builders: source repository, packages, protocol references for Boltz swaps, Liquid, RGB, and Arkade, test networks, and support"
 ---
 
-## Source Repositories
+## Source and packages
 
-<CardGroup cols={2}>
-  <Card title="SDK Source" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk">
-    Source, releases, and issue tracking for both language implementations.
-  </Card>
+- [kaleidoswap/swap-sdk](https://github.com/kaleidoswap/swap-sdk): source, examples, changelog, and versioning policy
+- [`@kaleidorg/swap-sdk`](https://www.npmjs.com/package/@kaleidorg/swap-sdk) on npm
+- [`@kaleidorg/swap-sdk-react-native`](https://www.npmjs.com/package/@kaleidorg/swap-sdk-react-native) on npm
+- [`kaleidorg_swap_sdk`](https://pypi.org/project/kaleidorg_swap_sdk/) on PyPI
 
-  <Card title="OpenAPI Specifications" icon="file-code" href="https://github.com/kaleidoswap/specs">
-    The specs both SDKs generate their API types from, which is what keeps request and response shapes identical across the two languages.
-  </Card>
-</CardGroup>
+The swap engine is a fork of [boltz-rust](https://github.com/SatoshiPortal/boltz-rust) by Bull Bitcoin (MIT).
 
-## Protocol References
+## Protocol references
 
-<CardGroup cols={2}>
-  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
-    The node `client.rln` talks to. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
-  </Card>
+- [Boltz API documentation](https://docs.boltz.exchange/api/): the `/v2` swap protocol the SDK speaks
+- [BIP85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki): deterministic entropy, used to derive the swap mnemonic
+- [MuSig2 (BIP327)](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki): cooperative key-path claims and refunds
+- [Elements / Liquid](https://elementsproject.org/): confidential transactions and PSETs
+- [RGB](https://rgb.tech/) and [rgb-lib](https://github.com/RGB-Tools/rgb-lib): the wallet library that handles USDT-RGB
+- [Arkade](https://arkadeos.com/): the Ark implementation behind the Intents corridor
 
-  <Card title="RGB Protocol Documentation" icon="gem" href="https://docs.rgb.info">
-    Client-side validation, asset interfaces, and the specification itself.
-  </Card>
-</CardGroup>
+## Test networks
 
-## Development & Testing
+- Signet maker: `https://maker.signet.kaleidoswap.com/v2`
+- Mutinynet Esplora: `https://esplora.signet.kaleidoswap.com`
+- Liquid testnet Esplora: `https://blockstream.info/liquidtestnet/api`
 
-<CardGroup cols={2}>
-  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
-    Get Signet Bitcoin to fund a node and open test channels.
-  </Card>
+## Related documentation
 
-  <Card title="Mutinynet Explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
-    Look up the transactions behind `listSwaps` and `refreshTransfers`.
-  </Card>
-</CardGroup>
+- [Node SDK](/cli/node-sdk/introduction): programmatic control of your own RGB Lightning Node
+- [API Reference](/api-reference/introduction): the maker's HTTP API
+- [Wallet Engine](/wallet-engine/introduction)
 
-## Get Help
+## Get help
 
-Check [Troubleshooting](/sdk/troubleshooting) for errors and the [FAQ](/sdk/faq) for questions.
-
-For anything else, report a problem through your preferred channel from the options below, including:
-
-1. SDK version (`getVersion()` / `get_version()`)
-2. Language and runtime version (Node.js / Python)
-3. Error message and stack trace
-4. Minimal code to reproduce
-5. Environment (Signet / Mainnet)
-
-<CardGroup cols={3}>
-  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
-    Ask the community.
-  </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
-    Report a bug on the relevant repository.
-  </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues.
-  </Card>
-</CardGroup>
+- [GitHub issues](https://github.com/kaleidoswap/swap-sdk/issues)
+- [Telegram](https://t.me/kaleidoswap)
+- Security reports: security@kaleidoswap.com

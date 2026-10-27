@@ -1,0 +1,52 @@
+---
+title: "Networks"
+sidebarTitle: "Networks"
+description: "Which networks the Swap SDK resolves to a KaleidoSwap maker, how to pair each with the right chain access, and how to point the client at another Boltz-compatible maker"
+---
+
+## Default makers
+
+`SwapClient.forNetwork(network)` (`SwapClient.default(network)` in Python, `BoltzApiClientV2::default(network)` in Rust) only ever returns a KaleidoSwap maker. On a network where KaleidoSwap runs no maker it returns an error rather than falling back to someone else, so a default can never put a swap in front of a counterparty you did not choose.
+
+| Network | Default maker | Bitcoin chain access |
+|---|---|---|
+| `signet` | `https://maker.signet.kaleidoswap.com/v2` | `https://esplora.signet.kaleidoswap.com` (Mutinynet) |
+| `regtest` | `http://localhost:9001/v2` (the SDK repository's local harness) | Local |
+| `mainnet` | Error: no mainnet maker yet | — |
+| `testnet` | Error: no testnet3 maker; use `signet` | — |
+
+Signet is the KaleidoSwap test network. Liquid chain access has no KaleidoSwap explorer yet; the examples use `https://blockstream.info/liquidtestnet/api`.
+
+## Keep the network and the chain on the same row
+
+The signet maker settles on **Mutinynet**, a custom signet. Signet and testnet3 use the same address encoding, so pairing the signet maker with testnet3 chain access does not raise an error: it creates swaps on one chain while your app funds or watches another. Always pass the chain endpoint that belongs to the network you created the swap on.
+
+Mutinynet has no public Electrum server. Use Esplora, or pass your own Electrum URL.
+
+## Another maker
+
+Any Boltz-`/v2`-compatible endpoint works if you name it explicitly:
+
+<CodeGroup>
+```typescript TypeScript
+const client = new SwapClient("https://maker.example.com/v2");
+```
+
+```python Python
+client = sdk.SwapClient("https://maker.example.com/v2", None)
+```
+
+```rust Rust
+let client = BoltzApiClientV2::new("https://maker.example.com/v2".to_string(), None);
+```
+</CodeGroup>
+
+Endpoint support differs between makers. The KaleidoSwap maker serves a subset of the upstream Boltz API and adds routes of its own; see [Compatibility](/sdk/compatibility).
+
+<Warning>
+Record the maker URL with every swap. A refund or a cooperative claim must go to the maker that issued the swap.
+</Warning>
+
+## Partner credentials
+
+Clients built with `createKaleidoOrgClient` or `createKaleidoMakerClient` take an explicit `makerUrl`, which must be `https` unless it is a loopback address. See [Partner attribution](/sdk/partner-attribution).

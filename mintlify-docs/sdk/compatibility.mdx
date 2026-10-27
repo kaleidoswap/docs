@@ -1,0 +1,45 @@
+---
+title: "Maker Compatibility"
+sidebarTitle: "Compatibility"
+description: "Which Swap SDK capabilities the KaleidoSwap maker serves, which upstream Boltz routes it does not, and what that means when you point the SDK at another maker"
+---
+
+The Swap SDK speaks the Boltz `/v2` protocol and keeps compatibility with upstream Boltz through an explicit base URL. The KaleidoSwap maker serves a subset of the Boltz public API and adds routes of its own. An exported SDK method does not by itself mean a given maker serves the route it needs.
+
+## Served by the KaleidoSwap maker
+
+| Capability | Routes | SDK surface |
+|---|---|---|
+| Submarine, reverse, and chain swaps | `/v2/swap/{submarine,reverse,chain}`, `/v2/swap/{type}/pairs`, `/v2/swap/{id}` | `SwapClient`, `SwapScript` |
+| Cooperative claims and refunds | `/v2/swap/{type}/{id}/claim`, `/refund` (reverse and chain claims; submarine, reverse, and chain refunds) | `constructClaim`, `constructCooperativeClaim`, `constructRefund` |
+| Chain-swap re-quotes | `/v2/swap/chain/{id}/quote` | `quote`, `acceptQuote` |
+| Status stream | `/v2/ws` | `SwapWsApi` |
+| Swap restore | `/v2/swap/restore`, `/v2/swap/restore/index` | `swapRestore`, `SwapMasterKey.restore` |
+| `swapAuth` recovery | `/v2/swap/{id}/auth/challenge`, `/v2/swap/{id}/auth/recover` | `recoverSwapAuth` |
+| Atomic BTC ↔ USDT-RGB | `/v2/swap/atomic/*` | `AtomicSwaps` |
+| Pay-through | `/v2/swap/pay` | `PayThroughClient` |
+| Arkade Intents corridor | `/v1/card`, `/v1/swap`, `/v1/rfq/{id}` | `IntentsCorridor`, Arkade venue |
+
+`swapAuth`, its recovery, atomic swaps, pay-through, and the corridor are KaleidoSwap additions. Upstream Boltz does not serve them.
+
+## Not served by the KaleidoSwap maker
+
+These upstream Boltz capabilities stay in the Rust core so you can use them against a compatible maker. They are not exported to the TypeScript, Python, or React Native bindings, and the KaleidoSwap public maker does not register their routes.
+
+| Capability | Upstream route | Where it exists in the SDK |
+|---|---|---|
+| Submarine server-claim co-signing | `GET`/`POST /v2/swap/submarine/{id}/claim` | Rust raw helpers; native `submarine_cooperative_claim` |
+| Maker-mediated raw broadcast | `POST /v2/chain/{BTC,L-BTC}/transaction` | Rust `broadcast_tx` |
+| Boltz-shaped BOLT12 offers | `/v2/lightning/BTC/bolt12*` | Five Rust methods |
+
+To broadcast, use your own chain backend: `BtcLikeTransaction.broadcast` in TypeScript, `ChainClient.broadcast_tx` natively.
+
+WASM's `constructCooperativeClaim` is a **chain**-swap claim constructor. It does not expose submarine co-signing.
+
+## Pointing the SDK at another maker
+
+Pass the maker's base URL explicitly (see [Networks](/sdk/networks#another-maker)). Then:
+
+- Read its pair catalogues at runtime instead of assuming routes.
+- Expect `swapAuth` to be absent on an upstream Boltz maker. Methods that take it accept `undefined` for a maker that issues none.
+- The SDK's create-time checks reject a response that differs from the protocol: an inexact timeout height, a non-minimal timelock encoding, or a lockup that does not match your keys. A maker that diverges from Boltz there will fail those checks by design.

@@ -1,0 +1,106 @@
+---
+title: "Keys and Recovery"
+sidebarTitle: "Keys and Recovery"
+description: "How the Swap SDK derives swap keys and preimages from a wallet mnemonic, why swapAuth must be stored, and how to restore swaps and credentials after losing local state"
+---
+
+## Swap keys and preimages
+
+The SDK derives everything a swap needs on your side from your wallet mnemonic. No key material is sent to the maker.
+
+1. **Swap mnemonic.** `SwapMasterKey.fromWalletMnemonic(walletMnemonic, network)` derives a BIP85 child (index 26589) of the wallet mnemonic. That child is the swap mnemonic. Persist it (`swapMnemonic()`) and reload it later with `fromSwapMnemonic`, so the wallet mnemonic itself is not needed for every swap.
+2. **Per-swap material.** `deriveSwapKey(index)` returns a key pair and `derivePreimage(index)` returns a preimage with its `sha256` hash.
+
+<CodeGroup>
+```typescript TypeScript
+import { SwapMasterKey } from "@kaleidorg/swap-sdk";
+
+const master = SwapMasterKey.fromSwapMnemonic(savedSwapMnemonic, "signet");
+const index = await nextSwapIndex();          // your persisted counter
+const { publicKey, secretKey } = master.deriveSwapKey(index);
+const { preimage, sha256 } = master.derivePreimage(index);
+```
+
+```python Python
+master = sdk.SwapMasterKey.from_swap_mnemonic(saved_swap_mnemonic, sdk.Network.SIGNET)
+keys = master.derive_swap_key(index)
+preimage = master.derive_preimage(index)
+preimage_hash = preimage.sha256()
+```
+</CodeGroup>
+
+The index is a `bigint` in TypeScript (`0n`, not `0`).
+
+<Warning>
+**Never reuse an index.** Two swaps on the same index share claim and refund keys and the same preimage. Keep the highest allocated index in persistent storage and increment it before each swap.
+</Warning>
+
+Which key does what:
+
+| Swap | Your key | Preimage |
+|---|---|---|
+| Submarine | Refund key | Not yours: the maker learns it by paying your invoice |
+| Reverse | Claim key | Yours: you reveal it when you claim |
+| Chain | A claim key and a separate refund key | Yours |
+
+## `swapAuth`: store it with the swap
+
+Every create response from the KaleidoSwap maker carries a `swapAuth`, a per-swap credential issued **once**. It authorizes:
+
+- accepting a chain-swap re-quote (`acceptQuote`), and
+- cooperative refunds (pass it in the refund parameters).
+
+Treat it as a secret. It is a plain property of the create response, so logging the whole response leaks it; log `swap.id` instead. Nothing re-issues it on request. If it is lost, the swap still has its script-path refund after the timeout, and the signed recovery flow below can recover it with the swap's key.
+
+```typescript TypeScript
+import { toJson } from "@kaleidorg/swap-sdk";
+
+const swap = await client.createChainSwap("signet", request);
+await store.put(swap.id, toJson(swap)); // swapAuth included
+
+const saved = JSON.parse(await store.get(swap.id));
+const quote = await client.quote(swap.id);
+await client.acceptQuote(swap.id, quote.amount, saved.swapAuth);
+```
+
+Use `toJson` rather than `JSON.stringify`: TypeScript responses carry `bigint` amounts, which `JSON.stringify` throws on.
+
+## Restoring swaps
+
+`SwapMasterKey.restore(client)` asks the maker for every swap created with keys from this swap mnemonic. `restoreIndex(client)` returns the highest index the maker has seen. Both use the account xpub (`masterXpub()`) and accept an optional gap limit.
+
+```typescript TypeScript
+const restored = await master.restore(client);
+const highest = await master.restoreIndex(client);
+```
+
+If you call `client.swapRestore` or `client.swapRestoreIndex` directly with `masterXpub()`, pass `"m"` as the derivation path. Without it the maker searches a different set of keys and can return nothing.
+
+Keep your own highest index as well. Restore is bounded by the gap limit, so an empty result does not prove that an index was never used.
+
+### Rebuilding a script from a restored swap
+
+`SwapScript.fromRestored(entry, ourPublicKey, network, side?)` rebuilds and validates the swap script from a restore entry, without the original create response:
+
+```typescript TypeScript
+const [entry] = await master.restore(client);
+const refundKey = master.deriveSwapKey(BigInt(entry.refundDetails.keyIndex));
+const script = SwapScript.fromRestored(entry, refundKey.publicKey, "signet");
+
+// Chain swaps: pick the side explicitly, each with its own key.
+const claimKey = master.deriveSwapKey(BigInt(chainEntry.claimDetails.keyIndex));
+const claimScript = SwapScript.fromRestored(chainEntry, claimKey.publicKey, "signet", "claim");
+```
+
+Use the refund details for a submarine swap and the claim details for a reverse swap. Restore works for BTC and L-BTC sides of all three HTLC types. It does not carry RGB allocation data or the Liquid asset context, so USDT-RGB, L-USDT, and Arkade swaps cannot be rebuilt from a restore entry: keep their original create responses and wallet context.
+
+### Recovering `swapAuth`
+
+Restore returns swap records, not credentials. Recover each credential with the restored swap's key, then save it:
+
+```typescript TypeScript
+const keys = master.deriveSwapKey(BigInt(restored.refundDetails.keyIndex));
+const swapAuth = await client.recoverSwapAuth(restored.id, keys.secretKey);
+```
+
+Use the refund key for submarine swaps, the claim key for reverse swaps, and either key for chain swaps. Recovery uses signed endpoints that the KaleidoSwap maker serves; upstream Boltz has neither the endpoints nor `swapAuth`.

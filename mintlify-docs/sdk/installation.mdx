@@ -1,146 +1,105 @@
 ---
-title: "KaleidoSDK: Installation"
+title: "Swap SDK: Installation"
 sidebarTitle: "Installation"
-description: "Install the KaleidoSDK for TypeScript or Python, with runtime requirements, the client configuration fields, environment variables, and the available API environments"
+description: "Install the KaleidoSwap Swap SDK for TypeScript, Python, React Native, or Rust, with supported runtimes, WebAssembly loading, and version pinning"
 ---
 
-`kaleido-sdk` (TypeScript) and `kaleido_sdk` (Python) are generated from the same Maker API and RGB Lightning Node specs, then wrapped with handwritten clients:
+import { swapSdkVersion } from "/snippets/versions.mdx";
 
-- `client.maker` for KaleidoSwap market, swap, and LSPS1 endpoints
-- `client.rln` for RGB Lightning Node wallet, channel, payment, and swap endpoints
-
-Both ship from the same repository and share a version number, so a given release behaves identically in either language.
-
-<Note>
-  For which SDK version works with which API, see [Maker API Compatibility](/sdk/maker-api-compatibility) and [RLN API Compatibility](/sdk/rln-api-compatibility).
-</Note>
-
-## Install the Package
+All four packages share one version number. Install the one for your runtime.
 
 <CodeGroup>
-```bash npm
-npm install kaleido-sdk
+```bash TypeScript
+npm install @kaleidorg/swap-sdk
 ```
 
-```bash pnpm
-pnpm add kaleido-sdk
+```bash Python
+python -m pip install kaleidorg_swap_sdk
 ```
 
-```bash yarn
-yarn add kaleido-sdk
+```bash React Native
+npm install @kaleidorg/swap-sdk-react-native
 ```
 
-```bash pip
-pip install kaleido-sdk
+```toml Rust (Cargo.toml)
+[dependencies]
+kaleidorg-swap-sdk = { git = "https://github.com/kaleidoswap/swap-sdk", tag = "vX.Y.Z" }
 ```
 </CodeGroup>
 
-### Requirements
+The current release is <code>v{swapSdkVersion}</code>. Use that tag for the Rust crate.
 
-<Tabs>
-  <Tab title="TypeScript">
-    - Node.js 18 or higher
-    - TypeScript 5.x recommended
-  </Tab>
-  <Tab title="Python">
-    - Python 3.10 or higher
-    - Runtime dependencies are installed automatically
-  </Tab>
-</Tabs>
+## Supported runtimes
 
-## Configuration
+| Package | Runtime |
+|---|---|
+| `@kaleidorg/swap-sdk` | Browsers and Node 22+ |
+| `kaleidorg_swap_sdk` | Python 3.10+. Wheels for Linux x86_64/aarch64, macOS x86_64/arm64, Windows x86_64; other platforms build the source distribution and need Rust 1.88+ |
+| `@kaleidorg/swap-sdk-react-native` | iOS and Android, new architecture, bare or prebuilt apps (not Expo Go) |
+| `kaleidorg-swap-sdk` (Rust) | Rust 1.88+, native and `wasm32-unknown-unknown`. Not published to crates.io; depend on a tag |
 
-### TypeScript
+## TypeScript: load the WebAssembly binary
 
-`KaleidoClient.create()` accepts a `KaleidoConfig` object:
+The TypeScript package wraps the Rust engine compiled to WebAssembly. Call `init()` once before you construct any client. It takes no argument in browsers or in Node.
 
 ```typescript
-import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+import { init, SwapClient } from "@kaleidorg/swap-sdk";
 
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',
-  apiKey: process.env.KALEIDO_API_KEY,
-  timeout: 30,
-  logLevel: LogLevel.INFO,
-});
+await init();
+const client = SwapClient.forNetwork("signet");
 ```
 
-Supported config fields:
+Your bundler must emit the packaged `vendor/bindings_wasm_bg.wasm` asset. To serve the binary from your own CDN, pass its location:
 
-- `baseUrl?`: Maker API base URL. Defaults to `https://api.signet.kaleidoswap.com`
-- `nodeUrl?`: RGB Lightning Node URL
-- `apiKey?`: optional API key
-- `nodeApiKey?`: optional bearer token for authenticated RLN node requests
-- `timeout?`: request timeout in seconds
-- `logLevel?`: SDK log level
-- `logger?`: custom logger implementation
-
-### Python
-
-`KaleidoClient.create()` accepts keyword arguments:
-
-```python
-import logging
-from kaleido_sdk import KaleidoClient
-
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",
-    api_key=None,
-    timeout=30.0,
-    max_retries=3,
-    cache_ttl=60,
-    log_level=logging.INFO,
-)
+```typescript
+await init(new URL("/assets/bindings_wasm_bg.wasm", location.origin));
 ```
 
-Python supports the same connection settings plus:
+`wasmUrl` points at the packaged binary if you need to copy it. For a pre-compiled `WebAssembly.Module`, use `initWithModule`.
 
-- `max_retries`: retry budget for the HTTP client
-- `cache_ttl`: cache TTL in seconds
-- `log_level`: standard Python logging level
+<Warning>
+Bundling the Node entry into a single file (a CLI or serverless artifact) moves the module away from its packaged `vendor/` folder, and the default lookup finds nothing. Copy `bindings_wasm_bg.wasm` next to your output and pass it to `init()`. This only fails at runtime, so check it before you ship.
+</Warning>
 
-## Environment Variables
+### Subpath entry points
 
-The SDK does not auto-load environment variables, but these names are used by the examples and work well as a convention:
+| Import | What it is | Needs `init()` |
+|---|---|---|
+| `@kaleidorg/swap-sdk` | The full swap surface | Yes |
+| `@kaleidorg/swap-sdk/pay-through` | HTTP client for [pay-through](/sdk/pay-through) | No |
+| `@kaleidorg/swap-sdk/chain-data` | Esplora fee and tip-height helpers | No |
+| `@kaleidorg/swap-sdk/arkade` | The [Arkade Intents venue](/sdk/arkade) (peer-depends on `@arkade-os/sdk` and `@arkade-os/swap`) | No |
 
-| Variable | Typical use |
-|----------|-------------|
-| `KALEIDO_API_URL` | Maker API base URL |
-| `KALEIDO_NODE_URL` | RGB Lightning Node URL |
-| `KALEIDO_API_KEY` | API key |
+## React Native
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+The browser package cannot run on a device because Hermes has no WebAssembly. `@kaleidorg/swap-sdk-react-native` is the same Rust engine compiled for iOS and Android and exposed as a turbo module.
 
-const client = KaleidoClient.create({
-  baseUrl: process.env.KALEIDO_API_URL || 'https://api.signet.kaleidoswap.com',
-  nodeUrl: process.env.KALEIDO_NODE_URL,
-  apiKey: process.env.KALEIDO_API_KEY,
-});
-```
+- Prebuilt native binaries are downloaded from the release on install and verified against a SHA-256 manifest shipped in the npm package. No Rust toolchain, NDK, or Xcode is needed. Run `pod install` for iOS afterwards.
+- With pnpm 10 or later, allow the package's install script, or the binaries are never fetched and the module is missing at first import:
 
-```python Python
-import os
-from kaleido_sdk import KaleidoClient
+  ```yaml pnpm-workspace.yaml
+  onlyBuiltDependencies:
+    - "@kaleidorg/swap-sdk-react-native"
+  ```
 
-client = KaleidoClient.create(
-    base_url=os.environ.get("KALEIDO_API_URL", "https://api.signet.kaleidoswap.com"),
-    node_url=os.environ.get("KALEIDO_NODE_URL"),
-    api_key=os.environ.get("KALEIDO_API_KEY"),
-)
-```
-</CodeGroup>
+- With Expo, use `expo prebuild` and a development build.
+- The Arkade venue is a separate entry, `@kaleidorg/swap-sdk-react-native/arkade`. It needs `@kaleidorg/swap-sdk`, `@arkade-os/sdk`, and `@arkade-os/swap` installed alongside, and Metro must resolve package `exports` (the default from React Native 0.79).
 
-## Available Environments
+Phones sleep and swaps have deadlines. Read the mobile notes in [Best practices](/sdk/best-practices#mobile-apps) before you ship.
 
-Pass the API URL as `baseUrl` / `base_url`; the SDK appends the `/api/v1` path itself. No API key is required on the test networks.
+## Pinning a version
 
-| Environment | API URL | WebSocket URL | Status |
-|-------------|---------|---------------|--------|
-| **Signet** | `https://api.signet.kaleidoswap.com` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` | Live (default) |
-| **Mainnet** | Your own maker's URL | — | No public endpoint yet |
+The SDK is `0.x`: a minor release can change the public surface, and patch releases never do. Depend on the minor you tested and take its patches: <code>"@kaleidorg/swap-sdk": "^{swapSdkVersion}"</code> in `package.json`, or <code>kaleidorg_swap_sdk~={swapSdkVersion}</code> in Python. On a `0.x` version both forms accept patches and never cross into the next minor.
 
-With the package installed, continue to [Getting Started](/sdk/getting-started) to create a client and request your first quote.
+Read the [changelog](/sdk/changelog) before moving to a new minor. Breaking changes are listed at the top of each release entry.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Getting started" icon="rocket" href="/sdk/getting-started">
+    Reach the signet maker and make a first swap.
+  </Card>
+  <Card title="Networks" icon="network-wired" href="/sdk/networks">
+    Pick the network and matching chain access.
+  </Card>
+</CardGroup>

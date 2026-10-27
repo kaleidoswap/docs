@@ -1,7 +1,7 @@
 name: Check SDK version
 
-# Warns when the SDK version documented in mintlify-docs/snippets/versions.mdx
-# has drifted from the latest kaleido-sdk on npm. Reports on the PR only; it
+# Warns when the SDK versions documented in mintlify-docs/snippets/versions.mdx
+# have drifted from the latest @kaleidorg/swap-sdk and kaleido-sdk on npm. Reports on the PR only; it
 # never blocks a merge, because npm can legitimately be ahead of the docs.
 on:
   pull_request:

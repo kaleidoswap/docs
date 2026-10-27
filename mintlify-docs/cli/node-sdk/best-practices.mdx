@@ -1,0 +1,266 @@
+---
+title: "Node SDK Best Practices"
+sidebarTitle: "Best Practices"
+description: "Guidelines for building production apps with the Node SDK, covering error handling, retries, amount precision, and security"
+---
+
+## Client Initialization
+
+### Use Environment Variables
+
+Keep configuration out of source code. The SDK does not auto-load environment variables — read them yourself and pass them to `create()`.
+
+For the conventional variable names and a full snippet in both languages, see [Installation](/cli/node-sdk/installation#environment-variables).
+
+### Use a Singleton Client
+
+Create one client instance and reuse it throughout your application:
+
+<CodeGroup>
+```typescript TypeScript
+// lib/kaleido.ts
+import { KaleidoClient } from 'kaleido-sdk';
+
+let client: KaleidoClient | null = null;
+
+export function getClient(): KaleidoClient {
+  if (!client) {
+    client = KaleidoClient.create({
+      baseUrl: process.env.KALEIDO_API_URL!,
+    });
+  }
+  return client;
+}
+```
+
+```python Python
+# lib/kaleido.py
+import os
+
+from kaleido_sdk import KaleidoClient
+
+_client = None
+
+def get_client() -> KaleidoClient:
+    global _client
+    if _client is None:
+        _client = KaleidoClient.create(
+            base_url=os.environ["KALEIDO_API_URL"]
+        )
+    return _client
+```
+</CodeGroup>
+
+## Error Handling
+
+### Always Handle Errors
+
+Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Troubleshooting](/cli/node-sdk/troubleshooting#comprehensive-error-handling) has the exhaustive version.
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoError, NetworkError, QuoteExpiredError } from 'kaleido-sdk';
+
+try {
+  const quote = await client.maker.getQuote({ /* ... */ });
+} catch (error) {
+  if (error instanceof QuoteExpiredError) {
+    // Retry with a fresh quote
+  } else if (error instanceof NetworkError && error.isRetryable()) {
+    // Retry after a delay
+  } else if (error instanceof KaleidoError) {
+    // Log and handle gracefully
+    console.error(`[${error.code}] ${error.message}`);
+  }
+}
+```
+
+```python Python
+from kaleido_sdk import KaleidoError, NetworkError, QuoteExpiredError, PairQuoteRequest
+
+try:
+    quote = await client.maker.get_quote(PairQuoteRequest(...))
+except QuoteExpiredError:
+    # Retry with a fresh quote
+    pass
+except NetworkError as e:
+    if e.is_retryable():
+        # Retry after a delay
+        pass
+except KaleidoError as e:
+    print(f"[{e.code}] {e}")
+```
+</CodeGroup>
+
+### Check Retryability
+
+Never retry blindly. Every error exposes `isRetryable()` / `is_retryable()`, which already encodes which failures can succeed on a second attempt — use it instead of matching on status codes yourself.
+
+For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Troubleshooting](/cli/node-sdk/troubleshooting#retry-patterns).
+
+## Async Patterns
+
+### TypeScript: Parallel Requests
+
+Use `Promise.all` for independent requests:
+
+```typescript
+const [assets, pairs, lspInfo] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+  client.maker.getLspInfo(),
+]);
+```
+
+Use `Promise.allSettled` when you want partial results:
+
+```typescript
+const results = await Promise.allSettled([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+]);
+
+for (const result of results) {
+  if (result.status === 'fulfilled') {
+    console.log('Success:', result.value);
+  } else {
+    console.error('Failed:', result.reason);
+  }
+}
+```
+
+### Python: Sequential with Error Recovery
+
+```python
+from kaleido_sdk import KaleidoError
+
+results = {}
+for name, fn in [
+    ("assets", lambda: client.maker.list_assets()),
+    ("pairs", lambda: client.maker.list_pairs()),
+]:
+    try:
+        results[name] = await fn()
+    except KaleidoError as e:
+        print(f"Failed to fetch {name}: {e}")
+        results[name] = None
+```
+
+## Amount Handling
+
+### Always Use Raw Units for API Calls
+
+The API works in raw (smallest unit) amounts, never display amounts. Convert with `parseRawAmount` / `parse_raw_amount` before building a quote request, and convert back with `toDisplayAmount` / `to_display_amount` before showing anything to the user.
+
+Both functions are documented in [Utilities](/cli/node-sdk/utilities#amount-conversion).
+
+### Use PrecisionHandler for Multi-Asset Apps
+
+With more than one asset in play, passing a precision by hand on every call is how rounding bugs get in. `PrecisionHandler` reads the precision from asset metadata, so you convert by asset ID instead.
+
+See [Utilities](/cli/node-sdk/utilities#precisionhandler) for how to create one and the full method list.
+
+## Node Operations
+
+`client.rln` is only usable when the client was created with a node URL, so guard every node call with `hasNode()` / `has_node()`. In Python, accessing `client.rln` without a node URL raises `NodeNotConfiguredError`.
+
+See [Getting Started](/cli/node-sdk/getting-started#node-configuration-checks) for the guard pattern in both languages.
+
+## WebSocket
+
+### Unsubscribe When Done
+
+`streamQuotes` / `streamQuotesByTicker` return an unsubscribe function. Call it as soon as you stop needing quotes — on unmount, on navigation, or when the user closes the pair. Skipping it leaks memory and keeps quote traffic flowing that nobody reads.
+
+See [WebSocket](/cli/node-sdk/websocket#best-practices) for this and the other streaming guidelines.
+
+### Handle Reconnection
+
+The `WSClient` reconnects on its own with exponential backoff, so the work on your side is surfacing state to the user: show a "reconnecting" indicator on `disconnected`, re-request quotes on `connected`, and treat `maxReconnectExceeded` as a hard error rather than a transient blip.
+
+For the event list and the reconnection configuration, see [WebSocket](/cli/node-sdk/websocket#events).
+
+## Security
+
+### Never Expose API Keys in Client Code
+
+API keys should only be used server-side. For browser applications, proxy API calls through your backend.
+
+### Validate User Input
+
+Always validate amounts and addresses before sending to the API:
+
+<CodeGroup>
+```typescript TypeScript
+// Validate amount is within the layer's trading limits
+const pairs = await client.maker.listPairs();
+const pair = pairs.pairs.find(p =>
+  p.base.ticker === 'BTC' && p.quote.ticker === 'USDT'
+);
+
+const limits = pair?.base.endpoints?.find(e => e.layer === 'BTC_LN');
+if (limits && (amount < limits.min_amount || amount > limits.max_amount)) {
+  throw new Error(`Amount must be between ${limits.min_amount} and ${limits.max_amount}`);
+}
+```
+
+```python Python
+pairs = await client.maker.list_pairs()
+pair = next(
+    (p for p in pairs.pairs
+     if p.base.ticker == "BTC" and p.quote.ticker == "USDT"),
+    None
+)
+
+limits = next(
+    (e for e in (pair.base.endpoints or []) if e.layer == "BTC_LN"),
+    None,
+) if pair else None
+
+if limits and not (limits.min_amount <= amount <= limits.max_amount):
+    raise ValueError(
+        f"Amount must be between {limits.min_amount} and {limits.max_amount}"
+    )
+```
+</CodeGroup>
+
+Order-size limits live on each asset's `endpoints` list (`TradingLimits` per layer); `pair.routes` only tells you which `from_layer -> to_layer` combinations exist.
+
+## Performance
+
+### Cache Static Data
+
+Assets and trading pairs change infrequently. Cache them to reduce API calls:
+
+<CodeGroup>
+```typescript TypeScript
+import type { TradingPairsResponse } from 'kaleido-sdk';
+
+let cachedPairs: TradingPairsResponse | null = null;
+let cacheTime = 0;
+
+async function getPairs() {
+  const now = Date.now();
+  if (!cachedPairs || now - cacheTime > 60000) {  // 60 second cache
+    cachedPairs = await client.maker.listPairs();
+    cacheTime = now;
+  }
+  return cachedPairs;
+}
+```
+
+```python Python
+import time
+
+_cached_pairs = None
+_cache_time = 0
+
+async def get_pairs():
+    global _cached_pairs, _cache_time
+    now = time.time()
+    if _cached_pairs is None or now - _cache_time > 60:
+        _cached_pairs = await client.maker.list_pairs()
+        _cache_time = now
+    return _cached_pairs
+```
+</CodeGroup>

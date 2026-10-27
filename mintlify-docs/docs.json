@@ -156,38 +156,38 @@
                 ]
               },
               {
-                "group": "API Surfaces",
-                "icon": "layer-group",
+                "group": "Concepts",
+                "icon": "lightbulb",
                 "pages": [
-                  "sdk/maker-api-compatibility",
-                  "sdk/rln-api-compatibility"
-                ]
-              },
-              {
-                "group": "Modules",
-                "icon": "code",
-                "pages": [
-                  "sdk/api-reference",
-                  "sdk/types",
-                  "sdk/websocket",
-                  "sdk/nwc"
+                  "sdk/swap-types",
+                  "sdk/how-to-swap",
+                  "sdk/networks",
+                  "sdk/keys-and-recovery",
+                  "sdk/claims-and-refunds"
                 ]
               },
               {
                 "group": "Guides",
                 "icon": "book-open",
                 "pages": [
-                  "sdk/how-to-swap",
-                  "sdk/examples",
-                  "sdk/best-practices"
+                  "sdk/submarine-swaps",
+                  "sdk/reverse-swaps",
+                  "sdk/chain-swaps",
+                  "sdk/rgb-swaps",
+                  "sdk/arkade",
+                  "sdk/pay-through",
+                  "sdk/partner-attribution"
                 ]
               },
               {
                 "group": "Reference",
                 "icon": "book",
                 "pages": [
+                  "sdk/api-reference",
+                  "sdk/best-practices",
+                  "sdk/examples",
+                  "sdk/compatibility",
                   "sdk/changelog",
-                  "sdk/utilities",
                   "sdk/faq",
                   "sdk/troubleshooting",
                   "sdk/additional-resources"
@@ -221,6 +221,35 @@
                 "pages": [
                   "cli/channels-lsp",
                   "cli/market-and-swaps"
+                ]
+              },
+              {
+                "group": "Node SDK",
+                "icon": "cube",
+                "pages": [
+                  "cli/node-sdk/introduction",
+                  "cli/node-sdk/installation",
+                  "cli/node-sdk/getting-started",
+                  "cli/node-sdk/api-reference",
+                  "cli/node-sdk/types",
+                  "cli/node-sdk/how-to-swap",
+                  "cli/node-sdk/websocket",
+                  "cli/node-sdk/nwc",
+                  "cli/node-sdk/examples",
+                  "cli/node-sdk/best-practices",
+                  "cli/node-sdk/utilities"
+                ]
+              },
+              {
+                "group": "Node SDK Reference",
+                "icon": "book",
+                "pages": [
+                  "cli/node-sdk/rln-api-compatibility",
+                  "cli/node-sdk/maker-api-compatibility",
+                  "cli/node-sdk/changelog",
+                  "cli/node-sdk/faq",
+                  "cli/node-sdk/troubleshooting",
+                  "cli/node-sdk/additional-resources"
                 ]
               },
               {
@@ -768,6 +797,30 @@
     {
       "source": "/cn/api-reference/error-handling",
       "destination": "/cn/api-reference/troubleshooting"
+    },
+    {
+      "source": "/sdk/types",
+      "destination": "/cli/node-sdk/types"
+    },
+    {
+      "source": "/sdk/websocket",
+      "destination": "/cli/node-sdk/websocket"
+    },
+    {
+      "source": "/sdk/nwc",
+      "destination": "/cli/node-sdk/nwc"
+    },
+    {
+      "source": "/sdk/utilities",
+      "destination": "/cli/node-sdk/utilities"
+    },
+    {
+      "source": "/sdk/rln-api-compatibility",
+      "destination": "/cli/node-sdk/rln-api-compatibility"
+    },
+    {
+      "source": "/sdk/maker-api-compatibility",
+      "destination": "/cli/node-sdk/maker-api-compatibility"
     }
   ],
   "footer": {

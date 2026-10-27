@@ -150,17 +150,17 @@ description: "Common questions about the KaleidoCLI, covering Docker requirement
     Yes — it wraps the Python SDK (`kaleido-sdk`), which is why command output maps so closely onto the API models. Practical consequences:
 
     * Requests use a 30-second timeout and up to 3 retries
-    * Errors surface as `Error: <message>` from the underlying SDK exception, so the [SDK error reference](/sdk/troubleshooting#error-reference) explains what a failure means
+    * Errors surface as `Error: <message>` from the underlying SDK exception, so the [SDK error reference](/cli/node-sdk/troubleshooting#error-reference) explains what a failure means
     * `market quote` display amounts are converted with the same precision helpers the SDK exposes
 
-    If you are building an application rather than running commands, use the [KaleidoSDK](/sdk/introduction) directly.
+    If you are building an application rather than running commands, use the [KaleidoSDK](/cli/node-sdk/introduction) directly.
   </Accordion>
 
   <Accordion title="CLI, SDK, or Desktop App?" icon="scale-balanced">
     | Tool                                                     | Best for                                                              |
     | -------------------------------------------------------- | --------------------------------------------------------------------- |
     | [KaleidoCLI](/cli/introduction)                          | Running a node, scripting, CI, and agent-driven flows from a terminal |
-    | [KaleidoSDK](/sdk/introduction)                          | Building an application in TypeScript or Python                       |
+    | [KaleidoSDK](/cli/node-sdk/introduction)                          | Building an application in TypeScript or Python                       |
     | [Desktop App](/desktop-app/getting-started/introduction) | A graphical wallet with the same trading and channel features         |
 
     They all drive the same two APIs, so a node created with the CLI can be used from the SDK, and the other way round.

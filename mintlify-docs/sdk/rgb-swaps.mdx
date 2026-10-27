@@ -1,0 +1,135 @@
+---
+title: "RGB Swaps: USDT on Bitcoin"
+sidebarTitle: "RGB Swaps"
+description: "Swap BTC and USDT-RGB with the Swap SDK, through HTLC submarine and reverse swaps or single-transaction atomic swaps on L1, with an rgb-lib wallet handling the asset"
+---
+
+USDT on RGB lives in Bitcoin outputs, but its ownership is validated off chain by RGB wallets. The Swap SDK handles the Bitcoin side of a swap. Your **rgb-lib** wallet handles the asset: it moves it, validates the consignments, colors transactions, and keeps its own operation state. The SDK does not bundle rgb-lib.
+
+There are two ways to swap BTC and USDT-RGB.
+
+| | HTLC swaps | Atomic swaps on L1 |
+|---|---|---|
+| Directions | `USDT-RGB → BTC` (submarine), `BTC → USDT-RGB` (reverse) | BTC ↔ USDT-RGB |
+| Mechanism | HTLC output carrying the asset | One transaction moving both legs |
+| Refund | Yes, after the timeout | Not needed: the transaction confirms or nothing happened |
+| SDK surface | `createSubmarineSwap` / `createReverseSwap`, `SwapScript` | `AtomicSwaps` |
+
+## HTLC swaps
+
+### Pin the contract
+
+Pass the expected RGB contract ID when you create the swap. It is required for RGB, checked locally against the response, and never sent to the maker. Pair cards do not identify the contract, so take the ID from your trusted wallet or asset registry.
+
+<CodeGroup>
+```typescript TypeScript
+// USDT-RGB -> Lightning
+const swap = await client.createSubmarineSwap(
+  "signet",
+  { from: "USDT-RGB", to: "BTC", invoice, refundPublicKey: refundKey.publicKey, pairHash: card.hash },
+  usdtContractId,
+  2_000n, // optional cap on the BTC collateral (default 1,000 sats), never sent to the maker
+);
+
+// Lightning -> USDT-RGB
+const reverse = await client.createReverseSwap(
+  "signet",
+  { from: "BTC", to: "USDT-RGB", invoiceAmount, preimageHash: preimage.sha256, claimPublicKey: claimKey.publicKey, pairHash },
+  usdtContractId,
+);
+```
+
+```python Python
+request = sdk.CreateReverseRequest(
+    invoice_amount=invoice_amount,
+    _from=btc,
+    to=usdt_rgb,               # Currency.USDT_RGB on the on-chain side
+    preimage_hash=preimage.sha256(),
+    claim_public_key=claim_key.public(),
+    rgb_contract_id=usdt_contract_id,
+)
+```
+</CodeGroup>
+
+Amounts: `rgb.amount` is in contract units (six decimals for USDT-RGB); `rgb.htlcSat` and fees are in sats. A submarine lockup carries a small amount of BTC collateral, capped at 1,000 sats unless you raise the cap. The maker receives all of it on a successful claim.
+
+### Fund or accept the lock
+
+- **Submarine:** your rgb-lib wallet funds the HTLC with the asset.
+- **Reverse:** your rgb-lib wallet accepts the maker's lock consignment and validates the asset proofs. There is no `transaction.confirmed` event for reverse RGB swaps: enforce lock confirmations through your chain backend and rgb-lib before claiming. Before you pay the invoice, compare the response's `claimFeeRate` with current fees and the remaining timeout.
+
+### Claim or refund
+
+The SDK prepares the spend, your wallet colors it, and the SDK signs the HTLC input:
+
+```typescript TypeScript
+const script = SwapScript.fromReverse("bitcoin", "signet", reverse, claimKey.publicKey);
+const spend = await script.prepareRgbClaim({
+  outputAddress: rgbWalletReceiveAddress,       // an RGB wallet witness receive
+  funding: { kind: "htlcValue", feeRateSatVb: reverse.rgb.claimFeeRate },
+  maxFee: 10_000n,
+  swapId: reverse.id,
+  makerBaseUrl,
+  network: "signet",
+  bitcoinEsploraUrl,
+  lockupTxHex,
+});
+
+// 1. Color spend.template() with rgb-lib's psbt_op_prepare_with_expiry,
+//    assigning the asset to paymentOutputIndex.
+// 2. Return the colored PSBT and its allocations to the SDK:
+const finalized = spend.finalizeClaim(coloredPsbt, claimKey.secretKey, preimage.preimage);
+// 3. Sign any remaining wallet inputs, broadcast, then complete the rgb-lib
+//    operation (psbt_op_mark_broadcast, psbt_op_apply, psbt_op_provide_receive_consignment).
+```
+
+- If the HTLC's sats cannot cover the fee, preparation fails with `rgb_fee_input_required`. Use `funding: { kind: "callerInputs" }`, add BTC inputs and change, and keep the new spend from `spend.fund(fundedPsbt)`. Fund before coloring or signing.
+- Refunds use `prepareRgbRefund` and `finalizeRefund` after the timeout, with the original colored lock transaction.
+- A Bitcoin broadcast alone does not complete the RGB receive. Finish the rgb-lib operation.
+
+### Cooperative refunds
+
+When the response advertises `rgb.cooperativeRefund === "rgb-coop-refund-v1"`, the maker can co-sign an early refund of a submarine swap with `prepareRgbCooperativeRefund` and `getRgbRefundPartialSig`. The CLTV refund remains the fallback. Without that capability the SDK refuses the cooperative path.
+
+## Atomic swaps on L1
+
+An atomic swap moves both legs in one Bitcoin transaction. There is no HTLC and no refund. The SDK quotes, verifies, and tracks; rgb-lib accepts the offer, signs the proposal, and accepts the transfers.
+
+```typescript TypeScript
+import { AtomicSwaps, SwapClient, ATOMIC_BTC_TO_USDT_RGB } from "@kaleidorg/swap-sdk";
+
+const atomic = new AtomicSwaps(new SwapClient(makerUrl));
+
+// 1. Quote. Throws unless the quote, and the rgb-lib offer inside it, match what you asked.
+const quote = await atomic.quote(
+  { pair: ATOMIC_BTC_TO_USDT_RGB, amount: 100_000n, direction: "from" },
+  {
+    assetId: usdtContractId,
+    bitcoinNetwork: "Signet",       // rgb-lib's network name for your wallet
+    maxNetworkFeeSat: 10_000n,
+    minToAmount,                    // the least you accept, in base units: this is the price protection
+    maxOfferTtlSecs: 3_600n,
+  },
+);
+// Feed quote.offer to rgb-lib's accept_swap_offer.
+
+// 2. Request. Pass every outpoint your wallet holds (rgb-lib's list_unspents).
+const { proposal, makerInputs } = await atomic.request(quote.id, rgbLibRequest, walletOutpoints);
+// Feed proposal to complete_swap_proposal.
+
+// 3. Complete. The maker signs last and broadcasts.
+const done = await atomic.complete(quote.id, rgbLibCompletion);
+// Feed done.completion to accept_swap_transfers.
+
+const final = await atomic.track(quote.id, { onStatus: (s) => console.log(s.status) });
+```
+
+What the SDK checks for you:
+
+- The quote answers your pair, direction, amount, asset, and network, stays within your fee and offer-lifetime limits, and has not passed its deadline. The rgb-lib offer inside it moves the same amounts and asset as the quote, so what your wallet signs is what you were shown.
+- The proposal lists none of your own coins as the maker's, and no coin twice.
+- The completion broadcasts the transaction you agreed to.
+
+Expectations are in base units: sats, or the contract's smallest unit (six decimals for USDT-RGB), never the pair card's display units. `maxServiceFee` bounds only the fee the maker declares; `minToAmount` and `maxFromAmount` bound the price.
+
+rgb-lib messages cross the JavaScript and Python boundaries as JSON text, because their 64-bit values do not survive JavaScript numbers.

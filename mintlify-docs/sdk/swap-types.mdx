@@ -1,0 +1,60 @@
+---
+title: "Swap Types"
+sidebarTitle: "Swap Types"
+description: "The swap types the Swap SDK supports, from submarine, reverse, and chain HTLC swaps to USDT-RGB, atomic RGB L1, Arkade Intents, and pay-through, with what each guarantees"
+---
+
+The KaleidoSwap maker serves several kinds of swap. They differ in which side pays first, which side claims on chain, and how strong the settlement guarantee is.
+
+## At a glance
+
+| Type | You send | You receive | You build | Guarantee |
+|---|---|---|---|---|
+| [Submarine](/sdk/submarine-swaps) | On-chain (BTC, L-BTC, L-USDT, USDT-RGB) | A paid Lightning invoice | A refund, only if the swap fails | Atomic (HTLC) |
+| [Reverse](/sdk/reverse-swaps) | A Lightning payment | On-chain (BTC, L-BTC, L-USDT, USDT-RGB) | The claim | Atomic (HTLC) |
+| [Chain](/sdk/chain-swaps) | On-chain on one chain | On-chain on another | The claim, or a refund | Atomic (HTLC on both chains) |
+| [Atomic RGB L1](/sdk/rgb-swaps#atomic-swaps-on-l1) | BTC or USDT-RGB | USDT-RGB or BTC | Nothing; your RGB wallet signs one shared transaction | Single transaction |
+| [Arkade Intents](/sdk/arkade) | Bitcoin on Arkade or Lightning | Lightning or bitcoin on Arkade | Funding, claim, and refund through the Arkade venue | Atomic (VHTLC) |
+| [Pay-through](/sdk/pay-through) | A Lightning payment | An on-chain payout to any address | Nothing | Maker-controlled payout leg |
+
+The routes a maker offers right now are whatever `submarinePairs()`, `reversePairs()`, `chainPairs()`, and the atomic and corridor catalogues return. Read them at runtime rather than hardcoding a list.
+
+## HTLC swaps: submarine, reverse, chain
+
+These three follow the Boltz `/v2` protocol. Each one locks on-chain funds in a Taproot output with two ways to spend it:
+
+- **Claim path:** the receiver's signature plus the preimage.
+- **Refund path:** the sender's signature after a timeout block height.
+
+The Lightning leg is locked to the same hash. Whoever claims on chain reveals the preimage, which lets the other party settle the Lightning payment. If nobody claims, the sender refunds after the timeout.
+
+Both parties can also agree to spend through a MuSig2 key-path signature. That is cheaper and looks like an ordinary payment on chain. The SDK uses it when the maker cooperates and falls back to the script path when it does not. See [Claims and refunds](/sdk/claims-and-refunds).
+
+### Submarine: on-chain → Lightning
+
+You lock funds on chain; the maker pays your Lightning invoice and claims your lockup with the preimage that payment reveals. In the normal case you build nothing: you only fund. You build a transaction only to **refund** if the maker never pays.
+
+### Reverse: Lightning → on-chain
+
+You pay a hold invoice locked to your preimage hash; the maker locks funds on chain to the same hash. You **claim** them, which reveals the preimage and lets the maker settle your payment. Until you claim, your Lightning payment stays held, not settled.
+
+### Chain: on-chain → on-chain
+
+Both sides lock on chain: you on the source chain, the maker on the destination chain. You claim the maker's lockup; the maker claims yours. If the amount you lock differs from the quote, the maker can offer a re-quote, which you accept with the swap's `swapAuth` credential.
+
+## USDT on RGB
+
+USDT-RGB works in two different ways:
+
+- **HTLC swaps.** `USDT-RGB → BTC` (submarine) and `BTC → USDT-RGB` (reverse) follow the same protocol as BTC, with the RGB asset carried on the HTLC output. Your rgb-lib wallet moves and validates the asset; the SDK validates the HTLC and builds the claim or refund PSBT for your wallet to color.
+- **Atomic swaps on L1.** BTC ↔ USDT-RGB in one transaction that moves both legs. There is no HTLC and no refund: either the transaction confirms or nothing happened. The SDK quotes, verifies, and tracks; rgb-lib signs.
+
+See [RGB swaps](/sdk/rgb-swaps).
+
+## Bitcoin on Arkade
+
+Bitcoin on Arkade (`ARKD` in the catalogue) is not a Boltz-shaped route. The maker serves it as a request-for-quote corridor beside `/v2`, and the SDK speaks it through `IntentsCorridor` (quotes) and the `@kaleidorg/swap-sdk/arkade` venue (funding, claims, and refunds with an Ark wallet). See [Arkade swaps](/sdk/arkade).
+
+## Pay-through
+
+Pay-through lets a payer settle a Lightning invoice while the recipient gets an on-chain payout. The payer's Lightning payment stays held until the maker broadcasts the payout, but the payout itself has no hash lock: the maker controls that leg. Use it where a trust-minimized flow is acceptable, and the HTLC swaps where it is not. See [Pay-through](/sdk/pay-through).

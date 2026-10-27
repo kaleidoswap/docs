@@ -1,219 +1,122 @@
 ---
-title: "KaleidoSDK Client Reference"
+title: "Swap SDK Client Reference"
 sidebarTitle: "Client Reference"
-description: "Full reference for KaleidoClient, MakerClient, and RlnClient, covering methods, parameters, and return types in the KaleidoSDK"
+description: "Reference for the Swap SDK surface in TypeScript and Python: SwapClient, SwapScript, SwapMasterKey, SwapWsApi, AtomicSwaps, IntentsCorridor, PayThroughClient, and helpers"
 ---
 
-## Overview
+Names are shown as TypeScript / Python. Rust uses the Python spelling on `BoltzApiClientV2` and `SwapScript`. React Native exposes the same surface as Python with camelCase names, generated from the same bindings. The published TypeScript declarations (`dist/index.d.ts`) document every type in full.
 
-`KaleidoClient` is the single entry point. You create it once, then work through its two sub-clients:
+## `SwapClient`
 
-- **`client.maker`** — the hosted [Maker API](/sdk/maker-api-compatibility): market data, quotes, atomic swaps, LSPS1 channel orders
-- **`client.rln`** — your own [RGB Lightning Node](/sdk/rln-api-compatibility): wallet, RGB assets, channels, invoices, payments
+The maker API client. In TypeScript it comes from `SwapClient.forNetwork`, `new SwapClient(baseUrl, timeoutSecs?)`, `createKaleidoOrgClient`, or `createKaleidoMakerClient`. In Python: `SwapClient.default(network)`, `SwapClient(base_url, timeout)`, `SwapClient.kaleido_org(...)`, or `SwapClient.kaleido_maker(...)`.
 
-`client.maker` needs nothing beyond `baseUrl`, while `client.rln` also requires `nodeUrl` / `node_url`. Every method below is listed in both its TypeScript and Python form.
+### Pairs and chain data
 
-## Client Initialization
+| TypeScript | Python | Returns |
+|---|---|---|
+| `submarinePairs()` | `get_submarine_pairs()` | Submarine pair catalogue (`from → to → card`) |
+| `reversePairs()` | `get_reverse_pairs()` | Reverse pair catalogue |
+| `chainPairs()` | `get_chain_pairs()` | Chain pair catalogue |
+| `feeEstimation()` | `get_fee_estimation()` | The maker's fee view (not for building spends) |
+| `height()` | `get_height()` | The maker's chain tips |
+| `nodes()` | `get_nodes()` | The maker's Lightning node info |
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, LogLevel } from 'kaleido-sdk';
+### Swaps
 
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',
-  apiKey: process.env.KALEIDO_API_KEY,
-  timeout: 30,
-  logLevel: LogLevel.INFO,
-});
+| TypeScript | Python | What it does |
+|---|---|---|
+| `createSubmarineSwap(network, request, rgbContractId?, rgbMaxHtlcSat?)` | `create_swap(request)` | Create and verify a submarine swap |
+| `createReverseSwap(network, request, rgbContractId?)` | `create_reverse_swap(request)` | Create and verify a reverse swap |
+| `createChainSwap(network, request)` | `create_chain_swap(request)` | Create and verify a chain swap (both keys required) |
+| `swap(id)` | `get_swap(id)` | Current status and audit events |
+| `quote(id)` | `get_quote(id)` | A chain-swap re-quote |
+| `acceptQuote(id, amount, swapAuth)` | `accept_quote(id, amount, swap_auth)` | Accept a re-quote |
+| `submarineTx(id)` / `reverseTx(id)` / `chainTxs(id)` | `get_submarine_tx` / `get_reverse_tx` / `get_chain_txs` | Lockup transactions the maker knows about |
+| `submarinePreimage(id)` | `get_submarine_preimage(id)` | The preimage of a paid submarine swap |
+| `swapRestore(xpub, path?)` | `swap_restore(...)` | Swaps created with an xpub's keys |
+| `swapRestoreIndex(xpub, path?)` | `swap_restore_index(...)` | Highest key index the maker has seen |
+| `recoverSwapAuth(id, secretKey)` | `recover_swap_auth(...)` | Recover a swap's `swapAuth` with its key |
 
-client.hasMaker(); // boolean
-client.hasNode();  // boolean
-client.maker;      // MakerClient
-client.rln;        // RlnClient
-```
+In Python, RGB swaps set `rgb_contract_id` (and optionally `rgb_max_htlc_sat`) on the request instead of passing extra arguments.
 
-```python Python
-import logging
-from kaleido_sdk import KaleidoClient
+### Corridor and atomic routes
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",
-    api_key=None,
-    timeout=30.0,
-    max_retries=3,
-    cache_ttl=60,
-    log_level=logging.INFO,
-)
+| TypeScript | Python | What it does |
+|---|---|---|
+| `corridorCard()` / `corridorCardRaw()` | `corridor_card()` / `corridor_card_raw()` | The maker's Arkade corridor card (unverified) |
+| `quoteLightningSend(request)` | `quote_lightning_send(request)` | RFQ for Arkade → Lightning |
+| `quoteLightningReceive(request)` | `quote_lightning_receive(request)` | RFQ for Lightning → Arkade |
+| `rfqStatus(rfqId)` | `rfq_status(rfq_id)` | Status of an RFQ |
+| `atomicPairs()`, `atomicQuote(...)`, `atomicRequest(...)`, `atomicComplete(...)`, `atomicSwap(id)` | `get_atomic_pairs()`, `atomic_quote(...)`, `atomic_request(...)`, `atomic_complete(...)`, `get_atomic_swap(id)` | Atomic RGB L1 routes; in TypeScript, prefer `AtomicSwaps` |
 
-client.has_node()  # bool
-client.maker       # MakerClient
-client.rln         # RlnClient, raises if node_url is missing
-```
-</CodeGroup>
-
-## MakerClient (`client.maker`)
-
-### Market Data
-
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `listAssets()` | `list_assets()` | List all assets |
-| `listPairs()` | `list_pairs()` | List all trading pairs |
-| `getQuote(body)` | `get_quote(body)` | Request a quote |
-| `getPairRoutes(body)` | `get_pair_routes(pair_ticker)` | TS accepts a request body; Python accepts a pair ticker like `"BTC/USDT"` |
-| `getMarketRoutes(body)` | `get_market_routes(body)` | Discover market routes |
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create();
-
-const assets = await client.maker.listAssets();
-const pairs = await client.maker.listPairs();
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: Layer.BTC_LN, amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: Layer.RGB_LN },
-});
-```
-
-```python Python
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
-
-client = KaleidoClient.create()
-
-assets = await client.maker.list_assets()
-pairs = await client.maker.list_pairs()
-quote = await client.maker.get_quote(
-    PairQuoteRequest(
-        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
-        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-    )
-)
-```
-</CodeGroup>
-
-### Atomic Swaps
-
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `initSwap(body)` | `init_swap(body)` | Initialize an atomic swap |
-| `executeSwap(body)` | `execute_swap(body)` | Confirm or execute the swap |
-| `getAtomicSwapStatus(body)` | `get_atomic_swap_status(body)` | Query swap status |
-| `getSwapNodeInfo()` | `get_swap_node_info()` | Maker swap node details |
-
-### LSPS1
-
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `getLspInfo()` | `get_lsp_info()` | LSP metadata |
-| `getLspNetworkInfo()` | `get_lsp_network_info()` | LSP network info |
-| `createLspOrder(body)` | `create_lsp_order(body)` | Create LSPS1 order |
-| `getLspOrder(body)` | `get_lsp_order(body)` | Fetch LSPS1 order |
-| `estimateLspFees(body)` | `estimate_lsp_fees(body)` | Estimate order fees |
-| `submitLspRateDecision(body)` | `submit_lsp_rate_decision(body)` | Rate-decision endpoint |
-
-### WebSocket and Streaming
-
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `enableWebSocket(wsUrl)` | `enable_websocket(ws_url, user_id=None)` | Create a `WSClient` |
-| `streamQuotes(...)` | `stream_quotes(...)` | Polling quote stream over WebSocket |
-| `streamQuotesByTicker(...)` | `stream_quotes_by_ticker(...)` | Auto-select routes |
-| `streamQuotesForAllRoutes(...)` | `stream_quotes_for_all_routes(...)` | Stream all routes |
-| `getAvailableRoutes(...)` | `get_available_routes(...)` | Route helper |
-
-## RlnClient (`client.rln`)
-
-### Wallet and BTC
+### Partner credentials
 
 | TypeScript | Python |
-|------------|--------|
-| `getNodeInfo()` | `get_node_info()` |
-| `getNetworkInfo()` | `get_network_info()` |
-| `initWallet(body)` | `init_wallet(body)` |
-| `unlockWallet(body)` | `unlock_wallet(body)` |
-| `lockWallet()` | `lock_wallet()` |
-| `changePassword(body)` | `change_password(body)` |
-| `backup(body)` | `backup(body)` |
-| `restore(body)` | `restore(body)` |
-| `shutdown()` | `shutdown()` |
-| `getAddress()` | `get_address()` |
-| `getBtcBalance(skipSync?)` | `get_btc_balance(skip_sync=False)` |
-| `sendBtc(body)` | `send_btc(body)` |
-| `listTransactions(request?)` | `list_transactions(...)` |
-| `listUnspents()` | `list_unspents(...)` |
-| `createUtxos(body)` | `create_utxos(body)` |
-| `estimateFee(body)` | `estimate_fee(body)` |
+|---|---|
+| `orgKey` | `org_key()` |
+| `apiKeyId`, `apiKeyEnvironment` | `api_key_id()`, `api_key_environment()` |
 
-### RGB Assets
+## `SwapScript`
 
-| TypeScript | Python |
-|------------|--------|
-| `listAssets(filterAssetSchemas?)` | `list_assets(filter_asset_schemas=...)` |
-| `getAssetBalance(body)` | `get_asset_balance(body)` |
-| `getAssetMetadata(body)` | `get_asset_metadata(body)` |
-| `getAssetMedia(body)` | `get_asset_media(body)` |
-| `postAssetMedia(body)` | `post_asset_media(body)` |
-| `issueAssetNIA(body)` | `issue_asset_nia(body)` |
-| `issueAssetCFA(body)` | `issue_asset_cfa(body)` |
-| `issueAssetUDA(body)` | `issue_asset_uda(body)` |
-| `issueAssetIFA(body)` | `issue_asset_ifa(body)` |
-| `inflate(body)` | `inflate(body)` |
-| `sendRgb(body)` | `send_rgb(body)` |
-| `listTransfers(body)` | `list_transfers(body)` |
-| `refreshTransfers(body?)` | `refresh_transfers(body=None)` |
-| `syncRgbWallet(body?)` | `sync_rgb_wallet(body=None)` |
-| `failTransfers(body)` | `fail_transfers(body)` |
-| `decodeSwapstring(body)` | `decode_swapstring(body)` |
+The swap script rebuilt on your side, and the claim and refund builder.
 
-### Channels, Peers, Invoices, and Payments
+| Method | What it does |
+|---|---|
+| `fromSubmarine(chain, network, response, ourPubkey)` | Rebuild from a submarine create response |
+| `fromReverse(chain, network, response, ourPubkey)` | Rebuild from a reverse create response |
+| `fromChain(chain, network, side, details, ourPubkey)` | Rebuild one side (`"lockup"` or `"claim"`) of a chain swap |
+| `fromRestored(entry, ourPubkey, network, side?)` | Rebuild from a restore entry |
+| `constructClaim(preimage, params)` | Claim (cooperative by default) |
+| `constructCooperativeClaim(preimage, params, lockupScript, refundKeySecret)` | Cooperative chain-swap claim |
+| `constructRefund(params)` | Refund (cooperative by default) |
+| `prepareLiquidClaim(...)` / `prepareLiquidRefund(...)` | Caller-funded PSET for L-USDT |
+| `prepareRgbClaim(...)` / `prepareRgbRefund(...)` | PSBT for an rgb-lib wallet to color |
+| `prepareRgbCooperativeRefund(...)` | Early co-signed RGB submarine refund |
+
+`chain` is `"bitcoin"` or `"liquid"`. Python uses snake_case and takes a `SwapTransactionParams` with a `Fee.RELATIVE(sat_per_vb)` or `Fee.ABSOLUTE(sats)`.
+
+## `SwapMasterKey`
+
+| TypeScript | Python | What it does |
+|---|---|---|
+| `fromWalletMnemonic(mnemonic, network)` | `from_wallet_mnemonic(...)` | Derive the swap mnemonic (BIP85, index 26589) |
+| `fromSwapMnemonic(mnemonic, network)` | `from_swap_mnemonic(...)` | Load a saved swap mnemonic |
+| `swapMnemonic()` | `swap_mnemonic()` | The swap mnemonic, to persist |
+| `masterXpub()` | `master_xpub()` | Account xpub used for restore |
+| `deriveSwapKey(index)` | `derive_swap_key(index)` | Key pair for one swap |
+| `derivePreimage(index)` | `derive_preimage(index)` | Preimage and its hash for one swap |
+| `restore(client, gapLimit?)` / `restoreIndex(client, gapLimit?)` | — | Restore swaps and the highest index |
+
+## `SwapWsApi`
 
 | TypeScript | Python |
-|------------|--------|
-| `listChannels()` | `list_channels()` |
-| `openChannel(body)` | `open_channel(body)` |
-| `closeChannel(body)` | `close_channel(body)` |
-| `getChannelId(body)` | `get_channel_id(body)` |
-| `listPeers()` | `list_peers()` |
-| `connectPeer(body)` | `connect_peer(body)` |
-| `disconnectPeer(body)` | `disconnect_peer(body)` |
-| `createLNInvoice(body)` | `create_ln_invoice(body)` |
-| `createRgbInvoice(body)` | `create_rgb_invoice(body)` |
-| `decodeLNInvoice(body)` | `decode_ln_invoice(body)` |
-| `decodeRgbInvoice(body)` | `decode_rgb_invoice(body)` |
-| `getInvoiceStatus(body)` | `get_invoice_status(body)` |
-| `sendPayment(body)` | `send_payment(body)` |
-| `keysend(body)` | `keysend(body)` |
-| `listPayments()` | `list_payments()` |
-| `getPayment(body)` | `get_payment(body)` |
+|---|---|
+| `new SwapWsApi(wsUrl)` | `client.ws()` or `SwapWsApi(ws_url)` |
+| `runWsLoop()` | `run_ws_loop()` |
+| `subscribeSwap(id)` | `subscribe_swap(id)` |
+| `updates().next()` | `updates().next()` |
+| `isConnected()` | `is_connected()` |
+| `close()` | `shutdown()` |
 
-### Swap Coordination and Utilities
+## Higher-level helpers (TypeScript)
 
-| TypeScript | Python | Notes |
-|------------|--------|-------|
-| `getTakerPubkey()` | `get_taker_pubkey()` | Returns node pubkey |
-| `whitelistSwap(body)` | `whitelist_swap(body)` | Accepts request object or raw swapstring |
-| `makerInit(body)` | `maker_init(body)` | Maker-side swap init |
-| `makerExecute(body)` | `maker_execute(body)` | Maker-side execution |
-| `listSwaps()` | `list_swaps()` | List swaps |
-| `getSwap(body)` | `get_swap(body)` | Fetch a swap |
-| `signMessage(body)` | `sign_message(body)` | Utility |
-| `sendOnionMessage(body)` | `send_onion_message(body)` | Utility |
-| `checkIndexerUrl(body)` | `check_indexer_url(body)` | Utility |
-| `checkProxyEndpoint(body)` | `check_proxy_endpoint(body)` | Utility |
-| `revokeToken(body)` | `revoke_token(body)` | Utility |
+| Export | Page |
+|---|---|
+| `AtomicSwaps`, `ATOMIC_BTC_TO_USDT_RGB`, `ATOMIC_USDT_RGB_TO_BTC` | [RGB swaps](/sdk/rgb-swaps#atomic-swaps-on-l1) |
+| `IntentsCorridor`, `isRfqQuote`, `newRfqId` | [Arkade swaps](/sdk/arkade) |
+| `canClaim`, `canRefund`, `claimReverseSwap`, `claimChainSwap`, `refundSubmarineSwap`, `refundChainSwap` | [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript) |
+| `PayThroughClient` (`/pay-through`) | [Pay-through](/sdk/pay-through) |
+| `esploraFeeEstimates`, `selectEsploraFeeRate`, `esploraTipHeight` (`/chain-data`) | [Claims and refunds](/sdk/claims-and-refunds#fees) |
+| `ArkadeIntentsVenue`, `kaleidoswapHttpTransport` (`/arkade`) | [Arkade swaps](/sdk/arkade) |
+| `BtcLikeTransaction.fromHex(hex, chain)` | [Claims and refunds](/sdk/claims-and-refunds#persist-first-then-broadcast) |
+| `resolveLightningAddress(address, amountSat)` | [Submarine swaps](/sdk/submarine-swaps) |
+| `toJson(value, space?)` | Lossless serialization of `bigint` values |
+| `isKaleidoSwapError(error)` | [Troubleshooting](/sdk/troubleshooting#errors) |
+| `init(source?)`, `initWithModule(module)`, `wasmUrl` | [Installation](/sdk/installation#typescript-load-the-webassembly-binary) |
 
-## Closing the Client
+## Numbers in TypeScript
 
-<CodeGroup>
-```typescript TypeScript
-await client.close();
-```
-
-```python Python
-await client.close()
-```
-</CodeGroup>
+- Parameters declared `bigint` need a `BigInt` (`0n`); a plain number throws a `TypeError` before the SDK can attach a code.
+- 64-bit fields inside request objects accept `bigint | number`. Unsafe numbers above `Number.MAX_SAFE_INTEGER` are rejected before the request is sent.
+- 64-bit response fields are always `bigint`, including amounts, timestamps, and the restore index. 32-bit fields (key indexes, output indexes, reverse and chain timeout heights) stay `number`.
+- Serialize responses with `toJson`, not `JSON.stringify`.

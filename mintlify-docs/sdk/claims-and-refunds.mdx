@@ -1,0 +1,139 @@
+---
+title: "Claims and Refunds"
+sidebarTitle: "Claims and Refunds"
+description: "Build claim and refund transactions with the Swap SDK: cooperative MuSig2 versus script-path spends, explicit fees, chain evidence, stateless reconciliation helpers, and safe rebroadcast"
+---
+
+The SDK builds every claim and refund on your side, signed with your swap key. You choose the fee and you decide when to broadcast.
+
+## Cooperative and script-path spends
+
+Each HTLC output can be spent two ways:
+
+- **Cooperative (key path).** You and the maker co-sign a MuSig2 signature. The transaction is smaller and cheaper, and a refund does not have to wait for the timeout. It needs the maker to answer.
+- **Script path.** You spend alone: with the preimage for a claim, or after `timeoutBlockHeight` for a refund. It never depends on the maker.
+
+`constructClaim` and `constructRefund` try the cooperative path by default. Chain-swap claims are the exception: they go through `constructCooperativeClaim`, which signs with the swap's **refund** key against the lockup script. A chain claim that takes the script path calls `constructClaim` with `cooperative: false`.
+
+## Building a spend
+
+Rebuild the `SwapScript` from the verified create response (`fromSubmarine`, `fromReverse`, `fromChain`) or from a restore entry (`fromRestored`), then construct the transaction:
+
+<CodeGroup>
+```typescript Refund (submarine)
+const script = SwapScript.fromSubmarine("bitcoin", "signet", saved.response, refundKey.publicKey);
+
+const refund = await script.constructRefund({
+  outputAddress: refundAddress,
+  swapId: saved.response.id,
+  keysSecretHex: refundKey.secretKey,
+  swapAuth: saved.response.swapAuth,     // required for a cooperative refund
+  makerBaseUrl: saved.makerUrl,
+  network: "signet",
+  bitcoinEsploraUrl: "https://esplora.signet.kaleidoswap.com",
+  feeSatPerVb: 2,
+});
+```
+
+```typescript Claim (reverse)
+const script = SwapScript.fromReverse("liquid", "signet", swap, claimKey.publicKey);
+
+const claim = await script.constructClaim(preimage.preimage, {
+  outputAddress: liquidAddress,
+  swapId: swap.id,
+  keysSecretHex: claimKey.secretKey,
+  makerBaseUrl,
+  network: "signet",
+  liquidEsploraUrl,
+});
+```
+
+```python Claim (Python)
+script = sdk.SwapScript.from_reverse(chain=to_chain, reverse_response=response, our_pubkey=keys.public())
+tx = await script.construct_claim(
+    preimage,
+    sdk.SwapTransactionParams(
+        swap_id=response.id,
+        keys=keys,
+        fee=sdk.Fee.RELATIVE(2.0),      # sat/vB; Fee.ABSOLUTE(sats) also works
+        output_address=claim_address,
+        chain_client=chain_client,
+        boltz_api=client,
+    ),
+)
+txid = await chain_client.broadcast_tx(tx)
+```
+</CodeGroup>
+
+The result is a signed transaction. Call `hex()` and `txid()` to persist it, and `broadcast(network, bitcoinEsploraUrl?, liquidEsploraUrl?)` to send it.
+
+## Fees
+
+Set the fee explicitly with one of `feeSatPerVb` or `feeAbsoluteSat`. The reconciliation helpers also take `feeLimits: { maxFeeSatPerVb, maxFeeAbsoluteSat }`, which rejects an excessive fee before signing.
+
+For live estimates, use the Esplora helpers on the chain you are spending on:
+
+```typescript TypeScript
+import { esploraFeeEstimates, selectEsploraFeeRate, esploraTipHeight } from "@kaleidorg/swap-sdk/chain-data";
+
+const [fees, tip] = await Promise.all([
+  esploraFeeEstimates(esploraUrl, { timeoutMs: 10_000 }),
+  esploraTipHeight(esploraUrl, { timeoutMs: 10_000 }),
+]);
+const feeRate = selectEsploraFeeRate(fees, 2); // two-block target, sat/vB
+if (feeRate === undefined) throw new Error("no estimate for that target yet");
+```
+
+`selectEsploraFeeRate` picks the largest available target at or below the one you asked for, and returns `undefined` rather than inventing a default. The helpers make one request per call, refuse redirects, and never retry.
+
+The maker's own `feeEstimation()` and `height()` describe the maker's view. For Liquid, its fee is a fixed policy value and its height can be `0` when unavailable, so do not use either to build a client-side spend.
+
+## Stateless reconciliation helpers (TypeScript)
+
+`canClaim`, `canRefund`, `claimReverseSwap`, `claimChainSwap`, `refundSubmarineSwap`, and `refundChainSwap` decide whether a spend is possible right now and build it if so. They return either a signed transaction or `{ kind: "not-yet", reason }`. They keep no state, run no timers, and never broadcast.
+
+```typescript TypeScript
+import { refundSubmarineSwap } from "@kaleidorg/swap-sdk";
+
+const result = await refundSubmarineSwap({
+  status,          // a fresh maker status for this swap
+  tipHeight,       // trusted tip of the chain being refunded
+  createResponse,  // the original verified response
+  script,          // the validated submarine script
+  params: { outputAddress, swapId, keysSecretHex, swapAuth, network, makerBaseUrl, bitcoinEsploraUrl, feeSatPerVb: 2 },
+});
+
+if (result.kind === "signed") {
+  // Persist { swapId, action, path, hex, txid, chain } BEFORE broadcasting.
+  await saveSpend(result);
+  await result.transaction.broadcast(network, bitcoinEsploraUrl);
+}
+```
+
+How they behave:
+
+- **Refunds**, `mode: "auto"`: try a cooperative refund on a failed or expired swap before the timeout, and use the script path once the chain tip reaches `timeoutBlockHeight`. At that point a stale maker status cannot block the refund; statuses that show the funds were paid or claimed still do. `mode: "cooperative"` always requires the maker.
+- **Claims** need chain evidence you verified yourself: `lockup: { chain, hex, txid, confirmations }` from your own backend. With fewer than `minConfirmations` (default 1), the helper returns `not-yet` before revealing the preimage. `allowZeroConf: true` accepts an unconfirmed lockup but still requires its bytes.
+- **Claim deadlines**: claims stop `claimSafetyMarginBlocks` before the timeout (6 blocks on Bitcoin, 60 on Liquid by default).
+- **Claims**, `mode: "auto"`: prefer cooperation, and if it fails, immediately build the script-path claim against the same lockup. If both fail, the `ClaimFallbackFailed` error carries both causes; recover through the script path urgently.
+
+## Persist first, then broadcast
+
+Save the signed transaction's hex, txid, chain, and network **before** you broadcast. A lost broadcast response does not mean the broadcast failed.
+
+To retry, rebuild the same transaction from the saved hex and send identical bytes:
+
+```typescript TypeScript
+import { BtcLikeTransaction } from "@kaleidorg/swap-sdk";
+
+const tx = BtcLikeTransaction.fromHex(receipt.hex, receipt.chain); // "bitcoin" | "liquid"
+await tx.broadcast(receipt.network, receipt.chain === "bitcoin" ? receipt.esploraUrl : undefined,
+  receipt.chain === "liquid" ? receipt.esploraUrl : undefined);
+```
+
+The reconciliation helpers accept the saved spend as `previous` and return it unchanged before looking at new status, height, or fees. Never re-sign a claim or refund just because a broadcast response went missing, and serialize concurrent operations on the same swap.
+
+## Liquid and RGB spends
+
+- **L-USDT** spends use a caller-funded PSET, because the Liquid fee must be paid in L-BTC: `prepareLiquidClaim` / `prepareLiquidRefund` return a template your wallet funds, then the SDK finalizes it.
+- **USDT-RGB** spends return a PSBT your rgb-lib wallet colors before the SDK signs the HTLC input. See [RGB swaps](/sdk/rgb-swaps).

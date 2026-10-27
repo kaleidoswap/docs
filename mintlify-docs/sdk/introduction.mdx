@@ -1,45 +1,72 @@
 ---
-title: "KaleidoSDK"
+title: "Swap SDK"
 sidebarTitle: "Overview"
-description: "Build Bitcoin wallets and trading apps with the KaleidoSDK, which ships TypeScript and Python clients for non-custodial atomic swaps across Bitcoin Layers"
+description: "Add non-custodial swaps between Bitcoin, Lightning, Liquid, RGB, and Arkade to any wallet or app with the KaleidoSwap Swap SDK for TypeScript, Python, Rust, and React Native"
 ---
 
-The KaleidoSDK (`kaleido-sdk`) lets wallet builders integrate non-custodial atomic swaps across Bitcoin, Lightning, and RGB. It powers the [KaleidoSwap non-custodial DEX](https://kaleidoswap.com) and ships in TypeScript and Python.
+The Swap SDK lets a wallet or app swap between Bitcoin layers against the KaleidoSwap maker without handing custody to anyone. Your app keeps its keys. The SDK quotes a swap, checks every contract the maker proposes, and builds the claim or refund transaction on your side.
 
-## Architecture
+It is one Rust engine published for four runtimes:
 
-Both SDKs share the same API design and are built independently:
+| Runtime | Package |
+|---|---|
+| TypeScript (browser and Node) | `@kaleidorg/swap-sdk` on npm |
+| Python | `kaleidorg_swap_sdk` on PyPI |
+| React Native (iOS and Android) | `@kaleidorg/swap-sdk-react-native` on npm |
+| Rust | `kaleidorg-swap-sdk`, installed from a git tag |
 
-![KaleidoSDK Architecture](/assets/images/overview/sdk-architecture.png)
+## What it does
 
-Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, atomic swaps, LSPS1 channel orders) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
+- **Quotes and creates swaps** against the KaleidoSwap maker's `/v2` API: submarine (on-chain → Lightning), reverse (Lightning → on-chain), and chain (on-chain → on-chain) swaps.
+- **Verifies before you fund.** Every create response is checked against your own keys: the swap script, the lockup address, the timeout, and the hash the Lightning invoice commits to. A response that does not match fails before any money moves.
+- **Derives keys and preimages client-side** from your wallet mnemonic (BIP85). No key material leaves your app.
+- **Builds claims and refunds.** Cooperative (MuSig2 key-spend, cheapest) when the maker co-signs, script-path when it does not, so a refund never depends on the maker.
+- **Covers more than BTC.** L-BTC and L-USDT on Liquid, USDT on RGB (HTLC swaps and single-transaction atomic swaps), and bitcoin on Arkade through the Intents corridor.
 
-## Two API Surfaces
+## What it does not do
 
-**Maker API** (`client.maker`)
+The SDK owns no wallet. Your app funds lockups, pays invoices, and stores swap records. The SDK tells you exactly what to fund and hands you signed transactions; it does not hold balances, run background timers, or broadcast on its own unless you ask it to.
 
-Connect to KaleidoSwap's maker APIs for:
-- Getting quotes for asset pairs
-- Initializing and executing HTLC atomic swaps
-- Streaming real-time quotes via WebSocket
-- LSPS1 channel ordering
+## How a swap works
 
-**RLN (RGB Lightning Node) Operations** (`client.rln`)
+Every HTLC swap uses one secret (the preimage) and its hash. Both legs of the swap are locked to that hash: the Lightning payment on one side and an on-chain output on the other. Revealing the preimage to claim one leg is what lets the other side claim theirs, so either both legs settle or both can be refunded after a timeout.
 
-Direct interaction with RGB Lightning Nodes for:
-- Wallet management and RGB asset operations
-- Lightning channel management
-- Invoice creation and payment
-- Node-to-node swap coordination
+```mermaid
+sequenceDiagram
+    participant App as Your app (Swap SDK)
+    participant Maker as KaleidoSwap maker
+    App->>App: derive key + preimage
+    App->>Maker: create swap (public key, hash)
+    Maker-->>App: invoice / lockup address, script, timeout
+    App->>App: verify script against own key
+    App->>Maker: fund lockup or pay invoice
+    Maker-->>App: status updates
+    App->>App: build claim or refund
+```
 
-For what KaleidoSwap is as a protocol, see [What's KaleidoSwap](/whats-kaleidoswap/introduction).
+[Swap types](/sdk/swap-types) explains which kind of swap fits which route, and [Swap lifecycle](/sdk/how-to-swap) follows one from creation to settlement.
 
-## Key Features
+## Networks
 
-- **Sub-client Architecture**: Organized API access via `client.maker` and `client.rln`
-- **Type Safety**: Auto-generated types from OpenAPI specs — full TypeScript types and Python Pydantic models
-- **Consistent API**: Identical structure across TypeScript and Python
-- **WebSocket Support**: Real-time quote streaming with automatic reconnection
-- **Error Handling**: Comprehensive exception hierarchy across both SDKs
-- **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
-- **Atomic Swaps**: HTLC-based swaps with no trust in the maker
+The SDK resolves the KaleidoSwap maker on **signet** (settling on Mutinynet) and on a local **regtest** harness. Mainnet is not served yet: asking for it returns an error instead of falling back to another provider. See [Networks](/sdk/networks).
+
+<Note>
+Looking for programmatic control of your own RGB Lightning Node (channels, RGB assets, payments, node-to-node swaps)? That is the [Node SDK](/cli/node-sdk/introduction), documented with the CLI.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/sdk/installation">
+    Install the package for your runtime.
+  </Card>
+  <Card title="Getting started" icon="rocket" href="/sdk/getting-started">
+    List the maker's routes and make a first swap on signet.
+  </Card>
+  <Card title="Swap types" icon="shuffle" href="/sdk/swap-types">
+    Submarine, reverse, chain, RGB, and Arkade.
+  </Card>
+  <Card title="Client reference" icon="book" href="/sdk/api-reference">
+    Every client, method, and helper.
+  </Card>
+</CardGroup>

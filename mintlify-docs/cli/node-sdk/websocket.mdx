@@ -1,7 +1,7 @@
 ---
 title: "WebSocket Quote Streaming"
 sidebarTitle: "WebSocket"
-description: "Stream real-time swap quotes over WebSocket with the KaleidoSDK, covering subscriptions, message formats, and reconnection handling"
+description: "Stream real-time swap quotes over WebSocket with the Node SDK, covering subscriptions, message formats, and reconnection handling"
 ---
 
 ## Overview
@@ -30,7 +30,7 @@ ws = client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/mark
 The URL includes a client ID for session tracking. The `enableWebSocket` method returns a `WSClient` instance.
 
 <Note>
-The examples on this page use Signet, which is also the SDK default. Match the WebSocket URL to the environment your `baseUrl` points at. See [Available Environments](/sdk/installation#available-environments).
+The examples on this page use Signet, which is also the SDK default. Match the WebSocket URL to the environment your `baseUrl` points at. See [Available Environments](/cli/node-sdk/installation#available-environments).
 </Note>
 
 ## High-Level API
@@ -347,16 +347,16 @@ Each `SwapLegData` object describes one leg of the swap:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Examples" icon="file-code" href="/sdk/examples">
+  <Card title="Examples" icon="file-code" href="/cli/node-sdk/examples">
     See WebSocket streaming in complete end-to-end examples
   </Card>
-  <Card title="Client Reference" icon="code" href="/sdk/api-reference">
+  <Card title="Client Reference" icon="code" href="/cli/node-sdk/api-reference">
     Full reference for all streaming methods on MakerClient
   </Card>
-  <Card title="Types" icon="brackets-curly" href="/sdk/types">
+  <Card title="Types" icon="brackets-curly" href="/cli/node-sdk/types">
     QuoteResponse, QuoteRequest, and other WebSocket type definitions
   </Card>
-  <Card title="Best Practices" icon="star" href="/sdk/best-practices">
+  <Card title="Best Practices" icon="star" href="/cli/node-sdk/best-practices">
     Reconnection strategies and production patterns
   </Card>
 </CardGroup>

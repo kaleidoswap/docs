@@ -1,0 +1,118 @@
+---
+title: "Node SDK Examples"
+sidebarTitle: "Examples"
+description: "Working Node SDK code examples in TypeScript and Python, covering market data queries and live quote streaming over WebSocket"
+---
+
+## Market Data
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+const [assets, pairs] = await Promise.all([
+  client.maker.listAssets(),
+  client.maker.listPairs(),
+]);
+
+console.log(`Assets: ${assets.assets.length}`);
+console.log(`Pairs: ${pairs.pairs.length}`);
+
+for (const pair of pairs.pairs.slice(0, 5)) {
+  console.log(`${pair.base.ticker}/${pair.quote.ticker}`);
+}
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+assets = await client.maker.list_assets()
+pairs = await client.maker.list_pairs()
+
+print(f"Assets: {len(assets.assets)}")
+print(f"Pairs: {len(pairs.pairs)}")
+
+for pair in pairs.pairs[:5]:
+    print(f"{pair.base.ticker}/{pair.quote.ticker}")
+```
+</CodeGroup>
+
+## Atomic Swaps
+
+A swap is a five-step sequence — quote, init, whitelist on your node, execute, then track settlement — and stopping after `initSwap` leaves a locked swap that never executes. The complete flow in both languages is on [How to Swap](/cli/node-sdk/how-to-swap).
+
+## WebSocket Streaming
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id');
+
+const stop = await client.maker.streamQuotesByTicker(
+  'BTC',
+  'USDT',
+  100000,
+  (quote) => console.log(quote.price),
+  { pollInterval: 2000 }
+);
+
+setTimeout(() => stop(), 10000);
+```
+
+```python Python
+import asyncio
+
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client-id")
+
+stop = await client.maker.stream_quotes_by_ticker(
+    "BTC",
+    "USDT",
+    100000,
+    lambda quote: print(quote["price"]),
+    poll_interval=2.0,
+)
+
+await asyncio.sleep(10)
+stop()
+```
+</CodeGroup>
+
+## Node Operations
+
+For the `client.rln` entry point — the `hasNode()` guard and the first node calls — see [Getting Started](/cli/node-sdk/getting-started#node-configuration-checks). Every available method is listed in the [Client Reference](/cli/node-sdk/api-reference#rlnclient-clientrln).
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="How to Swap" icon="arrows-rotate" href="/cli/node-sdk/how-to-swap">
+    The complete atomic swap sequence: init, whitelist, execute, status.
+  </Card>
+  <Card title="WebSocket" icon="tower-broadcast" href="/cli/node-sdk/websocket">
+    Streaming options, events, and the low-level `WSClient`.
+  </Card>
+  <Card title="Utilities" icon="calculator" href="/cli/node-sdk/utilities">
+    Amount conversion, precision handling, and asset pair mapping.
+  </Card>
+  <Card title="Client Reference" icon="code" href="/cli/node-sdk/api-reference">
+    Every method on `client.maker` and `client.rln`.
+  </Card>
+</CardGroup>

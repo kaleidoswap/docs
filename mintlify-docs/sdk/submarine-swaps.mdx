@@ -1,0 +1,107 @@
+---
+title: "Submarine Swaps: On-chain to Lightning"
+sidebarTitle: "Submarine Swaps"
+description: "Pay a Lightning invoice or Lightning address from on-chain BTC, L-BTC, or L-USDT with a Swap SDK submarine swap, and refund it if the maker never pays"
+---
+
+In a submarine swap you lock funds on chain and the maker pays a Lightning invoice for you. The maker can only claim your lockup with the preimage it learns by paying the invoice, so it is paid only if you are. If it never pays, you refund your lockup.
+
+## 1. Get an invoice
+
+Bring a BOLT11 invoice with a fixed amount. To pay a Lightning address or an LNURL-pay link, resolve it first:
+
+<CodeGroup>
+```typescript TypeScript
+import { init, resolveLightningAddress } from "@kaleidorg/swap-sdk";
+
+await init();
+const invoice = await resolveLightningAddress("alice@example.com", 25_000n); // whole sats, bigint
+```
+
+```python Python
+invoice = await sdk.resolve_lightning_address("alice@example.com", 25_000)
+```
+</CodeGroup>
+
+The resolver requires HTTPS (or an onion service), checks the provider's amount limits, and verifies the returned invoice's amount and description hash. It does not check the invoice's network or expiry; apply your own policy before paying.
+
+## 2. Create the swap
+
+<CodeGroup>
+```typescript TypeScript
+import { SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
+
+const client = SwapClient.forNetwork("signet");
+const master = SwapMasterKey.fromSwapMnemonic(swapMnemonic, "signet");
+const refundKey = master.deriveSwapKey(index);
+
+const card = (await client.submarinePairs())?.BTC?.BTC;
+if (!card) throw new Error("BTC -> Lightning is not offered right now");
+
+const swap = await client.createSubmarineSwap("signet", {
+  from: "BTC",          // the asset you lock: BTC, L-BTC, L-USDT, USDT-RGB
+  to: "BTC",            // Lightning BTC
+  invoice,
+  refundPublicKey: refundKey.publicKey,
+  pairHash: card.hash,
+});
+
+// Fails if the lockup is not refundable with your key.
+SwapScript.fromSubmarine("bitcoin", "signet", swap, refundKey.publicKey);
+
+await store.put(swap.id, toJson({ index, makerUrl, response: swap }));
+console.log(`Fund exactly ${swap.expectedAmount} sat to ${swap.address}`);
+```
+
+```python Python
+refund_key = master.derive_swap_key(index)
+btc = sdk.btc_chain_from_network(sdk.Network.SIGNET)
+
+swap = await client.create_swap(
+    sdk.CreateSubmarineRequest(
+        _from=btc,
+        to=btc,
+        invoice=invoice,
+        refund_public_key=refund_key.public(),
+    )
+)
+print(f"Fund exactly {swap.expected_amount} sat to {swap.address}")
+```
+</CodeGroup>
+
+## 3. Fund the lockup
+
+Send exactly `expectedAmount` to `address` from your wallet. A wrong amount moves the swap to `transaction.lockupFailed` and you refund it. If the card's `limits.maximalZeroConf` is `0`, the maker waits for a confirmation before paying.
+
+## 4. Wait for success
+
+The swap succeeds when the maker pays the invoice and claims the lockup: `invoice.paid`, then `transaction.claimed`. You build nothing on this path.
+
+## Refund
+
+If the maker reports `invoice.failedToPay` or `transaction.lockupFailed`, or the swap expires, refund the lockup:
+
+```typescript TypeScript
+const saved = JSON.parse(await store.get(swapId));
+const script = SwapScript.fromSubmarine("bitcoin", "signet", saved.response, refundKey.publicKey);
+
+const refund = await script.constructRefund({
+  outputAddress: refundAddress,
+  swapId,
+  keysSecretHex: refundKey.secretKey,
+  swapAuth: saved.response.swapAuth,
+  makerBaseUrl: saved.makerUrl,
+  network: "signet",
+  bitcoinEsploraUrl: "https://esplora.signet.kaleidoswap.com",
+  feeSatPerVb: 2,
+});
+const txid = await refund.broadcast("signet", "https://esplora.signet.kaleidoswap.com");
+```
+
+With the maker's co-signature, the refund goes through right away. Without it, the script path is spendable once the chain reaches the swap's `timeoutBlockHeight`. `refundSubmarineSwap` wraps both decisions; see [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript).
+
+## Other source assets
+
+- **L-BTC** uses the same flow with `SwapScript.fromSubmarine("liquid", ...)` and a Liquid Esplora URL for refunds.
+- **L-USDT** lockups are funded by your Liquid wallet, and refunds use a caller-funded PSET because the fee is paid in L-BTC.
+- **USDT-RGB** needs the RGB contract ID pinned at creation and an rgb-lib wallet to fund the lockup. See [RGB swaps](/sdk/rgb-swaps).

@@ -44,7 +44,13 @@ Every provider rejects with an `Error` that carries a `code` property, so a DApp
 | `METHOD_NOT_SUPPORTED` | The connected wallet cannot serve this method (for example RGB over Lightning on a node-less RGB wallet) |
 | `INVALID_PARAMS` | Malformed arguments, e.g. a bad `assetId` or an any-amount invoice to `payLnInvoice` (`window.rgb`) |
 | `ASSET_NOT_FOUND` | The wallet does not know this asset; omit `assetId` in `blindReceive` to accept any asset (`window.rgb`) |
+| `POPUP_CLOSED` | The approval window was closed, or could not open, before the user answered. Not a refusal: the DApp may ask again |
+| `REQUEST_INTERRUPTED` | The wallet restarted in the background before answering. The request may or may not have completed: check its outcome (for example the payment status) before repeating anything that moves funds |
+| `NO_AVAILABLE_UTXOS` | No free colorable UTXO for a blinded receive; call `createUtxos()` or use `witnessReceive()` (`window.rgb`) |
+| `UNSAFE_PSBT` | The PSBT would spend an input holding RGB assets, so it is refused before any prompt (`window.rgb`) |
 | `INTERNAL_ERROR` | Anything else, with the wallet's message in `error.message` |
+
+`window.rgb` only uses the codes defined by the WebRGB spec, so on that provider `POPUP_CLOSED` and `REQUEST_INTERRUPTED` arrive as `INTERNAL_ERROR`.
 
 ## WebLN Provider
 
@@ -129,7 +135,7 @@ Approving `signPsbt`, `finalizePsbt`, or `pushPsbt` is never blind-signing: the 
 `window.rgb` exposes the wallet's RGB runtime to DApps — the node-less RGB wallet or a connected RGB Lightning node, whichever the wallet is configured with — so an app can issue, receive, send and track RGB assets without running its own RGB backend. Every funds-touching call confirms in the extension popup, and the connect prompt lets the user restrict an origin to specific capabilities (minting is gated by its own `issueAsset` capability).
 
 <Note>
-`window.rgb` ships from extension 0.3.0 on. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists.
+`window.rgb` ships from extension 0.3.0 on. It is not present in 0.2.0 builds; feature-detect it with the `rgb:ready` event rather than assuming it exists. The WebRGB 0.4 methods (`witnessReceive`, `createUtxos`, `cancelReceive`, `getBtcBalance`, `refresh`, `getAssetMetadata`, `signPsbt`, `signMessage`) ship from extension 0.4.0; check `getInfo().methods` before calling them.
 </Note>
 
 ### TypeScript Support
@@ -191,6 +197,14 @@ Discovery is additive: reading `window.rgb` directly still works, and `requestPr
 | `getInfo()` | `{ ready, network, protocol, methods }` — `ready` is `false` when no RGB wallet is connected |
 | `getAddress()` | Bitcoin address of the RGB wallet, used to anchor RGB state |
 | `blindReceive(args)` | Blinded-UTXO receive invoice (optional `assetId`: omit it for an invoice that accepts any asset; optional `amount`, `durationSeconds`, `minConfirmations`, never below 3) |
+| `witnessReceive(args)` | Witness receive invoice: the sender funds a new output to this wallet, so it works without a free colorable UTXO (same arguments as `blindReceive`) |
+| `createUtxos(args?)` | Create colorable UTXOs from the RGB wallet's bitcoin (optional `num`, `size`, `feeRate`); spends BTC, so it always confirms in the popup |
+| `cancelReceive(recipientId)` | Cancel an unpaid receive this wallet created and release the UTXO it reserved; confirms in the popup; `{ cancelled }` |
+| `getBtcBalance()` | Bitcoin held by the RGB wallet, split into vanilla and colored `{ settled, future, spendable }`, plus `freeColorableUtxos` |
+| `refresh(assetId?)` | Sync and advance pending transfers; `{ refreshed }` |
+| `getAssetMetadata(assetId)` | The asset's RGB metadata as the wallet knows it |
+| `signPsbt(psbt, { finalize? })` | Sign the wallet-owned inputs of a base64 PSBT after a confirmation that shows each input; an input holding RGB assets rejects with `UNSAFE_PSBT`; `{ psbt, signedInputs }` |
+| `signMessage(message)` | Sign a message with the wallet's message key (LND `signmessage` format) after confirmation, so a backend can authenticate the wallet; `{ signature }` |
 | `issueAsset(args)` | Issue a new asset (`schema: "nia"`, `ticker`, `name`, `amounts`, `precision`); listed in `methods` only when the wallet can mint |
 | `listAssets()` | Assets held by the wallet |
 | `getAssetBalance(assetId)` | `{ assetId, balance }` for one asset |
@@ -282,7 +296,9 @@ window.addEventListener('nostr:ready', async () => {
 });
 ```
 
-If you deny a site's connection, `window.nostr` stops prompting for the rest of that page, and the wallet remembers the denial for that site for 10 minutes.
+Connecting a site for Nostr asks how much to approve up front. **Ask every time** (the default) confirms each request; **Sign-in only** auto-approves relay sign-in (NIP-42, kind 22242) and still asks for posts, deletions and everything else. A site connected only for WebLN or WebBTC must ask again before it can use your Nostr identity, and reading your public key or relays needs the site's Nostr permission.
+
+If you deny a site's connection, `window.nostr` stops prompting for the rest of that page, and the wallet remembers the denial for that site for 10 minutes. A prompt that is closed or left unanswered only backs off briefly; it is not recorded as a denial.
 
 ## Nostr Connect (NIP-46)
 
@@ -320,9 +336,15 @@ Each paired client gets its own spending budget, visible and revocable under **S
 
 ## Permission Prompts and Connected Apps
 
-When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. Connected Nostr clients start from a "Reasonable" consent default (comparable to other NIP-07 wallets): routine, low-risk operations are allowed for a connected app, while payments and other sensitive actions still prompt.
+When a connected site makes a sensitive request, the KaleidoSwap Extension asks the user to approve or deny the action. The connect prompt lists the capabilities the site asks for (create invoices, send Lightning payments, sign messages, sign PSBTs, send Bitcoin, issue RGB assets, Nostr), and the site gets exactly the ones the user leaves on; an approval without a capability list grants nothing. Every prompt names the site that asks.
 
-<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="Connection approval prompt showing the requesting site origin, the access it asks for, and the Reasonable consent default with Deny and Allow actions" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+- **More requests need approval:** LNURL-auth, LNURL-withdraw and LNURL-channel go through the site's permissions and the unlock gate like any other request, and reading node info or addresses needs approval. A site cannot switch the wallet's active account.
+- **Site payments are checked first:** Lightning invoices are fully decoded (checksum, network, expiry) and validated before any spending allowance is reserved, and refused when they are for another network than the paying wallet. The allowance is refunded only when the payment certainly did not go out.
+- **Arkade:** sites cannot start a Lightning payment (WebLN, LNURL, WebBTC) from an Arkade account, because Arkade pays Lightning through an Intents swap whose solver fee and delayed proof of payment a site confirmation does not show. Pay from the wallet's Send screen instead.
+- **Prompts are robust:** an approval window survives the wallet restarting in the background, a window closed without an answer is reported as `POPUP_CLOSED` rather than a refusal, and a locked wallet can be unlocked from the prompt with a passkey.
+- **Other wallets keep working:** the injected providers are read-only but configurable, so the extension never replaces another wallet's `window.webln`, `webbtc`, `bitcoin`, `rgb` or `nostr`.
+
+<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="Connection approval prompt showing the requesting site origin, the access it asks for, and the Nostr choice between Ask every time (default) and Sign-in only, with Deny and Allow actions" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 **Settings > Connected Apps** lists every site and app connected to the wallet, including NIP-46 (bunker) clients, showing which capabilities each one has been granted. You can revoke individual capabilities or disconnect a site entirely at any time.
 

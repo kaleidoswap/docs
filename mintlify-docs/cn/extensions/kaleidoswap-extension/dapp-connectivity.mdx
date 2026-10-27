@@ -44,7 +44,13 @@ KaleidoSwap 扩展会把标准钱包提供方注入浏览器页面，DApp 在获
 | `METHOD_NOT_SUPPORTED` | 已连接的钱包无法提供该方法（例如在无节点的 RGB 钱包上使用 RGB 闪电功能） |
 | `INVALID_PARAMS` | 参数格式错误，例如 `assetId` 无效，或向 `payLnInvoice` 传入任意金额发票（`window.rgb`） |
 | `ASSET_NOT_FOUND` | 钱包不认识该资产；在 `blindReceive` 中省略 `assetId` 即可接受任意资产（`window.rgb`） |
+| `POPUP_CLOSED` | 用户回答之前，审批窗口被关闭或无法打开。这不是拒绝：DApp 可以再次请求 |
+| `REQUEST_INTERRUPTED` | 钱包在后台重启，未能给出回答。请求可能已完成，也可能未完成：在重复任何涉及资金的操作之前，先检查结果（例如支付状态） |
+| `NO_AVAILABLE_UTXOS` | 没有可用于盲化接收的空闲可着色 UTXO；请调用 `createUtxos()` 或改用 `witnessReceive()`（`window.rgb`） |
+| `UNSAFE_PSBT` | 该 PSBT 会花费持有 RGB 资产的输入，因此在弹出任何提示之前就被拒绝（`window.rgb`） |
 | `INTERNAL_ERROR` | 其他所有情况，钱包的说明在 `error.message` 中 |
+
+`window.rgb` 只使用 WebRGB 规范定义的错误代码，因此在该提供方上，`POPUP_CLOSED` 和 `REQUEST_INTERRUPTED` 会以 `INTERNAL_ERROR` 返回。
 
 ## WebLN 提供方
 
@@ -129,7 +135,7 @@ window.addEventListener('webln:ready', async () => {
 `window.rgb` 把钱包的 RGB 运行时暴露给 DApp——无节点的 RGB 钱包或已连接的 RGB 闪电节点，取决于钱包的配置——让应用无需自建 RGB 后端即可发行、接收、发送和跟踪 RGB 资产。每个涉及资金的调用都会在扩展弹窗中确认，连接提示还允许用户把某个来源限制在特定能力范围内（发行资产受独立的 `issueAsset` 能力控制）。
 
 <Note>
-`window.rgb` 从扩展 0.3.0 起提供，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。
+`window.rgb` 从扩展 0.3.0 起提供，0.2.0 构建中不存在；请用 `rgb:ready` 事件做特性检测，不要假定它一定存在。WebRGB 0.4 的方法（`witnessReceive`、`createUtxos`、`cancelReceive`、`getBtcBalance`、`refresh`、`getAssetMetadata`、`signPsbt`、`signMessage`）从扩展 0.4.0 起提供；调用前请先检查 `getInfo().methods`。
 </Note>
 
 ### TypeScript 支持
@@ -191,6 +197,14 @@ for (const { info, provider } of await listProviders()) {
 | `getInfo()` | `{ ready, network, protocol, methods }`——未连接 RGB 钱包时 `ready` 为 `false` |
 | `getAddress()` | RGB 钱包的比特币地址，用于锚定 RGB 状态 |
 | `blindReceive(args)` | 盲化 UTXO 接收发票（可选 `assetId`：省略则生成接受任意资产的发票；可选 `amount`、`durationSeconds`、`minConfirmations`，最低为 3） |
+| `witnessReceive(args)` | 见证接收发票：由发送方向本钱包新建一个输出，因此不需要空闲的可着色 UTXO（参数与 `blindReceive` 相同） |
+| `createUtxos(args?)` | 用 RGB 钱包的比特币创建可着色 UTXO（可选 `num`、`size`、`feeRate`）；会花费 BTC，因此总是在弹窗中确认 |
+| `cancelReceive(recipientId)` | 取消本钱包创建且未被支付的接收，释放其保留的 UTXO；在弹窗中确认；返回 `{ cancelled }` |
+| `getBtcBalance()` | RGB 钱包持有的比特币，分为普通（vanilla）和已着色（colored）的 `{ settled, future, spendable }`，以及 `freeColorableUtxos` |
+| `refresh(assetId?)` | 同步并推进待处理的转账；返回 `{ refreshed }` |
+| `getAssetMetadata(assetId)` | 钱包所知的该资产的 RGB 元数据 |
+| `signPsbt(psbt, { finalize? })` | 在显示每个输入的确认之后，签名 base64 PSBT 中属于本钱包的输入；持有 RGB 资产的输入会以 `UNSAFE_PSBT` 拒绝；返回 `{ psbt, signedInputs }` |
+| `signMessage(message)` | 确认后用钱包的消息密钥签名一条消息（LND `signmessage` 格式），便于后端验证钱包；返回 `{ signature }` |
 | `issueAsset(args)` | 发行新资产（`schema: "nia"`、`ticker`、`name`、`amounts`、`precision`）；仅当钱包可发行时才出现在 `methods` 中 |
 | `listAssets()` | 钱包持有的资产 |
 | `getAssetBalance(assetId)` | 单个资产的 `{ assetId, balance }` |
@@ -281,7 +295,9 @@ window.addEventListener('nostr:ready', async () => {
 });
 ```
 
-如果你拒绝了某个站点的连接，`window.nostr` 在该页面剩余的生命周期内不再弹出提示，钱包也会在 10 分钟内记住对该站点的拒绝。
+为站点连接 Nostr 时，会先询问预先批准的范围。**每次都询问**（Ask every time，默认）会逐个确认每个请求；**仅登录**（Sign-in only）会自动批准中继登录（NIP-42，kind 22242），发帖、删除等其他操作仍会询问。只为 WebLN 或 WebBTC 连接的站点，必须再次请求才能使用你的 Nostr 身份；读取你的公钥或中继列表也需要该站点的 Nostr 权限。
+
+如果你拒绝了某个站点的连接，`window.nostr` 在该页面剩余的生命周期内不再弹出提示，钱包也会在 10 分钟内记住对该站点的拒绝。被关闭或未回答的提示只会短暂退避，不会记为拒绝。
 
 ## Nostr Connect（NIP-46）
 
@@ -319,9 +335,15 @@ nostr+walletconnect://<wallet-pubkey>?relay=<wss-relay-url>&secret=<client-secre
 
 ## 权限提示与已连接应用
 
-当已连接的站点发起敏感请求时，KaleidoSwap 扩展会要求用户批准或拒绝该操作。已连接的 Nostr 客户端默认采用「合理」(Reasonable) 授权级别（与其他 NIP-07 钱包相当）：已连接应用的常规低风险操作直接放行，而支付和其他敏感操作仍会弹出提示。
+当已连接的站点发起敏感请求时，KaleidoSwap 扩展会要求用户批准或拒绝该操作。连接提示会列出站点请求的能力（创建发票、发送闪电支付、签名消息、签名 PSBT、发送比特币、发行 RGB 资产、Nostr），站点只获得用户保留开启的那些能力；不带能力列表的批准不授予任何能力。每个提示都会注明发起请求的站点。
 
-<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="连接授权提示，显示发起请求的站点来源、它申请的访问权限，以及默认的「合理」授权级别和拒绝、允许两个操作" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+- **更多请求需要批准：** LNURL-auth、LNURL-withdraw 和 LNURL-channel 与其他请求一样经过站点权限和解锁检查，读取节点信息或地址也需要批准。站点不能切换钱包当前使用的账户。
+- **站点支付会先校验：** 闪电发票在预留任何支出额度之前会被完整解析（校验和、网络、到期时间）并验证，若发票所属网络与付款钱包不同则拒绝。只有在确定支付没有发出时，额度才会退还。
+- **Arkade：** 站点不能从 Arkade 账户发起闪电支付（WebLN、LNURL、WebBTC），因为 Arkade 通过 Intents 交换支付闪电，而站点确认无法显示求解方费用和延迟的支付证明。请改用钱包的发送界面。
+- **提示更可靠：** 钱包在后台重启时审批窗口仍然有效；未回答就关闭的窗口会以 `POPUP_CLOSED` 报告，而不是拒绝；钱包锁定时可以在提示中用通行密钥（passkey）解锁。
+- **其他钱包照常工作：** 注入的提供方是只读但可重新定义的，因此扩展不会替换其他钱包的 `window.webln`、`webbtc`、`bitcoin`、`rgb` 或 `nostr`。
+
+<img src="/assets/images/extension/31-dapp-approval-prompt.png" alt="连接授权提示，显示发起请求的站点来源、它申请的访问权限，以及 Nostr 的「每次都询问」（默认）和「仅登录」选项，还有拒绝和允许按钮" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 **设置 > 已连接应用**（Settings > Connected Apps）列出连接到钱包的每个站点和应用（包括 NIP-46（bunker）客户端），并显示各自被授予的能力。你可以随时撤销单项能力，或彻底断开某个站点。
 

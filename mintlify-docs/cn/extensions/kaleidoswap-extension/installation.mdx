@@ -92,7 +92,7 @@ KaleidoSwap 扩展的首个版本是仅限邀请的封闭测试。目前还没�
 
 <img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap 扩展首次启动界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-1. **欢迎界面** - 「创建新钱包」(Create New Wallet) 或「导入已有钱包」(Import Existing Wallet)（12 词或 24 词助记词）
+1. **欢迎界面** - 「创建新钱包」(Create New Wallet) 或「导入已有钱包」(Import Existing Wallet)（12 词或 24 词助记词）。导入时选择钱包持有真实比特币（**主网**，Mainnet）还是测试钱包（**测试网络**，Test networks：Signet、regtest、Liquid Testnet）
 2. **设置密码** - 创建一个密码，用于在本设备上加密钱包
 3. **助记词**（仅新钱包） - 保存控制 Spark、Arkade、Liquid、RGB 以及派生 Nostr 身份的 12 个词
 4. **Passkey**（可选） - 使用生物识别或安全密钥解锁
@@ -128,7 +128,7 @@ KaleidoSwap 扩展把加密后的助记词存储在 `chrome.storage.local` 中�
 
 ## 更新
 
-封闭测试构建不会通过浏览器商店自动更新。有新测试版时，重新打开你的下载链接——它始终提供当前构建——解压后回到 `chrome://extensions`，在 KaleidoSwap 扩展卡片上点击**重新加载**（Reload）。如果你把新构建解压到了另一个文件夹，请先移除旧的已解压扩展，再加载新文件夹。
+封闭测试构建不会通过浏览器商店自动更新。有新测试版时，重新打开你的下载链接——它始终提供当前构建——解压后回到 `chrome://extensions`，在 KaleidoSwap 扩展卡片上点击**重新加载**（Reload）。如果你把新构建解压到了另一个文件夹，请改为用**加载已解压的扩展程序**（Load unpacked）指向新文件夹。不要先移除旧扩展：移除会删除浏览器中保存的钱包数据，之后只能用助记词恢复。
 
 由于测试构建使用固定的扩展 ID（`mmldlmkphefjjbpbajnhnkbiahiabiog`），你的账户、余额和设置会在更新后保留。无论如何，请把助记词放在手边。
 

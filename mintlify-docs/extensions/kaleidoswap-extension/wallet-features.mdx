@@ -13,15 +13,14 @@ The KaleidoSwap Extension derives multiple protocol accounts from one recovery p
 | Account | What It Holds | Notes |
 |---------|---------------|-------|
 | **Spark** | Spark BTC, Spark-native assets, Lightning send/receive | Also powers Flashnet swaps and the cross-chain bridge |
-| **Arkade** | Arkade BTC and Arkade-native assets | Boarding/offboarding and VTXO lifecycle; optional rotating-address (HD) mode |
+| **Arkade** | Arkade BTC and Arkade-native assets | Boarding/offboarding, Lightning in and out through Arkade Intents, VTXO renewal and delegation; optional rotating-address (HD) mode |
 | **Liquid** | L-BTC and Liquid assets such as USDt | Node-less and self-custodial; mainnet by default |
 | **RGB-L1** | RGB assets and BTC on Bitcoin L1 | Node-less, runs in WebAssembly; mainnet by default |
 | **RGB Lightning (RLN)** | RGB assets over Lightning channels | Optional, experimental; replaces the RGB-L1 backing when connected |
-| **Bark** | BTC on Second's Ark | Test network (signet) only; Lightning in and out; receive and boarding from **Settings > Bark** |
 
 ## Asset Management
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard with network status chips, the BTC balance card with Receive, Swap, and Send, and Your Assets with the filter toggle" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap dashboard with network status chips, the BTC balance card with Receive, Swap, and Send, and Your Assets with Bitcoin, the combined Tether USD card and USDB" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### Viewing Balances
 
@@ -34,7 +33,7 @@ The KaleidoSwap dashboard displays all your assets:
 - **RGB assets** from the node-less RGB-L1 account, or from RLN when connected
 - **Protocol and network filters** for focusing on a single backing or network slice
 
-Assets with the same ticker across backings are merged into a single dashboard row that expands into its per-network balances.
+BTC held on several layers shows as one row that expands into its per-network balances. USDT held on RGB and on Liquid is also shown as a single **Tether USD** card, whose detail page lists both networks. Only known Tether assets are combined: tickers are chosen by the issuer, so any other asset stays on its own row even if it uses the same ticker.
 
 ### Hiding Assets
 
@@ -87,11 +86,9 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 
   <Step title="Review">
-    Select **Review Payment** and check the payment details:
-    - Destination
-    - Amount
-    - Selected route/account
-    - Fee or route notes when available
+    Select **Review Payment**. The review is a single card: the amount the recipient receives, **To** (the destination, shown once), **Network** (the layer and the account that pays), each fee, and the **total deducted** from your balance.
+
+    For an RGB invoice the review decodes the invoice first and shows the asset, the amount, the recipient and the bitcoin fee; nothing is signed until you confirm, and the transfer is followed until it confirms.
   </Step>
 
   <Step title="Confirm">
@@ -99,13 +96,13 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, balance in sats, fee rate options, the route list, and the Review Payment button" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, the available balance, an amount with the sats and USD unit picker inside the amount card, and the fee rate options" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-Paying Lightning from Arkade uses an Arkade Intents swap. It pays **invoices only**: Lightning addresses and LNURL are refused. The review shows the solver and its fee before you confirm. On mainnet the default solver is Ark Labs (third party).
+Paying Lightning from Arkade uses an Arkade Intents swap: a solver pays the Lightning side and takes your Arkade coins in exchange, so no Lightning channel is needed. It pays BOLT11 invoices and Lightning addresses; for a Lightning address the wallet fetches the invoice once the amount is set. The wallet asks every solver on the network for a quote and uses the cheapest. The review shows the solver and its fee before you confirm.
 </Note>
 
-<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="Send review for a Lightning invoice paid from Arkade through an Arkade Intents swap, showing the solver and the solver fee" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="One-card send review for a Lightning invoice paid from Arkade through an Arkade Intents swap: amount received, destination, Lightning from Arkade, the solver fee and the total deducted" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="send-to-lightning-address" title="Paying a Lightning address" portrait />
 
@@ -214,19 +211,31 @@ Open **Settings** from the bottom navigation. The page is grouped into **Account
 ### Accounts
 
 - **Spark** - Network selection, SDK details, and connection status
-- **Arkade** - Network selection, VTXO settings, boarding flows, lifecycle settings, and an optional rotating-address (HD) mode with restore via gap scan
-- **Arkade Intents** - Pay and receive Lightning from your Arkade balance through an RFQ solver. Configure it in **Settings > Arkade > Arkade Intents**. Sends and receives use the normal Send and Receive screens. The review shows the solver fee; stuck swaps can be refunded from the same settings page.
+- **Arkade** - Network selection, **VTXO management** (renewal and delegation, see [Arkade VTXO Renewal](#arkade-vtxo-renewal)), boarding flows, and an optional rotating-address (HD) mode with restore via gap scan
+- **Arkade Intents** - Pay and receive Lightning from your Arkade balance through RFQ solvers; the wallet quotes every solver and takes the cheapest. Configure it in **Settings > Arkade > Arkade Intents**. Sends and receives use the normal Send and Receive screens. Each Intents swap has its own status screen with a timeline, a countdown to the refund window and a refund button; swaps that need attention are listed in Activity and flagged on Home.
 - **RGB** - Choose the backing: **Node-less** (on-device RGB with BTC on Bitcoin L1; network, Indexer URL, optional RGB transport endpoints) or **RLN node** (your own RGB Lightning Node over Direct or Wallet Connect). From here you also manage **UTXOs** (colorable, colored and normal UTXOs), **Issue asset** (mint a new asset from the wallet), and RGB **Backup**
 - **Liquid** - Network selection and the Esplora/waterfalls sync endpoint (a fast default is provided; you can supply your own)
-- **Bark** - Second's Ark network: BTC with Lightning in and out. Test network (signet) only
 - **Lightning Node** - Connect one external Lightning node for deposits, withdrawals, and balance: **RGB Lightning node**, **LND** (REST HTTPS URL plus a restricted macaroon), or **Nostr Wallet Connect**. Core Lightning and LDK are shown as coming soon. Only one node is active at a time
 - **Nostr** - Nostr Identity, Nostr Connect, and Wallet Connect
 
-<img src="/assets/images/extension/22-settings-accounts.png" alt="Settings Accounts section listing Spark, Arkade, RGB (Beta), Liquid, Bark, Lightning Node, and Nostr" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/22-settings-accounts.png" alt="Settings Accounts section scrolled to Liquid, Lightning Node and Nostr, each with its connection status" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <img src="/assets/images/extension/38-settings-rgb.png" alt="Settings RGB hub with the Node-less and RLN node backings, UTXOs, Issue asset, and Backup" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <img src="/assets/images/extension/35-settings-lightning-node.png" alt="Settings Lightning Node chooser with RGB Lightning node, LND, and Nostr Wallet Connect, and Core Lightning and LDK marked coming soon" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### Arkade VTXO Renewal
+
+Arkade coins (VTXOs) expire and must be renewed before they do. **Settings > Arkade > VTXO management** shows when the next renewal is due and controls delegation:
+
+- **While the wallet is unlocked**, the extension renews VTXOs that expire within three days on its own.
+- **Delegation** (on by default) hands your VTXOs to a renewal service that renews them while the wallet is locked or the browser is closed. The service can renew them, never spend them. New coins are handed over as soon as they arrive; coins received while the wallet is locked are delegated at the next unlock. The screen shows how many of your VTXOs the service holds.
+- **Expiry warnings** keep running while the wallet is locked: a notification arrives 3 days and 1 day before a VTXO expires (1 day only for VTXOs the renewal service holds), and again if one has expired. Open the wallet to renew.
+- **Failures are shown**: a failed renewal or delegation is notified and listed on the VTXO management screen with its time and reason.
+
+Without delegation, nothing renews your VTXOs while the wallet is locked; the warnings are then the only safeguard.
+
+<img src="/assets/images/extension/40-settings-arkade-vtxo.png" alt="Arkade VTXO management screen showing the next renewal date, the repeat cycle, delegation switched on with its fee, the number of delegated VTXOs, and the delegator URL" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### KaleidoSwap Handle
 

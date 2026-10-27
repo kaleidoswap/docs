@@ -92,7 +92,7 @@ After installation, clicking the KaleidoSwap icon in your toolbar opens the wall
 
 <img src="/assets/images/extension/01-welcome.png" alt="KaleidoSwap Extension first launch" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
-1. **Welcome screen** - Create New Wallet or Import Existing Wallet (12 or 24-word phrase)
+1. **Welcome screen** - Create New Wallet or Import Existing Wallet (12 or 24-word phrase). When importing, choose whether the wallet holds real bitcoin (**Mainnet**) or is a test wallet (**Test networks**: Signet, regtest, Liquid Testnet)
 2. **Password setup** - Create a password that encrypts the wallet on this device
 3. **Recovery phrase** (new wallets) - Save the 12 words that control Spark, Arkade, Liquid, RGB, and the derived Nostr identity
 4. **Passkey** (optional) - Unlock with biometrics or a security key
@@ -128,7 +128,7 @@ If Chrome Sync is on, Chrome may copy the encrypted seed, password hash and salt
 
 ## Updating
 
-Closed beta builds do not auto-update through a browser store. When a new beta is available, open your download link again — it always serves the current build — extract it, then return to `chrome://extensions` and click **Reload** on the KaleidoSwap Extension card. If you extracted the new build into a different folder, remove the old unpacked extension and load the new folder.
+Closed beta builds do not auto-update through a browser store. When a new beta is available, open your download link again — it always serves the current build — extract it, then return to `chrome://extensions` and click **Reload** on the KaleidoSwap Extension card. If you extracted the new build into a different folder, point **Load unpacked** at the new folder instead. Do not remove the old extension first: removing it deletes the wallet data stored in the browser, and you would have to restore from your recovery phrase.
 
 Because beta builds ship a fixed extension ID (`mmldlmkphefjjbpbajnhnkbiahiabiog`), your accounts, balances and settings carry over across updates. Keep your recovery phrase to hand regardless.
 

@@ -13,15 +13,14 @@ KaleidoSwap 扩展从同一组助记词派生多个协议账户：
 | 账户 | 持有内容 | 说明 |
 |---------|---------------|-------|
 | **Spark** | Spark BTC、Spark 原生资产、Lightning 收发 | 同时支撑 Flashnet 交换和跨链桥 |
-| **Arkade** | Arkade BTC 和 Arkade 原生资产 | 进出通道（boarding/offboarding）和 VTXO 生命周期；可选轮换地址（HD）模式 |
+| **Arkade** | Arkade BTC 和 Arkade 原生资产 | 进出通道（boarding/offboarding）、通过 Arkade Intents 收付闪电、VTXO 续期与委托；可选轮换地址（HD）模式 |
 | **Liquid** | L-BTC 以及 USDt 等 Liquid 资产 | 无节点、自主保管；默认主网 |
 | **RGB-L1** | Bitcoin L1 上的 RGB 资产和 BTC | 无节点，运行于 WebAssembly；默认主网 |
 | **RGB Lightning（RLN）** | 通过闪电通道流转的 RGB 资产 | 可选、实验性；连接后会替换 RGB-L1 后端 |
-| **Bark** | Second 的 Ark 上的 BTC | 仅限测试网络（signet）；支持闪电收付；在**设置 > Bark**（Settings > Bark）中接收和入场 |
 
 ## 资产管理
 
-<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘：网络状态标签、带接收、交换和发送按钮的 BTC 余额卡片，以及带筛选开关的你的资产列表" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/08-dashboard.png" alt="KaleidoSwap 仪表盘：网络状态标签、带接收、交换和发送按钮的 BTC 余额卡片，以及包含比特币、合并后的 Tether USD 卡片和 USDB 的你的资产列表" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### 查看余额
 
@@ -34,7 +33,7 @@ KaleidoSwap 仪表盘会显示你的全部资产：
 - 来自无节点 RGB-L1 账户、或已连接时来自 RLN 的 **RGB 资产**
 - **协议和网络筛选器**，用于聚焦单一后端或某个网络分片
 
-不同后端中代码相同的资产会合并为仪表盘上的同一行，展开后可查看各网络的余额明细。
+分布在多个层上的 BTC 显示为同一行，展开后可查看各网络的余额明细。RGB 和 Liquid 上的 USDT 也会合并为一张 **Tether USD** 卡片，详情页列出两个网络。只有已知的 Tether 资产会被合并：代码（ticker）由发行方自行选择，因此其他资产即使代码相同也会单独显示。
 
 ### 隐藏资产
 
@@ -87,11 +86,9 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
   </Step>
 
   <Step title="核对">
-    选择**核对支付**（Review Payment），核对支付详情：
-    - 目标
-    - 金额
-    - 所选路由／账户
-    - 可用时显示的费用或路由提示
+    选择**核对支付**（Review Payment）。核对信息集中在一张卡片中：收款方收到的金额、**收款方**（To，目标只显示一次）、**网络**（Network，付款的层和账户）、每一项费用，以及从余额中**扣除的总额**。
+
+    对于 RGB 发票，核对页面会先解析发票，显示资产、金额、收款方和比特币费用；确认之前不会签名任何内容，转账会一直跟踪到确认为止。
   </Step>
 
   <Step title="确认">
@@ -99,13 +96,13 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示以聪计的余额、费率选项、路由列表和「核对支付」按钮" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示可用余额、金额卡片内的聪与美元单位切换，以及费率选项" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
-从 Arkade 支付闪电会使用 Arkade Intents 交换。它**只支持发票**：Lightning Address 和 LNURL 会被拒绝。确认前，核对页面会显示求解方（solver）及其费用。在主网上，默认求解方是 Ark Labs（第三方）。
+从 Arkade 支付闪电会使用 Arkade Intents 交换：求解方（solver）支付闪电部分并换取你的 Arkade 币，因此不需要闪电通道。它支持 BOLT11 发票和 Lightning Address；对于 Lightning Address，钱包会在金额确定后获取发票。钱包会向网络上的所有求解方询价并采用最便宜的报价。确认前，核对页面会显示求解方及其费用。
 </Note>
 
-<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="通过 Arkade Intents 交换从 Arkade 支付闪电发票的发送核对页面，显示求解方和求解方费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="通过 Arkade Intents 交换从 Arkade 支付闪电发票的单卡片发送核对页面：收款金额、目标、来自 Arkade 的闪电、求解方费用和扣除总额" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="send-to-lightning-address" title="向闪电地址付款" portrait />
 
@@ -214,19 +211,31 @@ RGB 表单可以把发票限定为某一种资产，也可以接受**任意 RGB 
 ### 账户
 
 - **Spark** - 网络选择、SDK 详情和连接状态
-- **Arkade** - 网络选择、VTXO 设置、入场流程、生命周期设置，以及可选的轮换地址（HD）模式（支持通过 gap scan 恢复）
-- **Arkade Intents** - 通过 RFQ 求解方用 Arkade 余额收付闪电。在**设置 > Arkade > Arkade Intents**（Settings > Arkade > Arkade Intents）中配置。收付都使用常规的发送和接收界面。核对页面会显示求解方费用；卡住的交换可以在同一设置页面中退款。
+- **Arkade** - 网络选择、**VTXO 管理**（VTXO management，续期与委托，见下方「Arkade VTXO 续期」）、入场流程，以及可选的轮换地址（HD）模式（支持通过 gap scan 恢复）
+- **Arkade Intents** - 通过 RFQ 求解方用 Arkade 余额收付闪电；钱包会向所有求解方询价并采用最便宜的报价。在**设置 > Arkade > Arkade Intents**（Settings > Arkade > Arkade Intents）中配置。收付都使用常规的发送和接收界面。每笔 Intents 交换都有自己的状态页面，包含时间线、退款窗口倒计时和退款按钮；需要处理的交换会列在活动记录中并在首页标出。
 - **RGB** - 选择后端：**无节点**（Node-less，在设备上运行的 RGB，BTC 位于 Bitcoin L1；可设置网络、索引器 URL 和可选的 RGB 传输接口端点）或 **RLN 节点**（RLN node，通过直连或 Wallet Connect 连接你自己的 RGB Lightning Node）。在这里还可以管理 **UTXO**（UTXOs，可着色、已着色和普通 UTXO）、**发行资产**（Issue asset，从钱包铸造新资产）以及 RGB **备份**（Backup）
 - **Liquid** - 网络选择以及 Esplora/waterfalls 同步接口端点（已提供一个高速默认端点，你也可以填入自己的）
-- **Bark** - Second 的 Ark 网络：支持闪电收付的 BTC。仅限测试网络（signet）
 - **Lightning Node** - 连接一个外部闪电节点，用于存入、提取和余额：**RGB Lightning 节点**、**LND**（REST HTTPS URL 加一个受限 macaroon）或 **Nostr Wallet Connect**。Core Lightning 和 LDK 显示为即将推出。同一时间只能启用一个节点
 - **Nostr** - Nostr 身份（Nostr Identity）、Nostr Connect 和 Wallet Connect
 
-<img src="/assets/images/extension/22-settings-accounts.png" alt="设置中的账户部分，列出 Spark、Arkade、RGB（Beta）、Liquid、Bark、Lightning Node 和 Nostr" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+<img src="/assets/images/extension/22-settings-accounts.png" alt="设置中的账户部分，滚动到 Liquid、Lightning Node 和 Nostr，各自显示连接状态" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <img src="/assets/images/extension/38-settings-rgb.png" alt="设置中的 RGB 页面，包含无节点和 RLN 节点两种后端、UTXO、发行资产和备份" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <img src="/assets/images/extension/35-settings-lightning-node.png" alt="设置中的闪电节点选择界面，包含 RGB Lightning 节点、LND 和 Nostr Wallet Connect，Core Lightning 和 LDK 标注为即将推出" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
+
+### Arkade VTXO 续期
+
+Arkade 币（VTXO）会过期，必须在过期前续期。**设置 > Arkade > VTXO 管理**（Settings > Arkade > VTXO management）显示下一次续期时间，并控制委托：
+
+- **钱包解锁期间**，扩展会自动续期三天内到期的 VTXO。
+- **委托**（Delegation，默认开启）会把你的 VTXO 交给续期服务，在钱包锁定或浏览器关闭时由它续期。该服务只能续期，永远无法花费。新币一到账就会交给它；钱包锁定期间收到的币会在下次解锁时委托。页面会显示该服务持有多少个你的 VTXO。
+- **到期提醒**在钱包锁定时也会运行：VTXO 到期前 3 天和 1 天会收到通知（由续期服务持有的 VTXO 只在前 1 天提醒），已过期时也会通知。打开钱包即可续期。
+- **失败会显示出来**：续期或委托失败时会发出通知，并在 VTXO 管理页面列出时间和原因。
+
+不开启委托时，钱包锁定期间没有任何机制会续期你的 VTXO，到期提醒就是唯一的保护。
+
+<img src="/assets/images/extension/40-settings-arkade-vtxo.png" alt="Arkade VTXO 管理页面，显示下一次续期日期、重复周期、已开启的委托及其费用、已委托的 VTXO 数量和委托方 URL" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ### KaleidoSwap 用户名
 

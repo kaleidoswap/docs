@@ -191,28 +191,8 @@ asyncio.run(main())
   Continue to a full swap, from creation to claim →
 </Card>
 
-### API Quick Reference
-
-The maker's public API, if you are building your own client:
-
-<CodeGroup>
-```bash Maker version
-curl https://maker.signet.kaleidoswap.com/v2/version
-```
-
-```bash Reverse pairs
-curl https://maker.signet.kaleidoswap.com/v2/swap/reverse/pairs
-```
-
-```bash Quote
-curl -X POST https://maker.signet.kaleidoswap.com/v2/quote \
-  -H "Content-Type: application/json" \
-  -d '{"swapType": "reverse", "pairId": "BTC/BTC", "fromAmount": 100000}'
-```
-</CodeGroup>
-
 <Card title="Maker API" icon="book" href="/api-reference/introduction">
-  View the complete API reference →
+  Building your own client? See the maker's /v2 API →
 </Card>
 
 ---

@@ -39,8 +39,6 @@ Three packages sit between an application and the protocols. Our own clients con
   </Card>
 </CardGroup>
 
-The Swap SDK keeps every swap key on the integrator's side. It checks each swap the maker proposes against those keys before anything is funded, and builds claim and refund transactions locally, so an app never has to trust the maker with funds.
-
 ## Protocol layer
 
 Every Bitcoin Layer ships its own SDK, address formats, and quirks: channel liquidity here, boarding transactions there, static receive addresses somewhere else. Left unmanaged, that becomes a protocol check on every screen of every app.

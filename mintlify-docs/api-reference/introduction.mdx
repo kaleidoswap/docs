@@ -1,124 +1,49 @@
 ---
-title: "Overview"
+title: "Maker API"
 sidebarTitle: "Overview"
-description: "The KaleidoSwap Bitcoin swap API provides REST endpoints for atomic swaps, market data, and Lightning channel orders on a multi-protocol Bitcoin DEX"
+description: "The KaleidoSwap maker's public HTTP API: Boltz-compatible submarine, reverse, and chain swaps, plus RGB, atomic swaps, pay-through, and Lightning channel orders"
 ---
 
-The RGB Lightning DEX API allows interaction with an RGB Lightning Service Provider (RGB-LSP) that provides liquidity on request and enables swap functionalities. The swap protocol operates on a taker-maker model, where clients request live quotes for trading pairs and initiate swaps against them. The API also supports the RGB LSPS1 (Lightning Service Provider Specification) for managing channels and liquidity services.
+The KaleidoSwap maker is the counterparty for every swap. Its public API is **wire-compatible with the Boltz `/v2` protocol** for submarine, reverse, and chain swaps, and adds routes for RGB assets, single-transaction atomic swaps, pay-through, swap credentials, and Lightning channel orders.
 
-### Key Features
-- **RGB LSPS1 (Lightning Service Provider Specification) Support**: Liquidity services and swap functionalities.
-- **Real-time Market Data**: WebSocket request/response quote streaming (`quote_request`/`quote_response`).
-- **Swap Protocol**: Taker-maker model for initiating and executing swaps.
-- **Asset and Trading Pair Management**: Comprehensive API for fetching supported assets and pairs.
+<Warning>
+**Use the [Swap SDK](/sdk/introduction) instead of calling this API directly.** Every swap the maker creates must be checked against your own keys before you fund it, and every claim and refund is a transaction you build and sign. The SDK does both. Call the API directly only if you are building your own client, and read [Swap flow](/api-reference/swap-protocol) first.
+</Warning>
 
-Proceed to [Getting Started](/api-reference/getting-started) to begin.
+## Base URL
 
----
+| Network | Base URL |
+|---|---|
+| Signet (Mutinynet) | `https://maker.signet.kaleidoswap.com` |
+| Mainnet | Not available yet |
 
-## Two Sub-APIs
+All routes live under `/v2`, for example `GET https://maker.signet.kaleidoswap.com/v2/version`. The interactive playground on each endpoint page calls the signet maker.
 
-The KaleidoSwap API is split into two distinct services:
+## What is in the API
 
-| Sub-API | Base Path | Purpose |
-|---------|-----------|---------|
-| **Maker API** | `/api/v1/` | Market data, quotes, swap orders, and LSPS1 channel operations |
-| **RLN API** | node root (e.g. `http://<node>:3001/`) | RGB Lightning Node operations — wallet, channels, and payments |
+| Group | What it covers |
+|---|---|
+| [Service](/api-reference/getting-started#service-endpoints) | Version, capabilities, health, node identity |
+| [Pairs and quotes](/api-reference/pairs-and-quotes/list-pairs) | The routes the maker trades, their limits and fees, and quotes |
+| [Submarine swaps](/api-reference/submarine-swaps/create-a-submarine-swap) | On-chain → Lightning: you lock on chain, the maker pays your invoice |
+| [Reverse swaps](/api-reference/reverse-swaps/create-a-reverse-swap) | Lightning → on-chain: you pay a hold invoice, the maker locks on chain, you claim |
+| [Chain swaps](/api-reference/chain-swaps/create-a-chain-swap) | On-chain → on-chain: both sides lock, you claim the maker's lockup |
+| [Swap status](/api-reference/swap-status/get-swap-status) | Status over HTTP and a WebSocket stream |
+| [Recovery](/api-reference/recovery/restore-swaps) | Restore swaps from an xpub, recover swap credentials |
+| [Atomic RGB swaps](/api-reference/atomic-rgb-swaps/get-an-atomic-quote) | BTC ↔ RGB asset swaps in one transaction |
+| [Pay-through](/api-reference/pay-through/create-a-pay-through-order) | A Lightning payment turned into an on-chain payout to any address |
+| [Lightning channels (LSPS1)](/api-reference/lightning-channels-lsps1/get-channel-options) | Buy an inbound channel from the maker |
+| [Chain data](/api-reference/chain-data/get-fee-estimates) | The maker's view of chain tips and fees |
 
-The **Maker API** is publicly accessible and handles all trading and liquidity operations. The **RLN API** is the REST API served directly at the root of your own RGB Lightning Node (e.g. `http://<node>:3001/nodeinfo`) and requires a running node instance.
+The endpoint pages are generated from the maker's OpenAPI specification. Swaps between Lightning and Arkade use a separate request-for-quote corridor that the Swap SDK speaks; it is not part of this reference.
 
-### Which API do I need?
+## Next steps
 
-| Goal | API | Endpoint group |
-|------|-----|----------------|
-| Get available assets or trading pairs | Maker API | [Market APIs](/api-reference/market-apis) |
-| Get a price quote for a swap | Maker API | [Market APIs](/api-reference/market-apis) |
-| Initiate or track an atomic swap | Maker API | [Swap APIs](/api-reference/swap-apis) |
-| Order a Lightning channel from an LSP | Maker API | [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) |
-| Request live quotes over WebSocket | Maker API (WebSocket) | [Swap Protocol](/api-reference/swap-protocol) |
-| Check wallet balance or node info | RLN API | Requires your own node |
-| Send/receive BTC or RGB assets | RLN API | Requires your own node |
-| Open or close Lightning channels | RLN API | Requires your own node |
-
-<Note>
-  The **interactive API playground** below runs against the **Signet environment** (`https://api.signet.kaleidoswap.com`). Use it for exploration and testing. For production, use the mainnet URL once available.
-</Note>
-
----
-
-## Authentication
-
-**Current state**: Anonymous access works for all Maker API endpoints. Bearer API keys (`Authorization: Bearer <token>`) are already **accepted and attributed** today — keys carry scopes such as `quote:read` (market data and quotes) and `swap:execute` (swap init/execute) — but enforcement is rolling out gradually, so requests without a key are still served. The API playground is pre-configured with bearer auth.
-
-**Rolling out**: Once enforcement is enabled, requests with a missing or invalid key will receive `401` responses. Integrations should start sending an API key now to be ready.
-
----
-
-## Base Response Format
-
-All API responses follow a consistent JSON structure. Successful responses return the requested data directly as a JSON object or array. Errors use one of three envelopes.
-
-**Application errors** (invalid parameters, missing resources, conflicts, rate limits, server errors) return a structured envelope:
-
-```json
-{
-  "error_code": "PAIR_NOT_FOUND",
-  "message": "Trading pair not found: BTC/USDT",
-  "details": {},
-  "request_id": "req_01HV8Q9X7G0Q7Y3Z"
-}
-```
-
-**Request-validation errors** (schema validation failures, HTTP `422`) return FastAPI's validation envelope:
-
-```json
-{
-  "detail": [
-    {
-      "loc": ["body", "rfq_id"],
-      "msg": "Field required",
-      "type": "missing"
-    }
-  ]
-}
-```
-
-**Legacy errors**: a few endpoints still return some `400` responses as a bare detail object, without `error_code` or `request_id` — for example an unsupported route on `/market/quote` or a malformed `pair_ticker` filter on `/market/pairs`:
-
-```json
-{
-  "detail": "Route not supported for this pair. From: BTC_LN, To: RGB_LN"
-}
-```
-
-HTTP status codes follow standard conventions:
-
-| Status | Meaning |
-|--------|---------|
-| `200` | Success |
-| `400` | Bad request — invalid parameters |
-| `401` | Unauthorized — missing or invalid API key (once enforcement is enabled) |
-| `403` | Forbidden — key not allowed from this origin |
-| `404` | Resource not found |
-| `422` | Unprocessable entity — validation error |
-| `429` | Too many requests — rate limit exceeded |
-| `500` | Internal server error |
-| `503` | Service unavailable — maker or LSP node temporarily unreachable |
-
-See [Troubleshooting](/api-reference/troubleshooting) for the complete list of error codes and the fix for each failure.
-
----
-
-## Rate Limits
-
-Rate limits apply to all API endpoints. Requests that exceed the limit receive a `429 Too Many Requests` response. Specific limits vary by endpoint and environment. When building integrations, implement exponential backoff for retries and cache static data (assets, pairs) locally where possible.
-
----
-
-## Using the SDK
-
-Instead of calling the REST API directly, you can use the official KaleidoSDK libraries, which wrap these endpoints with type safety and convenience methods in both TypeScript and Python.
-
-<Card title="KaleidoSDK" icon="code" href="/sdk/introduction">
-  Typed clients generated from the same OpenAPI specs, with `client.maker.*` and `client.rln.*` sub-clients.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Conventions" icon="gear" href="/api-reference/getting-started">
+    Authentication, amounts, errors, and rate limits.
+  </Card>
+  <Card title="Swap flow" icon="arrows-spin" href="/api-reference/swap-protocol">
+    The calls each swap type makes, in order, and what to verify.
+  </Card>
+</CardGroup>

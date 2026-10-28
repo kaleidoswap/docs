@@ -62,13 +62,6 @@ Quote and swap-creation routes are rate limited per caller, and swap creation al
 
 `POST /v2/swap/pay` accepts an `Idempotency-Key` header (a random UUIDv4). Retrying with the same key and request returns the original response. Check that `GET /v2/version` lists `pay_through_idempotency_v1` before relying on it.
 
-## Service endpoints
-
-| Route | Use |
-|---|---|
-| `GET /v2/version` | Version, build, and `capabilities` for feature detection |
-| `GET /v2/info` | Network, node key, and whether trading is halted |
-| `GET /v2/health` | Liveness |
-| `GET /v2/nodes` | The maker's Lightning node and peer URIs |
+## Trading halts
 
 When `GET /v2/info` reports trading as halted, the maker refuses quotes and new swaps with `503 trading_halted`, publishes an empty pair catalogue, and keeps settling swaps already in flight.

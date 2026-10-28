@@ -13,6 +13,10 @@ description: 'Use the KaleidoCLI to manage local multi-asset Lightning nodes and
 
 The same binary supports both interactive terminal use and scripted automation.
 
+<Note>
+The CLI is built on the [Node SDK](/cli/node-sdk/introduction) and trades through the maker API for swaps between RGB Lightning Nodes (`--api-url`, `https://api.signet.kaleidoswap.com` on signet). To add swaps to a wallet or app without running a node, use the [Swap SDK](/sdk/introduction).
+</Note>
+
 ## Global Flags
 
 All command groups inherit the same root flags:

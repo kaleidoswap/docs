@@ -150,104 +150,69 @@ description: "Set up KaleidoSwap and make your first non-custodial swap in minut
 
 ## SDK Quickstart
 
-### Python SDK
+The Swap SDK adds non-custodial swaps to any wallet or app. This lists the routes the signet maker trades, with no keys or funds needed.
 
 <CodeGroup>
-
-```bash Installation
-pip install kaleido-sdk
+```bash TypeScript
+npm install @kaleidorg/swap-sdk
 ```
 
-```python Basic Usage
-from kaleido_sdk import KaleidoClient
-
-# Initialize client
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="<Your RGB Lightning Node URL>"
-)
-
-# Get available trading pairs
-pairs = client.maker.list_pairs()
-print(f"Available pairs: {len(pairs)}")
-
-# Get a quote for BTC to USDT
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
-print(f"Quote received: {quote}")
+```bash Python
+pip install kaleidorg_swap_sdk
 ```
-
 </CodeGroup>
-
-<Card title="Python SDK Documentation" icon="python" href="/sdk/introduction">
-  Explore the complete SDK documentation →
-</Card>
-
-### TypeScript SDK
 
 <CodeGroup>
+```typescript TypeScript
+import { init, SwapClient } from "@kaleidorg/swap-sdk";
 
-```bash npm
-npm install kaleido-sdk
+await init();
+const client = SwapClient.forNetwork("signet");
+
+const submarine = await client.submarinePairs(); // on-chain -> Lightning
+const reverse = await client.reversePairs();     // Lightning -> on-chain
+console.log(Object.keys(submarine), Object.keys(reverse));
 ```
 
-```bash yarn
-yarn add kaleido-sdk
+```python Python
+import asyncio
+import kaleidorg_swap_sdk as sdk
+
+async def main():
+    client = sdk.SwapClient.default(sdk.Network.SIGNET)
+    print(await client.get_submarine_pairs())  # on-chain -> Lightning
+    print(await client.get_reverse_pairs())    # Lightning -> on-chain
+
+asyncio.run(main())
 ```
-
-```typescript Basic Usage
-import { KaleidoClient } from 'kaleido-sdk';
-
-// Initialize client
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com'
-});
-
-// Get available trading pairs
-const pairs = await client.maker.listPairs();
-console.log(`Available pairs: ${pairs.length}`);
-
-// Get a quote for BTC to USDT
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-});
-console.log(`Quote received:`, quote);
-```
-
 </CodeGroup>
 
-<Card title="TypeScript SDK Documentation" icon="js" href="/sdk/introduction">
-  Explore the complete SDK documentation →
+<Card title="Swap SDK Quickstart" icon="rocket" href="/sdk/getting-started">
+  Continue to a full swap, from creation to claim →
 </Card>
 
 ### API Quick Reference
 
+The maker's public API, if you are building your own client:
+
 <CodeGroup>
-
-```bash Get Trading Pairs
-curl https://api.signet.kaleidoswap.com/api/v1/market/pairs
+```bash Maker version
+curl https://maker.signet.kaleidoswap.com/v2/version
 ```
 
-```bash Get Asset List
-curl https://api.signet.kaleidoswap.com/api/v1/market/assets
+```bash Reverse pairs
+curl https://maker.signet.kaleidoswap.com/v2/swap/reverse/pairs
 ```
 
-```bash Request Quote
-curl -X POST https://api.signet.kaleidoswap.com/api/v1/market/quote \
+```bash Quote
+curl -X POST https://maker.signet.kaleidoswap.com/v2/quote \
   -H "Content-Type: application/json" \
-  -d '{
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-  }'
+  -d '{"swapType": "reverse", "pairId": "BTC/BTC", "fromAmount": 100000}'
 ```
-
 </CodeGroup>
 
-<Card title="API Reference" icon="book" href="/api-reference/introduction">
-  View complete API documentation →
+<Card title="Maker API" icon="book" href="/api-reference/introduction">
+  View the complete API reference →
 </Card>
 
 ---
@@ -256,9 +221,11 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/market/quote \
 
 <Tabs>
   <Tab title="Signet">
-    **API URL**: `https://api.signet.kaleidoswap.com/api/v1`
+    **Maker API**: `https://maker.signet.kaleidoswap.com/v2`
 
-    **WebSocket**: `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}`
+    **WebSocket**: `wss://maker.signet.kaleidoswap.com/v2/ws`
+
+    **Chain access**: `https://esplora.signet.kaleidoswap.com`
 
     - Bitcoin Signet (MutinyNet) — public testnet with realistic conditions
     - Recommended for integration testing before mainnet
@@ -266,7 +233,7 @@ curl -X POST https://api.signet.kaleidoswap.com/api/v1/market/quote \
   </Tab>
 
   <Tab title="Mainnet">
-    **API URL**: no public endpoint yet; use your own maker's URL
+    **Maker API**: not available yet
 
     - Bitcoin Mainnet — production environment
     - **Coming soon**

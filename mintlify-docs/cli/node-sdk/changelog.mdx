@@ -4,7 +4,41 @@ sidebarTitle: "Changelog"
 description: "Node SDK version history, listing new features, breaking changes, and RLN and Maker API compatibility notes for each release"
 ---
 
-## SDK v0.1.18 (Current)
+## SDK v0.1.23 (Current)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.10.0**
+
+### Changed
+
+- Python: `requires-python` is now `>=3.11`. The generated types use `enum.StrEnum`, so `import kaleido_sdk` already failed on Python 3.10.
+
+## SDK v0.1.22
+
+### Fixed
+
+- TypeScript: `RlnClient.sendBtc` returns the node's `SendBtcResponse` (with `txid`) instead of `void`, matching the Python SDK.
+
+## SDK v0.1.20
+
+**Compatible APIs:** RLN (RGB Lightning Node) API **v0.10.0**
+
+### Breaking changes
+
+- **`ListTransfersRequest` replaces `asset_id` with `asset_filter`**, a tagged union: `{ type: "AnyOrNone" }`, `{ type: "None" }`, or `{ type: "Id", value: "<asset id>" }`. Migrate `{ asset_id }` to `{ asset_filter: { type: "Id", value: asset_id } }`. RLN 0.10.0 rejects the old body.
+
+### Added
+
+- `ListTransfersRequest.txid`: an optional filter for one transfer.
+- BOLT11 `description` / `description_hash` on `LNInvoiceRequest`, `DecodeLNInvoiceResponse`, and payments.
+- Python: `AssetFilterAnyOrNone`, `AssetFilterId`, and `AssetFilterNone` exported from `kaleido_sdk.rln`. TypeScript: the `AssetFilter` type.
+
+## SDK v0.1.19
+
+### Fixed
+
+- TypeScript: `RlnClient.refreshTransfers()` always sends the `filter` and `skip_sync` fields that RGB Lightning Node 0.7.1+ requires, even when the caller passes a partial body. Before, a partial body was rejected with `400`, and incoming RGB transfers stayed in `WaitingCounterparty`.
+
+## SDK v0.1.18
 
 **Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.9.0**
 

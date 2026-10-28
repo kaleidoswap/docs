@@ -146,21 +146,22 @@ description: "Common questions about the KaleidoCLI, covering Docker requirement
     In non-interactive mode the CLI refuses rather than guessing, with messages like `--yes is required in non-interactive mode to accept the quoted price.` See [Troubleshooting](/cli/troubleshooting#scripting-and-automation).
   </Accordion>
 
-  <Accordion title="Is the CLI built on the KaleidoSDK?" icon="code">
-    Yes — it wraps the Python SDK (`kaleido-sdk`), which is why command output maps so closely onto the API models. Practical consequences:
+  <Accordion title="Is the CLI built on the Node SDK?" icon="code">
+    Yes — it wraps the Python Node SDK (`kaleido-sdk`), which is why command output maps so closely onto the API models. Practical consequences:
 
     * Requests use a 30-second timeout and up to 3 retries
     * Errors surface as `Error: <message>` from the underlying SDK exception, so the [SDK error reference](/cli/node-sdk/troubleshooting#error-reference) explains what a failure means
     * `market quote` display amounts are converted with the same precision helpers the SDK exposes
 
-    If you are building an application rather than running commands, use the [KaleidoSDK](/cli/node-sdk/introduction) directly.
+    If you are building an application that drives your own node, use the [Node SDK](/cli/node-sdk/introduction) directly. To add swaps to a wallet or app without running a node, use the [Swap SDK](/sdk/introduction).
   </Accordion>
 
-  <Accordion title="CLI, SDK, or Desktop App?" icon="scale-balanced">
+  <Accordion title="CLI, SDKs, or Desktop App?" icon="scale-balanced">
     | Tool                                                     | Best for                                                              |
     | -------------------------------------------------------- | --------------------------------------------------------------------- |
     | [KaleidoCLI](/cli/introduction)                          | Running a node, scripting, CI, and agent-driven flows from a terminal |
-    | [KaleidoSDK](/cli/node-sdk/introduction)                          | Building an application in TypeScript or Python                       |
+    | [Node SDK](/cli/node-sdk/introduction)                   | An application that drives your own RGB Lightning Node                |
+    | [Swap SDK](/sdk/introduction)                            | Adding swaps to a wallet or app, with no node of your own             |
     | [Desktop App](/desktop-app/getting-started/introduction) | A graphical wallet with the same trading and channel features         |
 
     They all drive the same two APIs, so a node created with the CLI can be used from the SDK, and the other way round.

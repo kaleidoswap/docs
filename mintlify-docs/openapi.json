@@ -1271,7 +1271,7 @@
             "SwapAuth": []
           }
         ],
-        "description": "Accept the exact proposed amount. Requires `X-Swap-Auth`. Returns `202 {}`; a replay or an amount mismatch returns a conflict."
+        "description": "Accept the exact proposed amount (the Boltz-compatible route, used by the Swap SDK's `acceptQuote`). Requires `X-Swap-Auth`. Returns `202 {}`; a replay or an amount mismatch returns a conflict. To reject the re-quote instead, use `POST /v2/swap/{id}/rate-decision`."
       }
     },
     "/v2/swap/chain/{id}/refund": {
@@ -2675,7 +2675,7 @@
             "SwapAuth": []
           }
         ],
-        "description": "Accept or reject the maker's re-quote while the swap awaits a rate decision. Requires `X-Swap-Auth`."
+        "description": "Accept (`accept: true`) or reject (`accept: false`) the maker's re-quote while the swap awaits a rate decision. Rejecting moves the swap to its refund. Requires `X-Swap-Auth`. To accept a chain-swap re-quote the Boltz-compatible way, use `POST /v2/swap/chain/{id}/quote` instead."
       }
     },
     "/v2/swap/{type}/pairs": {

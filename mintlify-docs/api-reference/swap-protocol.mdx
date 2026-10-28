@@ -83,9 +83,12 @@ The claim must confirm before `timeoutBlockHeight`. If the maker does not cooper
 | Verify | Both `lockupDetails` (where you lock) and `claimDetails` (where the maker locks) |
 | Both lockups | `GET /v2/swap/chain/{id}/transactions` |
 | Re-quote, if you locked a different amount | `GET /v2/swap/chain/{id}/quote`, then `POST` the same amount with `X-Swap-Auth` |
+| Or accept or reject the re-quote | `POST /v2/swap/{id}/rate-decision` with `X-Swap-Auth` |
 | Claim your payout | Spend `claimDetails` with the preimage |
 | Co-sign the maker's claim of your lockup | `POST /v2/swap/chain/{id}/claim` |
 | Cooperative refund | `POST /v2/swap/chain/{id}/refund` with `X-Swap-Auth` |
+
+**Two ways to answer a re-quote.** When you lock a different amount than quoted, the maker proposes a new destination amount and the swap waits for a decision. `POST /v2/swap/chain/{id}/quote` is the Boltz-compatible route: it accepts the exact proposed amount, and it is what the Swap SDK's `acceptQuote` calls. `POST /v2/swap/{id}/rate-decision` answers the same proposal with `accept: true` or `accept: false`; rejecting moves the swap to its refund. Both need `X-Swap-Auth`.
 
 ## Status values
 

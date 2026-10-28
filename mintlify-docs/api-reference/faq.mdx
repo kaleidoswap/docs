@@ -7,28 +7,9 @@ description: "Common questions about the KaleidoSwap maker API: Boltz compatibil
 ## Frequently Asked Questions
 
 <AccordionGroup>
-  <Accordion title="Should I call this API directly?">
-    Prefer the [Swap SDK](/sdk/introduction). Every swap the maker creates must be verified against your own keys before you fund it, and claims and refunds are transactions you build and sign. The SDK does both, in TypeScript, Python, Rust, and React Native.
-  </Accordion>
 
   <Accordion title="Is it compatible with Boltz?">
     Yes, for submarine, reverse, and chain swaps: the request and response shapes, the swap tree, cooperative MuSig2 signing, and the WebSocket envelope follow the Boltz `/v2` protocol. A Boltz client pointed at the maker's base URL works for those routes. Some upstream Boltz routes are not served, such as submarine claim co-signing, raw transaction broadcast, and BOLT12 offer management.
-  </Accordion>
-
-  <Accordion title="Do I need an API key?">
-    No. Swaps can be created without credentials. Partners add an organization key (client side) or an organization API key (servers) to have swaps attributed to them. See [Conventions](/api-reference/getting-started#authentication).
-  </Accordion>
-
-  <Accordion title="What is swapAuth?">
-    A per-swap credential returned once when a swap is created. Send it as `X-Swap-Auth` to accept a re-quote, make a rate decision, or request a cooperative refund. Store it with the swap.
-  </Accordion>
-
-  <Accordion title="Which networks are available?">
-    Signet (Mutinynet) at `https://maker.signet.kaleidoswap.com`. Mainnet is not available yet.
-  </Accordion>
-
-  <Accordion title="What units are amounts in?">
-    The asset's smallest unit: sats for BTC and L-BTC, the contract's smallest unit for RGB assets. LSPS1 routes use decimal strings.
   </Accordion>
 
   <Accordion title="How long is a quote valid?">

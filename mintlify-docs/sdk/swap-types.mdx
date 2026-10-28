@@ -1,0 +1,47 @@
+---
+title: "How Swaps Work"
+sidebarTitle: "How Swaps Work"
+description: "How Swap SDK swaps settle: one secret locks both legs, who pays first on each route, who claims, and how a failed swap is refunded"
+---
+
+New to these terms? The [swap terms glossary](/whats-kaleidoswap/glossary#swap-terms) defines each one in a line.
+
+## One secret, two locks
+
+Every swap except pay-through and atomic RGB swaps works the same way. One side generates a random secret, the **preimage**, and shares only its hash. Both legs of the swap are locked to that hash:
+
+- the Lightning payment, as a **hold invoice** that settles only when someone reveals the preimage, and
+- the on-chain funds, in a **lockup** output that can be spent in two ways: with the preimage (the claim), or by the original sender after a deadline (the refund).
+
+Claiming the on-chain funds reveals the preimage on chain, and that is exactly what the other side needs to settle the Lightning payment. So either both legs settle, or neither does and the money goes back.
+
+```mermaid
+flowchart LR
+  A("Create swap") --> B("First side locks funds")
+  B --> C("Second side locks funds")
+  C --> D("Claim reveals the preimage")
+  D --> E("Other side settles")
+  B --> F("Deadline passes: refund")
+  C --> F
+```
+
+## Who does what on each route
+
+| Route | Who pays first | Who claims on chain | If it fails |
+|---|---|---|---|
+| **On-chain → Lightning** (submarine) | You lock on chain | The maker, after paying your invoice | You refund your lockup after the deadline, or earlier if the maker co-signs |
+| **Lightning → on-chain** (reverse) | You pay a hold invoice | You | Your Lightning payment is released back to you automatically |
+| **Chain → chain** (chain) | You lock on the source chain | You, on the destination chain | You refund your lockup |
+| **Atomic RGB** | Nobody: one transaction moves both sides | — | The transaction never confirms, and nothing moved |
+| **Arkade ↔ Lightning** | Depends on direction | The receiving side, through the Arkade venue | Refund through the Arkade venue |
+| **Pay-through** | The payer, with a hold invoice | — | The hold is released if the maker never pays out |
+
+The technical names in parentheses (submarine, reverse, chain) come from the Boltz protocol the SDK speaks. The SDK methods use them: `createSubmarineSwap`, `createReverseSwap`, `createChainSwap`.
+
+## Cheap path and safe path
+
+A lockup can be spent **cooperatively** (you and the maker sign together: cheaper, and a refund needs no deadline) or **alone through the script** (with the secret, or after the deadline). The SDK tries the first and falls back to the second, so a swap never depends on the maker. See [Claims and refunds](/sdk/claims-and-refunds).
+
+Atomic RGB swaps and pay-through work differently: see [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1) and [Pay an address from Lightning](/sdk/pay-through).
+
+Next: [Swap states](/sdk/swap-states) follows each route step by step.

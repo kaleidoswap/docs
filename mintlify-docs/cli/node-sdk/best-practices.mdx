@@ -1,7 +1,7 @@
 ---
-title: "KaleidoSDK Best Practices"
+title: "Node SDK Best Practices"
 sidebarTitle: "Best Practices"
-description: "Guidelines for building production apps with the KaleidoSDK, covering error handling, retries, amount precision, and security"
+description: "Guidelines for building production apps with the Node SDK, covering error handling, retries, amount precision, and security"
 ---
 
 ## Client Initialization
@@ -10,7 +10,7 @@ description: "Guidelines for building production apps with the KaleidoSDK, cover
 
 Keep configuration out of source code. The SDK does not auto-load environment variables — read them yourself and pass them to `create()`.
 
-For the conventional variable names and a full snippet in both languages, see [Installation](/sdk/installation#environment-variables).
+For the conventional variable names and a full snippet in both languages, see [Installation](/cli/node-sdk/installation#environment-variables).
 
 ### Use a Singleton Client
 
@@ -55,7 +55,7 @@ def get_client() -> KaleidoClient:
 
 ### Always Handle Errors
 
-Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Troubleshooting](/sdk/troubleshooting#comprehensive-error-handling) has the exhaustive version.
+Wrap SDK calls in try/catch blocks and handle specific error types. The minimum worth branching on is shown below; [Troubleshooting](/cli/node-sdk/troubleshooting#comprehensive-error-handling) has the exhaustive version.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -96,7 +96,7 @@ except KaleidoError as e:
 
 Never retry blindly. Every error exposes `isRetryable()` / `is_retryable()`, which already encodes which failures can succeed on a second attempt — use it instead of matching on status codes yourself.
 
-For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Troubleshooting](/sdk/troubleshooting#retry-patterns).
+For the full exception hierarchy, the per-status retryability table, and a ready-made exponential-backoff wrapper, see [Troubleshooting](/cli/node-sdk/troubleshooting#retry-patterns).
 
 ## Async Patterns
 
@@ -152,19 +152,19 @@ for name, fn in [
 
 The API works in raw (smallest unit) amounts, never display amounts. Convert with `parseRawAmount` / `parse_raw_amount` before building a quote request, and convert back with `toDisplayAmount` / `to_display_amount` before showing anything to the user.
 
-Both functions are documented in [Utilities](/sdk/utilities#amount-conversion).
+Both functions are documented in [Utilities](/cli/node-sdk/utilities#amount-conversion).
 
 ### Use PrecisionHandler for Multi-Asset Apps
 
 With more than one asset in play, passing a precision by hand on every call is how rounding bugs get in. `PrecisionHandler` reads the precision from asset metadata, so you convert by asset ID instead.
 
-See [Utilities](/sdk/utilities#precisionhandler) for how to create one and the full method list.
+See [Utilities](/cli/node-sdk/utilities#precisionhandler) for how to create one and the full method list.
 
 ## Node Operations
 
 `client.rln` is only usable when the client was created with a node URL, so guard every node call with `hasNode()` / `has_node()`. In Python, accessing `client.rln` without a node URL raises `NodeNotConfiguredError`.
 
-See [Getting Started](/sdk/getting-started#node-configuration-checks) for the guard pattern in both languages.
+See [Getting Started](/cli/node-sdk/getting-started#node-configuration-checks) for the guard pattern in both languages.
 
 ## WebSocket
 
@@ -172,13 +172,13 @@ See [Getting Started](/sdk/getting-started#node-configuration-checks) for the gu
 
 `streamQuotes` / `streamQuotesByTicker` return an unsubscribe function. Call it as soon as you stop needing quotes — on unmount, on navigation, or when the user closes the pair. Skipping it leaks memory and keeps quote traffic flowing that nobody reads.
 
-See [WebSocket](/sdk/websocket#best-practices) for this and the other streaming guidelines.
+See [WebSocket](/cli/node-sdk/websocket#best-practices) for this and the other streaming guidelines.
 
 ### Handle Reconnection
 
 The `WSClient` reconnects on its own with exponential backoff, so the work on your side is surfacing state to the user: show a "reconnecting" indicator on `disconnected`, re-request quotes on `connected`, and treat `maxReconnectExceeded` as a hard error rather than a transient blip.
 
-For the event list and the reconnection configuration, see [WebSocket](/sdk/websocket#events).
+For the event list and the reconnection configuration, see [WebSocket](/cli/node-sdk/websocket#events).
 
 ## Security
 

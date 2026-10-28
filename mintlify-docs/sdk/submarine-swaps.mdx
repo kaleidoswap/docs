@@ -1,0 +1,114 @@
+---
+title: "Pay Lightning from On-chain"
+sidebarTitle: "Pay Lightning from On-chain"
+description: "Pay a Lightning invoice or Lightning address with on-chain BTC, L-BTC, or L-USDT using a Swap SDK submarine swap, and refund it if the maker never pays"
+---
+
+import Setup from "/snippets/swap-sdk-setup.mdx";
+
+Your user has funds on chain and wants to pay a Lightning invoice. This is a **submarine swap**.
+
+## How it works
+
+Your app locks the funds on chain. The maker pays the invoice, which reveals its preimage, and only then can it claim your lockup. If the maker never pays, your app refunds the lockup.
+
+In the normal case your app only funds the lockup: it builds no transaction.
+
+## Setup
+
+<Setup />
+
+## Pay an invoice
+
+<Steps>
+  <Step title="Get a fixed-amount invoice">
+    Use a BOLT11 invoice with an amount. For a Lightning address or an LNURL-pay link, resolve it first:
+
+    ```typescript
+    import { resolveLightningAddress } from "@kaleidorg/swap-sdk";
+
+    const invoice = await resolveLightningAddress("alice@example.com", 25_000n); // sats
+    ```
+  </Step>
+
+  <Step title="Create the swap">
+    ```typescript
+    const index = await nextSwapIndex();
+    const refundKey = master.deriveSwapKey(index);
+
+    const card = (await client.submarinePairs())?.BTC?.BTC; // on-chain BTC -> Lightning
+    if (!card) throw new Error("Route not offered right now");
+
+    const swap = await client.createSubmarineSwap(network, {
+      from: "BTC",
+      to: "BTC",
+      invoice,
+      refundPublicKey: refundKey.publicKey,
+      pairHash: card.hash,
+    });
+
+    SwapScript.fromSubmarine("bitcoin", network, swap, refundKey.publicKey); // throws if you could not refund it
+    await store.put(swap.id, toJson({ index, makerUrl, swap }));
+    ```
+
+    The SDK checks the maker's answer against your refund key before it returns. Save the record before you fund.
+  </Step>
+
+  <Step title="Fund the lockup">
+    Send exactly `swap.expectedAmount` to `swap.address` in **one transaction** from your wallet.
+  </Step>
+
+  <Step title="Wait for the payment">
+    The swap reaches `invoice.paid`, then `transaction.claimed`. You are done.
+  </Step>
+</Steps>
+
+<Accordion title="Python">
+```python
+refund_key = master.derive_swap_key(index)
+btc = sdk.btc_chain_from_network(network)
+card = (await client.get_submarine_pairs()).pairs["BTC"]["BTC"]
+
+# Python names the submarine create `create_swap`
+swap = await client.create_swap(
+    sdk.CreateSubmarineRequest(
+        _from=btc, to=btc, invoice=invoice,
+        refund_public_key=refund_key.public(), pair_hash=card.hash,
+    )
+)
+print(f"Fund exactly {swap.expected_amount} sat to {swap.address}")
+```
+</Accordion>
+
+## If something goes wrong
+
+If the swap reaches `invoice.failedToPay`, `transaction.lockupFailed`, or `swap.expired`, refund the lockup:
+
+```typescript
+const { index, swap } = JSON.parse(await store.get(swapId));
+const refundKey = master.deriveSwapKey(BigInt(index));
+const script = SwapScript.fromSubmarine("bitcoin", network, swap, refundKey.publicKey);
+
+const refund = await script.constructRefund({
+  outputAddress: myBitcoinAddress,
+  swapId: swap.id,
+  keysSecretHex: refundKey.secretKey,
+  swapAuth: swap.swapAuth,
+  makerBaseUrl: makerUrl,
+  network,
+  bitcoinEsploraUrl,
+  feeSatPerVb: 2,
+});
+// Save refund.hex() first, then:
+await refund.broadcast(network, bitcoinEsploraUrl);
+```
+
+If the maker co-signs, the refund goes through immediately. If it does not, the refund is valid once the chain reaches the swap's `timeoutBlockHeight`. See [Claims and refunds](/sdk/claims-and-refunds).
+
+## Paying from other assets
+
+| Asset you lock | What changes |
+|---|---|
+| L-BTC | `from: "L-BTC"`, `SwapScript.fromSubmarine("liquid", ...)`, a Liquid Esplora URL for refunds |
+| L-USDT | `from: "L-USDT"`. Refunds use a caller-funded PSET, because the Liquid fee is paid in L-BTC |
+| USDT-RGB | Pin the RGB contract at creation, and your rgb-lib wallet funds the lockup. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |

@@ -147,47 +147,48 @@
             "tab": "SDK",
             "groups": [
               {
-                "group": "Introduction",
+                "group": "Get Started",
                 "icon": "flag",
                 "pages": [
                   "sdk/introduction",
-                  "sdk/installation",
-                  "sdk/getting-started"
+                  "sdk/getting-started",
+                  "sdk/installation"
                 ]
               },
               {
-                "group": "API Surfaces",
-                "icon": "layer-group",
+                "group": "How It Works",
+                "icon": "lightbulb",
                 "pages": [
-                  "sdk/maker-api-compatibility",
-                  "sdk/rln-api-compatibility"
-                ]
-              },
-              {
-                "group": "Modules",
-                "icon": "code",
-                "pages": [
-                  "sdk/api-reference",
-                  "sdk/types",
-                  "sdk/websocket",
-                  "sdk/nwc"
+                  "sdk/swap-types",
+                  "sdk/swap-states",
+                  "sdk/trust-model",
+                  "sdk/claims-and-refunds",
+                  "sdk/keys-and-recovery",
+                  "sdk/networks"
                 ]
               },
               {
                 "group": "Guides",
                 "icon": "book-open",
                 "pages": [
-                  "sdk/how-to-swap",
-                  "sdk/examples",
-                  "sdk/best-practices"
+                  "sdk/submarine-swaps",
+                  "sdk/reverse-swaps",
+                  "sdk/chain-swaps",
+                  "sdk/rgb-swaps",
+                  "sdk/arkade",
+                  "sdk/pay-through",
+                  "sdk/partner-attribution"
                 ]
               },
               {
                 "group": "Reference",
                 "icon": "book",
                 "pages": [
+                  "sdk/common-mistakes",
+                  "sdk/api-reference",
+                  "sdk/examples",
+                  "sdk/compatibility",
                   "sdk/changelog",
-                  "sdk/utilities",
                   "sdk/faq",
                   "sdk/troubleshooting",
                   "sdk/additional-resources"
@@ -221,6 +222,35 @@
                 "pages": [
                   "cli/channels-lsp",
                   "cli/market-and-swaps"
+                ]
+              },
+              {
+                "group": "Node SDK",
+                "icon": "cube",
+                "pages": [
+                  "cli/node-sdk/introduction",
+                  "cli/node-sdk/installation",
+                  "cli/node-sdk/getting-started",
+                  "cli/node-sdk/api-reference",
+                  "cli/node-sdk/types",
+                  "cli/node-sdk/how-to-swap",
+                  "cli/node-sdk/websocket",
+                  "cli/node-sdk/nwc",
+                  "cli/node-sdk/examples",
+                  "cli/node-sdk/best-practices",
+                  "cli/node-sdk/utilities"
+                ]
+              },
+              {
+                "group": "Node SDK Reference",
+                "icon": "book",
+                "pages": [
+                  "cli/node-sdk/rln-api-compatibility",
+                  "cli/node-sdk/maker-api-compatibility",
+                  "cli/node-sdk/changelog",
+                  "cli/node-sdk/faq",
+                  "cli/node-sdk/troubleshooting",
+                  "cli/node-sdk/additional-resources"
                 ]
               },
               {
@@ -277,24 +307,127 @@
                 "icon": "flag",
                 "pages": [
                   "api-reference/introduction",
-                  "api-reference/getting-started"
-                ]
-              },
-              {
-                "group": "Guides",
-                "icon": "book-open",
-                "pages": [
+                  "api-reference/getting-started",
                   "api-reference/swap-protocol"
                 ]
               },
               {
-                "group": "Endpoints",
-                "icon": "code",
+                "group": "Service",
+                "icon": "server",
                 "openapi": "openapi.json",
                 "pages": [
-                  "api-reference/rgb-lsps1-apis",
-                  "api-reference/market-apis",
-                  "api-reference/swap-apis"
+                  "GET /v2/health",
+                  "GET /v2/info",
+                  "GET /v2/nodes",
+                  "GET /v2/version"
+                ]
+              },
+              {
+                "group": "Pairs and quotes",
+                "icon": "tags",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/quote",
+                  "GET /v2/swap/{type}/pairs"
+                ]
+              },
+              {
+                "group": "Submarine swaps",
+                "icon": "bolt",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/swap/submarine",
+                  "GET /v2/swap/submarine/{id}/preimage",
+                  "POST /v2/swap/submarine/{id}/refund",
+                  "GET /v2/swap/submarine/{id}/transaction"
+                ]
+              },
+              {
+                "group": "Reverse swaps",
+                "icon": "arrow-rotate-left",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/swap/reverse",
+                  "POST /v2/swap/reverse/{id}/claim",
+                  "POST /v2/swap/reverse/{id}/refund",
+                  "GET /v2/swap/reverse/{id}/transaction",
+                  "GET /v2/swap/reverse/{invoice}/bip21"
+                ]
+              },
+              {
+                "group": "Chain swaps",
+                "icon": "link",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/swap/chain",
+                  "POST /v2/swap/chain/{id}/claim",
+                  "GET /v2/swap/chain/{id}/quote",
+                  "POST /v2/swap/chain/{id}/quote",
+                  "POST /v2/swap/chain/{id}/refund",
+                  "GET /v2/swap/chain/{id}/transactions",
+                  "POST /v2/swap/{id}/rate-decision"
+                ]
+              },
+              {
+                "group": "Swap status",
+                "icon": "signal",
+                "openapi": "openapi.json",
+                "pages": [
+                  "GET /v2/swap/status",
+                  "GET /v2/swap/{id}",
+                  "GET /v2/ws"
+                ]
+              },
+              {
+                "group": "Recovery",
+                "icon": "life-ring",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/swap/restore",
+                  "POST /v2/swap/restore/index",
+                  "POST /v2/swap/{id}/auth/challenge",
+                  "POST /v2/swap/{id}/auth/recover"
+                ]
+              },
+              {
+                "group": "Atomic RGB swaps",
+                "icon": "atom",
+                "openapi": "openapi.json",
+                "pages": [
+                  "GET /v2/swap/atomic/pairs",
+                  "POST /v2/swap/atomic/quote",
+                  "GET /v2/swap/atomic/{id}",
+                  "POST /v2/swap/atomic/{id}/complete",
+                  "POST /v2/swap/atomic/{id}/request"
+                ]
+              },
+              {
+                "group": "Pay-through",
+                "icon": "paper-plane",
+                "openapi": "openapi.json",
+                "pages": [
+                  "POST /v2/swap/pay"
+                ]
+              },
+              {
+                "group": "Lightning channels (LSPS1)",
+                "icon": "network-wired",
+                "openapi": "openapi.json",
+                "pages": [
+                  "GET /v2/lsps1/info",
+                  "POST /v2/lsps1/order",
+                  "GET /v2/lsps1/order/{id}"
+                ]
+              },
+              {
+                "group": "Chain data",
+                "icon": "cubes",
+                "openapi": "openapi.json",
+                "pages": [
+                  "GET /v2/chain/fees",
+                  "GET /v2/chain/heights",
+                  "GET /v2/chain/{currency}/fee",
+                  "GET /v2/chain/{currency}/height"
                 ]
               },
               {
@@ -733,7 +866,7 @@
       "display": "interactive"
     },
     "mdx": {
-      "server": "https://api.signet.kaleidoswap.com",
+      "server": "https://maker.signet.kaleidoswap.com",
       "auth": {
         "method": "bearer"
       }
@@ -768,6 +901,50 @@
     {
       "source": "/cn/api-reference/error-handling",
       "destination": "/cn/api-reference/troubleshooting"
+    },
+    {
+      "source": "/sdk/types",
+      "destination": "/cli/node-sdk/types"
+    },
+    {
+      "source": "/sdk/websocket",
+      "destination": "/cli/node-sdk/websocket"
+    },
+    {
+      "source": "/sdk/nwc",
+      "destination": "/cli/node-sdk/nwc"
+    },
+    {
+      "source": "/sdk/utilities",
+      "destination": "/cli/node-sdk/utilities"
+    },
+    {
+      "source": "/sdk/rln-api-compatibility",
+      "destination": "/cli/node-sdk/rln-api-compatibility"
+    },
+    {
+      "source": "/sdk/maker-api-compatibility",
+      "destination": "/cli/node-sdk/maker-api-compatibility"
+    },
+    {
+      "source": "/sdk/best-practices",
+      "destination": "/sdk/common-mistakes"
+    },
+    {
+      "source": "/api-reference/market-apis",
+      "destination": "/api-reference/pairs-and-quotes/list-pairs"
+    },
+    {
+      "source": "/api-reference/swap-apis",
+      "destination": "/api-reference/swap-protocol"
+    },
+    {
+      "source": "/api-reference/rgb-lsps1-apis",
+      "destination": "/api-reference/lightning-channels-lsps1/get-channel-options"
+    },
+    {
+      "source": "/sdk/how-to-swap",
+      "destination": "/sdk/swap-states"
     }
   ],
   "footer": {

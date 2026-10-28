@@ -1,10 +1,10 @@
 ---
 title: "KaleidoSwap Architecture"
 sidebarTitle: "Architecture"
-description: "How the KaleidoSwap stack fits together, with one SDK behind every client, protocol adapters for Bitcoin Layers, an RFQ liquidity layer, and no custody."
+description: "How the KaleidoSwap stack fits together, with shared SDKs behind every client, protocol adapters for Bitcoin Layers, an RFQ liquidity layer, and no custody."
 ---
 
-KaleidoSwap is vertically integrated: a single SDK powers every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocol adapters, and the same liquidity. Adding a protocol once makes it available everywhere; adding a client costs no new protocol work.
+KaleidoSwap is vertically integrated: the same SDKs power every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocol adapters, and the same liquidity. Adding a protocol once makes it available everywhere; adding a client costs no new protocol work.
 
 This page walks the stack from the top down. For the protocols themselves and why hash-locked contracts make cross-layer trades possible, start with [How It Works](/whats-kaleidoswap/background). For the broader multi-protocol thesis behind this design, read [Solving Bitcoin's L2 liquidity problem](https://kaleidoswap.medium.com/solving-bitcoins-l2-liquidity-problem-kaleidoswap-s-multi-protocol-dex-layer-0725b26f8de4).
 
@@ -13,7 +13,7 @@ This page walks the stack from the top down. For the protocols themselves and wh
 | Layer | What lives there |
 |-------|------------------|
 | **Clients & integrators** | Desktop App, Browser Extension, Mobile, Web App, CLI — plus third-party wallets, neobanks, payment processors, and AI agents |
-| **Integration layer** | `kaleido-sdk` for swaps and market data; `wallet-engine` for wallet primitives across protocols |
+| **Integration layer** | The Swap SDK for swaps against the maker; `wallet-engine` for wallet primitives across protocols; the Node SDK for driving an RGB Lightning Node |
 | **Protocol layer** | One adapter per Bitcoin Layer, behind a single contract |
 | **Liquidity layer** | The RFQ engine, the KaleidoSwap LSP today, external market makers from 2027 |
 | **Intelligence layer** | KaleidoMind for local reasoning, KaleidoAgent for autonomous execution |
@@ -23,21 +23,21 @@ The desktop app, SDKs, CLI and wallet engine are open source under MIT, and the 
 
 ## Integration layer
 
-Two packages sit between an application and the protocols. Both are consumed by our own clients on exactly the same terms as by an external integrator.
+Three packages sit between an application and the protocols. Our own clients consume them on exactly the same terms as an external integrator.
 
-<CardGroup cols={2}>
-  <Card title="kaleido-sdk" icon="code" href="/sdk/introduction">
-    Swap integration: quotes, pairs, RFQ streaming, swap execution, LSPS1 channel orders, and direct RGB Lightning Node access. TypeScript and Python today, with a Rust core in progress.
+<CardGroup cols={3}>
+  <Card title="Swap SDK" icon="code" href="/sdk/introduction">
+    Swaps against the KaleidoSwap maker: quotes, swap creation and verification, claims, refunds, and recovery. One Rust engine for TypeScript, Python, React Native, and Rust.
   </Card>
 
-  <Card title="wallet-engine" icon="wallet" href="https://github.com/kaleidoswap/wallet-engine">
-    Headless multi-protocol wallet core: protocol adapters, a cross-protocol router, unified receive, and lite/advanced disclosure. TypeScript, runs on browser, React Native, and Node hosts.
+  <Card title="wallet-engine" icon="wallet" href="/wallet-engine/introduction">
+    Headless multi-protocol wallet core: protocol adapters, a cross-protocol router, unified receive, and lite/advanced disclosure. TypeScript, for browser, React Native, and Node hosts.
+  </Card>
+
+  <Card title="Node SDK" icon="server" href="/cli/node-sdk/introduction">
+    Programmatic control of an RGB Lightning Node: wallets, channels, RGB assets, payments, and node-to-node swaps. TypeScript and Python. The CLI and the Desktop App build on it.
   </Card>
 </CardGroup>
-
-`kaleido-sdk` exposes two sub-clients — `client.maker` for the market side and `client.rln` for node operations — and generates its types from the same [OpenAPI specifications](https://github.com/kaleidoswap/specs) that the backend serves, so TypeScript and Python never drift apart.
-
-![Abstract diagram of a code editor connecting to a TypeScript path and a Python path, each linking to a lightning-bolt and gear icon, both flowing down into a cloud service and a server rack](/assets/images/overview/sdk-architecture.png)
 
 ## Protocol layer
 
@@ -54,20 +54,20 @@ The practical consequences:
 
 ## Swap engine
 
-Swaps use a **Request for Quote** model settled by hash-locked contracts. The maker prices the trade; Lightning carries it; the shared preimage makes it atomic.
+Swaps use a **Request for Quote** model settled by hash-locked contracts. The maker prices the trade; the shared preimage makes it atomic.
 
 ![Diagram of desktop, browser, and extension clients connecting to an RGB Lightning Node and a Lightning Service Provider, both linked to a chain of hash-locked blocks representing Bitcoin settlement](/assets/images/overview/architecture-overview.png)
 
-On the shipped BTC ↔ RGB path, the flow is:
+The maker's [`/v2` API](/api-reference/introduction) is wire-compatible with the Boltz swap protocol. Through the Swap SDK, a client:
 
-1. The taker streams quotes from the maker over WebSocket and receives an `rfq_id` with each one.
-2. `POST /api/v1/swaps/init` locks the rate and returns a `swapstring` and a `payment_hash`.
-3. The taker's RGB Lightning Node whitelists the `swapstring`, authorising it to route through the node.
-4. `POST /api/v1/swaps/execute` starts the HTLC.
-5. Lightning routes it: the maker reveals the preimage to claim one leg, which simultaneously releases the other.
-6. If either side stalls, the timelocks expire and both sides recover their own funds.
+1. Reads the maker's pair catalogue and creates a swap with its own public key and, for swaps it claims, the hash of its own secret.
+2. Rebuilds the swap's Taproot contract locally and checks it against the maker's answer before funding anything.
+3. Funds a lockup on chain, or pays a Lightning hold invoice, depending on the direction.
+4. Claims the other side with the secret, which lets the counterparty settle. If either side stalls, the timeout lets each side recover its own funds.
 
-The taker's node is the one holding keys and validating state throughout — the maker never takes custody. Full endpoint reference and sequence diagram: [Atomic Swap Protocol](/api-reference/swap-protocol).
+The same pattern covers on-chain → Lightning, Lightning → on-chain, and chain-to-chain swaps across Bitcoin and Liquid, with USDT on RGB through HTLC swaps or single-transaction atomic swaps, and Arkade through the Intents corridor. The client holds the keys throughout; the maker never takes custody. Step by step: [How swaps work](/sdk/swap-types) and [Swap flow](/api-reference/swap-protocol).
+
+RGB assets inside Lightning channels use a node-to-node variant of the same idea: two RGB Lightning Nodes exchange a hash-locked payment for an asset payment. That path is part of the [Node SDK](/cli/node-sdk/how-to-swap) and the Desktop App.
 
 <Note>
   Atomicity depends on both layers having a native hashlock. See [Where atomicity holds](/whats-kaleidoswap/background#where-atomicity-holds) for what that rules in and out today.
@@ -92,7 +92,7 @@ KaleidoSwap implements the RGB Lightning Service Provider Specification, extendi
 - **Swap support** — atomic swap coordination built into the same surface
 - **Fee transparency** — costs stated before you commit
 
-See [RGB LSPS1 APIs](/api-reference/rgb-lsps1-apis) for the endpoints.
+See the [Maker API](/api-reference/introduction) for the endpoints.
 
 ### Market makers
 

@@ -58,12 +58,15 @@ Add a protocol and all four pick it up with no changes to existing protocol code
 
 ## Where it sits
 
-The engine consumes [`kaleido-sdk`](/sdk/introduction) internally for the KaleidoSwap protocol. Consumers of the engine never import `kaleido-sdk` directly.
+The engine consumes the KaleidoSwap SDKs internally. Consumers of the engine never import them directly.
 
 ```
 your app          rate · extension
    ↓
 wallet-engine     router · unified receive · manifest · disclosure · adapters
    ↓
-kaleido-sdk       RFQ/maker + RLN client
+swap-sdk          swaps against the maker (Boltz-protocol chain swaps, Lightning over Arkade)
+kaleido-sdk       RFQ swaps and RGB Lightning Node access, amount formatting
 ```
+
+`@kaleidorg/swap-sdk` is the [Swap SDK](/sdk/introduction); `kaleido-sdk` is the [Node SDK](/cli/node-sdk/introduction).

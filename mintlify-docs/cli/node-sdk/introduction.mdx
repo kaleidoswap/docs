@@ -1,0 +1,49 @@
+---
+title: "Node SDK"
+sidebarTitle: "Overview"
+description: "Drive an RGB Lightning Node from TypeScript or Python with the Node SDK (kaleido-sdk): wallets, RGB assets, channels, payments, and node-to-node atomic swaps"
+---
+
+The Node SDK (`kaleido-sdk`) is the developer library for running and scripting your own RGB Lightning Node (RLN). It is the same library the [KaleidoCLI](/cli/introduction) and the Desktop App build on, and it ships in TypeScript and Python.
+
+<Note>
+Building swaps into a wallet or app? Use the [Swap SDK](/sdk/introduction) instead. It quotes, creates, and settles swaps against the KaleidoSwap maker with keys that stay on your side, and it does not need a Lightning node of your own. The Node SDK is for developers who operate an RLN and want programmatic control over it.
+</Note>
+
+## Architecture
+
+Both SDKs share the same API design and are built independently:
+
+![Node SDK Architecture](/assets/images/overview/sdk-architecture.png)
+
+Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, atomic swaps, LSPS1 channel orders) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
+
+## Two API Surfaces
+
+**Maker API** (`client.maker`)
+
+Connect to KaleidoSwap's maker APIs for:
+- Getting quotes for asset pairs
+- Initializing and executing HTLC atomic swaps
+- Streaming real-time quotes via WebSocket
+- LSPS1 channel ordering
+
+**RLN (RGB Lightning Node) Operations** (`client.rln`)
+
+Direct interaction with RGB Lightning Nodes for:
+- Wallet management and RGB asset operations
+- Lightning channel management
+- Invoice creation and payment
+- Node-to-node swap coordination
+
+For what KaleidoSwap is as a protocol, see [What's KaleidoSwap](/whats-kaleidoswap/introduction).
+
+## Key Features
+
+- **Sub-client Architecture**: Organized API access via `client.maker` and `client.rln`
+- **Type Safety**: Auto-generated types from OpenAPI specs — full TypeScript types and Python Pydantic models
+- **Consistent API**: Identical structure across TypeScript and Python
+- **WebSocket Support**: Real-time quote streaming with automatic reconnection
+- **Error Handling**: Comprehensive exception hierarchy across both SDKs
+- **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
+- **Atomic Swaps**: HTLC-based swaps with no trust in the maker

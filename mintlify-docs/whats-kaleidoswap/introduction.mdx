@@ -24,7 +24,7 @@ Its vertically integrated stack spans end-user applications such as the Desktop 
   </Card>
 
   <Card title="Open Source" icon="code-branch">
-    The desktop app, SDKs, CLI, wallet engine, and AI tooling are MIT-licensed. Inspect the code, contribute, or build your own integration
+    The desktop app, SDKs, CLI, and wallet engine are MIT-licensed, and the AI tooling is Apache 2.0. Inspect the code, contribute, or build your own integration
   </Card>
 
   <Card title="Multi-Platform" icon="desktop">
@@ -38,10 +38,10 @@ Its vertically integrated stack spans end-user applications such as the Desktop 
 
 ![KaleidoSwap platform diagram: Desktop, Extension, Mobile, and Web App clients connecting through the swap-sdk and wallet-sdk integration layer to Bitcoin, Lightning, and Layer 2 protocol icons, the KaleidoSwap LSP and market makers, and the KaleidoMind and KaleidoAgent intelligence layer](/assets/images/overview/kaleidoswap-platform-overview.jpg)
 
-The stack is vertically integrated: a single SDK powers every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocols, and the same liquidity.
+The stack is vertically integrated: the same SDKs power every client we ship and every third-party integration, so each surface talks to the same swap engine, the same protocols, and the same liquidity.
 
 - **Clients & integrators** — Desktop, Extension, Mobile, and Web App, alongside third-party wallets, neobanks, payment processors, and AI agents building on the same interfaces.
-- **Integration layer** — `kaleido-sdk` for swap integration (TypeScript and Python, with a Rust core in progress) and `@kaleidorg/wallet-engine` for wallet primitives (TypeScript). [Start with the SDK →](/sdk/introduction)
+- **Integration layer** — the Swap SDK (`@kaleidorg/swap-sdk`: TypeScript, Python, React Native, and Rust) for non-custodial swaps against the maker, and `@kaleidorg/wallet-engine` for wallet primitives (TypeScript). [Start with the SDK →](/sdk/introduction)
 - **Protocols** — Bitcoin on-chain and Lightning, plus the Bitcoin Layer protocols swaps can settle on. [How it works →](/whats-kaleidoswap/background)
 - **Liquidity layer** — the KaleidoSwap LSP bootstraps liquidity today; external market makers join from 2027.
 - **Intelligence layer** — KaleidoMind, the self-hosted AI brain (QVAC runtime, Skills and MCP libraries, fine-tuned models), and KaleidoAgent, an autonomous trading agent that runs against a local model or Claude and OpenAI. [Explore AI Tools →](/ai-tools/introduction)
@@ -103,60 +103,49 @@ Build on KaleidoSwap with our SDKs, APIs, and AI Tools:
 ### Getting Started
 
 <Steps>
-  <Step title="Install the SDK">
-    `npm install kaleido-sdk` for TypeScript, `pip install kaleido-sdk` for Python.
-    [Installation Guide →](/sdk/installation)
+  <Step title="Install the Swap SDK">
+    `npm install @kaleidorg/swap-sdk` for TypeScript, `pip install kaleidorg_swap_sdk` for Python.
+    [Installation →](/sdk/installation)
   </Step>
 
-  <Step title="Create a client">
-    Point `KaleidoClient.create()` at the signet endpoint — mainnet is coming soon.
-    [Client Reference →](/sdk/api-reference)
+  <Step title="List what the maker trades">
+    Connect to the signet maker and read its routes, limits, and fees. Mainnet is coming soon.
+    [Quickstart →](/sdk/getting-started)
   </Step>
 
-  <Step title="Request a quote">
-    Fetch trading pairs and live quotes from the maker.
-    [Market APIs →](/api-reference/market-apis)
+  <Step title="Make a swap">
+    Create a swap, verify it against your own keys, fund it, and claim. The SDK builds and signs every transaction on your side.
+    [Receive on-chain from Lightning →](/sdk/reverse-swaps)
   </Step>
 
-  <Step title="Execute a swap">
-    Run your first non-custodial atomic swap end to end.
-    [How to Swap →](/sdk/how-to-swap)
+  <Step title="Go deeper">
+    Every maker endpoint, if you are building your own client.
+    [Maker API →](/api-reference/introduction)
   </Step>
 </Steps>
 
 <CodeGroup>
 ```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+import { init, SwapClient } from "@kaleidorg/swap-sdk";
 
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com'
-});
+await init();
+const client = SwapClient.forNetwork("signet");
 
-// Get available trading pairs
-const pairs = await client.maker.listPairs();
-
-// Get a quote
-const quote = await client.maker.getQuote({
-  from_asset: { asset_id: 'BTC', layer: 'BTC_LN', amount: 100000 },
-  to_asset: { asset_id: 'USDT', layer: 'RGB_LN' }
-});
+// Lightning -> on-chain routes, with limits and fees
+const reverse = await client.reversePairs();
+console.log(reverse.BTC["L-BTC"]);
 ```
 
 ```python Python
-from kaleido_sdk import KaleidoClient
+import asyncio
+import kaleidorg_swap_sdk as sdk
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com"
-)
+async def main():
+    client = sdk.SwapClient.default(sdk.Network.SIGNET)
+    # Lightning -> on-chain routes, with limits and fees
+    print(await client.get_reverse_pairs())
 
-# Get available trading pairs
-pairs = client.maker.list_pairs()
-
-# Get a quote
-quote = client.maker.get_quote({
-    "from_asset": {"asset_id": "BTC", "layer": "BTC_LN", "amount": 100000},
-    "to_asset": {"asset_id": "USDT", "layer": "RGB_LN"}
-})
+asyncio.run(main())
 ```
 </CodeGroup>
 
@@ -164,11 +153,11 @@ quote = client.maker.get_quote({
 
 <CardGroup cols={2}>
   <Card title="SDK" icon="code" href="/sdk/introduction">
-    Full SDK reference, examples, and best practices
+    Swap SDK guides, reference, and examples
   </Card>
 
   <Card title="API Reference" icon="brackets-curly" href="/api-reference/introduction">
-    REST endpoints and swap protocol details
+    The maker's /v2 endpoints and swap flow
   </Card>
 
   <Card title="CLI" icon="terminal" href="/cli/introduction">

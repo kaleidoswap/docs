@@ -272,6 +272,68 @@ description: "Key terms for trading across Bitcoin Layers, explaining atomic swa
   </Accordion>
 </AccordionGroup>
 
+## Swap Terms
+
+The words the [Swap SDK](/sdk/introduction) and the [Maker API](/api-reference/introduction) use.
+
+<AccordionGroup>
+  <Accordion title="Lockup" icon="lock">
+    The on-chain output that holds one side of a swap. It can be spent in two ways: claimed with the swap's preimage, or refunded to the sender after the timeout.
+  </Accordion>
+
+  <Accordion title="Hold invoice" icon="bolt">
+    A Lightning invoice whose payment stays pending until someone reveals the preimage. Until then the payer's funds are locked, not sent; if the preimage never comes, the payment is released back.
+  </Accordion>
+
+  <Accordion title="Submarine, reverse, and chain swaps" icon="shuffle">
+    The three swap shapes of the Boltz protocol. **Submarine**: on-chain funds pay a Lightning invoice. **Reverse**: a Lightning payment becomes on-chain funds. **Chain**: on-chain funds on one chain become on-chain funds on another.
+  </Accordion>
+
+  <Accordion title="Claim and refund" icon="rotate-left">
+    The two ways out of a lockup. The receiver **claims** it with the preimage before the timeout; the sender **refunds** it after the timeout if nobody claimed.
+  </Accordion>
+
+  <Accordion title="Timeout block height" icon="hourglass">
+    The block height at which a lockup's refund path opens. Claims must confirm before it.
+  </Accordion>
+
+  <Accordion title="Cooperative spend (MuSig2)" icon="handshake">
+    A claim or refund that you and the maker sign together with MuSig2, a scheme that merges two signatures into one. It is cheaper than the script path, and a cooperative refund does not wait for the timeout.
+  </Accordion>
+
+  <Accordion title="Script path" icon="code">
+    Spending a lockup alone, through its script: with the preimage and your signature for a claim, or your signature after the timeout for a refund. It never depends on the maker.
+  </Accordion>
+
+  <Accordion title="Swap tree" icon="sitemap">
+    The Taproot scripts (claim leaf and refund leaf) a lockup commits to. Your client rebuilds it from its own key and checks it against the maker's address before funding.
+  </Accordion>
+
+  <Accordion title="Pair card and pairHash" icon="tag">
+    A pair card is the maker's terms for one route: limits, fees, and rate. Its `hash` (sent back as `pairHash` when you create a swap) makes the maker reject the swap if those terms changed since you showed them.
+  </Accordion>
+
+  <Accordion title="swapAuth" icon="key">
+    A secret credential the maker returns once, when a swap is created. It authorizes accepting a re-quote and cooperative refunds for that swap. Store it with the swap.
+  </Accordion>
+
+  <Accordion title="PSET (caller-funded)" icon="receipt">
+    A Partially Signed Elements Transaction, Liquid's equivalent of a PSBT. L-USDT claims and refunds use one that your wallet funds with L-BTC for the fee before the SDK finalizes it.
+  </Accordion>
+
+  <Accordion title="rgb-lib and coloring" icon="palette">
+    rgb-lib is the wallet library that holds and validates RGB assets. **Coloring** a transaction means attaching an RGB asset transfer to it; the Swap SDK builds the Bitcoin side and your rgb-lib wallet colors it.
+  </Accordion>
+
+  <Accordion title="Intents corridor and VHTLC" icon="route">
+    The request-for-quote route the maker serves for Lightning ↔ Arkade swaps. Within Arkade, the lock is a VHTLC, Arkade's version of a hash time-locked contract.
+  </Accordion>
+
+  <Accordion title="Mutinynet" icon="flask">
+    A custom Bitcoin signet with 30-second blocks, used as KaleidoSwap's test network. Its addresses look like testnet addresses, but it is a separate chain: use Mutinynet wallets, faucets, and explorers with it.
+  </Accordion>
+</AccordionGroup>
+
 ## Wallet, Keys & Security
 
 <AccordionGroup>
@@ -371,8 +433,8 @@ description: "Key terms for trading across Bitcoin Layers, explaining atomic swa
     When market rates change significantly during order processing, users can choose to accept the new rate or request a refund.
   </Accordion>
 
-  <Accordion title="kaleido-sdk & wallet-engine" icon="code">
-    The two SDK surfaces every KaleidoSwap client is built on: `kaleido-sdk` for swap integration (TypeScript and Python, on npm and PyPI, with a Rust core in progress) and `@kaleidorg/wallet-engine` for wallet primitives (TypeScript). Third-party integrations use the same interfaces our own apps do. See the [SDK docs](/sdk/introduction).
+  <Accordion title="Swap SDK, Node SDK & wallet-engine" icon="code">
+    The SDK surfaces KaleidoSwap clients are built on. The **Swap SDK** (`@kaleidorg/swap-sdk`, `kaleidorg_swap_sdk`) adds non-custodial swaps against the maker to any wallet or app, in TypeScript, Python, React Native, and Rust; see the [SDK docs](/sdk/introduction). `@kaleidorg/wallet-engine` provides wallet primitives across protocols (TypeScript). The **Node SDK** (`kaleido-sdk`) drives an RGB Lightning Node and powers the CLI; see [Node SDK](/cli/node-sdk/introduction). Third-party integrations use the same interfaces our own apps do.
   </Accordion>
 
   <Accordion title="KaleidoAgent" icon="robot">

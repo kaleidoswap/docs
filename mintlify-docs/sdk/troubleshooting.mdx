@@ -1,516 +1,120 @@
 ---
-title: "KaleidoSDK Troubleshooting"
+title: "Swap SDK Troubleshooting"
 sidebarTitle: "Troubleshooting"
-description: "Diagnose common KaleidoSDK issues such as connection failures, version mismatches, and swap errors, with step-by-step solutions plus the full error hierarchy and retry patterns"
+description: "Fix common Swap SDK problems: WebAssembly loading, network and chain mismatches, bigint errors, rejected swaps, missing swapAuth, claims that will not build, and error codes"
 ---
 
-## Installation Issues
+## Errors
 
-<AccordionGroup>
-  <Accordion title="npm install fails (TypeScript)" icon="box">
-    **Symptoms:** `npm install kaleido-sdk` fails with errors
+Every rejection that reaches the Rust engine is an `Error` with a stable `code`. Narrow it with `isKaleidoSwapError`:
 
-    **Solutions:**
-    1. Ensure Node.js 18+ is installed: `node --version`
-    2. Clear npm cache: `npm cache clean --force`
-    3. Delete `node_modules` and `package-lock.json`, then reinstall
-    4. Try with a different package manager: `pnpm add kaleido-sdk`
-  </Accordion>
-
-  <Accordion title="pip install fails (Python)" icon="cube">
-    **Symptoms:** `pip install kaleido-sdk` fails
-
-    **Solutions:**
-    1. Ensure Python 3.10+ is installed: `python --version`
-    2. Use a virtual environment: `python -m venv .venv && source .venv/bin/activate`
-    3. Upgrade pip: `pip install --upgrade pip`
-    4. Try: `pip install kaleido-sdk --no-cache-dir`
-  </Accordion>
-
-  <Accordion title="Module not found, or ERR_REQUIRE_ESM" icon="magnifying-glass">
-    **Symptoms:** `Cannot find module 'kaleido-sdk'`, `ERR_REQUIRE_ESM`, import syntax errors, or `ModuleNotFoundError`
-
-    **Cause (TypeScript):** The SDK is ESM-only, and the legacy `"moduleResolution": "node"` setting ignores the package's `exports` field.
-
-    **Solutions:**
-    - **TypeScript:** set `"moduleResolution"` to `"bundler"`, `"node16"`, or `"nodenext"` in `tsconfig.json`, and make the consuming project ESM — `"type": "module"` in `package.json`, or the `.mts` file extension. If you must stay on CommonJS, use a dynamic import: `const sdk = await import('kaleido-sdk')`
-    - **Python:** Verify you are in the correct virtual environment
-    - Verify the package is installed: `npm list kaleido-sdk` or `pip show kaleido-sdk`
-  </Accordion>
-</AccordionGroup>
-
-## Runtime Errors
-
-<AccordionGroup>
-  <Accordion title="NetworkError: Connection refused" icon="link-slash">
-    **Symptoms:** `NetworkError` when making API calls
-
-    **Causes:**
-    - API server unreachable
-    - Incorrect `baseUrl`
-    - Firewall blocking requests
-
-    **Solutions:**
-    1. Verify the `baseUrl` is correct and accessible
-    2. Check internet connectivity
-    3. Try accessing the API URL in a browser: `https://api.signet.kaleidoswap.com/api/v1/market/assets`
-    4. If behind a firewall, ensure outbound HTTPS is allowed
-  </Accordion>
-
-  <Accordion title="Node not configured" icon="server">
-    **Symptoms:** `ConfigError` ("Node API not configured...") in TypeScript, or `NodeNotConfiguredError` in Python, when calling `client.rln.*` methods
-
-    **Cause:** No `nodeUrl` / `node_url` was provided when creating the client.
-
-    **Solution:**
-
-    <CodeGroup>
-    ```typescript TypeScript
-    const client = KaleidoClient.create({
-      baseUrl: 'https://api.signet.kaleidoswap.com',
-      nodeUrl: 'http://localhost:3001',  // Add this
-    });
-    ```
-
-    ```python Python
-    client = KaleidoClient.create(
-        base_url="https://api.signet.kaleidoswap.com",
-        node_url="http://localhost:3001",  # Add this
-    )
-    ```
-    </CodeGroup>
-
-    Always check `client.hasNode()` / `client.has_node()` before calling RLN methods.
-  </Accordion>
-
-  <Accordion title="QuoteExpiredError" icon="hourglass-end">
-    **Symptoms:** `QuoteExpiredError` when calling `initSwap` / `init_swap` with an `rfq_id`
-
-    **Cause:** The quote's `expires_at` time has passed.
-
-    **Solutions:**
-    1. Get a fresh quote immediately before calling `initSwap` — do not reuse an `rfq_id` across user think-time
-    2. Use WebSocket streaming for always-current quotes
-    3. Whitelist and execute promptly; the whole init → whitelist → execute sequence runs against one quote
-  </Accordion>
-
-  <Accordion title="ValidationError: Invalid amount" icon="calculator">
-    **Symptoms:** `ValidationError` with amount-related message
-
-    **Causes:**
-    - Amount below minimum or above maximum
-    - Wrong precision (sending display units instead of raw)
-    - Negative or zero amount
-
-    **Solutions:**
-    1. Check min/max limits from the `listPairs` response
-    2. Ensure you are sending raw amounts, not display amounts — convert with `parseRawAmount` / `parse_raw_amount` from [Utilities](/sdk/utilities)
-    3. Validate amounts before sending
-  </Accordion>
-
-  <Accordion title="APIError: 401 Unauthorized" icon="ban">
-    **Symptoms:** `APIError` with status 401
-
-    **Cause:** Invalid or missing API key.
-
-    **Solutions:**
-    1. Check that `apiKey` / `api_key` is set correctly
-    2. Verify the key is valid and not expired
-    3. Some endpoints may not require an API key — check the [API Reference](/sdk/api-reference)
-  </Accordion>
-
-  <Accordion title="TimeoutError" icon="clock">
-    **Symptoms:** `TimeoutError` on API calls
-
-    **Causes:**
-    - Slow network connection
-    - Server under heavy load
-    - Timeout too short
-
-    **Solutions:**
-    1. Increase the timeout: `timeout: 60` (seconds)
-    2. Check network connectivity
-    3. Implement retry logic using `error.isRetryable()` — see [Retry Patterns](#retry-patterns)
-  </Accordion>
-
-  <Accordion title="RateLimitError: 429 Too Many Requests" icon="gauge-high">
-    **Symptoms:** `RateLimitError` on repeated calls, typically while polling quotes
-
-    **Cause:** Too many requests in the rate-limit window.
-
-    **Solutions:**
-    1. Back off and retry, honouring any `retry_after` the response carries (in Python, `is_retryable()` returns `False` for rate limits, so back off manually)
-    2. Stream quotes over WebSocket instead of polling `getQuote` in a loop
-    3. Cache `listAssets` / `listPairs` rather than refetching them per operation
-  </Accordion>
-</AccordionGroup>
-
-## Swap Issues
-
-<AccordionGroup>
-  <Accordion title="SwapError on execute: swapstring not whitelisted" icon="triangle-exclamation">
-    **Symptoms:** `initSwap` succeeds, but `executeSwap` / `execute_swap` fails with `SwapError`
-
-    **Cause:** The `swapstring` returned by `initSwap` was never whitelisted on your own node, so the taker side cannot honour the HTLC.
-
-    **Solution:** The three steps must run in order, and the whitelist step is on `client.rln`, not `client.maker`:
-
-    1. `client.maker.initSwap(...)` → returns `swapstring`
-    2. `client.rln.whitelistSwap(swapstring)` → your node accepts the swap
-    3. `client.maker.executeSwap(...)` → the maker settles it
-
-    See [How to Swap](/sdk/how-to-swap) for the full sequence.
-  </Accordion>
-
-  <Accordion title="InsufficientBalanceError" icon="wallet">
-    **Symptoms:** `InsufficientBalanceError` on init or execute
-
-    **Causes:**
-    - Not enough outbound capacity on the channel for the leg you are sending
-    - The dust reserve is not available on top of the swap amount
-    - Balance is on-chain rather than in a channel
-
-    **Solutions:**
-    1. Check `client.rln.listChannels()` for outbound capacity on the right asset, not just total balance
-    2. Confirm the amount is within the pair's min/max from `listPairs`
-    3. If capacity is short, order more inbound or outbound liquidity via LSPS1
-  </Accordion>
-
-  <Accordion title="Swap stuck in a pending state" icon="clock-rotate-left">
-    **Symptoms:** `executeSwap` returned, but the assets have not arrived
-
-    **Solutions:**
-    1. Poll `client.maker.getAtomicSwapStatus(...)` / `get_atomic_swap_status(...)` rather than assuming execute is terminal
-    2. Call `client.rln.refreshTransfers()` / `refresh_transfers()` to advance pending RGB transfers
-    3. Check `client.rln.listSwaps()` for the node's own view of the swap
-  </Accordion>
-
-  <Accordion title="Version mismatch: unexpected response shape" icon="code-compare">
-    **Symptoms:** A call fails on parsing (Pydantic `ValidationError`, or a TypeScript field that is unexpectedly `undefined`) rather than returning a clean SDK error
-
-    **Cause:** The SDK and the API it is talking to were generated against different spec versions. This is most common on the node side, where the RLN version is yours to control.
-
-    **Solutions:**
-    1. Compare your node's version against the one your SDK release targets — see [RLN API Compatibility](/sdk/rln-api-compatibility)
-    2. Upgrade the SDK: `npm install kaleido-sdk@latest` or `pip install --upgrade kaleido-sdk`
-    3. Check the [Changelog](/sdk/changelog) for breaking changes between your version and the current one — several releases added now-required request fields
-  </Accordion>
-</AccordionGroup>
-
-## WebSocket Issues
-
-<AccordionGroup>
-  <Accordion title="WebSocket not connecting" icon="plug-circle-xmark">
-    **Symptoms:** `connected` event never fires, or `WebSocketError`
-
-    **Solutions:**
-    1. Verify the WebSocket URL is correct (should start with `wss://`)
-    2. Ensure `enableWebSocket` / `enable_websocket` was called before streaming
-    3. Check that WebSocket connections are not blocked by firewall or proxy
-    4. Try with a different client ID in the URL
-  </Accordion>
-
-  <Accordion title="No quotes received" icon="signal-slash">
-    **Symptoms:** `quoteResponse` / `quote_response` event never fires
-
-    **Solutions:**
-    1. Verify the asset pair is valid and has available routes
-    2. Check that the amount is within min/max limits
-    3. Listen for `error` events on the WSClient
-    4. Verify the connection is established (check `connected` event)
-  </Accordion>
-
-  <Accordion title="Frequent disconnections" icon="arrows-rotate">
-    **Symptoms:** WebSocket disconnects and reconnects frequently
-
-    **Solutions:**
-    1. Check internet stability
-    2. The WSClient auto-reconnects with exponential backoff
-    3. Monitor `reconnecting` events to track attempts
-    4. If `maxReconnectExceeded` fires, manually reconnect:
-
-    <CodeGroup>
-    ```typescript TypeScript
-    ws.on('maxReconnectExceeded', async () => {
-      console.log('Reconnecting manually...');
-      await ws.connect();
-    });
-    ```
-
-    ```python Python
-    async def manual_reconnect():
-        print("Reconnecting manually...")
-        await ws.connect()
-
-    ws.on("max_reconnect_exceeded", manual_reconnect)
-    ```
-    </CodeGroup>
-  </Accordion>
-</AccordionGroup>
-
-## Language-Specific Issues
-
-<AccordionGroup>
-  <Accordion title="Type errors with OpenAPI types (TypeScript)" icon="code">
-    **Symptoms:** TypeScript compiler errors about incompatible types
-
-    **Solutions:**
-    1. Ensure you are importing types from `kaleido-sdk`:
-       ```typescript
-       import type { AssetResponseModel, TradingPairResponseModel } from 'kaleido-sdk';
-       ```
-    2. Check your TypeScript version is 5.0+
-    3. If using strict mode, you may need to handle `undefined` explicitly
-  </Accordion>
-
-  <Accordion title="Pydantic validation errors (Python)" icon="circle-exclamation">
-    **Symptoms:** `ValidationError` from Pydantic when parsing API responses
-
-    **Solutions:**
-    1. Ensure `pydantic>=2.0` is installed
-    2. Check that you are using the correct request format
-    3. The API may have been updated — try updating the SDK: `pip install --upgrade kaleido-sdk`
-  </Accordion>
-
-  <Accordion title="httpx connection errors (Python)" icon="network-wired">
-    **Symptoms:** `httpx.ConnectError` or similar
-
-    **Solutions:**
-    1. Check that the API URL is reachable
-    2. If using a proxy, configure it via environment variables: `HTTP_PROXY`, `HTTPS_PROXY`
-    3. Increase timeout if the connection is slow
-  </Accordion>
-</AccordionGroup>
-
-## Error Reference
-
-Both SDKs share a nearly identical error class hierarchy. All errors extend from `KaleidoError`, so a single `catch` on it never lets an SDK failure escape unhandled:
-
-```
-KaleidoError (base)
-├── APIError (HTTP 400-599)
-│   └── RateLimitError (HTTP 429, TypeScript only)
-├── RateLimitError (HTTP 429, Python — extends KaleidoError directly)
-├── NetworkError (connectivity issues)
-├── ValidationError (HTTP 400, 422)
-├── TimeoutError (HTTP 408, 504)
-├── WebSocketError (WebSocket issues)
-├── NotFoundError (HTTP 404)
-├── ConfigError (configuration issues)
-├── SwapError (swap operation failures)
-├── NodeNotConfiguredError (node not set up)
-├── QuoteExpiredError (quote expired)
-└── InsufficientBalanceError (not enough funds)
-```
-
-Two divergences between the SDKs are worth knowing before you write a handler:
-
-- **`RateLimitError`** extends `APIError` in TypeScript but `KaleidoError` directly in Python — a Python `except APIError` handler will **not** catch rate-limit errors.
-- **A missing node URL** raises `NodeNotConfiguredError` in Python, but `ConfigError` ("Node API not configured. Provide \"nodeUrl\" when creating the client.") in TypeScript.
-
-### KaleidoError Properties
-
-Every error carries these, whichever class it is:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `code` | `string` | Error code for programmatic handling |
-| `message` | `string` | Human-readable error message |
-| `statusCode` / `status_code` | `number?` | HTTP status code (if applicable) |
-| `details` | `string?` | Additional error details |
-| `isRetryable()` / `is_retryable()` | `boolean` | Whether the error is safe to retry |
-
-### Error Classes
-
-| Class | Raised when | Additional properties |
-|-------|-------------|-----------------------|
-| `APIError` | HTTP 400-599 | TypeScript: `details`. Python: `response_body` |
-| `RateLimitError` | HTTP 429 | `retryAfter` / `retry_after` — seconds to wait |
-| `NetworkError` | DNS failure, connection refused, and other connectivity faults | — |
-| `ValidationError` | HTTP 400, 422 — includes parsed FastAPI validation detail | — |
-| `TimeoutError` | HTTP 408, 504 | — |
-| `WebSocketError` | WebSocket connection or communication failure | — |
-| `NotFoundError` | HTTP 404 | — |
-| `ConfigError` | Invalid SDK configuration, such as a malformed URL. In TypeScript, also a `client.rln.*` call made without `nodeUrl` | — |
-| `SwapError` | A swap operation failed | `swapId` / `swap_id` |
-| `NodeNotConfiguredError` | Python only — a `client.rln.*` call made without `node_url` | — |
-| `QuoteExpiredError` | An `rfq_id` is used after its `expires_at` | — |
-| `InsufficientBalanceError` | The balance cannot cover the operation | `requiredAmount` / `required_amount`, `availableAmount` / `available_amount`, `asset` |
-
-Which of these are safe to retry is decided per status, not per class — see [HTTP Error Mapping](#http-error-mapping) below.
-
-### HTTP Error Mapping
-
-The SDK automatically maps HTTP errors to typed exceptions using `mapHttpError` / `map_http_error`:
-
-| HTTP Status | Error Class | Retryable |
-|------------|-------------|-----------|
-| 400, 422 | `ValidationError` | No — the request itself is wrong |
-| 404 | `NotFoundError` | No |
-| 408, 504 | `TimeoutError` | Yes, always |
-| 429 | `RateLimitError` | TypeScript: yes, after `retryAfter`. Python: `is_retryable()` returns `False` — back off using `retry_after` yourself |
-| 500, 502, 503 | `APIError` | Yes — a server-side fault may clear |
-| Other 4xx | `APIError` | No |
-| Network failure | `NetworkError` | Yes, always |
-
-Rather than hardcoding this table in your own retry logic, call `isRetryable()` / `is_retryable()` — it encodes exactly these rules and stays correct as the mapping evolves.
-
-### Comprehensive Error Handling
-
-Branch from the most specific class to the most general, and end on `KaleidoError` so nothing escapes. Subclasses must be tested before their parents — in TypeScript `RateLimitError` is an `APIError`, so an `APIError` branch placed first would swallow it.
-
-<CodeGroup>
 ```typescript TypeScript
-import { KaleidoError, RateLimitError, QuoteExpiredError } from 'kaleido-sdk';
+import { isKaleidoSwapError } from "@kaleidorg/swap-sdk";
 
 try {
-  const quote = await client.maker.getQuote({ /* ... */ });
-  const swap = await client.maker.initSwap({ /* ... */ });
+  await client.createReverseSwap("signet", request);
 } catch (error) {
-  if (error instanceof QuoteExpiredError) {
-    // Get a fresh quote and retry
-  } else if (error instanceof RateLimitError) {
-    await new Promise(r => setTimeout(r, (error.retryAfter ?? 5) * 1000));
-  } else if (error instanceof KaleidoError && error.isRetryable()) {
-    // Back off and retry — see Retry Patterns below
-  } else if (error instanceof KaleidoError) {
-    console.error(`SDK error [${error.code}]: ${error.message}`);
+  if (isKaleidoSwapError(error)) {
+    console.error(error.code, error.message);
+  } else {
+    throw error;
   }
 }
 ```
 
-```python Python
-import asyncio
+- `InvalidArgument`: the binding rejected an input, such as a malformed key or a request missing a field. The message names the field.
+- Engine codes, such as `ClaimFallbackFailed` or `rgb_fee_input_required`: the swap engine refused the operation.
+- `Internal`: a failure inside the binding.
 
-from kaleido_sdk import (
-    KaleidoError,
-    PairQuoteRequest,
-    QuoteExpiredError,
-    RateLimitError,
-    SwapRequest,
-)
+Values rejected by the generated WebAssembly glue before Rust sees them stay plain JavaScript errors. The common one is a `TypeError` from passing a `number` where a `bigint` is declared.
 
-try:
-    quote = await client.maker.get_quote(PairQuoteRequest(...))
-    swap = await client.maker.init_swap(SwapRequest(...))
-except QuoteExpiredError:
-    # Get a fresh quote and retry
-    pass
-except RateLimitError as e:
-    await asyncio.sleep(e.retry_after or 5)
-except KaleidoError as e:
-    if e.is_retryable():
-        # Back off and retry — see Retry Patterns below
-        pass
-    else:
-        print(f"SDK error [{e.code}]: {e}")
-```
-</CodeGroup>
+In Python, errors are raised as `kaleidorg_swap_sdk.Error` variants.
 
-Add a branch for a specific class only where your handling genuinely differs — `InsufficientBalanceError` to show the shortfall, `ValidationError` to point at the offending field. Everything else is already covered by the `isRetryable()` check and the base case.
+## Installation and loading
 
-### Retry Patterns
+<AccordionGroup>
+  <Accordion title="init() fails or the WebAssembly binary is not found">
+    Your bundler must emit `vendor/bindings_wasm_bg.wasm`. If you bundled the Node entry into a single file, copy the binary next to your output and pass it to `init()`. To serve it yourself, pass its URL: `await init(new URL("/assets/bindings_wasm_bg.wasm", location.origin))`.
+  </Accordion>
 
-Use `isRetryable()` to implement automatic retries:
+  <Accordion title="React Native: native module missing at first import">
+    With pnpm 10+, add `@kaleidorg/swap-sdk-react-native` to `onlyBuiltDependencies` so its install script fetches the binaries. If the release archive could not be downloaded, reinstall once GitHub is reachable. Expo Go is not supported; use a development build.
+  </Accordion>
 
-<CodeGroup>
-```typescript TypeScript
-async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof KaleidoError && error.isRetryable() && attempt < maxRetries - 1) {
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(r => setTimeout(r, delay));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
+  <Accordion title="Python: no wheel for my platform">
+    Prebuilt wheels cover Linux x86_64/aarch64, macOS x86_64/arm64, and Windows x86_64. Elsewhere pip builds the source distribution, which needs Rust 1.88+.
+  </Accordion>
+</AccordionGroup>
 
-const pairs = await withRetry(() => client.maker.listPairs());
-```
+## Networks
 
-```python Python
-import asyncio
+<AccordionGroup>
+  <Accordion title="forNetwork('mainnet') throws">
+    There is no KaleidoSwap mainnet maker yet. The SDK errors instead of falling back to a third party. Use `signet`, or pass an explicit maker URL.
+  </Accordion>
 
-async def with_retry(fn, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            return await fn()
-        except KaleidoError as e:
-            if e.is_retryable() and attempt < max_retries - 1:
-                delay = 2 ** attempt
-                await asyncio.sleep(delay)
-                continue
-            raise
-    raise RuntimeError("Max retries exceeded")
+  <Accordion title="The lockup never shows up, or a claim cannot find the output">
+    Check that the chain endpoint matches the network. The signet maker settles on Mutinynet (`https://esplora.signet.kaleidoswap.com`); a testnet3 endpoint encodes addresses the same way and fails silently. See [Networks](/sdk/networks).
+  </Accordion>
+</AccordionGroup>
 
-pairs = await with_retry(lambda: client.maker.list_pairs())
-```
-</CodeGroup>
+## Creating swaps
 
-## Debugging
+<AccordionGroup>
+  <Accordion title="TypeError: Cannot convert 0 to a BigInt">
+    A parameter declared `bigint` got a `number`. Use `0n`, or `BigInt(value)`.
+  </Accordion>
 
-### Enable Verbose Logging
+  <Accordion title="Create fails with a validation error">
+    The SDK refused the maker's response because it does not match your request or keys: script, lockup address, timeout, or invoice hash. Do not fund it. Check that you passed the right public key and preimage hash, and that you are talking to the maker you expect.
+  </Accordion>
 
-Python exposes the underlying `httpx` and `websockets` loggers:
+  <Accordion title="Chain swap: 'needs claimPublicKey and refundPublicKey'">
+    Chain swaps require both keys so both lockup scripts can be verified. Derive them from two indexes.
+  </Accordion>
 
-```python
-import logging
+  <Accordion title="Reverse swap to ARKD is refused">
+    Arkade is not a Boltz route. Use `IntentsCorridor` and the Arkade venue. See [Lightning ↔ Arkade](/sdk/arkade).
+  </Accordion>
 
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger("httpx").setLevel(logging.DEBUG)
-logging.getLogger("websockets").setLevel(logging.DEBUG)
-```
+  <Accordion title="Organization key or API key rejected locally">
+    The value is malformed: an organization key must be a valid 64-hex x-only point, and an API key must look like `kld_test_…` or `kld_live_…`. The maker URL must be `https` unless it is a loopback address. A client cannot carry both credentials.
+  </Accordion>
+</AccordionGroup>
 
-TypeScript has no equivalent switch for the transport. Pass a lower `logLevel` when creating the client for the SDK's own output — see [Configuration](/sdk/installation#configuration) — and inspect the wire with `NODE_DEBUG=http`, or the network panel in your browser's DevTools.
+## Claims and refunds
 
-### Validate Configuration
+<AccordionGroup>
+  <Accordion title="acceptQuote fails with 401 invalid_swap_auth">
+    Pass the swap's `swapAuth` from the create response. If you lost it, recover it with `recoverSwapAuth(id, secretKey)`. Without it, the re-quote cannot be accepted and the swap expires into its refund path.
+  </Accordion>
 
-When calls fail before you can pin down a specific error, check these four things in order:
+  <Accordion title="A helper returns not-yet">
+    Read `reason`. For claims: the lockup lacks your required confirmations, or the deadline is inside the safety margin. For refunds: the timeout has not been reached and the maker did not co-sign.
+  </Accordion>
 
-<Steps>
-  <Step title="The API URL resolves">
-    Open `<baseUrl>/api/v1/market/assets` in a browser. The SDK appends `/api/v1` itself, so the config value must not already include it.
-  </Step>
+  <Accordion title="Cooperative refund refused">
+    `mode: "cooperative"` never falls back. Wait for `timeoutBlockHeight` and refund through the script path, or use `mode: "auto"`.
+  </Accordion>
 
-  <Step title="The client sees a node">
-    `client.hasNode()` / `client.has_node()` returns `false` whenever `nodeUrl` / `node_url` was omitted, and every `client.rln.*` call will fail on that alone.
-  </Step>
+  <Accordion title="ClaimFallbackFailed">
+    Both the cooperative and the script-path claim failed. The error carries both causes. Recover through the script path urgently, before the timeout.
+  </Accordion>
 
-  <Step title="The node answers">
-    `client.rln.getNodeInfo()` / `get_node_info()` returning a pubkey proves the node is both reachable and unlocked.
-  </Step>
+  <Accordion title="rgb_fee_input_required">
+    The HTLC's sats cannot pay the fee and keep the minimum payout. Prepare the spend with `funding: { kind: "callerInputs" }` and add BTC inputs from your wallet.
+  </Accordion>
 
-  <Step title="Both point at the same network">
-    A Signet `baseUrl` paired with a mainnet node yields confusing empty results rather than a clean error.
-  </Step>
-</Steps>
+</AccordionGroup>
 
-## Get Help
+## Status updates
 
-Check the [FAQ](/sdk/faq) for questions rather than errors, and [Additional Resources](/sdk/additional-resources) for upstream documentation and links.
+<AccordionGroup>
+  <Accordion title="No updates arrive">
+    Make sure `runWsLoop()` is running and you called `subscribeSwap(id)`. A dead socket reports no error, notably after a mobile app is backgrounded: check `isConnected()` and fall back to `swap(id)`.
+  </Accordion>
 
-For anything else, report a problem through your preferred channel from the options below, including:
-
-1. SDK version (`getVersion()` / `get_version()`)
-2. Language and runtime version (Node.js / Python)
-3. Error message and stack trace
-4. Minimal code to reproduce
-5. Environment (Signet / Mainnet)
-
-<CardGroup cols={3}>
-  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
-    Ask the community.
-  </Card>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/kaleidoswap/kaleido-sdk/issues">
-    Report a bug on the relevant repository.
-  </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues.
-  </Card>
-</CardGroup>
+  <Accordion title="The Node process does not exit">
+    Call `ws.close()` (TypeScript) or `ws.shutdown()` (Python) when you are done with a status stream.
+  </Accordion>
+</AccordionGroup>

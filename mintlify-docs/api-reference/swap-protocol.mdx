@@ -1,119 +1,124 @@
 ---
-title: "Atomic Swap Protocol"
-sidebarTitle: "Swap Protocol"
-description: "How KaleidoSwap swaps work under the hood, covering atomic HTLC swaps over the Lightning Network, with flow diagrams and code examples"
+title: "Swap Flow"
+sidebarTitle: "Swap Flow"
+description: "The maker API calls each swap type makes, in order: pick a pair, create, verify, fund, follow status, then claim or refund, with what a client must check at each step"
 ---
 
-KaleidoSwap executes swaps atomically using the client's RGB Lightning Node:
+Submarine, reverse, and chain swaps follow the Boltz `/v2` protocol. Both legs of a swap are locked to the hash of one secret, the preimage: the Lightning payment as a hold invoice, and the on-chain funds in a Taproot output that can be claimed with the preimage or refunded after a timeout. Claiming reveals the preimage, which settles the other leg.
 
-| Model | Used by | Trust required | Settlement |
-|-------|---------|----------------|------------|
-| **Atomic swap** | Desktop App, SDK, node integrations | None — cryptographic guarantee | HTLC on Lightning Network |
+## Every swap
 
----
+<Steps>
+  <Step title="Pick a pair">
+    `GET /v2/swap/{type}/pairs` returns `from → to → card`. Check the amount against the card's `limits` and keep its `hash`.
+  </Step>
+  <Step title="Create">
+    `POST /v2/swap/{submarine,reverse,chain}` with your public key(s) and `pairHash`. Send your organization key or API key here if you have one. Store the full response, including `swapAuth`.
+  </Step>
+  <Step title="Verify before funding">
+    Rebuild the swap tree from your own key, the maker's `refundPublicKey` or `claimPublicKey`, the preimage hash, and `timeoutBlockHeight`. Derive the Taproot address and compare it with the response. For reverse swaps, decode the invoice and check that its payment hash is your preimage hash. **Do not fund a swap that fails any check.**
+  </Step>
+  <Step title="Fund or pay">
+    Fund the lockup with exactly the expected amount in one transaction, or pay the invoice.
+  </Step>
+  <Step title="Follow status">
+    `GET /v2/swap/{id}`, or subscribe on `GET /v2/ws`.
+  </Step>
+  <Step title="Claim or refund">
+    Claim cooperatively through the claim endpoint, or alone through the script path. Refund cooperatively before the timeout, or alone after it.
+  </Step>
+</Steps>
 
-## Atomic Swaps
+## Submarine: on-chain → Lightning
 
-The Desktop App uses **Hash Time-Locked Contracts (HTLCs)** to execute swaps atomically over the Lightning Network. Both sides lock their assets simultaneously — either the full swap completes or both sides get their funds back. There is no counterparty risk. This is the same mechanism behind [the first ever RGB asset swap on Lightning mainnet](https://kaleidoswap.medium.com/%EF%B8%8F-the-first-ever-rgb-asset-swap-on-lightning-mainnet-1b940dcd0efd).
-
-### How It Works
-
-1. The taker requests live quotes from the maker over WebSocket (each `quote_response` carries an `rfq_id`).
-2. The taker calls `POST /api/v1/swaps/init` — the maker locks the exchange rate and returns a `swapstring`, a `payment_hash`, and an `access_token`. The `access_token` is returned only once — store it alongside the payment hash, as it is required to poll the swap status later.
-3. The taker's RGB Lightning Node whitelists the `swapstring` (authorising it to route through the node).
-4. The taker calls `POST /api/v1/swaps/execute` — the maker initiates the HTLC.
-5. The Lightning Network routes the HTLC: the maker reveals the preimage to claim BTC, which simultaneously releases the RGB asset to the taker.
-6. If either party fails to complete within the HTLC timeout, both sides' funds are returned automatically.
-7. The taker polls `POST /api/v1/swaps/atomic/status` with the `payment_hash` **and** the `access_token` from step 2. A missing or invalid token yields a uniform `404 Swap not found`.
-
-### Sequence Diagram
-
-```
-Taker Client                         Maker (RGB-LSP)                   Taker RLN Node
-     |                                      |                                 |
-     |──── WebSocket connect ──────────────>|                                 |
-     |──── quote_request (BTC/USDT) ───────>|                                 |
-     |<─── quote_response (price, rfq_id) ──|                                 |
-     |                                      |                                 |
-     |──── POST /api/v1/swaps/init ────────>|                                 |
-     |       (rfq_id, from, to, amounts)    |                                 |
-     |<─── { swapstring, payment_hash,      |                                 |
-     |       access_token } ─────────────── |                                 |
-     |                                      |                                 |
-     |──── whitelist_swap(swapstring) ──────────────────────────────────────>|
-     |<─── swap whitelisted ───────────────────────────────────────────────  |
-     |                                      |                                 |
-     |──── POST /api/v1/swaps/execute ─────>|                                 |
-     |       (swapstring, taker_pubkey,     |                                 |
-     |        payment_hash)                 |                                 |
-     |<─── 200 OK ──────────────────────── |                                 |
-     |          ← HTLC resolves atomically on Lightning Network →             |
-     |                                      |                                 |
-     |── POST /api/v1/swaps/atomic/status ─>|                                 |
-     |       (payment_hash, access_token)   |                                 |
-     |<─── { status: "Succeeded" } ─────── |                                 |
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant M as Maker
+    C->>M: POST /v2/swap/submarine (invoice, refundPublicKey, pairHash)
+    M-->>C: address, expectedAmount, swapTree, timeoutBlockHeight, swapAuth
+    C->>C: verify address against own key
+    C->>C: fund address
+    M->>M: pay invoice (learns preimage)
+    M->>M: claim lockup
+    Note over C,M: status: invoice.paid, then transaction.claimed
 ```
 
-### Endpoints Used
+| Step | Call |
+|---|---|
+| Lockup seen by the maker | `GET /v2/swap/submarine/{id}/transaction` |
+| Proof of payment | `GET /v2/swap/submarine/{id}/preimage` |
+| Cooperative refund if it fails | `POST /v2/swap/submarine/{id}/refund` with `X-Swap-Auth` |
 
-| Step | Endpoint |
-|------|----------|
-| Request quotes | WebSocket `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
-| Lock rate | `POST /api/v1/swaps/init` |
-| Execute swap | `POST /api/v1/swaps/execute` |
-| Check status | `POST /api/v1/swaps/atomic/status` (requires `access_token` from init) |
+## Reverse: Lightning → on-chain
 
-### WebSocket Environments
-
-| Environment | URL |
-|-------------|-----|
-| **Signet** | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
-| **Mainnet** | No public endpoint yet: use your own maker's URL |
-
-Replace `{client_id}` with a unique identifier for your session.
-
-### SDK Integration
-
-The SDK handles the WebSocket, init, and execute steps for you:
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
-
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',  // required for atomic swaps
-});
-
-// Stream a live quote
-client.maker.enableWebSocket('wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client');
-
-const unsubscribe = await client.maker.streamQuotesByTicker(
-  'BTC', 'USDT', 100000,
-  async (quote) => {
-    // Use the rfq_id from the latest quote to init + execute
-    const result = await client.maker.initSwap({
-      rfq_id: quote.rfq_id,
-      from_asset: 'BTC',
-      from_amount: quote.from_amount,
-      to_asset: 'USDT',
-      to_amount: quote.to_amount,
-    });
-    // Whitelist on your node, then execute...
-  }
-);
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant M as Maker
+    C->>M: POST /v2/swap/reverse (preimageHash, claimPublicKey, invoiceAmount, pairHash)
+    M-->>C: invoice, lockupAddress, onchainAmount, swapTree, timeoutBlockHeight, swapAuth
+    C->>C: verify invoice hash and lockup against own key
+    C->>C: pay hold invoice
+    M->>M: lock funds on chain
+    C->>M: POST /v2/swap/reverse/{id}/claim (preimage, pubNonce, transaction)
+    M-->>C: pubNonce, partialSignature
+    C->>C: aggregate, broadcast claim
+    Note over C,M: status: invoice.settled
 ```
 
-```python Python
-from kaleido_sdk import KaleidoClient
+| Step | Call |
+|---|---|
+| Maker's lockup | `GET /v2/swap/reverse/{id}/transaction` |
+| Cooperative claim | `POST /v2/swap/reverse/{id}/claim` |
+| Abandon (release your payment) | `POST /v2/swap/reverse/{id}/refund` with `X-Swap-Auth` |
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",  # required for atomic swaps
-)
+The claim must confirm before `timeoutBlockHeight`. If the maker does not cooperate, spend the claim leaf with the preimage and your signature.
 
-# Stream a live quote and initiate a swap
-client.maker.enable_websocket("wss://api.signet.kaleidoswap.com/api/v1/market/ws/my-client")
-# See sdk/examples for full atomic swap flow
+## Chain: on-chain → on-chain
+
+| Step | Call |
+|---|---|
+| Create | `POST /v2/swap/chain` with `preimageHash`, `claimPublicKey`, `refundPublicKey`, and one of `userLockAmount` / `serverLockAmount` |
+| Verify | Both `lockupDetails` (where you lock) and `claimDetails` (where the maker locks) |
+| Both lockups | `GET /v2/swap/chain/{id}/transactions` |
+| Re-quote, if you locked a different amount | `GET /v2/swap/chain/{id}/quote`, then `POST` the same amount with `X-Swap-Auth` |
+| Claim your payout | Spend `claimDetails` with the preimage |
+| Co-sign the maker's claim of your lockup | `POST /v2/swap/chain/{id}/claim` |
+| Cooperative refund | `POST /v2/swap/chain/{id}/refund` with `X-Swap-Auth` |
+
+## Status values
+
+| Status | Meaning |
+|---|---|
+| `swap.created` / `invoice.set` | Created |
+| `transaction.mempool` / `transaction.confirmed` | A lockup was seen / confirmed |
+| `transaction.server.mempool` / `transaction.server.confirmed` | The maker's lockup on the destination chain (chain swaps) |
+| `invoice.pending` / `invoice.paid` | The maker is paying / paid the invoice (submarine) |
+| `transaction.claim.pending` / `transaction.claimed` | Claim in progress / done |
+| `invoice.settled` | The hold invoice settled (reverse success) |
+| `invoice.failedToPay`, `transaction.lockupFailed` | Failed: refund the lockup |
+| `swap.expired`, `invoice.expired`, `transaction.failed`, `transaction.refunded` | Expired or failed |
+
+A status is the maker's report. Check lockups and the chain tip on your own chain backend before claiming or refunding.
+
+## WebSocket
+
+```json
+→ { "op": "subscribe", "channel": "swap.update", "args": ["<swap id>"] }
+← { "event": "update", "channel": "swap.update", "args": [{ "id": "<swap id>", "status": "transaction.confirmed" }] }
+→ { "op": "ping" }
+← { "event": "pong" }
 ```
-</CodeGroup>
+
+## Atomic RGB swaps
+
+Atomic swaps have no lockup and no refund: one transaction moves both legs. The client's rgb-lib wallet signs; the maker signs last and broadcasts.
+
+| Step | Call |
+|---|---|
+| Pairs | `GET /v2/swap/atomic/pairs` |
+| Quote and rgb-lib offer | `POST /v2/swap/atomic/quote`. Check the offer moves the quoted amounts and asset |
+| Request → unsigned proposal | `POST /v2/swap/atomic/{id}/request`. Check none of your coins are listed as the maker's |
+| Completion → broadcast | `POST /v2/swap/atomic/{id}/complete` |
+| Status | `GET /v2/swap/atomic/{id}` |

@@ -1,10 +1,10 @@
 ---
-title: "How to Swap with KaleidoSDK"
-sidebarTitle: "How to Swap"
-description: "Create and execute Bitcoin atomic swaps with the KaleidoSDK in a step-by-step guide that runs from quote to settlement"
+title: "Node-to-Node Atomic Swaps with the Node SDK"
+sidebarTitle: "Node Atomic Swaps"
+description: "Create and execute Bitcoin atomic swaps with the Node SDK in a step-by-step guide that runs from quote to settlement"
 ---
 
-This guide walks through an atomic swap (direct node-to-node) end to end with the KaleidoSDK, in both TypeScript and Python.
+This guide walks through an atomic swap (direct node-to-node) end to end with the Node SDK, in both TypeScript and Python.
 
 Atomic swaps are trustless: the maker never takes custody, because your own RGB Lightning Node holds the keys and has to whitelist the swap before it can settle. That also means you need an RLN node running alongside the client — see [Node Hosting](/desktop-app/getting-started/node-hosting) for the options.
 
@@ -43,7 +43,7 @@ client = KaleidoClient.create(
 
 ## Step 1: Get a Quote
 
-Request a quote for the pair you want to swap. Amounts are always **raw integer units** — see [Utilities](/sdk/utilities) for conversion helpers.
+Request a quote for the pair you want to swap. Amounts are always **raw integer units** — see [Utilities](/cli/node-sdk/utilities) for conversion helpers.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -181,4 +181,4 @@ print(status.swap.status if status.swap else None)
 ```
 </CodeGroup>
 
-If a transfer sits pending longer than expected, `client.rln.refreshTransfers()` / `refresh_transfers()` advances pending RGB transfers, and `client.rln.listSwaps()` gives you the node's own view. See [Troubleshooting](/sdk/troubleshooting#swap-issues) for the failure modes.
+If a transfer sits pending longer than expected, `client.rln.refreshTransfers()` / `refresh_transfers()` advances pending RGB transfers, and `client.rln.listSwaps()` gives you the node's own view. See [Troubleshooting](/cli/node-sdk/troubleshooting#swap-issues) for the failure modes.

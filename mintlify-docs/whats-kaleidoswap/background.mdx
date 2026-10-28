@@ -63,11 +63,11 @@ KaleidoSwap uses a **Request for Quote (RFQ)** model rather than an automated ma
 
 <Steps>
   <Step title="Request a quote">
-    Your client streams live prices for a pair from the maker. Each quote carries an `rfq_id` and an expiry.
+    Your client reads the maker's prices for a pair: its limits, fees, and rate, each with an expiry or a hash of the terms.
   </Step>
 
   <Step title="Lock the rate">
-    Taking a quote locks the rate and returns the swap parameters, including a `payment_hash` — the hash both legs will be locked to.
+    Creating the swap against those terms locks them and returns the contract, built around one hash that both legs will be locked to. Your client checks the contract against its own keys before committing anything.
   </Step>
 
   <Step title="Lock both legs">
@@ -83,7 +83,7 @@ KaleidoSwap uses a **Request for Quote (RFQ)** model rather than an automated ma
   </Step>
 </Steps>
 
-For the wire-level detail — endpoints, the `swapstring`, and the sequence diagram — see [Atomic Swap Protocol](/api-reference/swap-protocol).
+To build it into an app, see [How swaps work](/sdk/swap-types) in the Swap SDK docs. For the wire-level detail (endpoints, the calls per swap type, and sequence diagrams), see [Swap flow](/api-reference/swap-protocol).
 
 ## Where atomicity holds
 

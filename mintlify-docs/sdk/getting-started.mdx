@@ -1,136 +1,130 @@
 ---
-title: "KaleidoSDK: Getting Started"
-sidebarTitle: "Getting Started"
-description: "Create your first KaleidoSDK client in TypeScript or Python, reach the maker and node sub-clients, and request a swap quote in a few lines"
+title: "Swap SDK Quickstart"
+sidebarTitle: "Quickstart"
+description: "Install the Swap SDK, connect to the KaleidoSwap signet maker, list the routes it trades, and receive L-BTC on Liquid from a Lightning payment"
 ---
 
-This is the path from an installed package to a first quote. If you have not installed the SDK yet, start with [Installation](/sdk/installation).
+This page takes you from nothing to a finished swap on signet, in TypeScript.
 
-## Basic Setup
+## Before you start
 
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient } from 'kaleido-sdk';
+| You need | Where to get it |
+|---|---|
+| Node 22 or later | [nodejs.org](https://nodejs.org) |
+| A way to pay a Lightning invoice on **Mutinynet** | The KaleidoSwap signet maker runs on [Mutinynet](https://mutinynet.com), a custom signet, so an ordinary signet or testnet wallet cannot pay its invoices. The [Mutinynet faucet](https://faucet.mutinynet.com) pays a BOLT11 invoice for you: paste the invoice the script prints. |
+| A Liquid testnet address to receive into | Any Liquid wallet set to testnet. For test L-BTC, use the [Liquid testnet faucet](https://liquidtestnet.com/faucet). |
+| A 12-word BIP39 mnemonic | Any wallet can generate one. Use a test mnemonic only, never one that holds real funds. |
 
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-});
+## 1. Install
 
-const assets = await client.maker.listAssets();
-console.log(`Found ${assets.assets.length} assets`);
+```bash
+npm install @kaleidorg/swap-sdk
 ```
 
-```python Python
-from kaleido_sdk import KaleidoClient
+## 2. List what the maker trades
 
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com"
-)
+No keys, no funds. If this prints routes, the SDK and the maker are both reachable.
 
-assets = await client.maker.list_assets()
-print(f"Found {len(assets.assets)} assets")
-```
-</CodeGroup>
+```typescript routes.ts
+import { init, SwapClient } from "@kaleidorg/swap-sdk";
 
-<Note>
-`KaleidoClient.create()` is synchronous in both SDKs. Do not `await` client creation.
-</Note>
+await init();
+const client = SwapClient.forNetwork("signet");
 
-Every field you can pass to `create()` is listed in [Configuration](/sdk/installation#configuration).
+const catalogues = {
+  "on-chain -> Lightning": await client.submarinePairs(),
+  "Lightning -> on-chain": await client.reversePairs(),
+  "chain -> chain": await client.chainPairs(),
+};
 
-## Sub-Client Architecture
-
-<CodeGroup>
-```typescript TypeScript
-const client = KaleidoClient.create({
-  baseUrl: 'https://api.signet.kaleidoswap.com',
-  nodeUrl: 'http://localhost:3001',
-});
-
-const pairs = await client.maker.listPairs();
-
-if (client.hasNode()) {
-  const nodeInfo = await client.rln.getNodeInfo();
-  const channels = await client.rln.listChannels();
+for (const [kind, pairs] of Object.entries(catalogues)) {
+  for (const [from, tos] of Object.entries(pairs)) {
+    for (const [to, card] of Object.entries(tos)) {
+      console.log(`${kind}: ${from} -> ${to}  ${card.limits.minimal}-${card.limits.maximal}  fee ${card.fees.percentage}%`);
+    }
+  }
 }
 ```
 
-```python Python
-client = KaleidoClient.create(
-    base_url="https://api.signet.kaleidoswap.com",
-    node_url="http://localhost:3001",
-)
+Each route has a **card** with its limits (in sats for BTC and L-BTC), its fees, and a `hash` you pass back when you create a swap, to hold the maker to those terms.
 
-pairs = await client.maker.list_pairs()
+## 3. Receive L-BTC from a Lightning payment
 
-if client.has_node():
-    node_info = await client.rln.get_node_info()
-    channels = await client.rln.list_channels()
-```
-</CodeGroup>
+This is a [reverse swap](/sdk/reverse-swaps): you pay a Lightning invoice, the maker locks L-BTC for you, and you claim it.
 
-## Node Configuration Checks
+```typescript swap.ts
+import { init, SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
+import { writeFile } from "node:fs/promises";
 
-TypeScript exposes `client.hasNode()` and always returns an `rln` client instance. Python exposes `client.has_node()`, and `client.rln` raises `NodeNotConfiguredError` if `node_url` is missing.
+await init();
+const network = "signet";
+const makerUrl = "https://maker.signet.kaleidoswap.com/v2";
+const liquidEsploraUrl = "https://blockstream.info/liquidtestnet/api";
+const payoutAddress = process.env.LIQUID_ADDRESS!; // a Liquid testnet address you control
 
-<CodeGroup>
-```typescript TypeScript
-if (!client.hasNode()) {
-  console.log('Node URL not configured; only maker operations are available');
-} else {
-  const nodeInfo = await client.rln.getNodeInfo();
-  console.log(nodeInfo.pubkey);
-}
-```
+const client = new SwapClient(makerUrl);
 
-```python Python
-if not client.has_node():
-    print("Node URL not configured; only maker operations are available")
-else:
-    node_info = await client.rln.get_node_info()
-    print(node_info.pubkey)
-```
-</CodeGroup>
+// Keys and the swap secret come from a mnemonic you keep. Use a new index for every swap.
+const master = SwapMasterKey.fromWalletMnemonic(process.env.WALLET_MNEMONIC!, network);
+const index = BigInt(process.env.SWAP_INDEX ?? "0"); // use a new index for every run
+const claimKey = master.deriveSwapKey(index);
+const preimage = master.derivePreimage(index);
 
-## First Quote
-
-<CodeGroup>
-```typescript TypeScript
-import { KaleidoClient, Layer } from 'kaleido-sdk';
-
-const client = KaleidoClient.create();
-
-const quote = await client.maker.getQuote({
-  from_asset: {
-    asset_id: 'BTC',
-    layer: Layer.BTC_LN,
-    amount: 100000,
-  },
-  to_asset: {
-    asset_id: 'USDT',
-    layer: Layer.RGB_LN,
-  },
+// Create the swap. The SDK checks the maker's answer against your key and secret.
+const card = (await client.reversePairs()).BTC["L-BTC"];
+const swap = await client.createReverseSwap(network, {
+  from: "BTC",
+  to: "L-BTC",
+  invoiceAmount: 50_000n,
+  preimageHash: preimage.sha256,
+  claimPublicKey: claimKey.publicKey,
+  pairHash: card.hash,
 });
+await writeFile(`${swap.id}.json`, toJson({ index, swap })); // save before paying
 
-console.log(quote.rfq_id);
-console.log(quote.price);
+console.log(`Pay this invoice:\n${swap.invoice}`);
+
+// Wait until the maker's lockup confirms; stop if the swap fails.
+const failed = ["swap.expired", "invoice.expired", "transaction.failed", "transaction.refunded"];
+for (;;) {
+  const { status } = await client.swap(swap.id);
+  if (status === "transaction.confirmed") break;
+  if (failed.includes(status)) throw new Error(`swap ${swap.id} ended in ${status}`);
+  await new Promise((r) => setTimeout(r, 5_000));
+}
+
+// Claim it. Broadcasting reveals the secret, and the maker settles your payment.
+const script = SwapScript.fromReverse("liquid", network, swap, claimKey.publicKey);
+const claim = await script.constructClaim(preimage.preimage, {
+  outputAddress: payoutAddress,
+  swapId: swap.id,
+  keysSecretHex: claimKey.secretKey,
+  makerBaseUrl: makerUrl,
+  network,
+  liquidEsploraUrl,
+});
+console.log("Claimed:", await claim.broadcast(network, undefined, liquidEsploraUrl));
 ```
 
-```python Python
-from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
+Run it with `WALLET_MNEMONIC`, `LIQUID_ADDRESS`, and a fresh `SWAP_INDEX` set, pay the printed invoice (for example through the Mutinynet faucet), and the script claims the L-BTC once the maker's lockup confirms. The swap ends in `invoice.settled`.
 
-client = KaleidoClient.create()
+<Warning>
+This script keeps it short: the index comes from an environment variable, it polls instead of listening on the WebSocket, and it saves nothing but the swap record. A real app keeps a counter of used indexes, saves signed transactions before broadcasting, and handles failed swaps. See [Common mistakes](/sdk/common-mistakes).
+</Warning>
 
-quote = await client.maker.get_quote(
-    PairQuoteRequest(
-        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
-        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
-    )
-)
+## Next steps
 
-print(quote.rfq_id)
-print(quote.price)
-```
-</CodeGroup>
-
-Once a quote looks right, [How to Swap](/sdk/how-to-swap) walks the atomic swap flow end to end.
+<CardGroup cols={2}>
+  <Card title="How swaps work" icon="lightbulb" href="/sdk/swap-types">
+    Who pays first, who claims, and what happens if a swap fails.
+  </Card>
+  <Card title="Pay Lightning from on-chain" icon="bolt" href="/sdk/submarine-swaps">
+    The opposite direction, with a refund path.
+  </Card>
+  <Card title="Swap states" icon="list-check" href="/sdk/swap-states">
+    Every status, and what your app does at each one.
+  </Card>
+  <Card title="Examples" icon="code" href="/sdk/examples">
+    Runnable programs in the SDK repository.
+  </Card>
+</CardGroup>

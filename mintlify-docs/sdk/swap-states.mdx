@@ -1,0 +1,98 @@
+---
+title: "Swap States"
+sidebarTitle: "Swap States"
+description: "The states each Swap SDK swap moves through, what your app does at each one, who claims and who refunds, the deadlines, and how to follow a swap over WebSocket or polling"
+---
+
+## On-chain → Lightning (submarine)
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` / `invoice.set` | The swap exists with your invoice | Fund `address` with exactly `expectedAmount` |
+| 2 | `transaction.mempool` | Your lockup is in the mempool | Wait |
+| 3 | `transaction.confirmed` | Your lockup confirmed | Wait |
+| 4 | `invoice.pending` | The maker is paying your invoice | Wait |
+| 5 | `invoice.paid` | Your invoice is paid | Nothing more to do |
+| 6 | `transaction.claim.pending` / `transaction.claimed` | The maker claimed your lockup | Done |
+
+Failure states: `invoice.failedToPay`, `transaction.lockupFailed` (wrong amount), `swap.expired`. In each case, **refund your lockup**.
+
+## Lightning → on-chain (reverse)
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` | The swap exists | Pay `invoice` |
+| 2 | `transaction.mempool` | The maker's lockup is in the mempool | Wait (or claim, if you accept zero-conf) |
+| 3 | `transaction.confirmed` | The maker's lockup confirmed | **Claim it** |
+| 4 | `invoice.settled` | Your claim revealed the preimage and the maker settled your payment | Done |
+
+Failure states: `invoice.expired` and `swap.expired` (nothing was paid), `transaction.failed` and `transaction.refunded` (the maker's lockup failed or was refunded; your Lightning payment is released).
+
+## Chain → chain
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` | The swap exists | Fund `lockupDetails.lockupAddress` |
+| 2 | `transaction.mempool` / `transaction.confirmed` | Your lockup is seen, then confirmed | Wait |
+| 3 | `transaction.server.mempool` / `transaction.server.confirmed` | The maker locked on the destination chain | **Claim it** |
+| 4 | `transaction.claimed` | Done | Done |
+
+Failure states: `transaction.lockupFailed`, `swap.expired`, `transaction.failed`, `transaction.refunded`. **Refund your lockup.** If you locked a different amount than quoted, the maker may offer a re-quote instead; see [Move funds between chains](/sdk/chain-swaps#accept-a-re-quote).
+
+## Deadlines
+
+Every lockup has a `timeoutBlockHeight`.
+
+- **Claims must confirm before it.** After the deadline, the other side can refund. The SDK's claim helpers stop 6 blocks early on Bitcoin and 60 on Liquid by default.
+- **Refunds through the script path open at it.** Before it, a refund needs the maker to co-sign.
+- **Chain swaps have two deadlines:** the source chain's for your refund, the destination chain's for your claim.
+
+Your app must be running to claim. Check open swaps on start, on resume, and on a schedule.
+
+## Following a swap
+
+### WebSocket
+
+<CodeGroup>
+```typescript TypeScript
+import { SwapWsApi } from "@kaleidorg/swap-sdk";
+
+const ws = new SwapWsApi("wss://maker.signet.kaleidoswap.com/v2/ws");
+void ws.runWsLoop();                 // runs in the background; do not await
+const updates = ws.updates();        // take the stream before subscribing
+await ws.subscribeSwap(swap.id);
+
+for (;;) {
+  const { id, status } = await updates.next();
+  console.log(id, status);
+  if (status === "invoice.settled") break;
+}
+ws.close();
+```
+
+```python Python
+ws = client.ws()
+asyncio.create_task(ws.run_ws_loop())
+updates = ws.updates()               # take the stream before subscribing
+await ws.subscribe_swap(swap.id)
+
+while True:
+    update = await updates.next()
+    print(update.id, update.status)
+    if update.status == "invoice.settled":
+        break
+await ws.shutdown()
+```
+</CodeGroup>
+
+A dead socket reports no error, which happens on mobile after the app is backgrounded. Check `isConnected()` and fall back to polling.
+
+### Polling
+
+`client.swap(id)` (`get_swap` in Python) returns the current status. Poll it on start, on resume, and after a reconnect.
+
+<Note>
+A status is the maker's report, not proof. Before you claim, check the lockup on your own chain backend. Before you refund, check the chain tip against the deadline. See [Trust model](/sdk/trust-model).
+</Note>
+
+Lost your local records? See [Keys and recovery](/sdk/keys-and-recovery#restoring-swaps).

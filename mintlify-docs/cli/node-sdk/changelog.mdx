@@ -1,0 +1,184 @@
+---
+title: "Node SDK Changelog"
+sidebarTitle: "Changelog"
+description: "Node SDK version history, listing new features, breaking changes, and RLN and Maker API compatibility notes for each release"
+---
+
+## SDK v0.1.18 (Current)
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.9.0**
+
+<Warning>
+This release requires an RGB Lightning Node at **v0.9.0 or later**. If your node still runs 0.8.0 or earlier, stay on SDK **0.1.17** — the new `/unlock` body is rejected by those nodes, and their body shape can no longer be expressed.
+</Warning>
+
+### Changed
+
+- Synced the vendored RGB Lightning Node OpenAPI spec to RLN **v0.9.0** and regenerated the node models (Python + TypeScript).
+
+### Added
+
+- `ldk_chain_sync` on `UnlockRequest` selects how LDK follows the chain: `BlockSync` (bitcoind RPC, the pre-0.9.0 behaviour) or `TransactionSync` (indexer only, no bitcoind).
+- New node types `LdkChainSyncBlockSync` and `LdkChainSyncTransactionSync`. TypeScript also exports the `LdkChainSync` union and the `LdkChainSyncBlockSyncMode` / `LdkChainSyncTransactionSyncMode` enums; Python exports the nested configs as `LdkBlockSyncConfig` / `LdkTransactionSyncConfig`.
+
+### Breaking changes
+
+- **`UnlockRequest` no longer takes `bitcoind_rpc_username`, `bitcoind_rpc_password`, `bitcoind_rpc_host`, or `bitcoind_rpc_port`.** Move them into `ldk_chain_sync.config` with `mode: "BlockSync"`, or drop them entirely and pass `mode: "TransactionSync"` with `config.indexer_url`.
+- **`UnlockRequest.indexer_url` is now required** (previously optional and nullable). RGB transfers use it regardless of the chain-sync mode you pick.
+
+## SDK v0.1.17
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Fixed
+
+- **TypeScript** `listSwaps()` no longer loses precision on RGB swap quantities above `Number.MAX_SAFE_INTEGER` — `qty_from`/`qty_to` are preserved verbatim (typed `string | number`; read them with `BigInt(...)`). `JSON.parse` silently rounded them before, misreporting large swaps.
+
+## SDK v0.1.16
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Added
+
+- **TypeScript** `nodeApiKey` on `KaleidoConfig` — a bearer token applied to RLN node requests (including `enableNodeClient()`), kept separate from the maker `apiKey` so credentials are never sent cross-service.
+
+### Fixed
+
+- **TypeScript** a credential intended for an authenticated RLN node was silently dropped — `apiKey` was only ever attached to the maker client, so all node calls went out unauthenticated.
+
+## SDK v0.1.15
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+### Fixed
+
+- Completes the 0.1.14 release, which published to **npm only** (the PyPI job was skipped after a stale decode-invoice unit test failed). No functional change versus 0.1.14.
+
+## SDK v0.1.14
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.8.0**
+
+<Warning>
+If your RGB Lightning Node still runs **v0.7.1**, stay on SDK **0.1.13** — the regenerated 0.1.14+ models target the 0.8.0 API shapes.
+</Warning>
+
+### Changed
+
+- Synced the vendored RGB Lightning Node OpenAPI spec to RLN **v0.8.0** and regenerated the node models (Python + TypeScript).
+- The `/refreshtransfers` endpoint now returns a `RefreshResponse` (`{ transfers }`) instead of an empty body. The SDK methods `refreshTransfers()` / `refresh_transfers()` still return `void` / `None`.
+
+### Added
+
+- New RLN endpoints from v0.8.0: `/getconsignment`, `/provideoutofbandack`, `/provideoutofbandconsignment` (out-of-band consignment transfer), plus their request/response types.
+- New transfer status `WaitingBroadcast`.
+- `Utxo` gains `exists` and `derivation_index`; `Unspent` gains `pending_blinded`.
+
+### Breaking changes
+
+- **`RgbInvoiceRequest` now requires `expiration_timestamp` and `transport_endpoints`** (previously optional/absent in RLN 0.7.1). Callers of `createRgbInvoice`/`create_rgb_invoice` must supply both.
+- **`SendRgbRequest` now requires `expiration_timestamp`** for `sendRgb`/`send_rgb`.
+- `TransferTransportEndpoint.proxy_endpoint` was removed.
+
+## SDK v0.1.13
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Removed
+
+- **Order-based swap flow.** The maker API's `/api/v1/swaps/orders/*` endpoints were retired, so the SDK no longer ships the order-based surface: methods `createSwapOrder`/`create_swap_order`, `getSwapOrderStatus`/`get_swap_order_status`, `getOrderHistory`/`get_order_history`, `getOrderAnalytics`/`get_order_analytics`, the swap-order rate-decision method, and `waitForSwapCompletion`/`wait_for_swap_completion` (plus `SwapCompletionOptions`), along with the `SwapOrder*`, `OrderHistory*`, and `OrderStats*` types. (The LSPS1 `submitLspRateDecision` + `RateDecisionRequest`/`RateDecisionResponse` are unaffected.)
+
+### Breaking changes
+
+- Migrate from the removed order-based methods to the **atomic swap flow**: `initSwap`/`init_swap` → whitelist the swapstring on your RLN node → `executeSwap`/`execute_swap`, with status via `getAtomicSwapStatus`/`get_atomic_swap_status`. LSPS1 channel orders (`createLspOrder`/`getLspOrder`) are unaffected.
+
+## SDK v0.1.11
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Fixed
+
+- `refreshTransfers()` / `refresh_transfers()` now send `filter: []` (refresh all pending transfers) in their default body. RLN 0.7.1 made `filter` a required field on `RefreshRequest` (`POST /refreshtransfers`); the previous `{skip_sync}`-only default was rejected with `HTTP 400 "Failed to deserialize the JSON body into the target type"`. Applies to both the TypeScript and Python clients.
+
+## SDK v0.1.10
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Fixed
+
+- **TypeScript** `listUnspents()` now sends `settled_only: false` by default, matching the Python client and RLN 0.7.1's required `ListUnspentsRequest` shape. In 0.1.9 the TS convenience method still sent the `{skip_sync}`-only body and was rejected by RLN 0.7.1 with `HTTP 400 "Failed to deserialize the JSON body into the target type"`.
+
+## SDK v0.1.9
+
+**Compatible APIs:** Latest Maker API · RLN (RGB Lightning Node) API **v0.7.1**
+
+### Added
+
+- **NWC (Nostr Wallet Connect, NIP-47) client** — new `kaleido-sdk/nwc` subpath. `NWCClient` exposes `rln_*` RLN extension methods and an `RlnTransport` seam that runs the RLN client over an NWC connection (NIP-44 encryption, NIP-04 fallback). LN-invoice decode, send-BTC and list-payments are mapped over the NWC transport.
+- RLN client methods + models for `POST /sendrgb`, `POST /inflate`, `POST /issueassetifa`, and Inflatable Fungible Asset (IFA) types.
+
+### Changed
+
+- Regenerated the RLN models against `kaleidoswap/rgb-lightning-node` **v0.7.1**.
+
+### Breaking changes
+
+- `ListUnspentsRequest` now requires `settled_only`. RLN 0.7.1 rejects the old `{skip_sync}`-only body with `HTTP 400 "Failed to deserialize the JSON body into the target type"`. The `list_unspents()` convenience method defaults `settled_only=False`; callers that build the request directly must set it.
+- `POST /sendasset` was renamed to `POST /sendrgb` (`SendAssetRequest`/`SendAssetResponse` → `SendRgbRequest`/`SendRgbResponse`).
+
+<Info>
+  Versions 0.1.6–0.1.8 are omitted here; see the full [CHANGELOG](https://github.com/kaleidoswap/kaleido-sdk/blob/master/CHANGELOG.md) in the SDK repository.
+</Info>
+
+## SDK v0.1.5
+
+**Compatible APIs:** Latest Maker API and Latest RLN API
+
+<Info>
+This entry describes the surface as it shipped in 0.1.5. The order-based swap methods and `waitForSwapCompletion` listed below were later removed in **0.1.13** — see that entry for the migration path.
+</Info>
+
+### What's included
+
+#### Maker API Client (`client.maker`)
+
+Market data, quotes, swap orders, atomic swap protocol, LSPS1 channel ordering, and WebSocket streaming:
+
+- Market operations: asset and pair listing with caching
+- Quote endpoints: single and bulk quote requests with real-time streaming
+- Swap order management: create, list, and monitor order-based swaps
+- Atomic swap protocol: HTLC-based swaps for desktop and direct node interactions
+- LSPS1 channel ordering: liquidity and channel provisioning
+- WebSocket streaming: `streamQuotesByTicker` / `streamQuotesForAllRoutes` with automatic route discovery and reconnection
+
+#### RLN API Client (`client.rln`)
+
+Full RGB Lightning Node operations for wallet management, Lightning channels, and asset operations:
+
+- Wallet management: BTC and RGB asset operations with balance tracking
+- Channel management: open, monitor, and close Lightning channels
+- Invoice operations: create, list, and monitor Lightning invoices
+- Payment execution: pay invoices and coordinate node-to-node swaps
+- Node info and health: retrieve node configuration and pubkey information
+
+#### SDK Features
+
+- `KaleidoClient.create()` — synchronous factory for both TypeScript and Python
+- `waitForSwapCompletion` — built-in polling helper with configurable timeout and status callback
+- `PrecisionHandler` and `AssetPairMapper` utilities for amount conversion and pair lookups
+- Full error hierarchy: `KaleidoError`, `NetworkError`, `ValidationError`, `APIError`, `QuoteExpiredError`, `NodeNotConfiguredError`
+- Auto-generated types from OpenAPI specs (TypeScript: `openapi-fetch`; Python: Pydantic models)
+
+---
+
+## API v1
+
+**Status:** Stable. No breaking changes planned for v1.
+
+For the Maker API endpoint groups see [Maker API Compatibility](/cli/node-sdk/maker-api-compatibility), and for the node-side surface see [RLN API Compatibility](/cli/node-sdk/rln-api-compatibility). Live environments and their WebSocket URLs are listed in [Installation](/cli/node-sdk/installation#available-environments).
+
+---
+
+## Roadmap
+
+- **Mainnet launch** — production environment for real BTC and RGB assets.
+- **Additional Layer support** — Spark, Arkade, and Liquid protocol adapters in the KaleidoSwap Extension.

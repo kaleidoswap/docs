@@ -1,45 +1,58 @@
 ---
-title: "KaleidoSDK"
+title: "Swap SDK"
 sidebarTitle: "Overview"
-description: "Build Bitcoin wallets and trading apps with the KaleidoSDK, which ships TypeScript and Python clients for non-custodial atomic swaps across Bitcoin Layers"
+description: "Add non-custodial swaps between Bitcoin, Lightning, Liquid, RGB, and Arkade to any wallet or app with the KaleidoSwap Swap SDK for TypeScript, Python, Rust, and React Native"
 ---
 
-The KaleidoSDK (`kaleido-sdk`) lets wallet builders integrate non-custodial atomic swaps across Bitcoin, Lightning, and RGB. It powers the [KaleidoSwap non-custodial DEX](https://kaleidoswap.com) and ships in TypeScript and Python.
+The Swap SDK lets your wallet or app swap between Bitcoin, Lightning, Liquid, RGB, and Arkade against the KaleidoSwap maker. Your users never hand their funds to anyone: every swap is locked so that either both sides settle, or your user gets their money back.
 
-## Architecture
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="rocket" href="/sdk/getting-started">
+    List the maker's routes and make a first swap on signet.
+  </Card>
+  <Card title="How swaps work" icon="lightbulb" href="/sdk/swap-types">
+    Who pays first, who claims, and what happens if a swap fails.
+  </Card>
+  <Card title="Trust model" icon="shield-check" href="/sdk/trust-model">
+    What the SDK verifies, and what the maker controls.
+  </Card>
+</CardGroup>
 
-Both SDKs share the same API design and are built independently:
+## What you can build
 
-![KaleidoSDK Architecture](/assets/images/overview/sdk-architecture.png)
+| Outcome | Route | Signet | Guide |
+|---|---|---|---|
+| Pay a Lightning invoice from on-chain funds | BTC, L-BTC, L-USDT, USDT-RGB → Lightning | **Available** | [Pay Lightning from on-chain](/sdk/submarine-swaps) |
+| Receive on-chain funds by paying over Lightning | Lightning → BTC, L-BTC, L-USDT, USDT-RGB | **Available** | [Receive on-chain from Lightning](/sdk/reverse-swaps) |
+| Move funds from one chain to another | BTC → L-USDT | **Available** | [Move funds between chains](/sdk/chain-swaps) |
+| Swap bitcoin and USDT on RGB | USDT-RGB on chain ↔ BTC on Lightning, or BTC ↔ USDT-RGB both on chain | Against Lightning: **available**. Both on chain (atomic): regtest only | [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |
+| Pay and receive Lightning from an Arkade wallet | Arkade ↔ Lightning | **Available** | [Lightning to and from Arkade](/sdk/arkade) |
+| Let a Lightning payer fund an on-chain payout | Lightning → any address | When the maker enables it | [Pay an address from Lightning](/sdk/pay-through) |
 
-Your application connects through `KaleidoClient`, which provides two sub-clients: **MakerClient** for market operations (quotes, atomic swaps, LSPS1 channel orders) and **RlnClient** for RGB Lightning Node operations (wallets, channels, invoices). Both use HTTP clients internally, with optional WebSocket support for real-time streaming.
+Mainnet is not available yet: asking the SDK for it returns an error, never another provider. The maker's catalogue (`submarinePairs()`, `reversePairs()`, `chainPairs()`, the corridor card) is the source of truth, so read it at runtime. See [Networks](/sdk/networks).
 
-## Two API Surfaces
+## What the SDK does, and what your app does
 
-**Maker API** (`client.maker`)
+| The SDK | Your app |
+|---|---|
+| Derives each swap's keys and secret from your wallet mnemonic | Stores the swap mnemonic and a counter of used swap indexes |
+| Creates the swap and **checks the maker's answer** against your keys before you fund anything | Funds the lockup or pays the invoice from its own wallet |
+| Builds and signs claim and refund transactions | Stores each swap record, and each signed transaction before broadcasting it |
+| Tells you whether a claim or refund is possible right now | Checks open swaps on start, on resume, and on a schedule |
 
-Connect to KaleidoSwap's maker APIs for:
-- Getting quotes for asset pairs
-- Initializing and executing HTLC atomic swaps
-- Streaming real-time quotes via WebSocket
-- LSPS1 channel ordering
+The SDK holds no funds, runs no background timers, and stores nothing. That keeps it small and lets it run anywhere, but it means **your app is responsible for persistence and for coming back before a swap's deadline**. [Common mistakes](/sdk/common-mistakes) lists what goes wrong when it does not.
 
-**RLN (RGB Lightning Node) Operations** (`client.rln`)
+## Packages
 
-Direct interaction with RGB Lightning Nodes for:
-- Wallet management and RGB asset operations
-- Lightning channel management
-- Invoice creation and payment
-- Node-to-node swap coordination
+One Rust engine, published for four runtimes. All four share one version number.
 
-For what KaleidoSwap is as a protocol, see [What's KaleidoSwap](/whats-kaleidoswap/introduction).
+| Runtime | Package |
+|---|---|
+| TypeScript (browsers, Node, extensions) | `@kaleidorg/swap-sdk` |
+| React Native (iOS, Android) | `@kaleidorg/swap-sdk-react-native` |
+| Python | `kaleidorg_swap_sdk` |
+| Rust | `kaleidorg-swap-sdk` from a git tag |
 
-## Key Features
-
-- **Sub-client Architecture**: Organized API access via `client.maker` and `client.rln`
-- **Type Safety**: Auto-generated types from OpenAPI specs — full TypeScript types and Python Pydantic models
-- **Consistent API**: Identical structure across TypeScript and Python
-- **WebSocket Support**: Real-time quote streaming with automatic reconnection
-- **Error Handling**: Comprehensive exception hierarchy across both SDKs
-- **RGB Asset Trading**: Full support for trading RGB assets on Lightning and on-chain
-- **Atomic Swaps**: HTLC-based swaps with no trust in the maker
+<Note>
+Running your own RGB Lightning Node and want to control it from code (channels, RGB assets, payments)? That is the [Node SDK](/cli/node-sdk/introduction), documented with the CLI.
+</Note>

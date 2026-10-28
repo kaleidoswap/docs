@@ -1,0 +1,30 @@
+---
+title: 'RLN API'
+description: "Which RGB Lightning Node (RLN) API version each Node SDK release targets, with the node-side endpoint categories client.rln exposes"
+---
+
+import { nodeSdkVersion, rlnApiVersion } from "/snippets/versions.mdx";
+
+The RLN (RGB Lightning Node) API is provided directly by your configured RGB Lightning Node. It enables wallet operations, Lightning channel management, and node-to-node swap coordination.
+
+## Compatibility
+
+**Node SDK v{nodeSdkVersion}** is generated against **RGB Lightning Node API v{rlnApiVersion}** (the `kaleidoswap/rgb-lightning-node` fork).
+
+The SDK automatically supports the most recent RLN API release. Always keep your SDK and RGB Lightning Node updated to ensure full compatibility and access to the latest features and security improvements. See the [changelog](/cli/node-sdk/changelog) for version history.
+
+<Note>
+To check the latest RLN API changes and updates, refer to the [RGB Lightning Node](https://github.com/kaleidoswap/rgb-lightning-node) or your node documentation.
+</Note>
+
+## Categories
+
+| Category | Purpose | Examples |
+|---|---|---|
+| **Wallet** | BTC and RGB asset management | Balance queries, transfers, asset operations |
+| **Channels** | Lightning Network channel operations | Open, close, monitor, backup channels |
+| **Invoices** | Payment request management | Create, list, and monitor invoices |
+| **Payments** | Payment execution | Pay invoices, coordinate swaps, node-to-node transactions |
+| **Node Info** | Node status and configuration | Pubkey, sync status, capabilities |
+
+These are reached through `client.rln`, which requires a `nodeUrl` / `node_url` on the client: without one, TypeScript throws `ConfigError` and Python raises `NodeNotConfiguredError`. See [Getting Started](/cli/node-sdk/getting-started) for the setup and the node checks, and the [Client Reference](/cli/node-sdk/api-reference) for every method.

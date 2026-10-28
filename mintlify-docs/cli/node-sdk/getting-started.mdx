@@ -1,0 +1,136 @@
+---
+title: "Node SDK: Getting Started"
+sidebarTitle: "Getting Started"
+description: "Create your first Node SDK client in TypeScript or Python, reach the maker and node sub-clients, and request a swap quote in a few lines"
+---
+
+This is the path from an installed package to a first quote. If you have not installed the SDK yet, start with [Installation](/cli/node-sdk/installation).
+
+## Basic Setup
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient } from 'kaleido-sdk';
+
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+});
+
+const assets = await client.maker.listAssets();
+console.log(`Found ${assets.assets.length} assets`);
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient
+
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com"
+)
+
+assets = await client.maker.list_assets()
+print(f"Found {len(assets.assets)} assets")
+```
+</CodeGroup>
+
+<Note>
+`KaleidoClient.create()` is synchronous in both SDKs. Do not `await` client creation.
+</Note>
+
+Every field you can pass to `create()` is listed in [Configuration](/cli/node-sdk/installation#configuration).
+
+## Sub-Client Architecture
+
+<CodeGroup>
+```typescript TypeScript
+const client = KaleidoClient.create({
+  baseUrl: 'https://api.signet.kaleidoswap.com',
+  nodeUrl: 'http://localhost:3001',
+});
+
+const pairs = await client.maker.listPairs();
+
+if (client.hasNode()) {
+  const nodeInfo = await client.rln.getNodeInfo();
+  const channels = await client.rln.listChannels();
+}
+```
+
+```python Python
+client = KaleidoClient.create(
+    base_url="https://api.signet.kaleidoswap.com",
+    node_url="http://localhost:3001",
+)
+
+pairs = await client.maker.list_pairs()
+
+if client.has_node():
+    node_info = await client.rln.get_node_info()
+    channels = await client.rln.list_channels()
+```
+</CodeGroup>
+
+## Node Configuration Checks
+
+TypeScript exposes `client.hasNode()` and always returns an `rln` client instance. Python exposes `client.has_node()`, and `client.rln` raises `NodeNotConfiguredError` if `node_url` is missing.
+
+<CodeGroup>
+```typescript TypeScript
+if (!client.hasNode()) {
+  console.log('Node URL not configured; only maker operations are available');
+} else {
+  const nodeInfo = await client.rln.getNodeInfo();
+  console.log(nodeInfo.pubkey);
+}
+```
+
+```python Python
+if not client.has_node():
+    print("Node URL not configured; only maker operations are available")
+else:
+    node_info = await client.rln.get_node_info()
+    print(node_info.pubkey)
+```
+</CodeGroup>
+
+## First Quote
+
+<CodeGroup>
+```typescript TypeScript
+import { KaleidoClient, Layer } from 'kaleido-sdk';
+
+const client = KaleidoClient.create();
+
+const quote = await client.maker.getQuote({
+  from_asset: {
+    asset_id: 'BTC',
+    layer: Layer.BTC_LN,
+    amount: 100000,
+  },
+  to_asset: {
+    asset_id: 'USDT',
+    layer: Layer.RGB_LN,
+  },
+});
+
+console.log(quote.rfq_id);
+console.log(quote.price);
+```
+
+```python Python
+from kaleido_sdk import KaleidoClient, Layer, PairQuoteRequest, SwapLegInput
+
+client = KaleidoClient.create()
+
+quote = await client.maker.get_quote(
+    PairQuoteRequest(
+        from_asset=SwapLegInput(asset_id="BTC", layer=Layer.BTC_LN, amount=100000),
+        to_asset=SwapLegInput(asset_id="USDT", layer=Layer.RGB_LN),
+    )
+)
+
+print(quote.rfq_id)
+print(quote.price)
+```
+</CodeGroup>
+
+Once a quote looks right, [How to Swap](/cli/node-sdk/how-to-swap) walks the atomic swap flow end to end.

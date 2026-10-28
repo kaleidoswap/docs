@@ -1,0 +1,114 @@
+---
+title: "Lightning to and from Arkade"
+sidebarTitle: "Lightning ↔ Arkade"
+description: "Pay Lightning invoices from an Arkade wallet and receive Lightning payments into it through the KaleidoSwap Intents corridor, with IntentsCorridor for quotes and the Arkade venue for funding, claims, and refunds"
+---
+
+Your user has bitcoin in an Arkade wallet and wants to pay or receive over Lightning. The maker serves this as the **Arkade Intents corridor**, a request-for-quote route beside its `/v2` swaps.
+
+## How it works
+
+| You want | What happens | If it fails |
+|---|---|---|
+| **Pay a Lightning invoice** from Arkade | Your wallet funds a lockup within Arkade. The maker pays the invoice, which reveals the secret it needs to claim the lockup | The lockup comes back to you after its deadline |
+| **Receive over Lightning** into Arkade | The payer pays a hold invoice. The maker locks bitcoin within Arkade for you, and you claim it, which settles the payment | The hold invoice is released |
+
+Funding the lockup **is** accepting the quote: there is no separate accept step.
+
+The SDK splits the work in two:
+
+- **`IntentsCorridor`** talks to the maker: discovery card, quotes, and status. It is in the core of every runtime.
+- **The Arkade venue** (`@kaleidorg/swap-sdk/arkade`, TypeScript and React Native) does what needs an Arkade wallet: funding, claiming, refunding, and recovery.
+
+`ARKD` appears in the maker's pair catalogue, but `createReverseSwap({ to: "ARKD" })` is refused: use the corridor.
+
+## Setup
+
+```bash
+npm install @kaleidorg/swap-sdk @arkade-os/sdk @arkade-os/swap
+```
+
+You need an Arkade wallet from `@arkade-os/sdk`. The corridor speaks to the same maker URL as the rest of the SDK.
+
+## Discover the corridor
+
+```typescript TypeScript
+import { SwapClient, IntentsCorridor } from "@kaleidorg/swap-sdk";
+
+const corridor = new IntentsCorridor(SwapClient.forNetwork("signet"));
+const card = await corridor.card(); // null when the maker does not serve the corridor
+```
+
+The card lists the maker's markets with amount limits as decimal strings. It is **not verified**. To check its signature, fetch `corridor.cardRaw()`, verify the Schnorr signature over the SHA-256 of the compact card without its `sig` field (in the maker's serialization order, processed losslessly), and establish trust in its `discovery_pubkey` separately.
+
+## Quote
+
+A refusal is an answer, not an error: it comes back as a value.
+
+<CodeGroup>
+```typescript Receive on Arkade
+import { isRfqQuote, newRfqId } from "@kaleidorg/swap-sdk";
+
+const answer = await corridor.quoteLightningReceive({
+  rfq_id: newRfqId(),
+  amount_side: "to",
+  amount: 12_000,          // receive exactly this on Arkade
+  payment_hash,            // sha256 of YOUR preimage, hex
+  payout_address,          // your Ark address
+  payout_pubkey,           // your x-only Ark key, hex
+});
+if (!isRfqQuote(answer)) throw new Error(`refused: ${answer.reason}`);
+// answer.profile.invoice is the hold invoice. Check it pays payment_hash
+// for exactly answer.from_amount before paying it.
+```
+
+```typescript Send from Arkade
+const answer = await corridor.quoteLightningSend({
+  rfq_id: newRfqId(),
+  invoice,                 // the BOLT11 you want paid
+  refund_address,          // your Ark address
+  client_refund_pubkey,    // your x-only key, hex
+});
+```
+
+```python Python
+answer = await client.quote_lightning_send(request)
+```
+</CodeGroup>
+
+Payloads keep the wire's snake_case and `bigint` amounts, so a quote can be passed straight to `@arkade-os/swap`.
+
+## Pay or receive with the venue
+
+Install the venue's peers alongside the SDK: `@arkade-os/sdk` and `@arkade-os/swap`.
+
+```typescript TypeScript
+import {
+  ArkadeIntentsVenue,
+  InMemoryArkadeSwapStore,
+  kaleidoswapHttpTransport,
+} from "@kaleidorg/swap-sdk/arkade";
+
+const venue = new ArkadeIntentsVenue({
+  wallet,                                   // your @arkade-os/sdk wallet
+  arkServerUrl,
+  transport: kaleidoswapHttpTransport("https://maker.signet.kaleidoswap.com/v2"),
+  store: new InMemoryArkadeSwapStore(),     // use a persistent store in production
+});
+
+// invoice: the decoded BOLT11 (InvoiceFacts from @arkade-os/swap)
+const { record, address, fundAmountSats } = await venue.prepareLightningSend({ invoice });
+// The recovery record is persisted before this returns. Funding accepts the quote:
+const txid = await wallet.send({ address, amount: fundAmountSats });
+await venue.notifyFunded(record.id, txid);
+```
+
+Call `venue.reconcile()` from your own scheduler (an interval in Node, `chrome.alarms` in an MV3 extension). Each pass claims funded receives, refunds matured sends, and settles records from chain evidence. The venue runs no timers of its own and does not trust status messages from the relay.
+
+On React Native, import the venue from `@kaleidorg/swap-sdk-react-native/arkade`.
+
+## If something goes wrong
+
+- **The maker refuses a quote:** that is an answer, not an error. Show `answer.reason` and try another amount.
+- **The maker never pays your invoice:** `venue.reconcile()` refunds the lockup once its deadline passes.
+- **Your app restarts mid-swap:** the venue saved its record before you funded anything. Use a persistent store, then keep calling `reconcile()`.

@@ -1,0 +1,58 @@
+---
+title: "Trust Model"
+sidebarTitle: "Trust Model"
+description: "What the Swap SDK verifies, what the KaleidoSwap maker controls, what binds once funds are locked, and what your app must check itself"
+---
+
+**Only the locked contract enforces a swap.** Everything the maker says before and around it (prices, status updates, fee estimates, discovery cards) is information. A wrong answer from the maker can cost a failed attempt or a worse price. It cannot take funds from a swap your app verified and locked.
+
+## What binds
+
+| | Enforces | Does not |
+|---|---|---|
+| **The lockup you funded** | Claim with the preimage, refund after the deadline, with the keys you derived | Fair pricing, or that the maker shows up |
+| **The hold invoice you paid** | Settles only when the preimage is revealed | That the other leg is ever funded (then the payment is released) |
+| **A quote or pair card** | The terms you create the swap on, when you pass `pairHash` | Completion |
+| **An atomic RGB transaction** | Both sides move together, or neither does | Price beyond the limits you set |
+
+## What the SDK checks for you
+
+Before it returns a created swap, the SDK rebuilds the contract from your own inputs and compares it with what the maker sent. A mismatch stops the flow before any money moves.
+
+| Input | Comes from |
+|---|---|
+| Your claim or refund key, your preimage | Your wallet, through `SwapMasterKey` |
+| The maker's key, the deadline, the amounts | The maker's create response, checked for consistency |
+| The lockup address | Derived by the SDK, then compared with the maker's |
+| The invoice's payment hash | Compared with your preimage hash (reverse) or decoded from your invoice (submarine) |
+| The RGB contract | The ID you pin at creation, never the maker's word |
+
+The same applies to atomic RGB quotes: the rgb-lib offer inside a quote must move the same amounts and asset as the quote, so what your wallet signs is what you showed the user.
+
+## What your app must check
+
+- **Chain state.** The maker's status is not proof. Claim only against a lockup your own chain backend shows, with the confirmations you require. Refund only when your own backend shows the chain past the deadline.
+- **The network.** Keep the maker, the chain backend, and payout addresses on the same network. See [Networks](/sdk/networks).
+- **Invoices you pay.** For an Arkade receive, check the hold invoice pays your hash for exactly the quoted amount.
+- **Fees.** Choose them from your own estimates, not the maker's.
+
+## What the maker controls
+
+- **Whether it fills.** It can decline to create, pay, or lock. Your funds then come back through the refund or the released hold.
+- **Cooperation.** It can refuse to co-sign. The script path still works after the deadline.
+- **Re-quotes.** On a chain swap it can offer a new amount, but only your `swapAuth` can accept it.
+- **The pay-through payout.** That leg has no lock. Use pay-through only where that is acceptable.
+
+## Liveness
+
+- **Claims need your app online before the deadline.** If the deadline passes, the maker refunds its lockup and the swap fails. Your own lockup is then refundable and a held Lightning payment is released, so you lose fees and time. Claim late and you risk racing the maker's refund.
+- **Refunds after the deadline need nothing from the maker.** Only your refund key and a chain backend.
+
+## Credentials
+
+| Credential | What it authorizes | Where it may live |
+|---|---|---|
+| Swap mnemonic and keys | Claims and refunds | Your user's device |
+| `swapAuth` (per swap) | Accepting a re-quote, cooperative refunds | Stored with the swap, kept secret |
+| Organization key | Nothing: it is a public label for attribution | Anywhere, including client bundles |
+| Organization API key | Attribution, rate limits, partner-only access; no fund movement | Servers only |

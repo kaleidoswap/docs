@@ -102,14 +102,14 @@ The swap script rebuilt on your side, and the claim and refund builder.
 
 | Export | Page |
 |---|---|
-| `AtomicSwaps`, `ATOMIC_BTC_TO_USDT_RGB`, `ATOMIC_USDT_RGB_TO_BTC` | [RGB swaps](/sdk/rgb-swaps#atomic-swaps-on-l1) |
-| `IntentsCorridor`, `isRfqQuote`, `newRfqId` | [Arkade swaps](/sdk/arkade) |
+| `AtomicSwaps`, `ATOMIC_BTC_TO_USDT_RGB`, `ATOMIC_USDT_RGB_TO_BTC` | [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1) |
+| `IntentsCorridor`, `isRfqQuote`, `newRfqId` | [Lightning ↔ Arkade](/sdk/arkade) |
 | `canClaim`, `canRefund`, `claimReverseSwap`, `claimChainSwap`, `refundSubmarineSwap`, `refundChainSwap` | [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript) |
-| `PayThroughClient` (`/pay-through`) | [Pay-through](/sdk/pay-through) |
+| `PayThroughClient` (`/pay-through`) | [Pay an address from Lightning](/sdk/pay-through) |
 | `esploraFeeEstimates`, `selectEsploraFeeRate`, `esploraTipHeight` (`/chain-data`) | [Claims and refunds](/sdk/claims-and-refunds#fees) |
-| `ArkadeIntentsVenue`, `kaleidoswapHttpTransport` (`/arkade`) | [Arkade swaps](/sdk/arkade) |
+| `ArkadeIntentsVenue`, `kaleidoswapHttpTransport` (`/arkade`) | [Lightning ↔ Arkade](/sdk/arkade) |
 | `BtcLikeTransaction.fromHex(hex, chain)` | [Claims and refunds](/sdk/claims-and-refunds#persist-first-then-broadcast) |
-| `resolveLightningAddress(address, amountSat)` | [Submarine swaps](/sdk/submarine-swaps) |
+| `resolveLightningAddress(address, amountSat)` | [Pay Lightning from on-chain](/sdk/submarine-swaps) |
 | `toJson(value, space?)` | Lossless serialization of `bigint` values |
 | `isKaleidoSwapError(error)` | [Troubleshooting](/sdk/troubleshooting#errors) |
 | `init(source?)`, `initWithModule(module)`, `wasmUrl` | [Installation](/sdk/installation#typescript-load-the-webassembly-binary) |

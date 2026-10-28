@@ -1,147 +1,117 @@
 ---
-title: "Swap SDK: Getting Started"
-sidebarTitle: "Getting Started"
-description: "Connect to the KaleidoSwap signet maker with the Swap SDK, list the routes it trades, and create a first reverse swap from Lightning to Liquid"
+title: "Swap SDK Quickstart"
+sidebarTitle: "Quickstart"
+description: "Install the Swap SDK, connect to the KaleidoSwap signet maker, list the routes it trades, and receive L-BTC on Liquid from a Lightning payment"
 ---
 
-This page goes from an installed package to a first swap on signet. If you have not installed the SDK yet, start with [Installation](/sdk/installation).
+This page takes you from nothing to a finished swap on signet, in TypeScript. It needs Node 22 or later, a Lightning wallet with signet sats, and a Liquid testnet address to receive into.
 
-## 1. Connect and list routes
+## 1. Install
 
-`forNetwork("signet")` resolves the live KaleidoSwap maker, so this runs as written with no keys or funds.
+```bash
+npm install @kaleidorg/swap-sdk
+```
 
-<CodeGroup>
-```typescript TypeScript
+## 2. List what the maker trades
+
+No keys, no funds. If this prints routes, the SDK and the maker are both reachable.
+
+```typescript routes.ts
 import { init, SwapClient } from "@kaleidorg/swap-sdk";
 
 await init();
 const client = SwapClient.forNetwork("signet");
 
-const submarine = await client.submarinePairs(); // on-chain -> Lightning
-const reverse = await client.reversePairs();     // Lightning -> on-chain
-const chain = await client.chainPairs();         // on-chain -> on-chain
+const catalogues = {
+  "on-chain -> Lightning": await client.submarinePairs(),
+  "Lightning -> on-chain": await client.reversePairs(),
+  "chain -> chain": await client.chainPairs(),
+};
 
-for (const [from, tos] of Object.entries(reverse)) {
-  for (const [to, card] of Object.entries(tos)) {
-    console.log(`${from} -> ${to}`, card.limits.minimal, card.limits.maximal, card.fees.percentage);
+for (const [kind, pairs] of Object.entries(catalogues)) {
+  for (const [from, tos] of Object.entries(pairs)) {
+    for (const [to, card] of Object.entries(tos)) {
+      console.log(`${kind}: ${from} -> ${to}  ${card.limits.minimal}-${card.limits.maximal}  fee ${card.fees.percentage}%`);
+    }
   }
 }
 ```
 
-```python Python
-import asyncio
-import kaleidorg_swap_sdk as sdk
+Each route has a **card** with its limits (in sats for BTC and L-BTC), its fees, and a `hash` you pass back when you create a swap, to hold the maker to those terms.
 
-async def main():
-    client = sdk.SwapClient.default(sdk.Network.SIGNET)
-    reverse = await client.get_reverse_pairs()
-    print(reverse)
+## 3. Receive L-BTC from a Lightning payment
 
-asyncio.run(main())
-```
+This is a [reverse swap](/sdk/reverse-swaps): you pay a Lightning invoice, the maker locks L-BTC for you, and you claim it.
 
-```rust Rust
-use kaleidorg_swap_sdk::boltz::BoltzApiClientV2;
-use kaleidorg_swap_sdk::network::Network;
+```typescript swap.ts
+import { init, SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
+import { writeFile } from "node:fs/promises";
 
-let client = BoltzApiClientV2::default(Network::Signet)?;
-let reverse = client.get_reverse_pairs().await?;
-```
-</CodeGroup>
+await init();
+const network = "signet";
+const makerUrl = "https://maker.signet.kaleidoswap.com/v2";
+const liquidEsploraUrl = "https://blockstream.info/liquidtestnet/api";
+const payoutAddress = process.env.LIQUID_ADDRESS!; // a Liquid testnet address you control
 
-Each catalogue is a map of `from → to → pair card`. A card carries the route's `limits` (in the sending asset's base units: sats for BTC and L-BTC), its `fees` (a percentage plus miner fees), its `rate`, and a `hash`. Passing that `hash` back when you create a swap holds the maker to the terms you showed the user.
+const client = new SwapClient(makerUrl);
 
-## 2. Derive a swap key and preimage
-
-Swap keys and preimages derive from a **swap mnemonic**, which is a BIP85 child of your wallet mnemonic (index 26589). Derive it once, store it, and use a fresh index for every swap.
-
-<CodeGroup>
-```typescript TypeScript
-import { SwapMasterKey } from "@kaleidorg/swap-sdk";
-
-const master = SwapMasterKey.fromWalletMnemonic(walletMnemonic, "signet");
-// Persist master.swapMnemonic() and reload with SwapMasterKey.fromSwapMnemonic().
-
-const index = 0n; // from your persisted counter; never reuse one
+// Keys and the swap secret come from a mnemonic you keep. Use a new index for every swap.
+const master = SwapMasterKey.fromWalletMnemonic(process.env.WALLET_MNEMONIC!, network);
+const index = 0n;
 const claimKey = master.deriveSwapKey(index);
 const preimage = master.derivePreimage(index);
-```
 
-```python Python
-master = sdk.SwapMasterKey.from_wallet_mnemonic(wallet_mnemonic, sdk.Network.SIGNET)
-claim_key = master.derive_swap_key(0)
-preimage = master.derive_preimage(0)
-```
-</CodeGroup>
-
-<Warning>
-Reusing an index reuses claim and refund material across swaps. Keep a persisted counter, not a constant. See [Keys and recovery](/sdk/keys-and-recovery).
-</Warning>
-
-## 3. Create a reverse swap
-
-A reverse swap turns a Lightning payment into an on-chain output you claim. This one pays out L-BTC on Liquid.
-
-```typescript TypeScript
-import { SwapScript, toJson } from "@kaleidorg/swap-sdk";
-
-const card = (await client.reversePairs())?.BTC?.["L-BTC"];
-if (!card) throw new Error("BTC -> L-BTC is not offered right now");
-
-const swap = await client.createReverseSwap("signet", {
+// Create the swap. The SDK checks the maker's answer against your key and secret.
+const card = (await client.reversePairs()).BTC["L-BTC"];
+const swap = await client.createReverseSwap(network, {
   from: "BTC",
   to: "L-BTC",
-  invoiceAmount: 50_000n,          // amounts are bigint in TypeScript
+  invoiceAmount: 50_000n,
   preimageHash: preimage.sha256,
   claimPublicKey: claimKey.publicKey,
   pairHash: card.hash,
 });
+await writeFile(`${swap.id}.json`, toJson({ index, swap })); // save before paying
 
-// Rebuild the swap script against your own key before paying anything.
-const script = SwapScript.fromReverse("liquid", "signet", swap, claimKey.publicKey);
+console.log(`Pay this invoice:\n${swap.invoice}`);
 
-await store.put(swap.id, toJson({ index, swap })); // includes swapAuth, issued once
-console.log("Pay this invoice:", swap.invoice);
-```
+// Wait until the maker's lockup confirms.
+while ((await client.swap(swap.id)).status !== "transaction.confirmed") {
+  await new Promise((r) => setTimeout(r, 5_000));
+}
 
-`createReverseSwap` already checks the response against your key and preimage hash. `SwapScript.fromReverse` gives you the script you will claim from, and fails if the lockup it derives does not match the maker's address.
-
-## 4. Claim
-
-After you pay the invoice, the maker locks L-BTC to the swap script. Wait for the lockup to confirm, then claim it with the preimage:
-
-```typescript TypeScript
+// Claim it. Broadcasting reveals the secret, and the maker settles your payment.
+const script = SwapScript.fromReverse("liquid", network, swap, claimKey.publicKey);
 const claim = await script.constructClaim(preimage.preimage, {
-  outputAddress: myLiquidAddress,
+  outputAddress: payoutAddress,
   swapId: swap.id,
   keysSecretHex: claimKey.secretKey,
-  makerBaseUrl: "https://maker.signet.kaleidoswap.com/v2",
-  network: "signet",
-  liquidEsploraUrl: "https://blockstream.info/liquidtestnet/api",
+  makerBaseUrl: makerUrl,
+  network,
+  liquidEsploraUrl,
 });
-
-const txid = await claim.broadcast("signet", undefined, "https://blockstream.info/liquidtestnet/api");
+console.log("Claimed:", await claim.broadcast(network, undefined, liquidEsploraUrl));
 ```
 
-Broadcasting the claim reveals the preimage on chain, and the maker uses it to settle your Lightning payment. The swap ends in `invoice.settled`.
+Run it, pay the printed invoice, and the script claims the L-BTC once the maker's lockup confirms. The swap ends in `invoice.settled`.
 
-<Tip>
-The SDK repository ships this flow as a runnable program, plus a submarine swap with refund and an Arkade corridor quote. See [Examples](/sdk/examples).
-</Tip>
+<Warning>
+This script keeps it short: a fixed index, a polling loop, and no failure handling. A real app keeps a counter of used indexes, saves signed transactions before broadcasting, and handles failed swaps. See [Common mistakes](/sdk/common-mistakes).
+</Warning>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Swap lifecycle" icon="arrows-spin" href="/sdk/how-to-swap">
-    Status updates, deadlines, and what to persist at each step.
+  <Card title="How swaps work" icon="lightbulb" href="/sdk/swap-types">
+    Who pays first, who claims, and what happens if a swap fails.
   </Card>
-  <Card title="Claims and refunds" icon="rotate-left" href="/sdk/claims-and-refunds">
-    Cooperative and script-path spends, fees, and retries.
+  <Card title="Pay Lightning from on-chain" icon="bolt" href="/sdk/submarine-swaps">
+    The opposite direction, with a refund path.
   </Card>
-  <Card title="Submarine swaps" icon="bolt" href="/sdk/submarine-swaps">
-    Pay a Lightning invoice from on-chain funds.
+  <Card title="Swap states" icon="list-check" href="/sdk/how-to-swap">
+    Every status, and what your app does at each one.
   </Card>
-  <Card title="Best practices" icon="shield-check" href="/sdk/best-practices">
-    What a production integration must get right.
+  <Card title="Examples" icon="code" href="/sdk/examples">
+    Runnable programs in the SDK repository.
   </Card>
 </CardGroup>

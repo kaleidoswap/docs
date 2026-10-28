@@ -1,94 +1,95 @@
 ---
-title: "Chain Swaps: On-chain to On-chain"
-sidebarTitle: "Chain Swaps"
-description: "Swap between chains, such as BTC to L-USDT, with a Swap SDK chain swap: create, lock, accept a re-quote with swapAuth, and claim cooperatively or through the script path"
+title: "Move Funds Between Chains"
+sidebarTitle: "Move Funds Between Chains"
+description: "Swap on-chain funds from one chain to another, such as BTC to L-USDT, with a Swap SDK chain swap: lock, accept a re-quote, and claim"
 ---
 
-In a chain swap both sides lock on chain: you on the source chain, the maker on the destination chain, both to the hash of your preimage. You claim the maker's lockup, which reveals the preimage and lets the maker claim yours. If the swap fails, you refund your lockup after the timeout.
+import Setup from "/snippets/swap-sdk-setup.mdx";
 
-Check `chainPairs()` for the routes on offer, for example BTC → L-USDT.
+Your user has funds on one chain and wants them on another, for example BTC on Bitcoin to L-USDT on Liquid. This is a **chain swap**. `chainPairs()` lists the routes on offer.
 
-## 1. Create the swap
+## How it works
 
-A chain swap needs two keys: a claim key for the destination side and a refund key for the source side. Derive them from two different indexes.
+Your app creates a secret and locks funds on the source chain. The maker locks on the destination chain, to the same secret. Your app claims the maker's lockup, which reveals the secret and lets the maker claim yours. If the maker never locks, your app refunds its own lockup.
 
-<CodeGroup>
-```typescript TypeScript
-const claimKey = master.deriveSwapKey(claimIndex);
-const refundKey = master.deriveSwapKey(refundIndex);
-const preimage = master.derivePreimage(claimIndex);
+A chain swap uses two keys: a refund key for your lockup and a claim key for the maker's.
 
-const card = (await client.chainPairs())?.BTC?.["L-USDT"];
-if (!card) throw new Error("BTC -> L-USDT is not offered right now");
+## Setup
 
-const swap = await client.createChainSwap("signet", {
-  from: "BTC",
-  to: "L-USDT",
-  preimageHash: preimage.sha256,
-  claimPublicKey: claimKey.publicKey,
-  refundPublicKey: refundKey.publicKey,
-  userLockAmount: 100_000n,
-  pairHash: card.hash,
-});
-await store.put(swap.id, toJson({ claimIndex, refundIndex, makerUrl, response: swap }));
-```
+<Setup />
 
-```python Python
-swap = await client.create_chain_swap(
-    sdk.CreateChainRequest(
-        _from=btc,
-        to=lbtc,
-        preimage_hash=preimage.sha256(),
-        claim_public_key=claim_key.public(),
-        refund_public_key=refund_key.public(),
-        user_lock_amount=100_000,
-    )
-)
-print(swap.lockup_details.lockup_address)
-```
-</CodeGroup>
+## Swap
 
-Both keys are required: the SDK validates both lockup scripts against them before it returns the response. The response has `lockupDetails` (where you lock) and `claimDetails` (where the maker locks for you).
+<Steps>
+  <Step title="Create the swap">
+    ```typescript
+    const refundIndex = await nextSwapIndex();
+    const claimIndex = await nextSwapIndex();
+    const refundKey = master.deriveSwapKey(refundIndex);
+    const claimKey = master.deriveSwapKey(claimIndex);
+    const preimage = master.derivePreimage(claimIndex);
 
-## 2. Lock
+    const card = (await client.chainPairs())?.BTC?.["L-USDT"];
+    if (!card) throw new Error("Route not offered right now");
 
-Send exactly the expected amount to `swap.lockupDetails.lockupAddress`. The maker then locks on the destination chain: `transaction.server.mempool`, then `transaction.server.confirmed`.
+    const swap = await client.createChainSwap(network, {
+      from: "BTC",
+      to: "L-USDT",
+      preimageHash: preimage.sha256,
+      claimPublicKey: claimKey.publicKey,
+      refundPublicKey: refundKey.publicKey,
+      userLockAmount: 100_000n,
+      pairHash: card.hash,
+    });
 
-## 3. Accept a re-quote, if offered
+    await store.put(swap.id, toJson({ refundIndex, claimIndex, makerUrl, swap }));
+    ```
 
-If you locked a different amount than quoted, the maker can offer a new destination amount. Reading it needs no credential; accepting it needs the swap's `swapAuth`:
+    The response has `lockupDetails` (where you lock) and `claimDetails` (where the maker locks for you). The SDK checks both against your keys.
+  </Step>
 
-```typescript TypeScript
+  <Step title="Lock">
+    Send exactly the expected amount to `swap.lockupDetails.lockupAddress` in one transaction.
+  </Step>
+
+  <Step title="Wait for the maker's lockup">
+    The swap reaches `transaction.server.mempool`, then `transaction.server.confirmed`.
+  </Step>
+
+  <Step title="Claim">
+    The cooperative claim is signed with your **refund** key against your lockup's script, so rebuild both sides:
+
+    ```typescript
+    const lockupScript = SwapScript.fromChain("bitcoin", network, "lockup", swap.lockupDetails, refundKey.publicKey);
+    const claimScript = SwapScript.fromChain("liquid", network, "claim", swap.claimDetails, claimKey.publicKey);
+
+    const claim = await claimScript.constructCooperativeClaim(
+      preimage.preimage,
+      { outputAddress: myLiquidAddress, swapId: swap.id, keysSecretHex: claimKey.secretKey, makerBaseUrl: makerUrl, network, liquidEsploraUrl },
+      lockupScript,
+      refundKey.secretKey,
+    );
+    ```
+
+    If the maker does not cooperate, claim alone with `claimScript.constructClaim(preimage.preimage, { ...params, cooperative: false })`. `claimChainSwap` does this fallback for you.
+  </Step>
+</Steps>
+
+## Accept a re-quote
+
+If you locked a different amount than quoted, the maker can offer a new destination amount. Accepting it needs the swap's `swapAuth`:
+
+```typescript
 const quote = await client.quote(swap.id);
-await client.acceptQuote(swap.id, quote.amount, saved.response.swapAuth);
+await client.acceptQuote(swap.id, quote.amount, swap.swapAuth);
 ```
 
-Without `swapAuth` the maker rejects the call with `401 invalid_swap_auth`, and the swap sits until it expires into its refund path.
+Without `swapAuth` the call fails with `401 invalid_swap_auth`, and the swap expires into its refund.
 
-## 4. Claim
+## If something goes wrong
 
-Rebuild both sides of the swap and claim cooperatively. The cooperative chain claim is signed with the **refund** key against the lockup script:
-
-```typescript TypeScript
-const lockupScript = SwapScript.fromChain("bitcoin", "signet", "lockup", swap.lockupDetails, refundKey.publicKey);
-const claimScript = SwapScript.fromChain("liquid", "signet", "claim", swap.claimDetails, claimKey.publicKey);
-
-const claim = await claimScript.constructCooperativeClaim(
-  preimage.preimage,
-  { outputAddress, swapId: swap.id, keysSecretHex: claimKey.secretKey, makerBaseUrl, network: "signet", liquidEsploraUrl },
-  lockupScript,
-  refundKey.secretKey,
-);
-```
-
-If the maker does not cooperate, claim through the script path with `claimScript.constructClaim(preimage, { ...params, cooperative: false })`. `claimChainSwap` does this fallback for you; see [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript).
-
-Timeouts are per side: your refund uses the **lockup** chain's tip and timeout, your claim the **claim** chain's.
-
-## Refund
-
-If the maker never locks, refund your lockup with `lockupScript.constructRefund(...)` and the swap's `swapAuth`, or let `refundChainSwap` decide between the cooperative and script paths.
+Refund your lockup with `lockupScript.constructRefund({ ...params, swapAuth: swap.swapAuth })`, or let `refundChainSwap` choose between the cooperative and script paths. Your refund uses the **source** chain's deadline; your claim uses the **destination** chain's.
 
 <Note>
-USDT-RGB is not a chain-swap asset. To swap BTC and USDT-RGB on chain, use the [atomic L1 swap](/sdk/rgb-swaps#atomic-swaps-on-l1).
+USDT-RGB is not a chain-swap asset. For BTC ↔ USDT-RGB on chain, use an [atomic swap](/sdk/rgb-swaps#atomic-swaps-on-l1).
 </Note>

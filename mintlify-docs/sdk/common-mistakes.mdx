@@ -1,0 +1,59 @@
+---
+title: "Common Mistakes"
+sidebarTitle: "Common Mistakes"
+description: "The mistakes that lose or strand funds in a Swap SDK integration, and how to avoid each one: storage, key reuse, deadlines, networks, broadcasts, credentials, and mobile lifecycles"
+---
+
+Each of these has stranded funds or broken an integration. Check your app against all of them before you ship.
+
+## Not saving the swap before funding it
+
+Save the swap ID, the swap index, the maker URL, and the **full create response** (including `swapAuth`) before your app funds the lockup or pays the invoice. Without them it cannot claim or refund. Keep old records too: a submarine swap's preimage is the user's proof of payment.
+
+In TypeScript, save with `toJson`, not `JSON.stringify`. Responses carry `bigint` amounts, and `JSON.stringify` throws at exactly the step that must not fail.
+
+## Reusing a swap index
+
+Two swaps on the same index share keys and the same secret. Keep a persisted counter, increment it before every swap, and never derive from a constant. A chain swap uses two indexes.
+
+## Not being online before the deadline
+
+Claims must confirm before the swap's deadline. The SDK runs no timers, so your app must check open swaps:
+
+- on start, whatever screen the user opens,
+- on resume,
+- on a schedule while swaps are open.
+
+Leave a margin: the helpers stop 6 blocks before the deadline on Bitcoin and 60 on Liquid.
+
+## Mixing networks
+
+The signet maker settles on Mutinynet. A testnet3 chain backend uses the same address format, so the mismatch raises no error: your app funds or watches the wrong chain. Keep the maker, the chain backend, and payout addresses on the [same network](/sdk/networks), and check the payout address before paying a reverse swap's invoice.
+
+## Funding with the wrong amount or several transactions
+
+Fund each lockup with exactly the expected amount, in one transaction. A wrong amount fails the swap (`transaction.lockupFailed`) and leaves you to refund it.
+
+## Treating the maker's status as proof
+
+Claim only against a lockup your own chain backend shows with the confirmations you require. Refund only when your own backend shows the chain past the deadline. See [Trust model](/sdk/trust-model).
+
+## Signing again after a lost broadcast
+
+A lost broadcast response does not mean the broadcast failed. Save every signed transaction before broadcasting it, and on retry send the **same** bytes (`BtcLikeTransaction.fromHex`). Never build a second claim or refund for the same swap, and run one operation per swap at a time.
+
+## Taking fees from the maker
+
+Pass an explicit fee for every claim and refund, from your own estimates (`@kaleidorg/swap-sdk/chain-data`), with a ceiling in `feeLimits`. The maker's Liquid fee is a fixed placeholder and its Liquid height can be `0`.
+
+## Logging secrets
+
+`swapAuth`, swap keys, idempotency keys, and API keys are secrets. Log `swap.id`, never the whole response. Scrub API keys from error reporters that capture local variables.
+
+## Shipping an API key to clients
+
+An organization API key in a web page, extension, or app is readable by every user, who can then spend your organization's limits. Use an [organization key](/sdk/partner-attribution) in client code, and API keys only on servers.
+
+## Trusting a socket on mobile
+
+A backgrounded app loses its status WebSocket, and a dead socket reports no error. On resume, check `isConnected()` and poll `swap(id)`. On launch, run `SwapMasterKey.restore()` instead of assuming in-memory state survived.

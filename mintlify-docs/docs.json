@@ -147,23 +147,24 @@
             "tab": "SDK",
             "groups": [
               {
-                "group": "Introduction",
+                "group": "Get Started",
                 "icon": "flag",
                 "pages": [
                   "sdk/introduction",
-                  "sdk/installation",
-                  "sdk/getting-started"
+                  "sdk/getting-started",
+                  "sdk/installation"
                 ]
               },
               {
-                "group": "Concepts",
+                "group": "How It Works",
                 "icon": "lightbulb",
                 "pages": [
                   "sdk/swap-types",
                   "sdk/how-to-swap",
-                  "sdk/networks",
+                  "sdk/trust-model",
+                  "sdk/claims-and-refunds",
                   "sdk/keys-and-recovery",
-                  "sdk/claims-and-refunds"
+                  "sdk/networks"
                 ]
               },
               {
@@ -183,8 +184,8 @@
                 "group": "Reference",
                 "icon": "book",
                 "pages": [
+                  "sdk/common-mistakes",
                   "sdk/api-reference",
-                  "sdk/best-practices",
                   "sdk/examples",
                   "sdk/compatibility",
                   "sdk/changelog",
@@ -821,6 +822,10 @@
     {
       "source": "/sdk/maker-api-compatibility",
       "destination": "/cli/node-sdk/maker-api-compatibility"
+    },
+    {
+      "source": "/sdk/best-practices",
+      "destination": "/sdk/common-mistakes"
     }
   ],
   "footer": {

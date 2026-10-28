@@ -1,60 +1,58 @@
 ---
-title: "Swap Types"
-sidebarTitle: "Swap Types"
-description: "The swap types the Swap SDK supports, from submarine, reverse, and chain HTLC swaps to USDT-RGB, atomic RGB L1, Arkade Intents, and pay-through, with what each guarantees"
+title: "How Swaps Work"
+sidebarTitle: "How Swaps Work"
+description: "How Swap SDK swaps settle: one secret locks both legs, who pays first on each route, who claims, and how a failed swap is refunded"
 ---
 
-The KaleidoSwap maker serves several kinds of swap. They differ in which side pays first, which side claims on chain, and how strong the settlement guarantee is.
+## One secret, two locks
 
-## At a glance
+Every swap except pay-through and atomic RGB swaps works the same way. One side generates a random secret, the **preimage**, and shares only its hash. Both legs of the swap are locked to that hash:
 
-| Type | You send | You receive | You build | Guarantee |
-|---|---|---|---|---|
-| [Submarine](/sdk/submarine-swaps) | On-chain (BTC, L-BTC, L-USDT, USDT-RGB) | A paid Lightning invoice | A refund, only if the swap fails | Atomic (HTLC) |
-| [Reverse](/sdk/reverse-swaps) | A Lightning payment | On-chain (BTC, L-BTC, L-USDT, USDT-RGB) | The claim | Atomic (HTLC) |
-| [Chain](/sdk/chain-swaps) | On-chain on one chain | On-chain on another | The claim, or a refund | Atomic (HTLC on both chains) |
-| [Atomic RGB L1](/sdk/rgb-swaps#atomic-swaps-on-l1) | BTC or USDT-RGB | USDT-RGB or BTC | Nothing; your RGB wallet signs one shared transaction | Single transaction |
-| [Arkade Intents](/sdk/arkade) | Bitcoin on Arkade or Lightning | Lightning or bitcoin on Arkade | Funding, claim, and refund through the Arkade venue | Atomic (VHTLC) |
-| [Pay-through](/sdk/pay-through) | A Lightning payment | An on-chain payout to any address | Nothing | Maker-controlled payout leg |
+- the Lightning payment, as a **hold invoice** that settles only when someone reveals the preimage, and
+- the on-chain funds, in a **lockup** output that can be spent in two ways: with the preimage (the claim), or by the original sender after a deadline (the refund).
 
-The routes a maker offers right now are whatever `submarinePairs()`, `reversePairs()`, `chainPairs()`, and the atomic and corridor catalogues return. Read them at runtime rather than hardcoding a list.
+Claiming the on-chain funds reveals the preimage on chain, and that is exactly what the other side needs to settle the Lightning payment. So either both legs settle, or neither does and the money goes back.
 
-## HTLC swaps: submarine, reverse, chain
+```mermaid
+flowchart LR
+  A("Create swap") --> B("First side locks funds")
+  B --> C("Second side locks funds")
+  C --> D("Claim reveals the preimage")
+  D --> E("Other side settles")
+  B --> F("Deadline passes: refund")
+  C --> F
+```
 
-These three follow the Boltz `/v2` protocol. Each one locks on-chain funds in a Taproot output with two ways to spend it:
+## Who does what on each route
 
-- **Claim path:** the receiver's signature plus the preimage.
-- **Refund path:** the sender's signature after a timeout block height.
+| Route | Who pays first | Who claims on chain | If it fails |
+|---|---|---|---|
+| **On-chain → Lightning** (submarine) | You lock on chain | The maker, after paying your invoice | You refund your lockup after the deadline, or earlier if the maker co-signs |
+| **Lightning → on-chain** (reverse) | You pay a hold invoice | You | Your Lightning payment is released back to you automatically |
+| **Chain → chain** (chain) | You lock on the source chain | You, on the destination chain | You refund your lockup |
+| **Atomic RGB** | Nobody: one transaction moves both sides | — | The transaction never confirms, and nothing moved |
+| **Arkade ↔ Lightning** | Depends on direction | The receiving side, through the Arkade venue | Refund through the Arkade venue |
+| **Pay-through** | The payer, with a hold invoice | — | The hold is released if the maker never pays out |
 
-The Lightning leg is locked to the same hash. Whoever claims on chain reveals the preimage, which lets the other party settle the Lightning payment. If nobody claims, the sender refunds after the timeout.
+The technical names in parentheses (submarine, reverse, chain) come from the Boltz protocol the SDK speaks. The SDK methods use them: `createSubmarineSwap`, `createReverseSwap`, `createChainSwap`.
 
-Both parties can also agree to spend through a MuSig2 key-path signature. That is cheaper and looks like an ordinary payment on chain. The SDK uses it when the maker cooperates and falls back to the script path when it does not. See [Claims and refunds](/sdk/claims-and-refunds).
+## Who holds the secret
 
-### Submarine: on-chain → Lightning
+- **On-chain → Lightning:** the person who issued the Lightning invoice holds the preimage. The maker learns it by paying the invoice, and only then can it claim your lockup.
+- **Lightning → on-chain** and **chain → chain:** your app derives the preimage. You reveal it when you claim.
 
-You lock funds on chain; the maker pays your Lightning invoice and claims your lockup with the preimage that payment reveals. In the normal case you build nothing: you only fund. You build a transaction only to **refund** if the maker never pays.
+## Cheap path and safe path
 
-### Reverse: Lightning → on-chain
+A lockup can be claimed or refunded two ways:
 
-You pay a hold invoice locked to your preimage hash; the maker locks funds on chain to the same hash. You **claim** them, which reveals the preimage and lets the maker settle your payment. Until you claim, your Lightning payment stays held, not settled.
+- **Cooperatively.** You and the maker sign together (MuSig2). The transaction is smaller, looks like a normal payment, and a refund does not have to wait for the deadline.
+- **Alone, through the script.** With the preimage for a claim, or after the deadline for a refund. This never depends on the maker.
 
-### Chain: on-chain → on-chain
+The SDK tries the cooperative path first and falls back to the script path. See [Claims and refunds](/sdk/claims-and-refunds).
 
-Both sides lock on chain: you on the source chain, the maker on the destination chain. You claim the maker's lockup; the maker claims yours. If the amount you lock differs from the quote, the maker can offer a re-quote, which you accept with the swap's `swapAuth` credential.
+## The two exceptions
 
-## USDT on RGB
+- **Atomic RGB swaps** move both sides in one Bitcoin transaction your RGB wallet co-signs. There is no lock, no deadline, and no refund. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1).
+- **Pay-through** holds the payer's Lightning payment until the maker broadcasts the payout, but the payout itself is not locked: the maker controls it. See [Pay an address from Lightning](/sdk/pay-through).
 
-USDT-RGB works in two different ways:
-
-- **HTLC swaps.** `USDT-RGB → BTC` (submarine) and `BTC → USDT-RGB` (reverse) follow the same protocol as BTC, with the RGB asset carried on the HTLC output. Your rgb-lib wallet moves and validates the asset; the SDK validates the HTLC and builds the claim or refund PSBT for your wallet to color.
-- **Atomic swaps on L1.** BTC ↔ USDT-RGB in one transaction that moves both legs. There is no HTLC and no refund: either the transaction confirms or nothing happened. The SDK quotes, verifies, and tracks; rgb-lib signs.
-
-See [RGB swaps](/sdk/rgb-swaps).
-
-## Bitcoin on Arkade
-
-Bitcoin on Arkade (`ARKD` in the catalogue) is not a Boltz-shaped route. The maker serves it as a request-for-quote corridor beside `/v2`, and the SDK speaks it through `IntentsCorridor` (quotes) and the `@kaleidorg/swap-sdk/arkade` venue (funding, claims, and refunds with an Ark wallet). See [Arkade swaps](/sdk/arkade).
-
-## Pay-through
-
-Pay-through lets a payer settle a Lightning invoice while the recipient gets an on-chain payout. The payer's Lightning payment stays held until the maker broadcasts the payout, but the payout itself has no hash lock: the maker controls that leg. Use it where a trust-minimized flow is acceptable, and the HTLC swaps where it is not. See [Pay-through](/sdk/pay-through).
+Next: [Swap states](/sdk/how-to-swap) follows each route step by step, and [Trust model](/sdk/trust-model) covers what each step guarantees.

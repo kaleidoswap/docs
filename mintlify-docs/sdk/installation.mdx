@@ -85,7 +85,7 @@ The browser package cannot run on a device because Hermes has no WebAssembly. `@
 - With Expo, use `expo prebuild` and a development build.
 - The Arkade venue is a separate entry, `@kaleidorg/swap-sdk-react-native/arkade`. It needs `@kaleidorg/swap-sdk`, `@arkade-os/sdk`, and `@arkade-os/swap` installed alongside, and Metro must resolve package `exports` (the default from React Native 0.79).
 
-Phones sleep and swaps have deadlines. Read the mobile notes in [Best practices](/sdk/best-practices#mobile-apps) before you ship.
+Phones sleep and swaps have deadlines. Read [Common mistakes](/sdk/common-mistakes#trusting-a-socket-on-mobile) before you ship.
 
 ## Pinning a version
 
@@ -96,7 +96,7 @@ Read the [changelog](/sdk/changelog) before moving to a new minor. Breaking chan
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Getting started" icon="rocket" href="/sdk/getting-started">
+  <Card title="Quickstart" icon="rocket" href="/sdk/getting-started">
     Reach the signet maker and make a first swap.
   </Card>
   <Card title="Networks" icon="network-wired" href="/sdk/networks">

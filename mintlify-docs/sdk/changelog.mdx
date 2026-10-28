@@ -15,8 +15,8 @@ All four packages (Rust, Python, TypeScript, React Native) share one version num
 
 ### Added
 
-- **Atomic BTC ↔ USDT-RGB swaps on L1:** `AtomicSwaps` in TypeScript and `atomic_*` methods in Rust and Python. See [RGB swaps](/sdk/rgb-swaps#atomic-swaps-on-l1).
-- **Organization keys** for client-side partner attribution: `createKaleidoOrgClient`, `SwapClient.kaleido_org`, `KaleidoOrgClient`. See [Partner attribution](/sdk/partner-attribution).
+- **Atomic BTC ↔ USDT-RGB swaps on L1:** `AtomicSwaps` in TypeScript and `atomic_*` methods in Rust and Python. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1).
+- **Organization keys** for client-side partner attribution: `createKaleidoOrgClient`, `SwapClient.kaleido_org`, `KaleidoOrgClient`. See [Attribute swaps to your organization](/sdk/partner-attribution).
 - **Pay-through idempotency keys:** `create(request, { idempotencyKey })` and `supportsIdempotency()`.
 - **Stateless claim and refund helpers** in TypeScript with confirmation and timeout checks. See [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript).
 - **`SwapScript.fromRestored`** rebuilds scripts from restore entries.
@@ -40,7 +40,7 @@ All four packages (Rust, Python, TypeScript, React Native) share one version num
 
 ### Added
 
-- **USDT-RGB submarine and reverse swaps** in Rust, Python, and TypeScript, with rgb-lib wallet integration. See [RGB swaps](/sdk/rgb-swaps).
+- **USDT-RGB submarine and reverse swaps** in Rust, Python, and TypeScript, with rgb-lib wallet integration. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps).
 - **RGB cooperative submarine refunds** (`rgb-coop-refund-v1`).
 - **Cooperative refund authorization** with `swapAuth`, and signed credential recovery with `recoverSwapAuth`.
 

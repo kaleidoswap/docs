@@ -1,0 +1,30 @@
+The code on this page assumes this setup. It connects to the signet maker and loads your swap mnemonic. See [Installation](/sdk/installation) and [Keys and recovery](/sdk/keys-and-recovery) if you have neither yet.
+
+<CodeGroup>
+```typescript TypeScript
+import { init, SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
+
+await init();
+
+const network = "signet";
+const makerUrl = "https://maker.signet.kaleidoswap.com/v2";
+const bitcoinEsploraUrl = "https://esplora.signet.kaleidoswap.com";
+const liquidEsploraUrl = "https://blockstream.info/liquidtestnet/api";
+
+const client = new SwapClient(makerUrl);
+const master = SwapMasterKey.fromSwapMnemonic(process.env.SWAP_MNEMONIC!, network);
+
+// Two things your app provides:
+//   nextSwapIndex(): Promise<bigint>  a persisted counter, never reused
+//   store                             durable storage for swap records
+```
+
+```python Python
+import asyncio, os
+import kaleidorg_swap_sdk as sdk
+
+network = sdk.Network.SIGNET
+client = sdk.SwapClient("https://maker.signet.kaleidoswap.com/v2", None)
+master = sdk.SwapMasterKey.from_swap_mnemonic(os.environ["SWAP_MNEMONIC"], network)
+```
+</CodeGroup>

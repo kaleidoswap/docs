@@ -1,21 +1,29 @@
 ---
-title: "RGB Swaps: USDT on Bitcoin"
-sidebarTitle: "RGB Swaps"
-description: "Swap BTC and USDT-RGB with the Swap SDK, through HTLC submarine and reverse swaps or single-transaction atomic swaps on L1, with an rgb-lib wallet handling the asset"
+title: "Swap BTC and USDT on RGB"
+sidebarTitle: "Swap BTC and USDT on RGB"
+description: "Swap bitcoin and USDT-RGB with the Swap SDK, over Lightning with HTLC swaps or on chain with single-transaction atomic swaps, with an rgb-lib wallet handling the asset"
 ---
 
-USDT on RGB lives in Bitcoin outputs, but its ownership is validated off chain by RGB wallets. The Swap SDK handles the Bitcoin side of a swap. Your **rgb-lib** wallet handles the asset: it moves it, validates the consignments, colors transactions, and keeps its own operation state. The SDK does not bundle rgb-lib.
+import Setup from "/snippets/swap-sdk-setup.mdx";
 
-There are two ways to swap BTC and USDT-RGB.
+Your user holds USDT on RGB, or wants to. RGB assets live in Bitcoin outputs, but their ownership is checked by RGB wallets, not by Bitcoin itself. So every RGB swap has two parts:
 
-| | HTLC swaps | Atomic swaps on L1 |
-|---|---|---|
-| Directions | `USDT-RGB → BTC` (submarine), `BTC → USDT-RGB` (reverse) | BTC ↔ USDT-RGB |
-| Mechanism | HTLC output carrying the asset | One transaction moving both legs |
-| Refund | Yes, after the timeout | Not needed: the transaction confirms or nothing happened |
-| SDK surface | `createSubmarineSwap` / `createReverseSwap`, `SwapScript` | `AtomicSwaps` |
+- **The Swap SDK** handles the Bitcoin side: it checks the maker's contract and builds the transaction.
+- **Your rgb-lib wallet** handles the asset: it moves it, validates its history, and marks ("colors") the transaction with the asset. The SDK does not bundle rgb-lib.
 
-## HTLC swaps
+## Which swap to use
+
+| You want | Use | How it settles | If it fails |
+|---|---|---|---|
+| USDT-RGB on chain → bitcoin on Lightning | [HTLC swap](#htlc-swaps-over-lightning) (submarine) | A lockup carrying the asset, claimed when the maker pays your invoice | You refund the lockup after the deadline |
+| Bitcoin on Lightning → USDT-RGB on chain | [HTLC swap](#htlc-swaps-over-lightning) (reverse) | The maker locks the asset; you claim it | Your Lightning payment is released |
+| BTC ↔ USDT-RGB, both on chain | [Atomic swap](#atomic-swaps-on-l1) | One transaction moves both sides | Nothing moved: the transaction never confirmed |
+
+## Setup
+
+<Setup />
+
+## HTLC swaps over Lightning
 
 ### Pin the contract
 
@@ -93,6 +101,10 @@ When the response advertises `rgb.cooperativeRefund === "rgb-coop-refund-v1"`, t
 
 ## Atomic swaps on L1
 
+<Note>
+The signet maker does not offer atomic pairs yet; `atomic.pairs()` returns them empty. Test against a regtest maker.
+</Note>
+
 An atomic swap moves both legs in one Bitcoin transaction. There is no HTLC and no refund. The SDK quotes, verifies, and tracks; rgb-lib accepts the offer, signs the proposal, and accepts the transfers.
 
 ```typescript TypeScript
@@ -133,3 +145,11 @@ What the SDK checks for you:
 Expectations are in base units: sats, or the contract's smallest unit (six decimals for USDT-RGB), never the pair card's display units. `maxServiceFee` bounds only the fee the maker declares; `minToAmount` and `maxFromAmount` bound the price.
 
 rgb-lib messages cross the JavaScript and Python boundaries as JSON text, because their 64-bit values do not survive JavaScript numbers.
+
+## If something goes wrong
+
+- **HTLC swap, maker never pays (USDT-RGB → Lightning):** refund with `prepareRgbRefund` and `finalizeRefund` after the deadline, or earlier through a cooperative refund if the maker offers it.
+- **HTLC swap, maker never locks (Lightning → USDT-RGB):** your Lightning payment is released. Nothing to do.
+- **`rgb_fee_input_required`:** the lockup's sats cannot pay the fee. Prepare the spend with `funding: { kind: "callerInputs" }` and add BTC inputs.
+- **Atomic swap stops before `complete`:** the maker signs last and broadcasts, so before that nothing has moved.
+- **Any RGB spend:** a Bitcoin broadcast alone does not finish the RGB transfer. Complete the rgb-lib operation, or the wallet will not show the asset.

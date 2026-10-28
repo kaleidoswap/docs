@@ -1,40 +1,65 @@
 ---
-title: "Swap Lifecycle"
-sidebarTitle: "Swap Lifecycle"
-description: "Follow a Swap SDK swap from quote to settlement: what to persist, how to track status over WebSocket or polling, the status names, and the deadlines that matter"
+title: "Swap States"
+sidebarTitle: "Swap States"
+description: "The states each Swap SDK swap moves through, what your app does at each one, who claims and who refunds, the deadlines, and how to follow a swap over WebSocket or polling"
 ---
 
-Every HTLC swap runs through the same stages. The details differ by [swap type](/sdk/swap-types), but what your app must do at each stage does not.
+## Who claims, who refunds
 
-<Steps>
-  <Step title="Pick a route">
-    Read the pair catalogue for the swap type (`submarinePairs()`, `reversePairs()`, `chainPairs()`), check the amount against the card's `limits`, and show the user its fees and rate. Keep the card's `hash`.
-  </Step>
-  <Step title="Derive key material">
-    Take the next unused index from your persisted counter and derive the swap key (and, for reverse and chain swaps, the preimage) with `SwapMasterKey`. See [Keys and recovery](/sdk/keys-and-recovery).
-  </Step>
-  <Step title="Create and verify">
-    Call `createSubmarineSwap`, `createReverseSwap`, or `createChainSwap` with your public key and the card's `pairHash`. The SDK rejects a response whose script, address, timeout, or invoice hash does not match what you asked for. Rebuild the `SwapScript` from the response with your own key.
-  </Step>
-  <Step title="Persist before you move money">
-    Store the swap ID, the index, the maker URL, and the full create response, including `swapAuth`. Serialize with `toJson`, not `JSON.stringify`, because TypeScript responses carry `bigint` amounts.
-  </Step>
-  <Step title="Fund or pay">
-    Fund the lockup address with exactly the expected amount (submarine, chain), or pay the invoice (reverse). Your wallet does this; the SDK holds no funds.
-  </Step>
-  <Step title="Track status">
-    Subscribe to the swap over WebSocket, or poll `swap(id)`.
-  </Step>
-  <Step title="Claim or refund">
-    Claim once the maker's lockup is confirmed (reverse, chain). Refund if the swap fails or expires (submarine, chain). See [Claims and refunds](/sdk/claims-and-refunds).
-  </Step>
-</Steps>
+| | On-chain → Lightning | Lightning → on-chain | Chain → chain |
+|---|---|---|---|
+| **Your app claims** | | ✓ | ✓ |
+| **Your app refunds** | ✓ (if it fails) | | ✓ (if it fails) |
+| **Refunded automatically** | | ✓ (the hold invoice is released) | |
 
-## Tracking status
+## On-chain → Lightning (submarine)
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` / `invoice.set` | The swap exists with your invoice | Fund `address` with exactly `expectedAmount` |
+| 2 | `transaction.mempool` | Your lockup is in the mempool | Wait |
+| 3 | `transaction.confirmed` | Your lockup confirmed | Wait |
+| 4 | `invoice.pending` | The maker is paying your invoice | Wait |
+| 5 | `invoice.paid` | Your invoice is paid | Nothing more to do |
+| 6 | `transaction.claim.pending` / `transaction.claimed` | The maker claimed your lockup | Done |
+
+Failure states: `invoice.failedToPay`, `transaction.lockupFailed` (wrong amount), `swap.expired`. In each case, **refund your lockup**.
+
+## Lightning → on-chain (reverse)
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` | The swap exists | Pay `invoice` |
+| 2 | `transaction.mempool` | The maker's lockup is in the mempool | Wait (or claim, if you accept zero-conf) |
+| 3 | `transaction.confirmed` | The maker's lockup confirmed | **Claim it** |
+| 4 | `invoice.settled` | Your claim revealed the preimage and the maker settled your payment | Done |
+
+Failure states: `invoice.expired` and `swap.expired` (nothing was paid), `transaction.failed` and `transaction.refunded` (the maker's lockup failed or was refunded; your Lightning payment is released).
+
+## Chain → chain
+
+| # | Status | What happened | Your app |
+|---|---|---|---|
+| 1 | `swap.created` | The swap exists | Fund `lockupDetails.lockupAddress` |
+| 2 | `transaction.mempool` / `transaction.confirmed` | Your lockup is seen, then confirmed | Wait |
+| 3 | `transaction.server.mempool` / `transaction.server.confirmed` | The maker locked on the destination chain | **Claim it** |
+| 4 | `transaction.claimed` | Done | Done |
+
+Failure states: `transaction.lockupFailed`, `swap.expired`, `transaction.failed`, `transaction.refunded`. **Refund your lockup.** If you locked a different amount than quoted, the maker may offer a re-quote instead; see [Move funds between chains](/sdk/chain-swaps#accept-a-re-quote).
+
+## Deadlines
+
+Every lockup has a `timeoutBlockHeight`.
+
+- **Claims must confirm before it.** After the deadline, the other side can refund. The SDK's claim helpers stop 6 blocks early on Bitcoin and 60 on Liquid by default.
+- **Refunds through the script path open at it.** Before it, a refund needs the maker to co-sign.
+- **Chain swaps have two deadlines:** the source chain's for your refund, the destination chain's for your claim.
+
+Your app must be running to claim. Check open swaps on start, on resume, and on a schedule.
+
+## Following a swap
 
 ### WebSocket
-
-The maker streams status updates on `/v2/ws`. Run the socket loop, subscribe to each swap, and read updates as they arrive.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -46,9 +71,9 @@ await ws.subscribeSwap(swap.id);
 
 const updates = ws.updates();
 for (;;) {
-  const update = await updates.next();
-  console.log(update.id, update.status);
-  if (update.status === "invoice.settled") break;
+  const { id, status } = await updates.next();
+  console.log(id, status);
+  if (status === "invoice.settled") break;
 }
 ws.close();
 ```
@@ -68,40 +93,16 @@ await ws.shutdown()
 ```
 </CodeGroup>
 
-A dead socket reports no error, which matters most on mobile after the app is backgrounded. Check `isConnected()` (`is_connected()` in Python) and fall back to polling.
+A dead socket reports no error, which happens on mobile after the app is backgrounded. Check `isConnected()` and fall back to polling.
 
 ### Polling
 
-`client.swap(id)` (`get_swap` in Python) returns the current status and the maker's audit events for the swap. Poll it on resume, after a reconnect, and anywhere you cannot hold a socket open.
+`client.swap(id)` (`get_swap` in Python) returns the current status. Poll it on start, on resume, and after a reconnect.
 
-## Status names
+<Note>
+A status is the maker's report, not proof. Before you claim, check the lockup on your own chain backend. Before you refund, check the chain tip against the deadline. See [Trust model](/sdk/trust-model).
+</Note>
 
-| Status | Meaning |
-|---|---|
-| `swap.created` | The swap exists; nothing has been paid or locked yet |
-| `invoice.set` | A submarine swap has its invoice |
-| `transaction.mempool` | A lockup transaction is in the mempool |
-| `transaction.confirmed` | The lockup has confirmed |
-| `invoice.pending` | The maker is paying the invoice (submarine) |
-| `invoice.paid` | The maker paid the invoice (submarine) |
-| `transaction.server.mempool` / `transaction.server.confirmed` | The maker's lockup on the destination chain (chain swaps) |
-| `transaction.claim.pending` | A cooperative claim is in progress |
-| `transaction.claimed` | The lockup has been claimed; the swap succeeded |
-| `invoice.settled` | The hold invoice settled; the reverse swap succeeded |
-| `swap.expired` | The swap expired before it was funded |
-| `invoice.expired` | The invoice expired unpaid |
-| `invoice.failedToPay` | The maker could not pay the invoice; refund your lockup |
-| `transaction.lockupFailed` | The lockup was wrong (amount or asset); refund it |
-| `transaction.failed` / `transaction.refunded` | The maker's side failed or was refunded |
+## Lost your local records?
 
-Treat the maker's status as information, not proof. Before you sign a claim, check the lockup transaction on your own chain backend. Before you refund, check the chain tip against the swap's timeout.
-
-## Deadlines
-
-- **Refunds** become possible through the script path once the lockup chain reaches the swap's `timeoutBlockHeight`. Before that, a refund needs the maker's cooperation.
-- **Claims** must confirm before that same timeout, or the maker can refund the lockup. The reconciliation helpers stop by default 6 blocks before the deadline on Bitcoin and 60 on Liquid.
-- **Chain swaps** have two timeouts: the lockup side for your refund and the claim side for your claim.
-
-## Recovering after a restart
-
-If your app loses its local state, `SwapMasterKey.restore(client)` finds every swap the maker has seen for your swap mnemonic, including the ones still owed a claim or refund. `SwapScript.fromRestored` rebuilds each script without the original create response. See [Keys and recovery](/sdk/keys-and-recovery#restoring-swaps).
+`SwapMasterKey.restore(client)` finds every swap created with your swap mnemonic, including those still owed a claim or refund. See [Keys and recovery](/sdk/keys-and-recovery#restoring-swaps).

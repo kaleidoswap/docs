@@ -1,91 +1,105 @@
 ---
-title: "Reverse Swaps: Lightning to On-chain"
-sidebarTitle: "Reverse Swaps"
-description: "Turn a Lightning payment into on-chain BTC, L-BTC, or L-USDT with a Swap SDK reverse swap, and claim the payout with your own preimage"
+title: "Receive On-chain from Lightning"
+sidebarTitle: "Receive On-chain from Lightning"
+description: "Turn a Lightning payment into on-chain BTC, L-BTC, or L-USDT with a Swap SDK reverse swap, and claim the payout with your own secret"
 ---
 
-In a reverse swap you pay a Lightning hold invoice and the maker locks funds on chain for you. Both are locked to the hash of a preimage only you know. When you claim the on-chain output, the preimage becomes public and the maker uses it to settle your payment. Until you claim, your payment is held, not settled.
+import Setup from "/snippets/swap-sdk-setup.mdx";
 
-## 1. Create the swap
+Your user pays over Lightning and wants the funds on chain. This is a **reverse swap**.
 
-<CodeGroup>
-```typescript TypeScript
-import { SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
+## How it works
 
-const client = SwapClient.forNetwork("signet");
-const master = SwapMasterKey.fromSwapMnemonic(swapMnemonic, "signet");
-const claimKey = master.deriveSwapKey(index);
-const preimage = master.derivePreimage(index);
+Your app creates a secret and pays a hold invoice locked to it. The maker then locks the funds on chain to the same secret. Your app claims them, which reveals the secret and lets the maker settle your payment.
 
-const card = (await client.reversePairs())?.BTC?.["L-BTC"];
-if (!card) throw new Error("Lightning -> L-BTC is not offered right now");
+Until your app claims, the Lightning payment is held, not settled. If the maker never locks, the payment is released back.
 
-const amount = 50_000n;
-if (amount < card.limits.minimal || amount > card.limits.maximal) throw new Error("outside limits");
+## Setup
 
-const swap = await client.createReverseSwap("signet", {
-  from: "BTC",          // Lightning BTC
-  to: "L-BTC",          // BTC, L-BTC, L-USDT, USDT-RGB
-  invoiceAmount: amount,
-  preimageHash: preimage.sha256,
-  claimPublicKey: claimKey.publicKey,
-  pairHash: card.hash,
-});
+<Setup />
 
-const script = SwapScript.fromReverse("liquid", "signet", swap, claimKey.publicKey);
-await store.put(swap.id, toJson({ index, makerUrl, response: swap }));
-```
+## Receive funds
 
-```python Python
+<Steps>
+  <Step title="Create the swap">
+    ```typescript
+    const index = await nextSwapIndex();
+    const claimKey = master.deriveSwapKey(index);
+    const preimage = master.derivePreimage(index);
+
+    const card = (await client.reversePairs())?.BTC?.["L-BTC"]; // Lightning -> L-BTC
+    if (!card) throw new Error("Route not offered right now");
+
+    const swap = await client.createReverseSwap(network, {
+      from: "BTC",
+      to: "L-BTC",
+      invoiceAmount: 50_000n,
+      preimageHash: preimage.sha256,
+      claimPublicKey: claimKey.publicKey,
+      pairHash: card.hash,
+    });
+
+    await store.put(swap.id, toJson({ index, makerUrl, swap }));
+    ```
+
+    The SDK checks that the invoice is locked to your secret and that the lockup is claimable with your key.
+  </Step>
+
+  <Step title="Pay the invoice">
+    Pay `swap.invoice` from any Lightning wallet. Check your payout address first: the claim is the first step that would reject a wrong-network address, and by then the invoice is paid.
+  </Step>
+
+  <Step title="Wait for the maker's lockup">
+    The swap reaches `transaction.mempool`, then `transaction.confirmed`.
+  </Step>
+
+  <Step title="Claim">
+    ```typescript
+    const script = SwapScript.fromReverse("liquid", network, swap, claimKey.publicKey);
+
+    const claim = await script.constructClaim(preimage.preimage, {
+      outputAddress: myLiquidAddress,
+      swapId: swap.id,
+      keysSecretHex: claimKey.secretKey,
+      makerBaseUrl: makerUrl,
+      network,
+      liquidEsploraUrl,
+    });
+    // Save claim.hex() first, then:
+    await claim.broadcast(network, undefined, liquidEsploraUrl);
+    ```
+
+    The swap ends in `invoice.settled`.
+  </Step>
+</Steps>
+
+<Accordion title="Python">
+```python
 claim_key = master.derive_swap_key(index)
 preimage = master.derive_preimage(index)
-lbtc = sdk.lbtc_chain_from_network(sdk.Network.SIGNET)
-btc = sdk.btc_chain_from_network(sdk.Network.SIGNET)
+btc = sdk.btc_chain_from_network(network)
+lbtc = sdk.lbtc_chain_from_network(network)
 
 swap = await client.create_reverse_swap(
     sdk.CreateReverseRequest(
-        invoice_amount=50_000,
-        _from=btc,
-        to=lbtc,
-        preimage_hash=preimage.sha256(),
-        claim_public_key=claim_key.public(),
+        invoice_amount=50_000, _from=btc, to=lbtc,
+        preimage_hash=preimage.sha256(), claim_public_key=claim_key.public(),
     )
 )
 script = sdk.SwapScript.from_reverse(chain=lbtc, reverse_response=swap, our_pubkey=claim_key.public())
 ```
-</CodeGroup>
+</Accordion>
 
-The SDK checks that the invoice commits to your preimage hash and that the lockup script matches your key before it returns.
+## If something goes wrong
 
-## 2. Pay the invoice
+- **The maker never locks**, or its lockup fails (`transaction.failed`, `transaction.refunded`): your Lightning payment is released automatically. Nothing to do.
+- **Your app was offline:** claim as soon as it comes back. A claim must confirm before the swap's `timeoutBlockHeight`. `claimReverseSwap` checks the remaining margin and your chain evidence before revealing the secret; see [Claims and refunds](/sdk/claims-and-refunds).
+- **The broadcast response was lost:** rebroadcast the saved transaction. Never sign a second claim.
 
-Pay `swap.invoice` from any Lightning wallet. The maker then broadcasts its lockup to the swap script: `transaction.mempool`, then `transaction.confirmed`.
+## Receiving other assets
 
-## 3. Claim
-
-Once the lockup is confirmed, claim it to your own address:
-
-```typescript TypeScript
-const claim = await script.constructClaim(preimage.preimage, {
-  outputAddress: myLiquidAddress,
-  swapId: swap.id,
-  keysSecretHex: claimKey.secretKey,
-  makerBaseUrl,
-  network: "signet",
-  liquidEsploraUrl,
-});
-// Persist claim.hex() and claim.txid() first.
-await claim.broadcast("signet", undefined, liquidEsploraUrl);
-```
-
-The swap ends in `invoice.settled`. The claim must confirm before the swap's timeout; after that, the maker may refund its lockup. `claimReverseSwap` checks your chain evidence and the remaining margin before it reveals the preimage; see [Claims and refunds](/sdk/claims-and-refunds#stateless-reconciliation-helpers-typescript).
-
-<Warning>
-Check the payout address before you pay. Liquid networks encode addresses similarly enough that a wrong-network payout is unrecoverable, and the claim is the first step that would reject a bad address, after the invoice is already paid.
-</Warning>
-
-## Other destination assets
-
-- **BTC** uses `SwapScript.fromReverse("bitcoin", ...)` and a Bitcoin Esplora URL.
-- **L-USDT** claims use a caller-funded PSET: your wallet adds an L-BTC input for the fee, then the SDK finalizes. See `prepareLiquidClaim`.
-- **USDT-RGB** claims produce a PSBT your rgb-lib wallet colors. See [RGB swaps](/sdk/rgb-swaps).
+| Asset you receive | What changes |
+|---|---|
+| BTC | `to: "BTC"`, `SwapScript.fromReverse("bitcoin", ...)`, a Bitcoin Esplora URL |
+| L-USDT | `to: "L-USDT"`. The claim uses a caller-funded PSET: your wallet adds L-BTC for the fee (`prepareLiquidClaim`) |
+| USDT-RGB | Pin the RGB contract, and your rgb-lib wallet colors the claim. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |

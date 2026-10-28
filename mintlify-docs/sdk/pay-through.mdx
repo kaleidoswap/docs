@@ -61,6 +61,5 @@ Requests time out after `timeoutMs` (30 seconds by default) and accept an option
 
 ## If something goes wrong
 
-- **The create response was lost:** call `create` again with the same request and idempotency key. Never create a new order while the first one's outcome is unknown.
 - **The invoice expired unpaid:** start a new payment intent with a new request and a new key.
 - **The payer paid but no payout appears:** check `pay.status(order.id)`. The hold settles only after the payout is broadcast; until then the payment can still be released.

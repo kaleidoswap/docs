@@ -28,21 +28,7 @@ Node 22+ runs the `.ts` files directly.
 
 Start with `01-pairs.ts`. If it prints a table, the SDK, its WebAssembly binary, and the maker are all reachable.
 
-The examples read their configuration from the environment:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `KALEIDO_NETWORK` | `signet` | `signet` or `regtest` |
-| `KALEIDO_MAKER_URL` | The network's maker | Override the maker URL |
-| `KALEIDO_SWAP_INDEX` | `0` | BIP85 child index for this swap. Never reuse one |
-| `KALEIDO_SWAP_MNEMONIC` | — | The persisted 12-word swap mnemonic |
-| `BOLT11_INVOICE` | — | `02`: the invoice the maker should pay |
-| `LIQUID_CLAIM_ADDRESS` | — | `03`: where the L-BTC payout lands |
-| `REFUND_ADDRESS` | — | `02 --refund`: where refunded bitcoin lands |
-
-<Note>
-The examples take the swap index from an environment variable so you can see it. A real application keeps a persisted counter.
-</Note>
+Each example lists the environment variables it needs at the top of the file.
 
 ## Python
 

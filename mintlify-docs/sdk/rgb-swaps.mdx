@@ -150,6 +150,5 @@ rgb-lib messages cross the JavaScript and Python boundaries as JSON text, becaus
 
 - **HTLC swap, maker never pays (USDT-RGB → Lightning):** refund with `prepareRgbRefund` and `finalizeRefund` after the deadline, or earlier through a cooperative refund if the maker offers it.
 - **HTLC swap, maker never locks (Lightning → USDT-RGB):** your Lightning payment is released. Nothing to do.
-- **`rgb_fee_input_required`:** the lockup's sats cannot pay the fee. Prepare the spend with `funding: { kind: "callerInputs" }` and add BTC inputs.
 - **Atomic swap stops before `complete`:** the maker signs last and broadcasts, so before that nothing has moved.
 - **Any RGB spend:** a Bitcoin broadcast alone does not finish the RGB transfer. Complete the rgb-lib operation, or the wallet will not show the asset.

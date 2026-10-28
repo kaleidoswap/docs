@@ -1,139 +1,74 @@
 ---
-title: "Bitcoin Swap API: Getting Started"
-sidebarTitle: "Getting Started"
-description: "Start using the KaleidoSwap swap API, with base URLs for signet and mainnet plus authentication, request format, and rate limits"
+title: "API Conventions"
+sidebarTitle: "Conventions"
+description: "How to call the KaleidoSwap maker API: base URL, authentication with partner keys and per-swap credentials, amount units, error format, rate limits, and idempotency"
 ---
 
-Welcome to the KaleidoSwap API! This guide will help you set up and start using the API quickly and effectively.
+## Requests
 
----
+- Base URL: `https://maker.signet.kaleidoswap.com`, with every route under `/v2`.
+- JSON request and response bodies, with camelCase keys. LSPS1 routes use snake_case, as their specification does.
+- Swap IDs are 26-character ULIDs.
 
-## Base URL
-
-The KaleidoSwap API is accessible via HTTPS for secure communication. Here are the available environments:
-
-### Signet (MutinyNet)
-A public testnet with realistic network conditions, recommended for integration testing before mainnet. This environment is **currently live**. All API requests in this environment should be directed to the following base URL:
-
-- **Base URL:** `https://api.signet.kaleidoswap.com/api/v1`
-
-### Bitcoin Mainnet (Coming Soon)
-There is no public mainnet endpoint yet. To integrate on mainnet, point your client at your own maker's base URL; the API paths are the same as on Signet.
-
----
+```bash
+curl https://maker.signet.kaleidoswap.com/v2/swap/reverse/pairs
+```
 
 ## Authentication
 
-### Current State
-Anonymous requests are still served, so you can start testing and integrating with the API immediately. Bearer API keys (`Authorization: Bearer <token>`) are already accepted and attributed today.
+Most routes need no authentication. Three credentials exist, each for one purpose:
 
-### Enforcement Rollout
-API-key enforcement is being rolled out gradually. Once enabled, requests without a valid key will receive `401` responses — integrations should start sending an API key now. See the [Overview](/api-reference/introduction#authentication) for details.
+| Credential | Header | Sent on | What it does |
+|---|---|---|---|
+| Organization key | `X-Kaleido-Org-Key: <64 hex>` | Swap creation | Attributes the swap to your organization. A public label, safe in client code |
+| Organization API key | `Authorization: Bearer kld_test_…` | Swap creation | Attributes the swap, and gives your organization its own rate limits and partner-only access. **Servers only** |
+| Swap credential | `X-Swap-Auth: <swapAuth>` | Re-quote acceptance, rate decisions, cooperative refunds | Proves you are the party who created this swap |
 
----
+Send an organization key or an API key, never both: the maker rejects the request with `400 attribution_conflict`. Without either, swaps are created unattributed.
 
-## Request Format
+Every swap creation returns a `swapAuth`, **issued once**. Store it with the swap. It authorizes the routes that decide a live swap's outcome, so knowing the swap ID is not enough. If it is lost, recover it with a signed proof of key ownership: `POST /v2/swap/{id}/auth/challenge`, then `POST /v2/swap/{id}/auth/recover`.
 
-### HTTP Methods
-The API uses the following HTTP methods:
-- **GET:** Retrieve data.
-- **POST:** Submit data or perform an action.
+## Amounts
 
-Real-time quote streaming uses a **WebSocket** endpoint — see the [Swap Protocol](/api-reference/swap-protocol).
+- Amounts are integers in the asset's smallest unit: sats for BTC and L-BTC, the contract's smallest unit for RGB assets (six decimals for USDT-RGB).
+- LSPS1 amounts are decimal strings, as the LSPS1 specification requires.
+- Fee percentages follow the Boltz convention: `0.5` means 0.5%.
 
-### Headers
-Ensure that your `POST` HTTP requests include the following headers:
-- `Content-Type: application/json` (for requests with JSON payloads)
+## Errors
 
-### Example Request
-Here’s a sample `POST` request to the testnet environment:
+Errors use the Boltz envelope:
 
-```bash
-curl -X 'POST' \
-  'https://api.signet.kaleidoswap.com/api/v1/market/quote' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "from_asset": {
-    "asset_id": "BTC",
-    "layer": "BTC_LN",
-    "amount": 1500000
-  },
-  "to_asset": {
-    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-    "layer": "RGB_LN"
-  }
-}'
-```
-
-Each leg specifies an `asset_id`, a settlement `layer` (e.g. `BTC_LN`, `RGB_LN`, `BTC_L1`, `RGB_L1`), and optionally an `amount` in the asset's smallest unit — exactly one of the two legs must carry the amount.
----
-
-## Response Format
-All responses from the KaleidoSwap API are in JSON format for ease of parsing. A typical response includes:
-
-- A response value structured according to the corresponding **schema**.
-- `detail`: Details about any errors encountered.
-
-## Example Response
 ```json
-{
-  "rfq_id": "13d4777c-ae96-4858-9c7c-3ca730c5039a",
-  "from_asset": {
-    "asset_id": "BTC",
-    "name": "Bitcoin",
-    "ticker": "BTC",
-    "layer": "BTC_LN",
-    "amount": 1500000,
-    "precision": 8
-  },
-  "to_asset": {
-    "asset_id": "rgb:2NZGjyz-pJePUgegh-RLHbpx1Hy-iZMagWiZZ-qY4AxGymW-yCEYwwB",
-    "name": "Tether USD",
-    "ticker": "USDT",
-    "layer": "RGB_LN",
-    "amount": 875000,
-    "precision": 6
-  },
-  "price": 59507000000,
-  "fee": {
-    "base_fee": 1000,
-    "variable_fee": 250,
-    "fee_rate": 0.0001,
-    "final_fee": 1250,
-    "fee_asset": "BTC",
-    "fee_asset_precision": 8
-  },
-  "timestamp": 1715896356,
-  "expires_at": 1715896416
-}
+{ "error": "pair_hash_mismatch", "details": "the pair's rate card changed" }
 ```
----
 
-## API Versioning
-KaleidoSwap uses versioning to ensure backward compatibility. The current API version is:
+`error` is a stable machine-readable code; branch on it. `details` is human-readable, present on 4xx responses and absent on 5xx.
 
-**Version**: `v1`
+| Status | Meaning |
+|---|---|
+| `400` | Malformed request, or a rule violated (`pair_hash_mismatch`, `missing_sighash`, …) |
+| `401` | Missing or wrong credential (`invalid_swap_auth`) |
+| `404` | Unknown swap, order, or invoice |
+| `409` | Conflict: a duplicate swap for the same preimage hash, an idempotency mismatch, or a stale re-quote |
+| `422` | The request is valid but the swap's state does not allow it |
+| `429` | Rate limited. Retry after the `Retry-After` header |
+| `503` | A dependency is unavailable, or trading is halted (`trading_halted`) |
 
-The version number is reflected in the base URL, as in `https://api.signet.kaleidoswap.com/api/v1`.
+## Rate limits
 
----
+Quote and swap-creation routes are rate limited per caller, and swap creation also has a rolling notional budget. A `429` carries `Retry-After`. Organizations using an API key get their own budget.
 
-## Rate Limiting
-To ensure a fair usage policy, the API enforces rate limits. The defaults are:
-- **Per IP**: 600 requests per minute
-- **Per endpoint**: 300 requests per minute
-- **Global**: 1000 requests per minute
+## Idempotency
 
-These limits are configurable per deployment, so they may vary between environments. Every response includes `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers; requests over the limit receive a `429 Too Many Requests` response.
+`POST /v2/swap/pay` accepts an `Idempotency-Key` header (a random UUIDv4). Retrying with the same key and request returns the original response. Check that `GET /v2/version` lists `pay_through_idempotency_v1` before relying on it.
 
----
+## Service endpoints
 
-## Errors and Debugging
-The API returns standard HTTP status codes to indicate the outcome of a request:
+| Route | Use |
+|---|---|
+| `GET /v2/version` | Version, build, and `capabilities` for feature detection |
+| `GET /v2/info` | Network, node key, and whether trading is halted |
+| `GET /v2/health` | Liveness |
+| `GET /v2/nodes` | The maker's Lightning node and peer URIs |
 
-- **200**: Success
-- **400**: Bad Request (e.g., invalid parameters)
-- **404**: Resource Not Found
-- **500**: Internal Server Error
-For the full status-code list, the error response format, and per-symptom fixes, see [Troubleshooting](/api-reference/troubleshooting).
+When `GET /v2/info` reports trading as halted, the maker refuses quotes and new swaps with `503 trading_halted`, publishes an empty pair catalogue, and keeps settling swaps already in flight.

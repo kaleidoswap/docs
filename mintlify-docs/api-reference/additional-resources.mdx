@@ -1,111 +1,62 @@
 ---
-title: "Bitcoin Swap API: Additional Resources"
+title: "Maker API: Additional Resources"
 sidebarTitle: "Additional Resources"
-description: "Links for KaleidoSwap API integrators — OpenAPI specifications, SDKs and CLI, node and protocol references, test networks, and support channels"
+description: "Links for KaleidoSwap maker API integrators: the Swap SDK, protocol references for Boltz swaps, MuSig2, LSPS1, and RGB, test networks, and support"
 ---
 
-## Specifications & Clients
+## Clients
 
 <CardGroup cols={2}>
-  <Card title="OpenAPI Specifications" icon="file-code" href="https://github.com/kaleidoswap/specs">
-    Versioned specs for the KaleidoSwap APIs, updated on each release. Diff two versions instead of discovering changes at runtime.
+  <Card title="Swap SDK" icon="code" href="/sdk/introduction">
+    The recommended client: TypeScript, Python, Rust, and React Native. Verifies every swap and builds claims and refunds.
   </Card>
-
-  <Card title="TypeScript & Python SDKs" icon="code" href="/sdk/introduction">
-    Typed clients generated from those specs, wrapping both the Maker API and your node behind `client.maker.*` and `client.rln.*`.
-  </Card>
-
-  <Card title="CLI" icon="terminal" href="/cli/introduction">
-    Drive a node, quote, and swap from the terminal — useful for probing the API by hand before writing a client.
-  </Card>
-
-  <Card title="Getting Started" icon="rocket" href="/api-reference/getting-started">
-    Base URLs, authentication, request format, versioning, and rate limits.
+  <Card title="Conventions" icon="gear" href="/api-reference/getting-started">
+    Base URL, authentication, amounts, errors, and rate limits.
   </Card>
 </CardGroup>
 
-## Protocol References
+## Protocol references
 
 <CardGroup cols={2}>
-  <Card title="Swap Protocol" icon="arrows-rotate" href="/api-reference/swap-protocol">
-    The atomic HTLC flow end to end, with the sequence diagram and the endpoints used at each step.
+  <Card title="Boltz API" icon="arrows-rotate" href="https://docs.boltz.exchange/api/">
+    The `/v2` swap protocol the maker is compatible with.
   </Card>
-
-  <Card title="RGB Lightning Node" icon="code-branch" href="https://github.com/kaleidoswap/rgb-lightning-node">
-    The node that serves the RLN API and whitelists swapstrings. This is the KaleidoSwap fork; the [upstream project](https://github.com/RGB-Tools/rgb-lightning-node) is maintained by RGB Tools.
+  <Card title="MuSig2 (BIP327)" icon="key" href="https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki">
+    The two-party signing behind cooperative claims and refunds.
   </Card>
-
   <Card title="LSPS1 (bLIP-51)" icon="scroll" href="https://github.com/lightning/blips/blob/master/blip-0051.md">
-    The Channel Requests specification our [channel order endpoints](/api-reference/rgb-lsps1-apis) implement, extended here with RGB asset allocation.
+    The channel-request specification the LSPS1 routes implement.
   </Card>
-
-  <Card title="RGB Protocol Documentation" icon="gem" href="https://docs.rgb.info">
-    Client-side validation, asset interfaces, and the specification behind the `rgb:` contract IDs the API returns.
-  </Card>
-</CardGroup>
-
-## Environments & Testing
-
-Integrate against Signet before mainnet. No API key is required today, and anonymous requests are still served.
-
-| Environment | REST base URL | WebSocket |
-|-------------|---------------|-----------|
-| **Signet (MutinyNet)** | `https://api.signet.kaleidoswap.com/api/v1` | `wss://api.signet.kaleidoswap.com/api/v1/market/ws/{client_id}` |
-| **Mainnet** | No public endpoint yet: use your own maker's URL | — |
-
-Asset IDs are not portable between environments — read them from `GET /api/v1/market/assets` and key your configuration per environment.
-
-<CardGroup cols={2}>
-  <Card title="Mutiny Faucet" icon="faucet" href="https://faucet.mutinynet.com/">
-    Get Signet Bitcoin to fund a node and open test channels.
-  </Card>
-
-  <Card title="Mutinynet Explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
-    Confirm on-chain that a swap settled or a channel open actually confirmed.
-  </Card>
-
-  <Card title="Node Hosting" icon="server" href="/desktop-app/getting-started/node-hosting">
-    Deployment options for the RGB Lightning Node the swap endpoints require.
+  <Card title="RGB" icon="gem" href="https://docs.rgb.info">
+    The protocol behind `rgb:` contract IDs and RGB swaps.
   </Card>
 </CardGroup>
 
-## Related Documentation
+## Test network
+
+| Environment | Base URL | WebSocket |
+|---|---|---|
+| Signet (Mutinynet) | `https://maker.signet.kaleidoswap.com/v2` | `wss://maker.signet.kaleidoswap.com/v2/ws` |
+| Mainnet | Not available yet | — |
 
 <CardGroup cols={2}>
-  <Card title="Troubleshooting" icon="triangle-exclamation" href="/api-reference/troubleshooting">
-    The three error envelopes, status-code semantics, retry strategy, and a fix per symptom.
+  <Card title="Mutinynet faucet" icon="faucet" href="https://faucet.mutinynet.com/">
+    Signet bitcoin for testing.
   </Card>
-
-  <Card title="SDK Examples" icon="file-code" href="/sdk/examples">
-    End-to-end code for the atomic swap flow, if you would rather read working code than endpoint tables.
-  </Card>
-
-  <Card title="Architecture" icon="diagram-project" href="/whats-kaleidoswap/architecture">
-    Where the maker, the LSP, and your node sit relative to each other.
-  </Card>
-
-  <Card title="Glossary" icon="book" href="/whats-kaleidoswap/glossary">
-    RFQ, swapstring, HTLC, layer, and the rest of the vocabulary these endpoints assume.
+  <Card title="Mutinynet explorer" icon="magnifying-glass-chart" href="https://mutinynet.com/">
+    Check lockups, claims, and refunds on chain.
   </Card>
 </CardGroup>
 
-## Get Help
+## Get help
 
-Check [Troubleshooting](/api-reference/troubleshooting) for errors and the [FAQ](/api-reference/faq) for questions.
-
-For anything else, report a problem through your preferred channel from the options below, including:
-
-1. Request URL and HTTP method
-2. Request payload (redact any API key)
-3. Full error response, including `request_id`
-4. Timestamp of the request
-5. Environment (Signet / Mainnet)
+Check [Troubleshooting](/api-reference/troubleshooting) and the [FAQ](/api-reference/faq) first. When you report a problem, include the request URL and method, the payload (without credentials), the full error response, the swap ID, and the time of the request.
 
 <CardGroup cols={2}>
-  <Card title="Telegram Community" icon="telegram" href="https://t.me/kaleidoswap">
+  <Card title="Telegram" icon="telegram" href="https://t.me/kaleidoswap">
     Ask the community.
   </Card>
-  <Card title="Email Support" icon="envelope" href="mailto:support@kaleidoswap.com">
-    Direct support for urgent issues.
+  <Card title="Email" icon="envelope" href="mailto:support@kaleidoswap.com">
+    Direct support.
   </Card>
 </CardGroup>

@@ -56,22 +56,35 @@ A chain swap uses two keys: a refund key for your lockup and a claim key for the
     The swap reaches `transaction.server.mempool`, then `transaction.server.confirmed`.
   </Step>
 
-  <Step title="Claim">
-    The cooperative claim is signed with your **refund** key against your lockup's script, so rebuild both sides:
+  <Step title="Claim the L-USDT">
+    L-USDT pays its Liquid fee in L-BTC, so the claim is a **caller-funded PSET**: the SDK prepares a partial transaction, your Liquid wallet adds an L-BTC input for the fee and signs it, and the SDK finalizes it with your secret.
 
     ```typescript
+    // Both sides rebuild from the response; a mismatch throws here.
     const lockupScript = SwapScript.fromChain("bitcoin", network, "lockup", swap.lockupDetails, refundKey.publicKey);
     const claimScript = SwapScript.fromChain("liquid", network, "claim", swap.claimDetails, claimKey.publicKey);
 
-    const claim = await claimScript.constructCooperativeClaim(
-      preimage.preimage,
-      { outputAddress: myLiquidAddress, swapId: swap.id, keysSecretHex: claimKey.secretKey, makerBaseUrl: makerUrl, network, liquidEsploraUrl },
-      lockupScript,
-      refundKey.secretKey,
-    );
+    const prepared = await claimScript.prepareLiquidClaim({
+      outputAddress: myExplicitLiquidAddress, // an unconfidential Liquid address
+      swapId: swap.id,
+      maxFee: 1_000n,                         // your fee ceiling, in L-BTC sats
+      quotedFeeCap: 1_000n,                   // the claim fee the pair card quoted; the lower cap wins
+      makerBaseUrl: makerUrl,
+      network,
+      liquidEsploraUrl,
+    });
+
+    // Your Liquid wallet funds the fee with L-BTC, blinds, and signs its own input.
+    const funded = await myLiquidWallet.fundAndSign(prepared.template());
+
+    const claim = prepared.finalizeClaim(funded, claimKey.secretKey, preimage.preimage);
+    // Save claim.hex() first, then:
+    await claim.broadcast(network, undefined, liquidEsploraUrl);
     ```
 
-    If the maker does not cooperate, claim alone with `claimScript.constructClaim(preimage.preimage, { ...params, cooperative: false })`. `claimChainSwap` does this fallback for you.
+    `myLiquidWallet.fundAndSign` stands for your wallet's code: it takes the template's `pset`, adds and signs an L-BTC input that covers the fee, and returns `{ pset, paymentOutputSecrets }`. The swap ends in `transaction.claimed`.
+
+    For a chain swap that pays out L-BTC or BTC instead, claim with `claimScript.constructCooperativeClaim(preimage, params, lockupScript, refundKey.secretKey)`, which signs with your **refund** key against the lockup script, and fall back to `constructClaim(preimage, { ...params, cooperative: false })` if the maker does not cooperate.
   </Step>
 </Steps>
 

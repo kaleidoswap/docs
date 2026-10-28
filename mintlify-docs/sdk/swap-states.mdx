@@ -58,10 +58,10 @@ Your app must be running to claim. Check open swaps on start, on resume, and on 
 import { SwapWsApi } from "@kaleidorg/swap-sdk";
 
 const ws = new SwapWsApi("wss://maker.signet.kaleidoswap.com/v2/ws");
-void ws.runWsLoop();
+void ws.runWsLoop();                 // runs in the background; do not await
+const updates = ws.updates();        // take the stream before subscribing
 await ws.subscribeSwap(swap.id);
 
-const updates = ws.updates();
 for (;;) {
   const { id, status } = await updates.next();
   console.log(id, status);
@@ -73,9 +73,9 @@ ws.close();
 ```python Python
 ws = client.ws()
 asyncio.create_task(ws.run_ws_loop())
+updates = ws.updates()               # take the stream before subscribing
 await ws.subscribe_swap(swap.id)
 
-updates = ws.updates()
 while True:
     update = await updates.next()
     print(update.id, update.status)

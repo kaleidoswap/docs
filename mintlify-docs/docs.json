@@ -160,7 +160,7 @@
                 "icon": "lightbulb",
                 "pages": [
                   "sdk/swap-types",
-                  "sdk/how-to-swap",
+                  "sdk/swap-states",
                   "sdk/trust-model",
                   "sdk/claims-and-refunds",
                   "sdk/keys-and-recovery",
@@ -826,6 +826,10 @@
     {
       "source": "/sdk/best-practices",
       "destination": "/sdk/common-mistakes"
+    },
+    {
+      "source": "/sdk/how-to-swap",
+      "destination": "/sdk/swap-states"
     }
   ],
   "footer": {

@@ -67,9 +67,14 @@ In the normal case your app only funds the lockup: it builds no transaction.
 ```python
 refund_key = master.derive_swap_key(index)
 btc = sdk.btc_chain_from_network(network)
+card = (await client.get_submarine_pairs()).pairs["BTC"]["BTC"]
 
+# Python names the submarine create `create_swap`
 swap = await client.create_swap(
-    sdk.CreateSubmarineRequest(_from=btc, to=btc, invoice=invoice, refund_public_key=refund_key.public())
+    sdk.CreateSubmarineRequest(
+        _from=btc, to=btc, invoice=invoice,
+        refund_public_key=refund_key.public(), pair_hash=card.hash,
+    )
 )
 print(f"Fund exactly {swap.expected_amount} sat to {swap.address}")
 ```

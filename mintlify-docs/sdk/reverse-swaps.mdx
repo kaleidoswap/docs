@@ -79,11 +79,13 @@ claim_key = master.derive_swap_key(index)
 preimage = master.derive_preimage(index)
 btc = sdk.btc_chain_from_network(network)
 lbtc = sdk.lbtc_chain_from_network(network)
+card = (await client.get_reverse_pairs()).pairs["BTC"]["L-BTC"]
 
 swap = await client.create_reverse_swap(
     sdk.CreateReverseRequest(
         invoice_amount=50_000, _from=btc, to=lbtc,
         preimage_hash=preimage.sha256(), claim_public_key=claim_key.public(),
+        pair_hash=card.hash,
     )
 )
 script = sdk.SwapScript.from_reverse(chain=lbtc, reverse_response=swap, our_pubkey=claim_key.public())

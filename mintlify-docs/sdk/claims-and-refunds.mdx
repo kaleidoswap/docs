@@ -49,14 +49,24 @@ const claim = await script.constructClaim(preimage.preimage, {
 ```
 
 ```python Claim (Python)
-script = sdk.SwapScript.from_reverse(chain=to_chain, reverse_response=response, our_pubkey=keys.public())
+network = sdk.Network.SIGNET
+lbtc = sdk.lbtc_chain_from_network(network)
+chain_client = sdk.ChainClient(sdk.ClientConfig(
+    network=network,
+    bitcoin=sdk.ClientConnection.ESPLORA(sdk.EsploraBuilder(url="https://esplora.signet.kaleidoswap.com")),
+    liquid=sdk.ClientConnection.ESPLORA(sdk.EsploraBuilder(url="https://blockstream.info/liquidtestnet/api")),
+))
+
+keys = master.derive_swap_key(index)        # the claim key of this swap
+preimage = master.derive_preimage(index)
+script = sdk.SwapScript.from_reverse(chain=lbtc, reverse_response=swap, our_pubkey=keys.public())
 tx = await script.construct_claim(
     preimage,
     sdk.SwapTransactionParams(
-        swap_id=response.id,
+        swap_id=swap.id,
         keys=keys,
         fee=sdk.Fee.RELATIVE(2.0),      # sat/vB; Fee.ABSOLUTE(sats) also works
-        output_address=claim_address,
+        output_address=my_liquid_address,
         chain_client=chain_client,
         boltz_api=client,
     ),

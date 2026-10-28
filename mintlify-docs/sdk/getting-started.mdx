@@ -4,7 +4,16 @@ sidebarTitle: "Quickstart"
 description: "Install the Swap SDK, connect to the KaleidoSwap signet maker, list the routes it trades, and receive L-BTC on Liquid from a Lightning payment"
 ---
 
-This page takes you from nothing to a finished swap on signet, in TypeScript. It needs Node 22 or later, a Lightning wallet with signet sats, and a Liquid testnet address to receive into.
+This page takes you from nothing to a finished swap on signet, in TypeScript.
+
+## Before you start
+
+| You need | Where to get it |
+|---|---|
+| Node 22 or later | [nodejs.org](https://nodejs.org) |
+| A way to pay a Lightning invoice on **Mutinynet** | The KaleidoSwap signet maker runs on [Mutinynet](https://mutinynet.com), a custom signet, so an ordinary signet or testnet wallet cannot pay its invoices. The [Mutinynet faucet](https://faucet.mutinynet.com) pays a BOLT11 invoice for you: paste the invoice the script prints. |
+| A Liquid testnet address to receive into | Any Liquid wallet set to testnet. For test L-BTC, use the [Liquid testnet faucet](https://liquidtestnet.com/faucet). |
+| A 12-word BIP39 mnemonic | Any wallet can generate one. Use a test mnemonic only, never one that holds real funds. |
 
 ## 1. Install
 
@@ -57,7 +66,7 @@ const client = new SwapClient(makerUrl);
 
 // Keys and the swap secret come from a mnemonic you keep. Use a new index for every swap.
 const master = SwapMasterKey.fromWalletMnemonic(process.env.WALLET_MNEMONIC!, network);
-const index = 0n;
+const index = BigInt(process.env.SWAP_INDEX ?? "0"); // use a new index for every run
 const claimKey = master.deriveSwapKey(index);
 const preimage = master.derivePreimage(index);
 
@@ -75,8 +84,12 @@ await writeFile(`${swap.id}.json`, toJson({ index, swap })); // save before payi
 
 console.log(`Pay this invoice:\n${swap.invoice}`);
 
-// Wait until the maker's lockup confirms.
-while ((await client.swap(swap.id)).status !== "transaction.confirmed") {
+// Wait until the maker's lockup confirms; stop if the swap fails.
+const failed = ["swap.expired", "invoice.expired", "transaction.failed", "transaction.refunded"];
+for (;;) {
+  const { status } = await client.swap(swap.id);
+  if (status === "transaction.confirmed") break;
+  if (failed.includes(status)) throw new Error(`swap ${swap.id} ended in ${status}`);
   await new Promise((r) => setTimeout(r, 5_000));
 }
 
@@ -93,10 +106,10 @@ const claim = await script.constructClaim(preimage.preimage, {
 console.log("Claimed:", await claim.broadcast(network, undefined, liquidEsploraUrl));
 ```
 
-Run it, pay the printed invoice, and the script claims the L-BTC once the maker's lockup confirms. The swap ends in `invoice.settled`.
+Run it with `WALLET_MNEMONIC`, `LIQUID_ADDRESS`, and a fresh `SWAP_INDEX` set, pay the printed invoice (for example through the Mutinynet faucet), and the script claims the L-BTC once the maker's lockup confirms. The swap ends in `invoice.settled`.
 
 <Warning>
-This script keeps it short: a fixed index, a polling loop, and no failure handling. A real app keeps a counter of used indexes, saves signed transactions before broadcasting, and handles failed swaps. See [Common mistakes](/sdk/common-mistakes).
+This script keeps it short: the index comes from an environment variable, it polls instead of listening on the WebSocket, and it saves nothing but the swap record. A real app keeps a counter of used indexes, saves signed transactions before broadcasting, and handles failed swaps. See [Common mistakes](/sdk/common-mistakes).
 </Warning>
 
 ## Next steps
@@ -108,7 +121,7 @@ This script keeps it short: a fixed index, a polling loop, and no failure handli
   <Card title="Pay Lightning from on-chain" icon="bolt" href="/sdk/submarine-swaps">
     The opposite direction, with a refund path.
   </Card>
-  <Card title="Swap states" icon="list-check" href="/sdk/how-to-swap">
+  <Card title="Swap states" icon="list-check" href="/sdk/swap-states">
     Every status, and what your app does at each one.
   </Card>
   <Card title="Examples" icon="code" href="/sdk/examples">

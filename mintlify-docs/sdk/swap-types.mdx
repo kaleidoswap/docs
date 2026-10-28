@@ -4,6 +4,8 @@ sidebarTitle: "How Swaps Work"
 description: "How Swap SDK swaps settle: one secret locks both legs, who pays first on each route, who claims, and how a failed swap is refunded"
 ---
 
+New to these terms? The [swap terms glossary](/whats-kaleidoswap/glossary#swap-terms) defines each one in a line.
+
 ## One secret, two locks
 
 Every swap except pay-through and atomic RGB swaps works the same way. One side generates a random secret, the **preimage**, and shares only its hash. Both legs of the swap are locked to that hash:
@@ -42,4 +44,4 @@ A lockup can be spent **cooperatively** (you and the maker sign together: cheape
 
 Atomic RGB swaps and pay-through work differently: see [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1) and [Pay an address from Lightning](/sdk/pay-through).
 
-Next: [Swap states](/sdk/how-to-swap) follows each route step by step.
+Next: [Swap states](/sdk/swap-states) follows each route step by step.

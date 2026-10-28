@@ -160,7 +160,7 @@
                 "icon": "lightbulb",
                 "pages": [
                   "sdk/swap-types",
-                  "sdk/how-to-swap",
+                  "sdk/swap-states",
                   "sdk/trust-model",
                   "sdk/claims-and-refunds",
                   "sdk/keys-and-recovery",
@@ -941,6 +941,10 @@
     {
       "source": "/api-reference/rgb-lsps1-apis",
       "destination": "/api-reference/lightning-channels-lsps1/get-channel-options"
+    },
+    {
+      "source": "/sdk/how-to-swap",
+      "destination": "/sdk/swap-states"
     }
   ],
   "footer": {

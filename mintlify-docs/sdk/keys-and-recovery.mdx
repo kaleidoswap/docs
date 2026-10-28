@@ -52,18 +52,7 @@ Every create response from the KaleidoSwap maker carries a `swapAuth`, a per-swa
 
 Treat it as a secret. It is a plain property of the create response, so logging the whole response leaks it; log `swap.id` instead. Nothing re-issues it on request. If it is lost, the swap still has its script-path refund after the timeout, and the signed recovery flow below can recover it with the swap's key.
 
-```typescript TypeScript
-import { toJson } from "@kaleidorg/swap-sdk";
-
-const swap = await client.createChainSwap("signet", request);
-await store.put(swap.id, toJson(swap)); // swapAuth included
-
-const saved = JSON.parse(await store.get(swap.id));
-const quote = await client.quote(swap.id);
-await client.acceptQuote(swap.id, quote.amount, saved.swapAuth);
-```
-
-Use `toJson` rather than `JSON.stringify`: TypeScript responses carry `bigint` amounts, which `JSON.stringify` throws on.
+Store the whole create response with `toJson(swap)`; `swapAuth` is part of it. [Move funds between chains](/sdk/chain-swaps#accept-a-re-quote) shows it in use.
 
 ## Restoring swaps
 

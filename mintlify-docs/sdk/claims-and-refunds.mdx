@@ -133,7 +133,4 @@ await tx.broadcast(receipt.network, receipt.chain === "bitcoin" ? receipt.esplor
 
 The reconciliation helpers accept the saved spend as `previous` and return it unchanged before looking at new status, height, or fees. Never re-sign a claim or refund just because a broadcast response went missing, and serialize concurrent operations on the same swap.
 
-## Liquid and RGB spends
-
-- **L-USDT** spends use a caller-funded PSET, because the Liquid fee must be paid in L-BTC: `prepareLiquidClaim` / `prepareLiquidRefund` return a template your wallet funds, then the SDK finalizes it.
-- **USDT-RGB** spends return a PSBT your rgb-lib wallet colors before the SDK signs the HTLC input. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps).
+L-USDT and USDT-RGB spends need your wallet to fund or color the transaction; the [guides](/sdk/reverse-swaps#receiving-other-assets) cover each.

@@ -4,14 +4,6 @@ sidebarTitle: "Swap States"
 description: "The states each Swap SDK swap moves through, what your app does at each one, who claims and who refunds, the deadlines, and how to follow a swap over WebSocket or polling"
 ---
 
-## Who claims, who refunds
-
-| | On-chain → Lightning | Lightning → on-chain | Chain → chain |
-|---|---|---|---|
-| **Your app claims** | | ✓ | ✓ |
-| **Your app refunds** | ✓ (if it fails) | | ✓ (if it fails) |
-| **Refunded automatically** | | ✓ (the hold invoice is released) | |
-
 ## On-chain → Lightning (submarine)
 
 | # | Status | What happened | Your app |
@@ -103,6 +95,4 @@ A dead socket reports no error, which happens on mobile after the app is backgro
 A status is the maker's report, not proof. Before you claim, check the lockup on your own chain backend. Before you refund, check the chain tip against the deadline. See [Trust model](/sdk/trust-model).
 </Note>
 
-## Lost your local records?
-
-`SwapMasterKey.restore(client)` finds every swap created with your swap mnemonic, including those still owed a claim or refund. See [Keys and recovery](/sdk/keys-and-recovery#restoring-swaps).
+Lost your local records? See [Keys and recovery](/sdk/keys-and-recovery#restoring-swaps).

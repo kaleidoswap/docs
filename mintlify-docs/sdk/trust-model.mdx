@@ -31,10 +31,7 @@ The same applies to atomic RGB quotes: the rgb-lib offer inside a quote must mov
 
 ## What your app must check
 
-- **Chain state.** The maker's status is not proof. Claim only against a lockup your own chain backend shows, with the confirmations you require. Refund only when your own backend shows the chain past the deadline.
-- **The network.** Keep the maker, the chain backend, and payout addresses on the same network. See [Networks](/sdk/networks).
-- **Invoices you pay.** For an Arkade receive, check the hold invoice pays your hash for exactly the quoted amount.
-- **Fees.** Choose them from your own estimates, not the maker's.
+Chain state, the network, invoices you pay, and fees. [Common mistakes](/sdk/common-mistakes) lists each check.
 
 ## What the maker controls
 
@@ -45,14 +42,6 @@ The same applies to atomic RGB quotes: the rgb-lib offer inside a quote must mov
 
 ## Liveness
 
-- **Claims need your app online before the deadline.** If the deadline passes, the maker refunds its lockup and the swap fails. Your own lockup is then refundable and a held Lightning payment is released, so you lose fees and time. Claim late and you risk racing the maker's refund.
-- **Refunds after the deadline need nothing from the maker.** Only your refund key and a chain backend.
+Claims need your app online before the deadline; refunds after the deadline need nothing from the maker. If a claim is missed, the swap fails and both sides recover their own funds. See [Swap states](/sdk/how-to-swap#deadlines).
 
-## Credentials
-
-| Credential | What it authorizes | Where it may live |
-|---|---|---|
-| Swap mnemonic and keys | Claims and refunds | Your user's device |
-| `swapAuth` (per swap) | Accepting a re-quote, cooperative refunds | Stored with the swap, kept secret |
-| Organization key | Nothing: it is a public label for attribution | Anywhere, including client bundles |
-| Organization API key | Attribution, rate limits, partner-only access; no fund movement | Servers only |
+Credentials and what each authorizes: [Keys and recovery](/sdk/keys-and-recovery#swapauth-store-it-with-the-swap) and [Attribute swaps to your organization](/sdk/partner-attribution).

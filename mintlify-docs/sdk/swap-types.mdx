@@ -36,23 +36,10 @@ flowchart LR
 
 The technical names in parentheses (submarine, reverse, chain) come from the Boltz protocol the SDK speaks. The SDK methods use them: `createSubmarineSwap`, `createReverseSwap`, `createChainSwap`.
 
-## Who holds the secret
-
-- **On-chain → Lightning:** the person who issued the Lightning invoice holds the preimage. The maker learns it by paying the invoice, and only then can it claim your lockup.
-- **Lightning → on-chain** and **chain → chain:** your app derives the preimage. You reveal it when you claim.
-
 ## Cheap path and safe path
 
-A lockup can be claimed or refunded two ways:
+A lockup can be spent **cooperatively** (you and the maker sign together: cheaper, and a refund needs no deadline) or **alone through the script** (with the secret, or after the deadline). The SDK tries the first and falls back to the second, so a swap never depends on the maker. See [Claims and refunds](/sdk/claims-and-refunds).
 
-- **Cooperatively.** You and the maker sign together (MuSig2). The transaction is smaller, looks like a normal payment, and a refund does not have to wait for the deadline.
-- **Alone, through the script.** With the preimage for a claim, or after the deadline for a refund. This never depends on the maker.
+Atomic RGB swaps and pay-through work differently: see [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1) and [Pay an address from Lightning](/sdk/pay-through).
 
-The SDK tries the cooperative path first and falls back to the script path. See [Claims and refunds](/sdk/claims-and-refunds).
-
-## The two exceptions
-
-- **Atomic RGB swaps** move both sides in one Bitcoin transaction your RGB wallet co-signs. There is no lock, no deadline, and no refund. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps#atomic-swaps-on-l1).
-- **Pay-through** holds the payer's Lightning payment until the maker broadcasts the payout, but the payout itself is not locked: the maker controls it. See [Pay an address from Lightning](/sdk/pay-through).
-
-Next: [Swap states](/sdk/how-to-swap) follows each route step by step, and [Trust model](/sdk/trust-model) covers what each step guarantees.
+Next: [Swap states](/sdk/how-to-swap) follows each route step by step.

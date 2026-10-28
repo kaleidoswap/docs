@@ -20,27 +20,16 @@ The Swap SDK lets your wallet or app swap between Bitcoin, Lightning, Liquid, RG
 
 ## What you can build
 
-| Outcome | Route | Guide |
-|---|---|---|
-| Pay a Lightning invoice from on-chain funds | BTC, L-BTC, L-USDT, USDT-RGB → Lightning | [Pay Lightning from on-chain](/sdk/submarine-swaps) |
-| Receive on-chain funds by paying over Lightning | Lightning → BTC, L-BTC, L-USDT, USDT-RGB | [Receive on-chain from Lightning](/sdk/reverse-swaps) |
-| Move funds from one chain to another | BTC → L-USDT | [Move funds between chains](/sdk/chain-swaps) |
-| Swap bitcoin and USDT on RGB | BTC ↔ USDT-RGB | [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |
-| Pay and receive Lightning from an Arkade wallet | Arkade ↔ Lightning | [Lightning to and from Arkade](/sdk/arkade) |
-| Let a Lightning payer fund an on-chain payout | Lightning → any address | [Pay an address from Lightning](/sdk/pay-through) |
+| Outcome | Route | Signet | Guide |
+|---|---|---|---|
+| Pay a Lightning invoice from on-chain funds | BTC, L-BTC, L-USDT, USDT-RGB → Lightning | **Available** | [Pay Lightning from on-chain](/sdk/submarine-swaps) |
+| Receive on-chain funds by paying over Lightning | Lightning → BTC, L-BTC, L-USDT, USDT-RGB | **Available** | [Receive on-chain from Lightning](/sdk/reverse-swaps) |
+| Move funds from one chain to another | BTC → L-USDT | **Available** | [Move funds between chains](/sdk/chain-swaps) |
+| Swap bitcoin and USDT on RGB | BTC ↔ USDT-RGB | Over Lightning: **available**. Atomic on L1: regtest only | [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |
+| Pay and receive Lightning from an Arkade wallet | Arkade ↔ Lightning | **Available** | [Lightning to and from Arkade](/sdk/arkade) |
+| Let a Lightning payer fund an on-chain payout | Lightning → any address | When the maker enables it | [Pay an address from Lightning](/sdk/pay-through) |
 
-## What works today
-
-| Route | Signet (Mutinynet) | Mainnet |
-|---|---|---|
-| On-chain → Lightning (BTC, L-BTC, L-USDT, USDT-RGB) | **Available** | Not yet |
-| Lightning → on-chain (BTC, L-BTC, L-USDT, USDT-RGB) | **Available** | Not yet |
-| Chain to chain (BTC → L-USDT) | **Available** | Not yet |
-| Atomic BTC ↔ USDT-RGB on L1 | Regtest only: the signet maker does not offer these pairs yet | Not yet |
-| Arkade ↔ Lightning | **Available** | Not yet |
-| Pay-through | When the maker enables it | Not yet |
-
-The maker's catalogue is the source of truth. Read it at runtime with `submarinePairs()`, `reversePairs()`, `chainPairs()`, and the corridor card, rather than hardcoding this table. Asking the SDK for mainnet returns an error today; it never falls back to another provider. See [Networks](/sdk/networks).
+Mainnet is not available yet: asking the SDK for it returns an error, never another provider. The maker's catalogue (`submarinePairs()`, `reversePairs()`, `chainPairs()`, the corridor card) is the source of truth, so read it at runtime. See [Networks](/sdk/networks).
 
 ## What the SDK does, and what your app does
 

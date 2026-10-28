@@ -1,7 +1,7 @@
 ---
 title: "Swap SDK FAQ"
 sidebarTitle: "FAQ"
-description: "Common questions about the KaleidoSwap Swap SDK: custody, networks, mainnet, which package to use, the Node SDK, amounts, browser use, and other makers"
+description: "Common questions about the KaleidoSwap Swap SDK: custody, mainnet, the Node SDK, Lightning wallets, and other makers"
 ---
 
 ## Frequently Asked Questions
@@ -11,16 +11,8 @@ description: "Common questions about the KaleidoSwap Swap SDK: custody, networks
     No. Your app derives and keeps every swap key. The SDK verifies each swap the maker proposes against your keys before you fund it, and builds claims and refunds on your side. If the maker disappears mid-swap, the script-path refund after the timeout needs only your key.
   </Accordion>
 
-  <Accordion title="Which networks are supported?">
-    Signet (settling on Mutinynet) against the live KaleidoSwap maker, and regtest against the SDK repository's local harness. Mainnet and testnet3 return an error from `forNetwork` because KaleidoSwap runs no maker there yet. See [Networks](/sdk/networks).
-  </Accordion>
-
   <Accordion title="When will mainnet work?">
     When a KaleidoSwap mainnet maker is live, `forNetwork("mainnet")` will resolve to it in a minor release with a changelog entry. Until then the SDK does not silently fall back to a third-party maker.
-  </Accordion>
-
-  <Accordion title="Which package should I install?">
-    `@kaleidorg/swap-sdk` for browsers, Node, and browser extensions; `@kaleidorg/swap-sdk-react-native` for iOS and Android apps (Hermes has no WebAssembly); `kaleidorg_swap_sdk` for Python; and the git-tagged crate for Rust. See [Installation](/sdk/installation).
   </Accordion>
 
   <Accordion title="What is the difference between the Swap SDK and the Node SDK?">
@@ -31,24 +23,8 @@ description: "Common questions about the KaleidoSwap Swap SDK: custody, networks
     For submarine and reverse swaps, yes: someone has to receive or pay the Lightning leg. Any Lightning wallet works. Chain swaps and atomic RGB swaps need only on-chain wallets.
   </Accordion>
 
-  <Accordion title="What units are amounts in?">
-    Base units of the asset: sats for BTC and L-BTC, the contract's smallest unit for RGB assets (six decimals for USDT-RGB). In TypeScript, 64-bit values are `bigint`. Serialize them with `toJson`.
-  </Accordion>
-
-  <Accordion title="Can I use it in a browser extension?">
-    Yes. `@kaleidorg/swap-sdk` runs in pages, workers, and MV3 service workers. Use `createKaleidoOrgClient` for partner attribution there; `createKaleidoMakerClient` holds a secret and refuses browser contexts by default.
-  </Accordion>
-
   <Accordion title="Can I point it at another maker?">
     Yes. Pass any Boltz-`/v2`-compatible base URL explicitly. Check which routes that maker serves; see [Compatibility](/sdk/compatibility).
-  </Accordion>
-
-  <Accordion title="What happens if I lose my local swap records?">
-    `SwapMasterKey.restore` finds your swaps from the swap mnemonic, `SwapScript.fromRestored` rebuilds their scripts, and `recoverSwapAuth` recovers each credential. Swaps with RGB, L-USDT, or Arkade sides need their original create responses. See [Keys and recovery](/sdk/keys-and-recovery).
-  </Accordion>
-
-  <Accordion title="How are versions managed?">
-    All packages share one version. On `0.x`, a minor can break the public surface and a patch never does; breaking changes are listed first in each [changelog](/sdk/changelog) entry. Pin with `^0.Y.0` or `~=0.Y.0`.
   </Accordion>
 </AccordionGroup>
 

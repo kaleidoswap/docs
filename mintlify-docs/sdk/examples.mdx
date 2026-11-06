@@ -1,10 +1,17 @@
 ---
 title: "Swap SDK Examples"
 sidebarTitle: "Examples"
-description: "Runnable Swap SDK examples in TypeScript, Python, and Rust against the KaleidoSwap signet maker: pair listing, submarine and reverse swaps, the Arkade corridor, RGB spends, and atomic swaps"
+description: "Runnable Swap SDK examples in TypeScript, Python, and Rust against the KaleidoSwap signet maker: submarine and reverse swaps with the high-level API, pair listing, the Arkade corridor, RGB spends, and atomic swaps"
 ---
 
-The [swap-sdk repository](https://github.com/kaleidoswap/swap-sdk) ships runnable programs. The TypeScript ones run against the live signet maker.
+The [swap-sdk repository](https://github.com/kaleidoswap/swap-sdk) ships runnable programs. Each binding keeps them in two folders:
+
+- **`simple/`** uses the high-level `KaleidoSwap` API: you name what you pay and what you receive, and the SDK prices the route, checks the maker's response, persists the swap, and claims or refunds on its own. Start here.
+- **`advanced/`** drives the swap engine step by step: pair cards, create requests, scripts, claim and refund transactions. Use it when you own those steps yourself, or for a route the high-level API does not serve yet (L-USDT, the Arkade corridor, RGB, atomic swaps).
+
+<Note>
+The high-level API and the `simple/` examples are on `trunk` and not yet in a published release (the latest is v0.13.0). The commands below build the SDK from source, so they run either way.
+</Note>
 
 ## TypeScript
 
@@ -12,37 +19,47 @@ The [swap-sdk repository](https://github.com/kaleidoswap/swap-sdk) ships runnabl
 git clone https://github.com/kaleidoswap/swap-sdk && cd swap-sdk/typescript-sdk
 npm install && npm run build
 cd examples && npm install
-node 01-pairs.ts
+node advanced/01-pairs.ts
 ```
 
 Node 22+ runs the `.ts` files directly.
 
 | Example | What it does | Needs |
 |---|---|---|
-| [`01-pairs.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/01-pairs.ts) | Prints every route the maker trades and on what terms | Nothing |
-| [`02-submarine.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/02-submarine.ts) | On-chain BTC → a Lightning invoice; refunds with `--refund` | A swap mnemonic, a BOLT11 invoice, signet bitcoin |
-| [`03-reverse.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/03-reverse.ts) | A Lightning payment → L-BTC on Liquid; claims and broadcasts | A swap mnemonic, a Liquid address, 50,000 signet sats |
-| [`04-corridor.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/04-corridor.ts) | Quotes the Arkade Intents corridor and shows a refusal | Nothing |
-| [`05-rgb-spend.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/05-rgb-spend.ts) | The RGB wallet adapter boundary for claims and refunds | An rgb-lib wallet adapter |
-| [`06-atomic.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/06-atomic.ts) | Quotes, verifies, and tracks an atomic BTC ↔ USDT-RGB swap | A regtest maker with atomic pairs, an rgb-lib wallet |
+| [`simple/submarine.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/simple/submarine.ts) | On-chain BTC → a Lightning invoice; refunds on its own if the swap unwinds | A swap mnemonic, a BOLT11 invoice, a refund address |
+| [`simple/reverse.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/simple/reverse.ts) | A Lightning payment → L-BTC on Liquid; claims on its own | A swap mnemonic, a Liquid address, 50,000 signet sats |
+| [`simple/resume.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/simple/resume.ts) | Finishes or refunds whatever the store still holds | A swap mnemonic |
+| [`advanced/01-pairs.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/01-pairs.ts) | Prints every route the maker trades and on what terms | Nothing |
+| [`advanced/02-submarine.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/02-submarine.ts) | On-chain BTC → a Lightning invoice; refunds with `--refund` | A swap mnemonic, a BOLT11 invoice, signet bitcoin |
+| [`advanced/03-reverse.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/03-reverse.ts) | A Lightning payment → L-BTC on Liquid; claims and broadcasts | A swap mnemonic, a Liquid address, 50,000 signet sats |
+| [`advanced/04-corridor.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/04-corridor.ts) | Quotes the Arkade Intents corridor and shows a refusal | Nothing |
+| [`advanced/05-rgb-spend.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/05-rgb-spend.ts) | The RGB wallet adapter boundary for claims and refunds | An rgb-lib wallet adapter |
+| [`advanced/06-atomic.ts`](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/advanced/06-atomic.ts) | Quotes, verifies, and tracks an atomic BTC ↔ USDT-RGB swap | A regtest maker with atomic pairs, an rgb-lib wallet |
 
-Start with `01-pairs.ts`. If it prints a table, the SDK, its WebAssembly binary, and the maker are all reachable.
+Start with `advanced/01-pairs.ts`. If it prints a table, the SDK, its WebAssembly binary, and the maker are all reachable.
 
-Each example lists the environment variables it needs at the top of the file.
+Each example lists the environment variables it needs at the top of the file. The [examples README](https://github.com/kaleidoswap/swap-sdk/blob/trunk/typescript-sdk/examples/README.md) covers configuration and the swap mnemonic.
 
 ## Python
 
-[`bindings/python/examples/`](https://github.com/kaleidoswap/swap-sdk/tree/trunk/bindings/python/examples) has `submarine.py`, `reverse.py`, `chain.py`, `corridor_quote.py`, and `rgb_spend.py`. They target the regtest harness; do not run them against real funds.
+[`bindings/python/examples/`](https://github.com/kaleidoswap/swap-sdk/tree/trunk/bindings/python/examples) has:
+
+- `simple/submarine.py` and `simple/reverse.py`: the high-level API against the signet maker.
+- `advanced/`: `submarine.py`, `reverse.py`, `chain.py`, `corridor_quote.py`, and `rgb_spend.py` on the swap engine. They target the regtest harness; do not run them against real funds.
 
 ## Rust
 
 [`examples/`](https://github.com/kaleidoswap/swap-sdk/tree/trunk/examples) has:
 
-- `lusdt_submarine.rs` and `lusdt_reverse.rs`: the full L-USDT ↔ BTC workflow, including the caller-funded PSET claim.
-- `corridor_quote.rs`: an Arkade corridor quote.
-- `signet_smoke.rs`: a read-only check of the signet maker and chain access.
+- `simple/submarine.rs` and `simple/reverse.rs` (`simple_submarine`, `simple_reverse`): the high-level API against the signet maker.
+- `advanced/submarine.rs` and `advanced/reverse.rs` (`advanced_submarine`, `advanced_reverse`): the same BTC swaps step by step on the engine.
+- `advanced/lusdt_submarine.rs` and `advanced/lusdt_reverse.rs`: the full L-USDT ↔ BTC workflow, including the caller-funded PSET claim.
+- `advanced/corridor_quote.rs`: an Arkade corridor quote.
+- `advanced/signet_smoke.rs`: a read-only check of the signet maker and chain access.
 - `rgb-regtest/`: live USDT-RGB swaps with real rgb-lib wallets on regtest.
 
+Each example runs by its name in `Cargo.toml`:
+
 ```bash
-cargo run --example lusdt_reverse
+cargo run --example simple_reverse
 ```

@@ -7,21 +7,19 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 开始使用 KaleidoSwap 通常要做的第一件事就是存入一些资金，无论是为了交换资产还是为了保管资产。前者需要你存入比特币来开通 RGB 通道，后者则可以自行决定存入哪种资产（包括 RGB 资产）。
 
-<FeatureVideo name="desktop-deposits" title="存入比特币并通过闪电网络接收 USDT" />
+<FeatureVideo name="desktop-deposit-withdraw" title="存入比特币和 USDT，再链上提取并确认" />
 
 ## 存入比特币
 
-1. **点击「存入」(Deposit)**：该按钮位于左侧边栏底部。<img src="/assets/images/desktop-app/9_deposit_quick_actions.png" alt="侧边栏底部的存入和提取按钮" width={360} height={1000} />
-2. **选择资产**：资产卡片中默认已选中 BTC（点击「更多」(More) 可搜索全部资产）。点击「使用 BTC 继续」(Continue with BTC)。<img src="/assets/images/desktop-app/34_deposit_pick.png" alt="存入资产选择界面，显示 BTC、USDT 和新资产卡片" width={1600} height={1000} />
-3. **存入 BTC** (Deposit BTC)：界面显示一个**统一 BIP21** (Unified BIP21) 二维码，同时包含 BTC 地址和闪电发票，两者也列在二维码下方（点击即可复制）。可以选填「金额」(Amount)，发票会按该金额生成；「闪电最大可收」(Max via Lightning) 显示你的通道最多能接收的金额。可从任意钱包通过链上或闪电网络付款。点击「生成新地址」(Generate New Addresses) 可获取新的地址。界面打开期间，链上入账一进入内存池就会显示出来并附带确认数，随后标记为已收到；闪电支付会立即显示为已收到。<img src="/assets/images/desktop-app/10_deposit_method.png" alt="存入 BTC 界面，显示统一 BIP21 二维码" width={760} height={1014} />
+1. **点击「存入」(Deposit)**：该按钮位于左侧边栏底部。
+2. **选择资产**：资产卡片中默认已选中 BTC（点击「更多」(More) 可搜索全部资产）。点击「使用 BTC 继续」(Continue with BTC)。
+3. **存入 BTC** (Deposit BTC)：界面显示一个**统一 BIP21** (Unified BIP21) 二维码，同时包含 BTC 地址和闪电发票，两者也列在二维码下方（点击即可复制）。可以选填「金额」(Amount)，发票会按该金额生成；「闪电最大可收」(Max via Lightning) 显示你的通道最多能接收的金额。可从任意钱包通过链上或闪电网络付款。点击「生成新地址」(Generate New Addresses) 可获取新的地址。界面打开期间，链上入账一进入内存池就会显示出来并附带确认数，随后标记为已收到；闪电支付会立即显示为已收到。
 
 ## 存入 RGB 资产
 
 1. **选择资产**：重复上一节的第 1、2 步，但这次选择某个已注册资产，或选择「新资产」(New Asset)。资产 ID 是可选的；不填时会得到一张可接收任意 RGB 资产的链上发票（闪电网络需要资产 ID）。资产要出现在已注册列表中，你的节点必须此前遇到过（即接收过）它。本例中我们使用 test-USDT。
 2. **链上** (Onchain)：打开「隐私接收」(Receive with Privacy) 使用盲化 UTXO，关闭则通过见证（基于地址的）发票接收。复制「RGB 发票」(RGB Invoice) 或「接收方 ID」(Recipient ID)。盲化接收需要一个可染色 UTXO；如果没有可用的，应用会提示你创建可染色 UTXO。
-3. **闪电** (Lightning)：输入金额（不超过显示的「最大值」(Max)，即你的通道对该资产的入向容量）以生成 RGB 闪电发票 —— 例如把 USDT 接收到 USDT 通道中。这需要一个持有该资产的活跃通道。<img src="/assets/images/desktop-app/35_deposit_usdt_lightning.png" alt="通过闪电网络存入 USDT：填写金额并显示闪电发票二维码" width={1600} height={1000} />
-
-<img src="/assets/images/desktop-app/22_deposit-rgb-asset.png" alt="存入 RGB 资产界面" width={760} height={1014} />
+3. **闪电** (Lightning)：输入金额（不超过显示的「最大值」(Max)，即你的通道对该资产的入向容量）以生成 RGB 闪电发票 —— 例如把 USDT 接收到 USDT 通道中。这需要一个持有该资产的活跃通道。
 
 ## 获取测试币
 

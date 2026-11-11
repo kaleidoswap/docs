@@ -7,21 +7,19 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 The first thing you would usually need to do to start using KaleidoSwap is depositing some funds, either to start swapping assets or custody them. In the former case, you need to deposit Bitcoin to open an RGB channel, in the latter you can decide which other asset (including an RGB one) to deposit.
 
-<FeatureVideo name="desktop-deposits" title="Depositing bitcoin and receiving USDT over Lightning" />
+<FeatureVideo name="desktop-deposit-withdraw" title="Depositing bitcoin and USDT, then withdrawing on-chain with a confirmation" />
 
 ## Depositing Bitcoin
 
-1. **Click "Deposit"**: the button is at the bottom of the left sidebar. <img src="/assets/images/desktop-app/9_deposit_quick_actions.png" alt="Deposit and Withdraw buttons at the bottom of the sidebar" width={360} height={1000} />
-2. **Select Asset**: BTC is selected by default among the asset tiles (use **More** to search all assets). Click **Continue with BTC**. <img src="/assets/images/desktop-app/34_deposit_pick.png" alt="Deposit asset picker with BTC, USDT and New Asset tiles" width={1600} height={1000} />
-3. **Deposit BTC**: the screen shows one **Unified BIP21** QR code that carries both a BTC address and a Lightning invoice, with both listed below it (click to copy). Optionally enter an **Amount**; the invoice is then generated for it, and **Max via Lightning** shows the most your channels can receive. Pay from any wallet, on-chain or Lightning. Use **Generate New Addresses** for fresh ones. While the screen is open, an incoming on-chain payment is shown as soon as it reaches the mempool, with its confirmation count, then marked received; a Lightning payment is shown as received immediately. <img src="/assets/images/desktop-app/10_deposit_method.png" alt="Deposit BTC screen with the unified BIP21 QR code" width={760} height={1014} />
+1. **Click "Deposit"**: the button is at the bottom of the left sidebar.
+2. **Select Asset**: BTC is selected by default among the asset tiles (use **More** to search all assets). Click **Continue with BTC**.
+3. **Deposit BTC**: the screen shows one **Unified BIP21** QR code that carries both a BTC address and a Lightning invoice, with both listed below it (click to copy). Optionally enter an **Amount**; the invoice is then generated for it, and **Max via Lightning** shows the most your channels can receive. Pay from any wallet, on-chain or Lightning. Use **Generate New Addresses** for fresh ones. While the screen is open, an incoming on-chain payment is shown as soon as it reaches the mempool, with its confirmation count, then marked received; a Lightning payment is shown as received immediately.
 
 ## Depositing RGB Assets
 
 1. **Choose Asset**: Repeat steps 1 and 2 in the previous section, but this time select one of the registered assets or choose **New Asset**. The Asset ID is optional; without it you get an on-chain invoice that can receive any RGB asset (Lightning requires the asset ID). To see an asset among the registered ones, your node needs to have already encountered (i.e. received) it. In this example we will use test-USDT.
 2. **Onchain**: toggle **Receive with Privacy** for a blinded UTXO, or turn it off to receive on a witness (address-based) invoice. Copy the **RGB Invoice** or the **Recipient ID**. Blinded receives need a colorable UTXO; if none is available, the app offers to create colorable UTXOs.
-3. **Lightning**: enter an amount, up to the shown **Max** (your channel's inbound capacity for that asset), to generate an RGB Lightning invoice — for example to receive USDT into a USDT channel. This needs an active channel holding the asset. <img src="/assets/images/desktop-app/35_deposit_usdt_lightning.png" alt="Deposit USDT over Lightning with an amount and the Lightning invoice QR" width={1600} height={1000} />
-
-<img src="/assets/images/desktop-app/22_deposit-rgb-asset.png" alt="Deposit RGB asset screen" width={760} height={1014} />
+3. **Lightning**: enter an amount, up to the shown **Max** (your channel's inbound capacity for that asset), to generate an RGB Lightning invoice — for example to receive USDT into a USDT channel. This needs an active channel holding the asset.
 
 ## Obtaining test coins
 

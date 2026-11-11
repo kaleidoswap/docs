@@ -96,11 +96,11 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="发送界面，已识别出链上目标地址，显示可用余额、金额卡片内的聪与美元单位切换，以及费率选项" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 <Note>
 从 Arkade 支付闪电会使用 Arkade Intents 交换：求解方（solver）支付闪电部分并换取你的 Arkade 币，因此不需要闪电通道。它支持 BOLT11 发票和 Lightning Address；对于 Lightning Address，钱包会在金额确定后获取发票。钱包会向网络上的所有求解方询价并采用最便宜的报价。确认前，核对页面会显示求解方及其费用。
 </Note>
+
+<FeatureVideo name="arkade-to-lightning" title="通过求解方从 Arkade 支付闪电发票" portrait />
 
 <img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="通过 Arkade Intents 交换从 Arkade 支付闪电发票的单卡片发送核对页面：收款金额、目标、来自 Arkade 的闪电、求解方费用和扣除总额" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -117,8 +117,6 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 ## 接收支付
 
 根据所选资产和已连接的账户，生成发票和地址以接收 Spark、Arkade、Liquid、Bitcoin L1、Lightning 和 RGB 上支持的资产。
-
-<img src="/assets/images/extension/09-deposit.png" alt="接收资产选择界面，包含搜索、比特币（下一步选择目标账户）、你的资产、添加资产，以及从其他链跨链转入" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="deposit-options" title="跨比特币各层的收款选项" portrait />
 
@@ -150,8 +148,6 @@ KaleidoSwap 扩展会根据你在目标字段中粘贴或输入的内容，自�
 | **RGB（无节点）** | Bitcoin L1 上的 RGB 发票 |
 | **闪电节点** | 比特币地址和闪电发票，在 RGB Lightning 节点上还包括通过闪电流转的 RGB 资产 |
 
-<img src="/assets/images/extension/15-receive-generated.png" alt="接收 BTC 的界面，包含路由选择器（按方式／按账户）、二维码，以及可在聪和法币之间切换的金额输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 ### RGB 发票
 
 RGB 表单可以把发票限定为某一种资产，也可以接受**任意 RGB 资产**（Any RGB asset），包括钱包尚未持有的资产。金额为可选项。在**高级**（Advanced）中可以设置有效期和接收模式：**盲化**（Blinded，具备隐私性，会使用你的一个空闲 UTXO）或**见证**（Witness，由付款方追加 BTC 为输出提供资金）。发票显示在屏幕上时，会自动检测到入账支付。
@@ -179,8 +175,6 @@ RGB 表单可以把发票限定为某一种资产，也可以接受**任意 RGB 
 2. 粘贴比特币地址、闪电发票、BOLT12 offer、Lightning Address、LNURL、RGB 发票、Liquid 地址或 `liquidnetwork:` URI、Spark 地址，或 Arkade 目标
 3. 输入金额
 4. 选择**核对支付**（Review Payment），核对建议路由后选择**确认并发送**（Confirm & Send）
-
-<img src="/assets/images/extension/16-withdraw-form.png" alt="空白的发送界面，「可发送至」面板列出 Lightning、Bitcoin、Spark、Liquid、Arkade、RGB，以及跨链 USDC 或 USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 从 Spark 发送到外部链（EVM 网络、Solana 等）的方式，请参见[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
 

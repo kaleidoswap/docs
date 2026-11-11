@@ -52,10 +52,6 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/27-bridge-quote.png" alt="跨链桥存入报价，在存入二维码上方显示发送金额、预计收到金额、以基点计的费用和有效期" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
-<img src="/assets/images/extension/28-bridge-deposit-address.png" alt="跨链桥存入地址，包含二维码、可复制的地址、等待存入状态，以及粘贴交易哈希的输入框" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 <FeatureVideo name="bridge-usdt-to-btc" title="将 EVM 链上的 USDT 桥接为 BTC" portrait />
 
 ## 跨链转出（提取）
@@ -80,15 +76,11 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/30-bridge-withdraw.png" alt="发送界面中识别出的跨链提取，显示目标网络、接收地址、接收代币、固定输出金额和费用" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 <FeatureVideo name="btc-to-usdt-evm" title="将 BTC 以 USDT 形式发送到 EVM 链" portrait />
 
 ## 订单跟踪与恢复
 
 跨链桥订单会作为会话保存在本地。如果订单进行中扩展被关闭或 service worker 重启，跨链桥界面会恢复待处理订单并继续跟踪。已完成和失败的订单会显示最终状态以及相关的交易引用。
-
-<img src="/assets/images/extension/29-bridge-tracking.png" alt="正在处理的跨链桥订单，包含从处理中到已完成的六阶段进度列表，以及路由和订单 ID" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 ## 使用建议
 

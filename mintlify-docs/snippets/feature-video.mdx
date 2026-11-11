@@ -8,6 +8,12 @@
     <FeatureVideo name="desktop-dca" title="Creating a DCA order" />
 
   `portrait` sizes the browser-extension clips (a 320px-wide popup).
+
+  The clip starts on its own and loops, but it carries native controls, so a
+  reader can pause it, scrub back to a step they missed, slow it down or open
+  it full screen. The control bar fades out while the clip plays and comes
+  back on hover, focus or pause. The clips have no audio; the volume control
+  is part of the native bar and cannot be hidden on its own.
 */}
 
 export const FeatureVideo = ({ name, title, portrait = false }) => (
@@ -15,6 +21,8 @@ export const FeatureVideo = ({ name, title, portrait = false }) => (
     autoPlay
     muted
     loop
+    controls
+    controlsList="nodownload"
     playsInline
     preload="metadata"
     poster={`/assets/videos/${name}.jpg`}

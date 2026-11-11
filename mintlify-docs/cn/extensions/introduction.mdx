@@ -4,6 +4,8 @@ sidebarTitle: "概览"
 description: "KaleidoSwap 生态的浏览器扩展：面向 Spark、Arkade、Liquid 和 RGB 的多协议比特币分层钱包，支持外部闪电节点，内置原子交换、跨链桥和 DApp 连接，资产管理与支付审批都在浏览器内完成。"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 KaleidoSwap 浏览器扩展把钱包管理、协议账户、交换和 DApp 连接直接带进浏览器。它在工具栏上提供一个常驻的钱包界面，用于查看余额、发起转账、处理钱包审批请求以及执行协议操作。
 
 ## KaleidoSwap 扩展是什么？
@@ -39,6 +41,8 @@ KaleidoSwap 扩展是 KaleidoSwap 面向比特币及其分层协议的浏览器�
 - 生成二维码，方便分享
 - 自动识别目标地址类型和兼容的路由
 
+<FeatureVideo name="address-auto-routing" title="粘贴任意地址，钱包自动选择网络" portrait />
+
 ### 资产交换与跨链桥
 
 - RLN 连接后，可获取 KaleidoSwap 做市方交易对
@@ -46,6 +50,8 @@ KaleidoSwap 扩展是 KaleidoSwap 面向比特币及其分层协议的浏览器�
 - 执行前先核对报价输出、费用、有效期和交易场所；内置的最大滑点会保护最小输出金额
 - 在 Spark 与外部链（EVM 网络、Solana 等）之间跨链转移资金，并持续跟踪订单状态
 - 通过 Arkade Intents 用 Arkade 余额支付闪电发票和 Lightning Address，并把闪电收入 Arkade，自动采用报价最低的求解方
+
+<FeatureVideo name="usdt-on-rgb-swap" title="通过闪电网络在 RGB 上原子交换 BTC 与 USDT" portrait />
 
 ### DApp 连接
 

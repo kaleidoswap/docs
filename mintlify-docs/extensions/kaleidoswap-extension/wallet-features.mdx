@@ -96,11 +96,11 @@ The KaleidoSwap Extension automatically detects the payment type based on what y
   </Step>
 </Steps>
 
-<img src="/assets/images/extension/14-send-form.png" alt="Send screen with an on-chain destination detected, the available balance, an amount with the sats and USD unit picker inside the amount card, and the fee rate options" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 <Note>
 Paying Lightning from Arkade uses an Arkade Intents swap: a solver pays the Lightning side and takes your Arkade coins in exchange, so no Lightning channel is needed. It pays BOLT11 invoices and Lightning addresses; for a Lightning address the wallet fetches the invoice once the amount is set. The wallet asks every solver on the network for a quote and uses the cheapest. The review shows the solver and its fee before you confirm.
 </Note>
+
+<FeatureVideo name="arkade-to-lightning" title="Paying a Lightning invoice from Arkade through a solver" portrait />
 
 <img src="/assets/images/extension/37-send-arkade-lightning-review.png" alt="One-card send review for a Lightning invoice paid from Arkade through an Arkade Intents swap: amount received, destination, Lightning from Arkade, the solver fee and the total deducted" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
@@ -117,8 +117,6 @@ Clicking a `bitcoin:`, `lightning:` or `lnurl:` link on a web page opens the wal
 ## Receiving Payments
 
 Generate invoices and addresses to receive supported assets across Spark, Arkade, Liquid, Bitcoin L1, Lightning, and RGB, depending on the selected asset and connected account.
-
-<img src="/assets/images/extension/09-deposit.png" alt="Receive asset picker with search, Bitcoin (Choose destination account next), Your assets, Add an asset, and Bridge from another chain" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <FeatureVideo name="deposit-options" title="Receive options across Bitcoin layers" portrait />
 
@@ -150,8 +148,6 @@ Generate invoices and addresses to receive supported assets across Spark, Arkade
 | **RGB (node-less)** | RGB invoice on Bitcoin L1 |
 | **Lightning node** | Bitcoin address and Lightning invoice, including RGB assets over Lightning on an RGB Lightning node |
 
-<img src="/assets/images/extension/15-receive-generated.png" alt="Receive BTC screen with the route picker (By method / By account), a QR code, and the amount field with the sats/fiat toggle" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 ### RGB Invoices
 
 The RGB form can lock the invoice to one asset or accept **Any RGB asset**, including assets the wallet doesn't hold yet. The amount is optional. Under **Advanced** you set the expiry and the receive mode: **Blinded** (with privacy; uses one of your spare UTXOs) or **Witness** (the sender adds BTC to fund the output). While the invoice is on screen, an incoming payment is detected automatically.
@@ -179,8 +175,6 @@ Send pays from the selected account to a detected destination:
 2. Paste a Bitcoin address, Lightning invoice, BOLT12 offer, Lightning address, LNURL, RGB invoice, Liquid address or `liquidnetwork:` URI, Spark address, or Arkade destination
 3. Enter the amount
 4. Select **Review Payment**, check the suggested route, then **Confirm & Send**
-
-<img src="/assets/images/extension/16-withdraw-form.png" alt="Empty Send screen with the What you can send to panel listing Lightning, Bitcoin, Spark, Liquid, Arkade, RGB, and cross-chain USDC or USDT" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 For sends from Spark to external chains (EVM networks, Solana, and more), see [Bridge](/extensions/kaleidoswap-extension/bridge).
 

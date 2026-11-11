@@ -10,8 +10,6 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 KaleidoSwap 扩展内置了交换界面。当可选的 RGB Lightning Node 账户已连接时，它可以使用 KaleidoSwap 做市方交易对；当 Spark 池可用时，它可以使用 Spark/Flashnet 路由。
 
-<img src="/assets/images/extension/10-swap.png" alt="KaleidoSwap 交换界面" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
-
 <Note>
 交换是在你的钱包内部把一种资产换成另一种。要在 Spark 与外部链（EVM 网络、Solana 等）之间转移资金，请改用[跨链桥](/cn/extensions/kaleidoswap-extension/bridge)。
 </Note>
@@ -99,8 +97,6 @@ Flashnet 交换内置了 5% 的最大滑点限制：最小输出金额由该限�
 | **收尾中**（Completing） | 交换正在完成收尾 |
 
 交换结束后，界面会显示成功结果。如果某个步骤失败，则会显示带有失败细节的错误信息。Flashnet 交换不使用跟踪器，在结算完成前只显示一个**正在 Spark 上结算…**状态。
-
-<img src="/assets/images/extension/25-swap-status.png" alt="KaleidoSwap 做市方交换进行中，三步进度跟踪器显示请求中、原子交换和收尾中，BTC 金额以聪显示" style={{ maxWidth: "360px", width: "100%", height: "auto", display: "block", margin: "1.5rem auto" }} />
 
 <Note>
 如果没有可用的兼容交易场所或交易对，KaleidoSwap 扩展会显示空状态而不是报价。接收、发送、余额和设置等钱包功能仍然可用。

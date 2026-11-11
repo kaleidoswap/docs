@@ -7,35 +7,25 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 首次启动应用时，欢迎界面会询问要运行哪些组件：**Node + Mind**（默认）、**Only Node** 或 **Only Mind**。选择包含节点的模式后，再选择**远程节点** (Remote Node，连接你自己或服务商已在运行的节点) 或**本地节点** (Local Node，由应用在本设备上运行节点)。本地节点需要选择后端：**原生二进制** (Native Binary，macOS 和 Linux) 或 **Docker 容器** (Docker Container，推荐，支持所有平台，需要 Docker Desktop 处于运行状态)。本指南演示本地节点的流程。
 
-<img src="/assets/images/desktop-app/0_home.png" alt="KaleidoSwap 桌面应用启动界面，显示节点连接选项" width={1600} height={1000} />
-
 <FeatureVideo name="desktop-onboarding" title="在本地节点上创建新钱包" />
 
 ## 创建新钱包
 
 选择「本地节点」，选定后端，然后点击「创建新钱包」(Create New Wallet)。
 
-<img src="/assets/images/desktop-app/1_create_new_wallet.png" alt="KaleidoSwap 桌面应用中的创建新钱包选项" width={1600} height={1000} />
-
 然后按以下步骤操作：
 
 1. **接受条款**：首先会弹出「条款与隐私政策」(Terms & Privacy Policy) 对话框。阅读其中链接的服务条款和隐私政策，然后点击「接受并继续」(Accept & Continue)。
-<img src="/assets/images/desktop-app/33_terms.png" alt="条款与隐私政策对话框及「接受并继续」按钮" width={1600} height={1000} />
 2. **为账户命名**（点击随机图标可自动生成名称），并**选择网络**。默认网络为 Mutinynet，列表中还有 Regtest、Local Regtest、Local Docker Regtest、signet 和测试网。主网暂不可选。「高级设置」(Advanced Settings) 中可配置索引器、RGB 代理以及可选的 Bitcoin Core 节点。点击「设置密码」(Set Password)。
-<img src="/assets/images/desktop-app/2_creation_step1.png" alt="钱包创建第 1 步：填写账户名称并选择网络" width={1600} height={1000} />
 3. **设置安全密码**：输入并确认一个至少 8 个字符的密码（检查清单还建议包含大写字母和数字），然后点击「查看助记词」(View Recovery Phrase)。这会在你的机器上启动并初始化节点，需要稍等片刻。
-<img src="/assets/images/desktop-app/3_creation_step2.png" alt="钱包创建第 2 步：设置安全密码并初始化节点" width={1600} height={1000} />
 4. **备份**：点击模糊区域或「显示」(Reveal)，显示 12 个单词的助记词（确保没有人能看到你的屏幕）。抄写下来并离线保存。「复制」(Copy) 仅在助记词可见时可用。点击「验证助记词」(Verify Recovery Phrase)。也可以选择「跳过备份（不推荐）」(Skip backup (not recommended))，但这样你将没有经过验证的备份。
-<img src="/assets/images/desktop-app/4_creation_step3.png" alt="钱包创建第 3 步：需要抄写的助记词备份短语" width={1600} height={1000} />
 5. **验证**：按顺序输入完整助记词（单词会自动补全），然后点击「完成设置」(Complete Setup)。节点随即解锁并打开仪表盘。
-<img src="/assets/images/desktop-app/5_creation_step4.png" alt="钱包创建第 4 步：助记词验证" width={1600} height={1000} />
 
 之后需要稍等一会儿来解锁新的本地节点，随后你就会进入 KaleidoSwap 主页，可以开始使用了！
 
 <Warning>
 使用 v0.5.0 或更早版本内置节点创建的钱包及其备份，无法在 v0.5.1 中打开。升级前，请先用 v0.5.0 关闭通道并转出资金，然后再创建新钱包。
 </Warning>
-
 
 ## 选择账户
 

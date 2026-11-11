@@ -7,35 +7,25 @@ import { FeatureVideo } from "/snippets/feature-video.mdx";
 
 When you first launch the app, the welcome screen asks what to run: **Node + Mind** (default), **Only Node** or **Only Mind**. With a node mode you then pick **Remote Node** (connect to a node you or a provider already run) or **Local Node** (the app runs one on this device). For a local node you choose a backend: **Native Binary** (macOS and Linux) or **Docker Container** (Recommended, all platforms, requires Docker Desktop to be running). This guide follows the local node path.
 
-<img src="/assets/images/desktop-app/0_home.png" alt="KaleidoSwap Desktop App start screen with node connection options" width={1600} height={1000} />
-
 <FeatureVideo name="desktop-onboarding" title="Creating a new wallet on a local node" />
 
 ## Create New Wallet
 
 Choose **Local Node**, select a backend, then click **Create New Wallet**.
 
-<img src="/assets/images/desktop-app/1_create_new_wallet.png" alt="Create New Wallet option in the KaleidoSwap Desktop App" width={1600} height={1000} />
-
 Then, you will need proceed with the following steps:
 
 1. **Accept the terms**: a **Terms & Privacy Policy** dialog opens first. Read the linked Terms of Service and Privacy Policy, then click **Accept & Continue**.
-<img src="/assets/images/desktop-app/33_terms.png" alt="Terms & Privacy Policy dialog with Accept & Continue" width={1600} height={1000} />
 2. **Assign a name** to your new account (the shuffle icon generates one) and **select the network**. Mutinynet is the default; Regtest, Local Regtest, Local Docker Regtest, Signet and Testnet are also listed. Mainnet is not yet selectable. **Advanced Settings** holds the indexer, RGB proxy and optional Bitcoin Core node. Click **Set Password**.
-<img src="/assets/images/desktop-app/2_creation_step1.png" alt="Wallet creation step 1: account name and network selection" width={1600} height={1000} />
 3. **Set a Secure Password**: enter and confirm a password of at least 8 characters (the checklist also suggests an uppercase letter and a number), then click **View Recovery Phrase**. This starts and initializes the node on your machine, which takes a moment.
-<img src="/assets/images/desktop-app/3_creation_step2.png" alt="Wallet creation step 2: setting a secure password and initializing the node" width={1600} height={1000} />
 4. **Backup**: click the blurred area or **Reveal** to show your 12-word recovery phrase (make sure no one can see your screen). Write it down and store it offline. **Copy** works only while the phrase is visible. Click **Verify Recovery Phrase**. **Skip backup (not recommended)** is available but leaves you without a verified backup.
-<img src="/assets/images/desktop-app/4_creation_step3.png" alt="Wallet creation step 3: mnemonic backup phrase to write down" width={1600} height={1000} />
 5. **Verify**: type the full phrase in order (words autocomplete), then click **Complete Setup**. The node unlocks and the dashboard opens.
-<img src="/assets/images/desktop-app/5_creation_step4.png" alt="Wallet creation step 4: recovery phrase verification" width={1600} height={1000} />
 
 After that, some moments will be required to unlock your new local node and you will then land to the home page of KaleidoSwap, ready to start operating with it!
 
 <Warning>
 Wallets created with the bundled node of v0.5.0 or earlier, and their backups, cannot be opened by v0.5.1. Before upgrading, close channels and move funds out with v0.5.0, then create a new wallet.
 </Warning>
-
 
 ## Select Account
 

@@ -4,6 +4,8 @@ sidebarTitle: "Overview"
 description: "Browser extensions for the KaleidoSwap ecosystem, offering a multi-layer Bitcoin wallet for Spark, Arkade, Liquid, and RGB, with external Lightning nodes and built-in atomic swaps"
 ---
 
+import { FeatureVideo } from "/snippets/feature-video.mdx";
+
 KaleidoSwap browser extensions bring wallet management, protocol accounts, swaps, and DApp connectivity directly into the browser. They provide a persistent wallet surface for balances, transfers, wallet approval requests, and protocol actions from the toolbar.
 
 ## What is the KaleidoSwap Extension?
@@ -39,6 +41,8 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 - QR code generation for easy sharing
 - Auto-detection of destination type and compatible route
 
+<FeatureVideo name="address-auto-routing" title="Pasting any destination: the wallet picks the network" portrait />
+
 ### Asset Swaps and Bridge
 
 - Fetch KaleidoSwap maker pairs when RLN is connected
@@ -46,6 +50,8 @@ The KaleidoSwap Extension is the KaleidoSwap browser wallet for Bitcoin and its 
 - Review quote output, fee, expiry, and venue before execution; a built-in maximum slippage protects the minimum output amount
 - Bridge funds between Spark and external chains (EVM networks, Solana, and more) with persistent order tracking
 - Pay Lightning invoices and Lightning addresses from Arkade, and receive Lightning into Arkade, through Arkade Intents at the cheapest solver quote
+
+<FeatureVideo name="usdt-on-rgb-swap" title="Atomic BTC to USDT swap on RGB over Lightning" portrait />
 
 ### DApp Connectivity
 

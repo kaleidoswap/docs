@@ -57,7 +57,7 @@ import { createKaleidoSwap, FileStore, isQuote, mnemonicSigner } from "@kaleidor
 
 const kaleido = await createKaleidoSwap({
   network: "signet",
-  store: new FileStore("./swaps"),                            // one file per swap
+  store: new FileStore("./swaps"), // one file per swap
   signer: mnemonicSigner(process.env.SWAP_MNEMONIC!, "signet"),
 });
 

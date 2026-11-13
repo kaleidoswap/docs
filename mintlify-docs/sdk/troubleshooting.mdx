@@ -30,6 +30,8 @@ Values rejected by the generated WebAssembly glue before Rust sees them stay pla
 
 In Python, errors are raised as `kaleidorg_swap_sdk.Error` variants.
 
+The `KaleidoSwap` API reports its own failures as a `SwapError`, narrowed with `isSwapError`. Its codes are listed in [The KaleidoSwap API](/sdk/kaleidoswap#errors).
+
 ## Installation and loading
 
 <AccordionGroup>
@@ -69,6 +71,18 @@ In Python, errors are raised as `kaleidorg_swap_sdk.Error` variants.
     The SDK refused the maker's response because it does not match your request or keys: script, lockup address, timeout, or invoice hash. Do not fund it. Check that you passed the right public key and preimage hash, and that you are talking to the maker you expect.
   </Accordion>
 
+  <Accordion title="quote() returns a refusal with pair_unavailable">
+    Either the maker does not offer the route right now, or the `KaleidoSwap` API does not serve it yet: chain swaps, L-USDT, USDT-RGB, Arkade, and pay-through go through the swap engine. The refusal's `message` says which. See [The KaleidoSwap API](/sdk/kaleidoswap#the-swap-engine).
+  </Accordion>
+
+  <Accordion title="An L-USDT create is refused before any request is sent">
+    On testnet and regtest, pass the L-USDT asset id you trust as `lusdtAssetId` (`lusdt_asset_id` in Python). See [Move funds between chains](/sdk/chain-swaps).
+  </Accordion>
+
+  <Accordion title="PayThroughClient throws on construction">
+    `lightningNetwork` is required: `"bitcoin"`, `"testnet"`, `"signet"`, or `"regtest"`.
+  </Accordion>
+
   <Accordion title="Chain swap: 'needs claimPublicKey and refundPublicKey'">
     Chain swaps require both keys so both lockup scripts can be verified. Derive them from two indexes.
   </Accordion>
@@ -87,6 +101,14 @@ In Python, errors are raised as `kaleidorg_swap_sdk.Error` variants.
 <AccordionGroup>
   <Accordion title="acceptQuote fails with 401 invalid_swap_auth">
     Pass the swap's `swapAuth` from the create response. If you lost it, recover it with `recoverSwapAuth(id, secretKey)`. Without it, the re-quote cannot be accepted and the swap expires into its refund path.
+  </Accordion>
+
+  <Accordion title="A swap stays in awaiting_funding or locked and never ends">
+    Nothing is following it. Call `resume()` on start and follow each swap in `resumed` with `settled()` or `phases()`.
+  </Accordion>
+
+  <Accordion title="constructClaim refuses an unconfirmed lockup">
+    A claim needs a lockup your chain backend shows confirmed and unspent. Wait for the confirmation, or opt in with `allowZeroConf: true`. See [Claims and refunds](/sdk/claims-and-refunds#what-a-claim-checks-first).
   </Accordion>
 
   <Accordion title="A helper returns not-yet">

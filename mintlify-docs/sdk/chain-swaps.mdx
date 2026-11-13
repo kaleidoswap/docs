@@ -40,12 +40,14 @@ A chain swap uses two keys: a refund key for your lockup and a claim key for the
       refundPublicKey: refundKey.publicKey,
       userLockAmount: 100_000n,
       pairHash: card.hash,
-    });
+    }, lusdtAssetId);
 
     await store.put(swap.id, toJson({ refundIndex, claimIndex, makerUrl, swap }));
     ```
 
-    The response has `lockupDetails` (where you lock) and `claimDetails` (where the maker locks for you). The SDK checks both against your keys.
+    `lusdtAssetId` is the L-USDT asset id your app trusts, from your own configuration and never from the maker. It is required on testnet and regtest, where USDT is issued per deployment; on mainnet the SDK pins the canonical Liquid USDt itself. A maker that offers another asset as L-USDT is refused.
+
+    The response has `lockupDetails` (where you lock) and `claimDetails` (where the maker locks for you). The SDK checks both against your keys and the amounts you requested.
   </Step>
 
   <Step title="Lock">

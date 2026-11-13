@@ -14,6 +14,29 @@ Your app creates a secret and pays a hold invoice locked to it. The maker then l
 
 Until your app claims, the Lightning payment is held, not settled. If the maker never locks, the payment is released back.
 
+## The short way
+
+The [`KaleidoSwap` API](/sdk/kaleidoswap) serves this route for BTC and L-BTC. It checks your payout address before the invoice exists, and claims on its own once the maker's lockup confirms.
+
+```typescript
+const answer = await kaleido.quote({
+  pay: "lightning:BTC",
+  receive: "liquid:BTC",           // or "bitcoin:BTC"
+  amount: { pay: 50_000 },         // or { receive: sats } to fix what lands
+});
+if (!isQuote(answer)) throw new Error(`${answer.reason}: ${answer.message}`);
+
+const swap = await kaleido.start(answer, { destination: myLiquidAddress });
+console.log(`Pay ${swap.action.invoice}`);
+
+for await (const phase of swap.phases()) console.log(phase);
+// "settled": your claim confirmed.
+```
+
+`start` hands out the invoice only if the maker's lockup leaves enough time to confirm and claim. Otherwise it fails with `SWAP_EXPIRED`, and nothing is paid.
+
+The rest of this page does the same swap step by step on the swap engine. Use it for L-USDT and USDT-RGB, or when your app builds its own claims.
+
 ## Setup
 
 <Setup />
@@ -50,7 +73,7 @@ Until your app claims, the Lightning payment is held, not settled. If the maker 
   </Step>
 
   <Step title="Wait for the maker's lockup">
-    The swap reaches `transaction.mempool`, then `transaction.confirmed`.
+    The swap reaches `transaction.mempool`, then `transaction.confirmed`. Wait for the confirmation: a claim is refused until your own chain backend shows the lockup confirmed.
   </Step>
 
   <Step title="Claim">
@@ -103,5 +126,5 @@ script = sdk.SwapScript.from_reverse(chain=lbtc, reverse_response=swap, our_pubk
 | Asset you receive | What changes |
 |---|---|
 | BTC | `to: "BTC"`, `SwapScript.fromReverse("bitcoin", ...)`, a Bitcoin Esplora URL |
-| L-USDT | `to: "L-USDT"`. The claim uses a caller-funded PSET: your wallet adds L-BTC for the fee (`prepareLiquidClaim`) |
+| L-USDT | `to: "L-USDT"`, and pass the L-USDT asset id you trust as the last argument: `createReverseSwap(network, request, undefined, lusdtAssetId)`. It is required on testnet and regtest. The claim uses a caller-funded PSET: your wallet adds L-BTC for the fee (`prepareLiquidClaim`) |
 | USDT-RGB | Pin the RGB contract, and your rgb-lib wallet colors the claim. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |

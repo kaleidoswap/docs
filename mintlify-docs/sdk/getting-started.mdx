@@ -13,7 +13,7 @@ This page takes you from nothing to a finished swap on signet, in TypeScript.
 | Node 22 or later | [nodejs.org](https://nodejs.org) |
 | A way to pay a Lightning invoice on **Mutinynet** | The KaleidoSwap signet maker runs on [Mutinynet](https://mutinynet.com), a custom signet, so an ordinary signet or testnet wallet cannot pay its invoices. The [Mutinynet faucet](https://faucet.mutinynet.com) pays a BOLT11 invoice for you: paste the invoice the script prints. |
 | A Liquid testnet address to receive into | Any Liquid wallet set to testnet. For test L-BTC, use the [Liquid testnet faucet](https://liquidtestnet.com/faucet). |
-| A 12-word BIP39 mnemonic | Any wallet can generate one. Use a test mnemonic only, never one that holds real funds. |
+| A 12-word BIP39 mnemonic, used only for swaps | Any wallet can generate one. Use a test mnemonic only, never one that holds real funds. |
 
 ## 1. Install
 
@@ -46,77 +46,55 @@ for (const [kind, pairs] of Object.entries(catalogues)) {
 }
 ```
 
-Each route has a **card** with its limits (in sats for BTC and L-BTC), its fees, and a `hash` you pass back when you create a swap, to hold the maker to those terms.
+Each route has a **card** with its limits (in sats for BTC and L-BTC) and its fees.
 
 ## 3. Receive L-BTC from a Lightning payment
 
-This is a [reverse swap](/sdk/reverse-swaps): you pay a Lightning invoice, the maker locks L-BTC for you, and you claim it.
+You pay a Lightning invoice and receive L-BTC on Liquid. The [`KaleidoSwap` API](/sdk/kaleidoswap) does it in three calls: `quote` prices the route, `start` creates the swap, and following the swap claims the L-BTC for you.
 
 ```typescript swap.ts
-import { init, SwapClient, SwapMasterKey, SwapScript, toJson } from "@kaleidorg/swap-sdk";
-import { writeFile } from "node:fs/promises";
+import { createKaleidoSwap, FileStore, isQuote, mnemonicSigner } from "@kaleidorg/swap-sdk";
 
-await init();
-const network = "signet";
-const makerUrl = "https://maker.signet.kaleidoswap.com/v2";
-const liquidEsploraUrl = "https://blockstream.info/liquidtestnet/api";
-const payoutAddress = process.env.LIQUID_ADDRESS!; // a Liquid testnet address you control
-
-const client = new SwapClient(makerUrl);
-
-// Keys and the swap secret come from a mnemonic you keep. Use a new index for every swap.
-const master = SwapMasterKey.fromWalletMnemonic(process.env.WALLET_MNEMONIC!, network);
-const index = BigInt(process.env.SWAP_INDEX ?? "0"); // use a new index for every run
-const claimKey = master.deriveSwapKey(index);
-const preimage = master.derivePreimage(index);
-
-// Create the swap. The SDK checks the maker's answer against your key and secret.
-const card = (await client.reversePairs()).BTC["L-BTC"];
-const swap = await client.createReverseSwap(network, {
-  from: "BTC",
-  to: "L-BTC",
-  invoiceAmount: 50_000n,
-  preimageHash: preimage.sha256,
-  claimPublicKey: claimKey.publicKey,
-  pairHash: card.hash,
+const kaleido = await createKaleidoSwap({
+  network: "signet",
+  store: new FileStore("./swaps"),                            // one file per swap
+  signer: mnemonicSigner(process.env.SWAP_MNEMONIC!, "signet"),
 });
-await writeFile(`${swap.id}.json`, toJson({ index, swap })); // save before paying
 
-console.log(`Pay this invoice:\n${swap.invoice}`);
+// Finish or refund anything a previous run left open.
+await kaleido.resume();
 
-// Wait until the maker's lockup confirms; stop if the swap fails.
-const failed = ["swap.expired", "invoice.expired", "transaction.failed", "transaction.refunded"];
-for (;;) {
-  const { status } = await client.swap(swap.id);
-  if (status === "transaction.confirmed") break;
-  if (failed.includes(status)) throw new Error(`swap ${swap.id} ended in ${status}`);
-  await new Promise((r) => setTimeout(r, 5_000));
-}
-
-// Claim it. Broadcasting reveals the secret, and the maker settles your payment.
-const script = SwapScript.fromReverse("liquid", network, swap, claimKey.publicKey);
-const claim = await script.constructClaim(preimage.preimage, {
-  outputAddress: payoutAddress,
-  swapId: swap.id,
-  keysSecretHex: claimKey.secretKey,
-  makerBaseUrl: makerUrl,
-  network,
-  liquidEsploraUrl,
+const answer = await kaleido.quote({
+  pay: "lightning:BTC",
+  receive: "liquid:BTC",
+  amount: { pay: 50_000 },
 });
-console.log("Claimed:", await claim.broadcast(network, undefined, liquidEsploraUrl));
+if (!isQuote(answer)) throw new Error(`${answer.reason}: ${answer.message}`);
+
+// Creates the swap, checks the maker's answer, and saves it. Nothing is paid yet.
+const swap = await kaleido.start(answer, { destination: process.env.LIQUID_ADDRESS! });
+console.log(`Pay this invoice (${answer.fromAmount} sat):\n${swap.action.invoice}`);
+
+// Follows the swap to the end and claims the L-BTC when the maker's lockup confirms.
+for await (const phase of swap.phases()) console.log(phase);
+
+if (swap.phase !== "settled") throw new Error(`Swap ${swap.id} ended ${swap.phase}`);
+console.log(`Received about ${answer.toAmount} sat of L-BTC`);
 ```
 
-Run it with `WALLET_MNEMONIC`, `LIQUID_ADDRESS`, and a fresh `SWAP_INDEX` set, pay the printed invoice (for example through the Mutinynet faucet), and the script claims the L-BTC once the maker's lockup confirms. The swap ends in `invoice.settled`.
+Run it with `SWAP_MNEMONIC` and `LIQUID_ADDRESS` set, and pay the printed invoice (for example through the Mutinynet faucet). The script prints each phase and ends on `settled`.
+
+If you stop the script after paying, run it again: `resume()` picks the swap up from `./swaps` and claims it.
 
 <Warning>
-This script keeps it short: the index comes from an environment variable, it polls instead of listening on the WebSocket, and it saves nothing but the swap record. A real app keeps a counter of used indexes, saves signed transactions before broadcasting, and handles failed swaps. See [Common mistakes](/sdk/common-mistakes).
+`./swaps` holds what the SDK needs to claim or refund your swaps. Use a mnemonic that is only for swaps, keep the folder out of version control, and never delete it or restore an older copy while swaps are open. See [Keys and recovery](/sdk/keys-and-recovery#the-swap-store).
 </Warning>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="How swaps work" icon="lightbulb" href="/sdk/swap-types">
-    Who pays first, who claims, and what happens if a swap fails.
+  <Card title="The KaleidoSwap API" icon="wand-magic-sparkles" href="/sdk/kaleidoswap">
+    Quotes, refusals, your own store and signer, and errors.
   </Card>
   <Card title="Pay Lightning from on-chain" icon="bolt" href="/sdk/submarine-swaps">
     The opposite direction, with a refund path.

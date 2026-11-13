@@ -8,7 +8,7 @@ The Swap SDK lets your wallet or app swap between Bitcoin, Lightning, Liquid, RG
 
 <CardGroup cols={3}>
   <Card title="Quickstart" icon="rocket" href="/sdk/getting-started">
-    List the maker's routes and make a first swap on signet.
+    Make a first swap on signet with `quote`, `start`, and `resume`.
   </Card>
   <Card title="How swaps work" icon="lightbulb" href="/sdk/swap-types">
     Who pays first, who claims, and what happens if a swap fails.
@@ -31,16 +31,27 @@ The Swap SDK lets your wallet or app swap between Bitcoin, Lightning, Liquid, RG
 
 Mainnet is not available yet: asking the SDK for it returns an error, never another provider. The maker's catalogue (`submarinePairs()`, `reversePairs()`, `chainPairs()`, the corridor card) is the source of truth, so read it at runtime. See [Networks](/sdk/networks).
 
+## Two ways to use it
+
+| | The `KaleidoSwap` API | The swap engine |
+|---|---|---|
+| You write | `quote`, `start`, `resume` | Every step: pair cards, create requests, scripts, claims, refunds |
+| Claims and refunds | The SDK does them | Your app builds and broadcasts them |
+| Swap records | Saved by the SDK in a store you provide | Saved by your app |
+| Routes | Lightning ↔ on-chain BTC and L-BTC | Every route in the table above |
+
+Start with [the `KaleidoSwap` API](/sdk/kaleidoswap). Use the engine for a route it does not serve yet, or when you want to own each step. Both ship in the same package.
+
 ## What the SDK does, and what your app does
 
 | The SDK | Your app |
 |---|---|
-| Derives each swap's keys and secret from your wallet mnemonic | Stores the swap mnemonic and a counter of used swap indexes |
+| Derives each swap's keys and secret from your swap mnemonic | Keeps the swap mnemonic and the swap store safe |
 | Creates the swap and **checks the maker's answer** against your keys before you fund anything | Funds the lockup or pays the invoice from its own wallet |
-| Builds and signs claim and refund transactions | Stores each swap record, and each signed transaction before broadcasting it |
-| Tells you whether a claim or refund is possible right now | Checks open swaps on start, on resume, and on a schedule |
+| Builds and signs claim and refund transactions | Runs `resume()` on start and keeps following open swaps |
+| Refuses a claim or refund the chain does not support yet | Comes back before a swap's deadline |
 
-The SDK holds no funds, runs no background timers, and stores nothing. That keeps it small and lets it run anywhere, but it means **your app is responsible for persistence and for coming back before a swap's deadline**. [Common mistakes](/sdk/common-mistakes) lists what goes wrong when it does not.
+The SDK holds no funds and runs no background timers: a swap moves only while your app is running and following it. With the swap engine, your app also stores each swap record and each signed transaction, and decides when to claim and refund. [Common mistakes](/sdk/common-mistakes) lists what goes wrong when it does not.
 
 ## Packages
 

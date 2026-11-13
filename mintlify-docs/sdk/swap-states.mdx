@@ -4,6 +4,26 @@ sidebarTitle: "Swap States"
 description: "The states each Swap SDK swap moves through, what your app does at each one, who claims and who refunds, the deadlines, and how to follow a swap over WebSocket or polling"
 ---
 
+## Phases
+
+The [`KaleidoSwap` API](/sdk/kaleidoswap) reports one set of phases for every swap, and acts on them for you.
+
+| Phase | What happened | Your app |
+|---|---|---|
+| `created` / `awaiting_funding` | The swap exists and is saved | Pay the invoice, or fund the lockup |
+| `funded` | Your payment or lockup was seen | Wait |
+| `locked` | The on-chain lockup is in place | Wait |
+| `claiming` | The claim is being broadcast and confirmed | Wait |
+| `settled` | Final: the swap completed | Done |
+| `refundable` | A swap you funded failed; your lockup can be recovered | Wait: the SDK refunds it, with the maker's signature or after the timeout |
+| `refunding` | The refund is being broadcast and confirmed | Wait |
+| `refunded` | Final: your funds came back | Done |
+| `failed` | Final: the swap ended without settling | Start a new swap |
+
+A swap moves only while your app follows it or runs `resume()`. The maker's own status, described in the rest of this page, stays readable as `swap.record().rawStatus`.
+
+The tables below are the maker's statuses, which you act on yourself when you use the swap engine.
+
 ## On-chain → Lightning (submarine)
 
 | # | Status | What happened | Your app |
@@ -22,7 +42,7 @@ Failure states: `invoice.failedToPay`, `transaction.lockupFailed` (wrong amount)
 | # | Status | What happened | Your app |
 |---|---|---|---|
 | 1 | `swap.created` | The swap exists | Pay `invoice` |
-| 2 | `transaction.mempool` | The maker's lockup is in the mempool | Wait (or claim, if you accept zero-conf) |
+| 2 | `transaction.mempool` | The maker's lockup is in the mempool | Wait. A claim on an unconfirmed lockup needs `allowZeroConf: true` |
 | 3 | `transaction.confirmed` | The maker's lockup confirmed | **Claim it** |
 | 4 | `invoice.settled` | Your claim revealed the preimage and the maker settled your payment | Done |
 

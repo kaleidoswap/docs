@@ -14,6 +14,31 @@ Your app locks the funds on chain. The maker pays the invoice, which reveals its
 
 In the normal case your app only funds the lockup: it builds no transaction.
 
+## The short way
+
+The [`KaleidoSwap` API](/sdk/kaleidoswap) serves this route for BTC and L-BTC. It saves the swap before you fund it and refunds on its own if the maker never pays.
+
+```typescript
+const answer = await kaleido.quote({
+  pay: "bitcoin:BTC",              // or "liquid:BTC"
+  receive: "lightning:BTC",
+  amount: { invoice },             // a BOLT11 invoice with an amount
+});
+if (!isQuote(answer)) throw new Error(`${answer.reason}: ${answer.message}`);
+
+const swap = await kaleido.start(answer, { refundAddress: myBitcoinAddress });
+
+// Send exactly this amount, in one transaction, from your wallet.
+console.log(swap.action.fundingAmount, swap.action.fundingAddress);
+
+for await (const phase of swap.phases()) console.log(phase);
+// "settled": the invoice is paid. "refunded": the maker did not pay and your funds came back.
+```
+
+A quote is refused before anything is sent if the invoice has less than 10 minutes left.
+
+The rest of this page does the same swap step by step on the swap engine. Use it for L-USDT and USDT-RGB, or when your app builds its own refunds.
+
 ## Setup
 
 <Setup />
@@ -110,5 +135,5 @@ If the maker co-signs, the refund goes through immediately. If it does not, the 
 | Asset you lock | What changes |
 |---|---|
 | L-BTC | `from: "L-BTC"`, `SwapScript.fromSubmarine("liquid", ...)`, a Liquid Esplora URL for refunds |
-| L-USDT | `from: "L-USDT"`. Refunds use a caller-funded PSET, because the Liquid fee is paid in L-BTC |
+| L-USDT | `from: "L-USDT"`, and pass the L-USDT asset id you trust as the last argument: `createSubmarineSwap(network, request, undefined, undefined, lusdtAssetId)`. It is required on testnet and regtest. Refunds use a caller-funded PSET, because the Liquid fee is paid in L-BTC |
 | USDT-RGB | Pin the RGB contract at creation, and your rgb-lib wallet funds the lockup. See [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |

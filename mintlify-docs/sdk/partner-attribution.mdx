@@ -94,7 +94,7 @@ The result is an ordinary client with every route available. How the key is prot
 - A malformed key is rejected locally instead of reaching the maker as a `401`, the same answer a revoked key gets.
 
 <Warning>
-**Never ship an API key in client-side code.** It is valid until revoked and has no origin binding, so anyone holding it can attribute swaps to your organization or exhaust its limits. In TypeScript, `createKaleidoMakerClient` throws in a page, a Web, shared, or service worker, and a browser extension unless you pass `allowBrowser: true`. Use `createKaleidoOrgClient` in client-side code instead.
+**Never ship an API key in client-side code.** It is valid until revoked and has no origin binding, so anyone holding it can attribute swaps to your organization or exhaust its limits. In TypeScript, `createKaleidoMakerClient` throws in a page, a Web, shared, or service worker, and a browser extension unless you pass `allowBrowser: true`. In React Native, `SwapClient.kaleidoMaker` throws in an app unless you pass `{ allowMobile: true }`. Use `createKaleidoOrgClient` in client-side code instead.
 </Warning>
 
 Error reporters that capture local variables (Sentry's `includeLocalVariables` or `with_locals`, `pytest --showlocals`) can read the key off a stack frame. Scrub `apiKey` in their before-send hook.

@@ -6,6 +6,22 @@ description: "The mistakes that lose or strand funds in a Swap SDK integration, 
 
 Each of these has stranded funds or broken an integration. Check your app against all of them before you ship.
 
+The [`KaleidoSwap` API](/sdk/kaleidoswap) handles several of them for you: it saves each swap before you fund it, allocates swap indexes, checks the chain before it claims or refunds, and saves each signed transaction before broadcasting it. The first three below are still yours.
+
+## Not resuming on start
+
+A swap moves only while your app follows it. Call `resume()` every time the app starts or returns to the foreground, and follow each swap it reports as still in progress. A reverse swap that nobody follows is never claimed.
+
+## Restoring an old swap store
+
+The store holds the counter of used swap indexes. Restoring an older copy, or resetting it, makes the next swaps reuse keys and secrets. Keep the store out of device and cloud backups, and start a new swap mnemonic if a store is lost. See the [store rules](/sdk/keys-and-recovery#the-swap-store).
+
+## Driving one swap from two places
+
+Use one `KaleidoSwap` per store per process, and never claim or refund with the swap engine a swap that `KaleidoSwap` started.
+
+The rest of this page applies when you use the swap engine.
+
 ## Not saving the swap before funding it
 
 Save the swap ID, the swap index, the maker URL, and the **full create response** (including `swapAuth`) before your app funds the lockup or pays the invoice. Without them it cannot claim or refund. Keep old records too: a submarine swap's preimage is the user's proof of payment.
@@ -36,7 +52,7 @@ Fund each lockup with exactly the expected amount, in one transaction. A wrong a
 
 ## Treating the maker's status as proof
 
-Claim only against a lockup your own chain backend shows with the confirmations you require. Refund only when your own backend shows the chain past the deadline. See [Trust model](/sdk/trust-model).
+Claim only against a lockup your own chain backend shows with the confirmations you require. `constructClaim` enforces this by default: it refuses an unseen, unconfirmed, or already spent lockup. Refund only when your own backend shows the chain past the deadline. See [Trust model](/sdk/trust-model).
 
 ## Signing again after a lost broadcast
 

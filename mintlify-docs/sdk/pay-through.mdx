@@ -21,7 +21,10 @@ The maker must have pay-through enabled. The client needs no WebAssembly initial
 ```typescript TypeScript
 import { PayThroughClient } from "@kaleidorg/swap-sdk/pay-through";
 
-const pay = new PayThroughClient({ makerUrl: "https://maker.signet.kaleidoswap.com/v2" });
+const pay = new PayThroughClient({
+  makerUrl: "https://maker.signet.kaleidoswap.com/v2",
+  lightningNetwork: "signet", // every invoice must be for this network
+});
 
 if (!(await pay.supportsIdempotency())) {
   throw new Error("This maker does not support safe retries of pay-through creation");
@@ -44,7 +47,7 @@ const status = await pay.status(order.id);
 
 ## What `create` checks
 
-It refuses an order that differs from the request: another destination, another `invoiceAmount`, less than the requested `payoutAmount`, or another asset. It decodes the invoice and refuses one whose amount or payment hash differs from the order. Amounts are safe JavaScript integers; a larger value is rejected, not rounded.
+It refuses an order that differs from the request: another destination, another `invoiceAmount`, less than the requested `payoutAmount`, or another asset. It decodes the invoice and refuses one whose amount or payment hash differs from the order, or that is for another network than `lightningNetwork` (`"bitcoin"`, `"testnet"`, `"signet"`, or `"regtest"`). Amounts are safe JavaScript integers; a larger value is rejected, not rounded.
 
 ## Idempotent creation and recovery
 

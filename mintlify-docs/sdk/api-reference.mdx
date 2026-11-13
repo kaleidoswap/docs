@@ -1,10 +1,50 @@
 ---
 title: "Swap SDK Client Reference"
 sidebarTitle: "Client Reference"
-description: "Reference for the Swap SDK surface in TypeScript and Python: SwapClient, SwapScript, SwapMasterKey, SwapWsApi, AtomicSwaps, IntentsCorridor, PayThroughClient, and helpers"
+description: "Reference for the Swap SDK surface in TypeScript and Python: KaleidoSwap, SwapClient, SwapScript, SwapMasterKey, SwapWsApi, AtomicSwaps, IntentsCorridor, PayThroughClient, and helpers"
 ---
 
 Names are shown as TypeScript / Python. Rust uses the Python spelling on `BoltzApiClientV2` and `SwapScript`. React Native exposes the same surface as Python with camelCase names, generated from the same bindings. The published TypeScript declarations (`dist/index.d.ts`) document every type in full.
+
+## `KaleidoSwap`
+
+Quote, start, and resume swaps, with claims and refunds done by the SDK. [The KaleidoSwap API](/sdk/kaleidoswap) explains each call.
+
+| TypeScript | Python | What it does |
+|---|---|---|
+| `createKaleidoSwap(options)` | `KaleidoSwap(KaleidoSwapOptions(...))` | Build the instance from a network, a store, and a signer |
+| `quote({ pay, receive, amount })` | `quote(QuoteRequest(...))` | A `Quote` or a `Refusal` |
+| `start(quote, { destination, refundAddress })` | `start(quote, StartOptions(...))` | Create, verify, and save the swap; returns a `Swap` |
+| `swap(id)` | `swap(id)` | The `Swap` for a saved record |
+| `resume()` | `resume()` | Move every open swap one step; returns a `ResumeReport` |
+
+### `Swap`
+
+| TypeScript | Python | What it does |
+|---|---|---|
+| `id`, `phase`, `protocol` | `id()`, `phase()`, `protocol()` | Read without waiting |
+| `action` | `action()` | What to pay or fund: `invoice`, or `fundingAddress` and `fundingAmount` (plus `bip21`, `zeroConfLimit`) |
+| `phases(signal?)` | `watch(listener)` | Follow to the end, reporting each phase |
+| `settled(signal?)` | `settled()` | Resolve on `settled`; fail on `refunded` or `failed` |
+| `refund()` | `refund()` | Refund now instead of waiting for the SDK to do it |
+| `record()` | `record()` | The `SwapRecord`: ids, assets, phase, `rawStatus`, timestamps |
+
+### Stores, signers, and helpers
+
+| TypeScript | Python | What it is |
+|---|---|---|
+| `FileStore(dir)` (Node only) | `FileStore(dir)` | One JSON file per swap |
+| `MemoryStore()` | `MemoryStore()` | Nothing persisted: tests only |
+| `SwapStore` | `SwapStore` | The interface for a store of your own: `get`, `put`, `list`, `nextIndex` |
+| `mnemonicSigner(mnemonic, network, passphrase?)` | `MnemonicSigner(mnemonic, passphrase, network)` | Signer for a swap mnemonic |
+| `SwapSigner` | `SwapSigner` | The interface for a signer of your own: `deriveKey`, `derivePreimage` |
+| `isQuote(answer)` | `answer.quote` / `answer.refusal` | Tell a quote from a refusal |
+| `isSwapError(error)` | `Error.Swap` | A failure with a [code](/sdk/kaleidoswap#errors) |
+| `TERMINAL_PHASES` | — | `settled`, `refunded`, `failed` |
+
+The `Asset` values are `bitcoin:BTC`, `lightning:BTC`, `liquid:BTC`, `liquid:USDT`, `arkade:BTC`, `spark:BTC`, `bitcoin:rgb:<contract>`, `lightning:rgb:<contract>`, and `spark:<token>`. Python builds them with `Asset.BTC_ONCHAIN()`, `Asset.BTC_LIGHTNING()`, `Asset.BTC_LIQUID()`, and so on. Every asset can be named; [the routes served today](/sdk/kaleidoswap#routes) are a subset.
+
+React Native exposes the same classes as Python with camelCase names.
 
 ## `SwapClient`
 
@@ -25,9 +65,10 @@ The maker API client. In TypeScript it comes from `SwapClient.forNetwork`, `new 
 
 | TypeScript | Python | What it does |
 |---|---|---|
-| `createSubmarineSwap(network, request, rgbContractId?, rgbMaxHtlcSat?)` | `create_swap(request)` | Create and verify a submarine swap |
-| `createReverseSwap(network, request, rgbContractId?)` | `create_reverse_swap(request)` | Create and verify a reverse swap |
-| `createChainSwap(network, request)` | `create_chain_swap(request)` | Create and verify a chain swap (both keys required) |
+| `createSubmarineSwap(network, request, rgbContractId?, rgbMaxHtlcSat?, lusdtAssetId?)` | `create_swap(request)` | Create and verify a submarine swap |
+| `createReverseSwap(network, request, rgbContractId?, lusdtAssetId?)` | `create_reverse_swap(request)` | Create and verify a reverse swap |
+| `createChainSwap(network, request, lusdtAssetId?)` | `create_chain_swap(request)` | Create and verify a chain swap (both keys required) |
+| `checkMrh(invoice, chain, network)` | `check_mrh(invoice, chain)` | A magic routing hint's destination, with its amount bounded by the invoice |
 | `swap(id)` | `get_swap(id)` | Current status and audit events |
 | `quote(id)` | `get_quote(id)` | A chain-swap re-quote |
 | `acceptQuote(id, amount, swapAuth)` | `accept_quote(id, amount, swap_auth)` | Accept a re-quote |
@@ -37,7 +78,7 @@ The maker API client. In TypeScript it comes from `SwapClient.forNetwork`, `new 
 | `swapRestoreIndex(xpub, path?)` | `swap_restore_index(...)` | Highest key index the maker has seen |
 | `recoverSwapAuth(id, secretKey)` | `recover_swap_auth(...)` | Recover a swap's `swapAuth` with its key |
 
-In Python, RGB swaps set `rgb_contract_id` (and optionally `rgb_max_htlc_sat`) on the request instead of passing extra arguments.
+In Python, RGB swaps set `rgb_contract_id` (and optionally `rgb_max_htlc_sat`) on the request instead of passing extra arguments, and L-USDT swaps set `lusdt_asset_id`. `lusdtAssetId` is required for L-USDT on testnet and regtest.
 
 ### Corridor and atomic routes
 
@@ -111,6 +152,7 @@ The swap script rebuilt on your side, and the claim and refund builder.
 | `BtcLikeTransaction.fromHex(hex, chain)` | [Claims and refunds](/sdk/claims-and-refunds#persist-first-then-broadcast) |
 | `resolveLightningAddress(address, amountSat)` | [Pay Lightning from on-chain](/sdk/submarine-swaps) |
 | `toJson(value, space?)` | Lossless serialization of `bigint` values |
+| `validateReverseTimeoutHeadroom`, `validateChainTimeoutHeadroom` | [Claims and refunds](/sdk/claims-and-refunds#what-a-claim-checks-first) |
 | `isKaleidoSwapError(error)` | [Troubleshooting](/sdk/troubleshooting#errors) |
 | `init(source?)`, `initWithModule(module)`, `wasmUrl` | [Installation](/sdk/installation#typescript-load-the-webassembly-binary) |
 

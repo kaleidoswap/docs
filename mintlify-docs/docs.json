@@ -152,7 +152,8 @@
                 "pages": [
                   "sdk/introduction",
                   "sdk/getting-started",
-                  "sdk/installation"
+                  "sdk/installation",
+                  "sdk/kaleidoswap"
                 ]
               },
               {

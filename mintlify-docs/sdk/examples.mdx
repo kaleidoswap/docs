@@ -6,12 +6,8 @@ description: "Runnable Swap SDK examples in TypeScript, Python, and Rust against
 
 The [swap-sdk repository](https://github.com/kaleidoswap/swap-sdk) ships runnable programs. Each binding keeps them in two folders:
 
-- **`simple/`** uses the high-level `KaleidoSwap` API: you name what you pay and what you receive, and the SDK prices the route, checks the maker's response, persists the swap, and claims or refunds on its own. Start here.
-- **`advanced/`** drives the swap engine step by step: pair cards, create requests, scripts, claim and refund transactions. Use it when you own those steps yourself, or for a route the high-level API does not serve yet (L-USDT, the Arkade corridor, RGB, atomic swaps).
-
-<Note>
-The high-level API and the `simple/` examples are on `trunk` and not yet in a published release (the latest is v0.13.0). The commands below build the SDK from source, so they run either way.
-</Note>
+- **`simple/`** uses the [`KaleidoSwap` API](/sdk/kaleidoswap): you name what you pay and what you receive, and the SDK prices the route, checks the maker's response, persists the swap, and claims or refunds on its own. Start here.
+- **`advanced/`** drives the swap engine step by step: pair cards, create requests, scripts, claim and refund transactions. Use it when you own those steps yourself, or for a route the `KaleidoSwap` API does not serve yet (L-USDT, the Arkade corridor, RGB, atomic swaps).
 
 ## TypeScript
 

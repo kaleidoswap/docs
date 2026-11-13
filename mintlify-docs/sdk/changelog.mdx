@@ -6,6 +6,67 @@ description: "Swap SDK release history with new features and breaking changes fo
 
 All four packages (Rust, Python, TypeScript, React Native) share one version number. Each entry lists breaking changes first. The full history, including fixes, is in the repository's [CHANGELOG.md](https://github.com/kaleidoswap/swap-sdk/blob/trunk/CHANGELOG.md).
 
+## 0.14.2 (2026-11-10)
+
+### Fixed
+
+- Submarine swaps that fund an asset (USDT-RGB or L-USDT to Lightning) no longer reject the maker's quote: the amount to lock is checked with the pair card's fees converted together with the payout. On chain swaps the bound is in the lockup's units.
+
+## 0.14.1 (2026-11-09)
+
+Recommended for every 0.14.0 user of the `KaleidoSwap` API.
+
+### Security
+
+- A reverse swap's claim is followed on chain from the moment it starts, until it confirms or something else spends the lockup, whatever the maker reports and while the maker cannot be reached. The swap is `settled` when its own claim confirms.
+- A claim falls back to the script path on any failure of the cooperative claim.
+- `FileStore` never hands out the same swap index to two instances or processes that share a directory.
+
+## 0.14.0 (2026-11-08)
+
+### Breaking changes
+
+- **TypeScript: `PayThroughClient` requires `lightningNetwork`** and refuses an invoice for another network. See [Pay an address from Lightning](/sdk/pay-through).
+- **Rust: `RfqQuote::verify_receive_invoice`** takes the Lightning network the client pays on.
+- **Create calls that pass a `pairHash` are checked against that pair card.** The reverse payout, the chain swap's computed leg, and the submarine `expectedAmount` must stay within what the card's rate and fees imply. A card the maker has since replaced is refused: read the card again and retry.
+
+### Added
+
+- **The `KaleidoSwap` API**, in the Rust core with TypeScript, Python, and React Native bindings: `quote`, `start`, and `resume`, one phase machine for every swap, and a store and signer you provide. It persists each swap before you fund it and claims or refunds on its own. It serves Lightning ↔ on-chain BTC and L-BTC. See [The KaleidoSwap API](/sdk/kaleidoswap).
+- `simple/` examples on the `KaleidoSwap` API beside the `advanced/` examples on the swap engine, in every binding. See [Examples](/sdk/examples).
+- Submarine create responses check a non-empty `bip21` against the response's address, amount, and asset.
+
+### Changed
+
+- The atomic pair constants use the maker's canonical pair ids (`BTC@L1/USDT-RGB@L1`, `USDT-RGB@L1/BTC@L1`).
+- Python: `str()` on a generated record prints `swap_auth` and `blinding_key` as `<redacted>`. The attributes stay readable.
+
+## 0.13.0 (2026-10-28)
+
+### Breaking changes
+
+- **Claims check the chain before revealing the preimage.** `constructClaim` and `prepareLiquidClaim` refuse to build a claim unless your chain backend shows the lockup confirmed and unspent, with the tip outside the safety margin (6 blocks on Bitcoin, 60 on Liquid). The maker's status is never used for this. A zero-conf claim needs `allowZeroConf: true`. The policy fields are `minConfirmations`, `allowZeroConf`, `claimSafetyMarginBlocks`, and `allowConflictingSpend` (snake_case on `TransactionOptions` in Python). See [Claims and refunds](/sdk/claims-and-refunds#what-a-claim-checks-first).
+- **L-USDT on testnet and regtest requires a pinned asset id.** The create calls take `lusdtAssetId` (`lusdt_asset_id` on the request in Python). An L-USDT create without it is refused before any request is sent. On mainnet the SDK pins the canonical Liquid USDt itself.
+- **React Native: `SwapClient.kaleidoMaker` refuses to run in an app** unless you pass `{ allowMobile: true }`, like `allowBrowser` in TypeScript. Create attributed swaps from a server, or use an organization key.
+- **Rust:** implementors of `BitcoinClient` and `LiquidClient` add `get_tip_height` and `get_output_status`.
+
+### Added
+
+- **Timeout headroom checks at creation:** `validateReverseTimeoutHeadroom` and `validateChainTimeoutHeadroom` refuse a response whose timeout is already too close to a tip you trust.
+- **`checkMrh(invoice, chain, network)`** returns a magic routing hint's destination only after bounding its amount by the invoice.
+- `LnurlOptions { allow_private_hosts }` for development setups (Rust and Python).
+
+### Security
+
+- Create responses are bound to the amounts you requested: a reverse swap's invoice must equal `invoiceAmount`, and a chain swap's lockup and claim amounts must equal the request.
+- Browser requests to the maker refuse redirects, so a swap's `swapAuth` never leaves the maker's origin.
+- LNURL requests refuse non-public destinations, and LNURL-withdraw uses the same hardened transport as LNURL-pay.
+- Rust `Debug` and Python `str()` redact per-swap secrets.
+
+### Fixed
+
+- The React Native package loads the SDK again on Android.
+
 ## 0.12.0 (2026-10-19)
 
 ### Breaking changes

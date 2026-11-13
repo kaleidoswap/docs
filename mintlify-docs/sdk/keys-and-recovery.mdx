@@ -43,6 +43,32 @@ Which key does what:
 | Reverse | Claim key | Yours: you reveal it when you claim |
 | Chain | A claim key and a separate refund key | Yours |
 
+## The swap store
+
+The [`KaleidoSwap` API](/sdk/kaleidoswap) derives keys through a **signer** and keeps swaps in a **store**. `mnemonicSigner(swapMnemonic, network)` is the signer for a swap mnemonic. The store holds each swap's record, including its `swapAuth`, and the counter of used indexes, so you allocate no index yourself.
+
+`FileStore` writes one file per swap, readable by the owner only. To use your own database, implement `SwapStore`:
+
+| Method | Contract |
+|---|---|
+| `get(id)`, `list()` | Return records exactly as they were stored |
+| `put(record)` | Does not resolve until the record is durably stored |
+| `nextIndex()` | Persists the advanced counter before it resolves, is atomic across callers, and never goes backwards |
+
+Records are plain JSON-compatible objects. They carry `swapAuth` and what a refund needs, so treat the store as a secret: do not log records or send them to telemetry.
+
+<Warning>
+**Store rules.**
+
+- A store belongs to exactly one swap mnemonic.
+- Use one `FileStore` and one `KaleidoSwap` per store directory per process.
+- Never reset, copy, or restore a store from an older backup while its swap mnemonic is in use. An older copy hands out indexes that were already used.
+- If a store is lost, start a new swap mnemonic.
+- On a phone, keep the store out of device and cloud backups, so a restore never brings back an older copy.
+</Warning>
+
+The rest of this page covers the swap engine, where your app stores the records itself.
+
 ## `swapAuth`: store it with the swap
 
 Every create response from the KaleidoSwap maker carries a `swapAuth`, a per-swap credential issued **once**. It authorizes:

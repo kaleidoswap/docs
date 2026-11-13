@@ -6,6 +6,10 @@ description: "Build claim and refund transactions with the Swap SDK: cooperative
 
 The SDK builds every claim and refund on your side, signed with your swap key. You choose the fee and you decide when to broadcast.
 
+<Note>
+With the [`KaleidoSwap` API](/sdk/kaleidoswap) you build none of this: following a swap claims or refunds it. This page is for the swap engine.
+</Note>
+
 ## Cooperative and script-path spends
 
 Each HTLC output can be spent two ways:
@@ -76,6 +80,18 @@ txid = await chain_client.broadcast_tx(tx)
 </CodeGroup>
 
 The result is a signed transaction. Call `hex()` and `txid()` to persist it, and `broadcast(network, bitcoinEsploraUrl?, liquidEsploraUrl?)` to send it.
+
+## What a claim checks first
+
+Before a claim reveals your secret, `constructClaim` and `prepareLiquidClaim` ask **your chain backend**, never the maker, about the lockup. The claim is refused when:
+
+- the backend has not seen the lockup, or it has no confirmation,
+- a spend of the lockup is visible in the mempool or in a block,
+- the chain tip is within the safety margin of the swap's timeout (6 blocks on Bitcoin, 60 on Liquid).
+
+Change the policy in the claim parameters: `minConfirmations`, `allowZeroConf`, `claimSafetyMarginBlocks`, `allowConflictingSpend`. Python sets the same fields in snake_case on `TransactionOptions`. Accepting an unconfirmed lockup means trusting the maker not to double-spend it.
+
+At creation, `validateReverseTimeoutHeadroom` and `validateChainTimeoutHeadroom` refuse a swap whose timeout is already too close to a tip you trust, before you pay anything.
 
 ## Fees
 

@@ -1,0 +1,224 @@
+---
+title: "The KaleidoSwap API"
+sidebarTitle: "The KaleidoSwap API"
+description: "Swap with three calls in the Swap SDK: quote a route, start the swap, and resume open swaps at startup, with a store and a signer you provide and claims and refunds handled by the SDK"
+---
+
+`KaleidoSwap` is the shortest way to swap. You name what you pay and what you receive. The SDK prices the route, checks the maker's answer, saves the swap, and then claims or refunds on its own.
+
+| Call | What it does |
+|---|---|
+| `quote` | Prices a route. Returns a quote, or a refusal that says why |
+| `start` | Creates the swap, saves it, and tells you what to pay or fund |
+| `resume` | Finishes or refunds every swap a previous run left open |
+
+The only step that stays yours is the payment: paying the invoice or funding the lockup from your own wallet. The SDK holds no keys of its own and never moves your funds.
+
+## Routes
+
+| You pay | You receive | Amount you fix |
+|---|---|---|
+| `lightning:BTC` | `bitcoin:BTC` or `liquid:BTC` | `{ pay: sats }` or `{ receive: sats }` |
+| `bitcoin:BTC` or `liquid:BTC` | `lightning:BTC` | `{ invoice: bolt11 }`, the invoice the maker pays |
+
+Chain swaps, L-USDT, USDT-RGB, Arkade, and pay-through are not served by this API yet. A quote for one of them comes back as a `pair_unavailable` refusal. Use the [swap engine](#the-swap-engine) and the guide for that route.
+
+## Set up
+
+<CodeGroup>
+```typescript TypeScript
+import { createKaleidoSwap, FileStore, mnemonicSigner } from "@kaleidorg/swap-sdk";
+
+const kaleido = await createKaleidoSwap({
+  network: "signet",
+  store: new FileStore(storeDir),
+  signer: mnemonicSigner(swapMnemonic, "signet"),
+});
+
+await kaleido.resume();
+```
+
+```python Python
+import kaleidorg_swap_sdk as sdk
+
+network = sdk.Network.SIGNET
+kaleido = sdk.KaleidoSwap(sdk.KaleidoSwapOptions(
+    network=network,
+    store=sdk.FileStore(store_dir),
+    signer=sdk.MnemonicSigner(swap_mnemonic, None, network),
+))
+
+await kaleido.resume()
+```
+</CodeGroup>
+
+`createKaleidoSwap` loads the WebAssembly binary itself, so you do not call `init()`. Build one `KaleidoSwap` per process and share it.
+
+Two things are yours to provide:
+
+- **A signer**, which derives each swap's key and secret. `mnemonicSigner` takes your [swap mnemonic](/sdk/keys-and-recovery). A wallet that keeps its seed elsewhere implements `SwapSigner`.
+- **A store**, which keeps each swap's record and the counter of used swap indexes. `FileStore` (Node and Python) keeps one JSON file per swap in a directory you choose. In a browser, or to use your own database, pass any object with `get`, `put`, `list`, and `nextIndex`. `MemoryStore` is for tests only.
+
+<Warning>
+The store is as important as the mnemonic. Read the [store rules](/sdk/keys-and-recovery#the-swap-store) before you ship.
+</Warning>
+
+Optional settings: `makerUrl`, `bitcoinEsploraUrl`, `liquidEsploraUrl`, `pollIntervalMs`, `makerTimeoutMs`, `feeSatPerVb`, `quoteTtlMs`, and `reverseTimeoutHeadroom`. Each has a default for the network.
+
+## Quote
+
+Each side is an asset and the layer it lives on, written `<layer>:<asset>`.
+
+<CodeGroup>
+```typescript TypeScript
+import { isQuote } from "@kaleidorg/swap-sdk";
+
+const answer = await kaleido.quote({
+  pay: "lightning:BTC",
+  receive: "liquid:BTC",
+  amount: { pay: 50_000 },
+});
+
+if (!isQuote(answer)) throw new Error(`${answer.reason}: ${answer.message}`);
+console.log(answer.fromAmount, answer.toAmount, answer.fees);
+```
+
+```python Python
+answer = await kaleido.quote(sdk.QuoteRequest(
+    pay=sdk.Asset.BTC_LIGHTNING(),
+    receive=sdk.Asset.BTC_LIQUID(),
+    amount=sdk.Amount.PAY(50_000),
+))
+
+if answer.refusal:
+    raise SystemExit(f"{answer.refusal.reason}: {answer.refusal.message}")
+quote = answer.quote
+print(quote.from_amount, quote.to_amount, quote.fees.maker, quote.fees.miner)
+```
+</CodeGroup>
+
+A **refusal is a value, not an error**: the maker will not trade this pair or this amount right now.
+
+| `reason` | Meaning |
+|---|---|
+| `pair_unavailable` | The maker does not offer this route, or this API does not serve it |
+| `amount_below_min` / `amount_above_max` | Outside the route's limits; `limits` carries the bounds |
+| `no_liquidity` | The maker cannot fill this amount right now |
+| `maker_paused` | The maker is not taking swaps |
+
+A quote carries `fromAmount`, `toAmount`, `fees` (`maker` and `miner`), `limits`, and `expiresAt`. In TypeScript, amounts go in as a `bigint`, a safe-integer `number`, or a decimal string, and come back as `bigint`.
+
+## Start
+
+<CodeGroup>
+```typescript TypeScript
+// From Lightning: say where the funds land.
+const swap = await kaleido.start(answer, { destination: liquidAddress });
+console.log(`Pay ${swap.action.invoice}`);
+
+// From chain: say where a refund goes instead.
+//   const swap = await kaleido.start(answer, { refundAddress });
+//   swap.action.fundingAddress, swap.action.fundingAmount
+```
+
+```python Python
+swap = await kaleido.start(
+    quote, sdk.StartOptions(destination=liquid_address, refund_address=None)
+)
+action = swap.action()
+print(f"Pay {action.invoice}")
+# From chain: send exactly action.funding_amount sat to action.funding_address
+```
+</CodeGroup>
+
+`start` checks both addresses against the asset and the network before it contacts the maker. It then checks the maker's answer against your key, your secret, and the quoted terms, and saves the swap before it returns. Nothing is paid yet.
+
+| Option | When |
+|---|---|
+| `destination` | Required when you receive on chain. Leave it out when you priced the swap by an invoice |
+| `refundAddress` | Required when you pay from chain |
+
+`swap.action` is what you do next: pay `invoice`, or send exactly `fundingAmount` sats to `fundingAddress` in one transaction.
+
+## Follow the swap
+
+<CodeGroup>
+```typescript TypeScript
+for await (const phase of swap.phases()) console.log(phase);
+
+if (swap.phase !== "settled") {
+  throw new Error(`Swap ${swap.id} ended ${swap.phase}`);
+}
+```
+
+```python Python
+class PrintPhases(sdk.PhaseListener):
+    def on_phase(self, phase):
+        print(phase.name.lower())
+
+try:
+    record = await swap.watch(PrintPhases())
+except sdk.Error.Swap as error:
+    print(f"Swap {swap.id()} did not settle: {error.code} {error.message}")
+```
+</CodeGroup>
+
+Following a swap is what moves it: the SDK claims when the maker's lockup confirms, and refunds when a swap you funded fails.
+
+- `phases()` yields every phase change and ends on a final phase. Check `swap.phase` afterwards.
+- `settled()` resolves with the record when the swap settles, and rejects with a `SwapError` if it is refunded or fails.
+
+A swap moves only while something follows it or `resume()` runs. Keep following until it ends. See [Swap states](/sdk/swap-states#phases) for every phase.
+
+## Resume at startup
+
+Call `resume()` every time your app starts, before anything else.
+
+```typescript TypeScript
+const report = await kaleido.resume();
+
+for (const swap of report.resumed) void swap.settled().catch(() => {});
+for (const { id, code, message } of report.errors) console.error(id, code, message);
+```
+
+It moves every open swap one step, claiming what can be claimed and refunding what can be refunded, and returns a report:
+
+| Field | Contents |
+|---|---|
+| `resumed` | Swaps still in progress. Follow each one to the end |
+| `settled`, `refunded`, `failed` | Swaps that ended during this pass |
+| `errors` | Swaps it could not move, each with an `id`, a `code`, and a `message`. They stay in the store for the next `resume()` |
+
+`resume()` does not wait for funding or confirmations. On mobile, call it again whenever the app returns to the foreground.
+
+## Errors
+
+Failures are a `SwapError` with a `code`. Narrow it with `isSwapError` (`sdk.Error.Swap` in Python).
+
+| Code | Meaning |
+|---|---|
+| `INVALID_AMOUNT`, `INVALID_DESTINATION` | The request is malformed, or uses the wrong amount kind for the route |
+| `WRONG_NETWORK_ADDRESS` | An address belongs to another network |
+| `REFUND_ADDRESS_REQUIRED` | You pay from chain and gave no refund address |
+| `QUOTE_EXPIRED` | Ask for a new quote |
+| `INVOICE_EXPIRED` | The invoice has less than 10 minutes left |
+| `AMOUNT_OUT_OF_LIMITS`, `PAIR_UNAVAILABLE` | The route or the amount is no longer on offer |
+| `LOCKUP_MISMATCH` | The maker's answer did not match your keys or the quote. Nothing was saved; do not pay |
+| `MAKER_UNREACHABLE`, `MAKER_REJECTED` | The maker did not answer, or refused |
+| `CHAIN_UNREACHABLE` | Your chain backend could not be read |
+| `SWAP_EXPIRED`, `SWAP_FAILED` | The swap ended without settling |
+| `SWAP_NOT_FOUND`, `STORE_FAILED` | The store has no such swap, or could not be read or written |
+| `ABORTED` | You aborted the wait. The swap itself continues |
+
+## The swap engine
+
+`KaleidoSwap` is built on the swap engine: `SwapClient`, `SwapMasterKey`, and `SwapScript`. The engine is the same package and stays fully supported. Use it when you want to own every step, or for a route this API does not serve yet:
+
+| Route | Guide |
+|---|---|
+| Chain to chain, such as BTC → L-USDT | [Move funds between chains](/sdk/chain-swaps) |
+| L-USDT and USDT-RGB against Lightning | [Pay Lightning from on-chain](/sdk/submarine-swaps#paying-from-other-assets), [Receive on-chain from Lightning](/sdk/reverse-swaps#receiving-other-assets), [Swap BTC and USDT on RGB](/sdk/rgb-swaps) |
+| Arkade | [Lightning to and from Arkade](/sdk/arkade) |
+| Pay-through | [Pay an address from Lightning](/sdk/pay-through) |
+
+Do not drive the same swap from both. A swap started with `KaleidoSwap` is claimed and refunded by `KaleidoSwap`.

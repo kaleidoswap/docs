@@ -11,13 +11,13 @@ All documentation lives in the `mintlify-docs/` directory. Each section below ma
 - `whats-kaleidoswap/` - Overview: introduction, quickstart, key features, architecture, glossary
 - `desktop-app/` - Desktop App guides: getting started, wallet, channels, trading, KaleidoMind, support
 - `extensions/` - Browser extensions (multi-layer wallet for Spark, Arkade and Liquid)
-- `sdk/` - KaleidoSDK documentation (`kaleido-sdk`, TypeScript and Python clients)
-- `cli/` - KaleidoCLI: local multi-asset Lightning nodes, channels, market and swaps from the terminal
+- `sdk/` - Swap SDK (`@kaleidorg/swap-sdk`): swaps against the KaleidoSwap maker
+- `cli/` - KaleidoCLI: local multi-asset Lightning nodes, channels, market and swaps from the terminal; `cli/node-sdk/` covers the Node SDK (`kaleido-sdk`)
 - `ai-tools/` - AI tools: MCP servers, skills, KaleidoAgent and KaleidoMind
 - `api-reference/` - API reference and integration guides
 - `wallet-engine/` - Multi-protocol wallet engine: concepts and adding a protocol
 - `cn/` - Simplified Chinese translation (see [Translations](#translations))
-- `snippets/` - Shared MDX snippets, including `versions.mdx` (documented SDK and RLN API versions)
+- `snippets/` - Shared MDX snippets, including `versions.mdx` (documented SDK and RLN API versions) and `feature-video.mdx`
 - `assets/` - Images (`assets/images/`) and logos/favicon (`assets/logos/`)
 
 ## Configuration
@@ -48,9 +48,12 @@ mint dev
 
 ## Version checks
 
-SDK and API versions quoted in the docs are defined once in `mintlify-docs/snippets/versions.mdx`. On every pull request, the `Check SDK version` workflow (`scripts/check-sdk-version.sh`) compares the documented SDK version against the latest `kaleido-sdk` on npm and warns if they have drifted.
+SDK and API versions quoted in the docs are defined once in `mintlify-docs/snippets/versions.mdx`. On every pull request, the `Check SDK version` workflow (`scripts/check-sdk-version.sh`) compares the documented versions against the latest `@kaleidorg/swap-sdk` and `kaleido-sdk` on npm and warns if they have drifted.
 
 ## Contributing
+
+Coding agents: read [AGENTS.md](AGENTS.md) first.
+
 
 1. Fork the repository
 2. Create your feature branch
